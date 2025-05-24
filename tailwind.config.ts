@@ -14,5 +14,13 @@ export default {
       },
     },
   },
+  safelist: [
+    'grid-cols-7',
+    'grid-cols-8',
+    'grid-cols-9',
+    'grid-rows-7',
+    'grid-rows-8',
+    'grid-rows-9'
+  ],
   plugins: [],
 } satisfies Config;
