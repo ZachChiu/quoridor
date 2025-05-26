@@ -13,8 +13,8 @@ export default function Home() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen gap-16 font-[family-name:var(--font-geist-sans)] overflow-hidden">
-      <main className="flex flex-col gap-8 row-start-2 h-full flex-1 items-center justify-center ">
+    <div className="flex min-h-screen items-center justify-center gap-16 overflow-hidden font-[family-name:var(--font-geist-sans)]">
+      <main className="row-start-2 flex h-full flex-1 flex-col items-center justify-center gap-8 ">
         <h1 className="text-xl">圍牆圍棋 QUORIDOR</h1>
         <div className="flex flex-col gap-4">
           <button type="button" onClick={handleStartGame}>開始遊戲</button>
