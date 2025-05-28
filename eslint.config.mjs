@@ -6,10 +6,10 @@ const compat = new FlatCompat({
 });
 
 const eslintConfig = [
-  ...tailwind.configs["flat/recommended"],
   ...compat.config({
-    extends: ['next', 'prettier'],
+    extends: ['next/core-web-vitals', 'next/typescript'],
   }),
+  ...tailwind.configs["flat/recommended"],
   {  
     rules: {
       'tailwindcss/no-custom-classname': 'off',
