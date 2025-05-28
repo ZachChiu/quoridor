@@ -9,14 +9,15 @@ export default function Play() {
   const [currentPlayer, setCurrentPlayer] = useState<Player>('A');
   const [verticalWalls, setVerticalWalls] = useState<(null | 'A' | 'B')[][]>([]);
   const [horizontalWalls, setHorizontalWalls] = useState<(null | 'A' | 'B')[][]>([]);
+  const [selectedChess, setSelectedChess] = useState<{ row: number; col: number } | null>(null);
 
   // 棋盤
   const mockBoard: Player[][] = useMemo(() => [
     [null, null, 'A', null, null, null, null],
-    [null, null, null, null, null, null, null],
-    [null, null, null, null, null, null, null],
-    [null, null, null, null, null, null, null],
-    [null, null, null, null, null, null, null],
+    [null, null, null, null, null, 'A', null],
+    [null, 'A', 'B', null, null, null, null],
+    [null, null, null, 'A', null, null, null],
+    [null, 'B', null, null, null, 'B', null],
     [null, null, null, null, null, null, null],
     [null, null, 'B', null, null, null, null],
   ], []);
@@ -46,30 +47,40 @@ export default function Play() {
   useEffect(() => {
     setSize(7);
     setBoard(mockBoard);
-    setCurrentPlayer('A');
+    setCurrentPlayer('B');
     setVerticalWalls(mockVerticalWalls);
     setHorizontalWalls(mockHorizontalWalls);
   }, [mockBoard, mockVerticalWalls, mockHorizontalWalls]);
 
+  const updateBoard = () => {}
+
+  const selectChess = (row: number, col: number) => {
+    if (row === selectedChess?.row && col === selectedChess?.col) {
+      setSelectedChess(null);
+      return;
+    }
+    setSelectedChess({ row, col });
+  }
+
   return (
     <div className="flex min-h-screen items-center justify-center gap-16 overflow-hidden font-[family-name:var(--font-geist-sans)]">
-      <main className="flex h-full flex-1 items-center justify-between gap-8 px-5">
-        <div className="flex flex-col gap-2  rounded-md border-2 p-2">
-          <div className="size-5 rounded-full bg-primary">
-
-          </div>
-          <div className="size-5 rounded-full bg-secondary">
-
-          </div>
+      <main className="flex flex-1 items-center justify-center gap-8 px-5">
+        <div className="fixed left-5 flex flex-col gap-2 rounded-md border-2 p-2">
+          <div className={`size-5 rounded-full bg-primary ${currentPlayer === 'A' ? 'animate-breathe' : ''}`}></div>
+          <div className={`size-5 rounded-full bg-secondary ${currentPlayer === 'B' ? 'animate-breathe' : ''}`}></div>
         </div>
-        <Chessboard
-          size={size}
-          walls={walls}
-          board={board}
-          verticalWalls={verticalWalls}
-          horizontalWalls={horizontalWalls}
-          currentPlayer={currentPlayer}
-        ></Chessboard>
+        <div className="chessboard-container size-[90dvw] md:size-[90dvh]">
+          <Chessboard
+            size={size}
+            board={board}
+            verticalWalls={verticalWalls}
+            horizontalWalls={horizontalWalls}
+            currentPlayer={currentPlayer}
+            selectedChess={selectedChess}
+            updateBoard={updateBoard}
+            selectChess={selectChess}
+          ></Chessboard>
+        </div>
       </main>
     </div>
   );
