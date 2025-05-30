@@ -1,7 +1,7 @@
 'use client'
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import Chessboard from "../components/chessboard";
-import type { Player } from "@/types/chessboard.ts";
+import type { Player, Direction, Move } from "@/types/chessboard.ts";
 
 export default function Play() {
   const [size, setSize] = useState(0);
@@ -10,36 +10,37 @@ export default function Play() {
   const [verticalWalls, setVerticalWalls] = useState<(null | 'A' | 'B')[][]>([]);
   const [horizontalWalls, setHorizontalWalls] = useState<(null | 'A' | 'B')[][]>([]);
   const [selectedChess, setSelectedChess] = useState<{ row: number; col: number } | null>(null);
+  const [remainSteps, setRemainSteps] = useState(2);
 
   // 棋盤
   const mockBoard: Player[][] = useMemo(() => [
     [null, null, 'A', null, null, null, null],
     [null, null, null, null, null, 'A', null],
-    [null, 'A', 'B', null, null, null, null],
+    [null, 'A', null,  null, 'B',null, null],
     [null, null, null, 'A', null, null, null],
     [null, 'B', null, null, null, 'B', null],
     [null, null, null, null, null, null, null],
     [null, null, 'B', null, null, null, null],
   ], []);
 
-  // 直牆：verticalWalls[row][col] 表示 (col, row) 右側有牆，值可為 'A'、'B' 或 null
+  // 直牆：verticalWalls[row][col] 表示 (row, col) 右側有牆，值可為 'A'、'B' 或 null
   const mockVerticalWalls: (null | 'A' | 'B')[][] = useMemo(() => [
-    [null, null, null, null, null, 'A', null],
+    [null, 'A', null, null, null, 'A', null],
     [null, 'B', null, null, null, null, null],
-    [null, null, null, null, 'A', null, null],
-    [null, null, null, null, null, null, null],
-    [null, null, null, null, null, 'B', null],
+    [null, null, null, 'A', null, null, null],
+    ['B', 'B', null, null, null, null, null],
+    [null, null, null, null, 'B', 'B', null],
     [null, null, null, null, null, null, null],
     [null, null, null, null, null, null, null],
   ], []);
 
-  // 橫牆：horizontalWalls[row][col] 表示 (col, row) 下方有牆，值可為 'A'、'B' 或 null
+  // 橫牆：horizontalWalls[row][col] 表示 (row, col) 下方有牆，值可為 'A'、'B' 或 null
   const mockHorizontalWalls: (null | 'A' | 'B')[][] = useMemo(() => [
     [null, null, null, 'B', null, null, null],
-    [null, null, null, null, null, null, null],
-    [null, null, 'A', null, null, null, null],
+    [null, null, 'A', 'A', null, null, null],
+    ['A', null, 'A', 'A', null, null, null],
+    [null, 'A', null, null, null, 'B', null],
     [null, null, null, null, null, 'B', null],
-    [null, null, null, null, null, null, null],
     [null, 'A', null, null, null, null, null],
     [null, null, null, null, null, null, null],
   ], []);
@@ -55,12 +56,54 @@ export default function Play() {
   const updateBoard = () => {}
 
   const selectChess = (row: number, col: number) => {
+    if (remainSteps < 2) {
+      return;
+    }
     if (row === selectedChess?.row && col === selectedChess?.col) {
       setSelectedChess(null);
       return;
     }
     setSelectedChess({ row, col });
   }
+
+  const selectWall = useCallback((row: number, col: number, direction: Direction) => {
+    switch (direction) {
+      case 'top':
+      case 'bottom':
+        setHorizontalWalls((prev) => {
+          const newWalls = [...prev];
+          newWalls[row][col] = currentPlayer;
+          return newWalls;
+        });
+        break;
+      case 'left':
+      case 'right':
+        setVerticalWalls((prev) => {
+          const newWalls = [...prev];
+          newWalls[row][col] = currentPlayer;
+          return newWalls;
+        });
+        break;
+    }
+    setCurrentPlayer(currentPlayer === 'A' ? 'B' : 'A');
+    setRemainSteps(2);
+    setSelectedChess(null);
+  }, [currentPlayer, setHorizontalWalls, setVerticalWalls]);
+
+  const selectCell = useCallback((row: number, col: number) => {
+    if (!selectedChess) return;
+    setSelectedChess({ row, col });
+    const gap = remainSteps - (Math.abs((selectedChess.row) - row) + Math.abs((selectedChess.col) - col));
+    setRemainSteps(gap);
+
+    setBoard((prev) => {
+      const newBoard = [...prev];
+      newBoard[selectedChess.row][selectedChess.col] = null;
+      newBoard[row][col] = currentPlayer;
+      return newBoard;
+    });
+  }, [selectedChess, currentPlayer, remainSteps, setSelectedChess, setBoard]);
+  
 
   return (
     <div className="flex min-h-screen items-center justify-center gap-16 overflow-hidden font-[family-name:var(--font-geist-sans)]">
@@ -77,8 +120,11 @@ export default function Play() {
             horizontalWalls={horizontalWalls}
             currentPlayer={currentPlayer}
             selectedChess={selectedChess}
+            remainSteps={remainSteps}
             updateBoard={updateBoard}
             selectChess={selectChess}
+            selectWall={selectWall}
+            selectCell={selectCell}
           ></Chessboard>
         </div>
       </main>
