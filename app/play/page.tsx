@@ -2,6 +2,8 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import Chessboard from "../components/chessboard";
 import type { Player, Direction, Move } from "@/types/chessboard.ts";
+import flatten from 'lodash-es/flatten';
+import uniq from 'lodash-es/uniq';
 
 export default function Play() {
   const [size, setSize] = useState(0);
@@ -11,12 +13,23 @@ export default function Play() {
   const [horizontalWalls, setHorizontalWalls] = useState<(null | 'A' | 'B')[][]>([]);
   const [selectedChess, setSelectedChess] = useState<{ row: number; col: number } | null>(null);
   const [remainSteps, setRemainSteps] = useState(2);
+  const [territories, setTerritories] = useState<{ A: string[][]; B: string[][] }>({
+    A: [],
+    B: []
+  });
+  const [uniqTerritories, setUniqTerritories] = useState<{ A: string[][]; B: string[][] }>({});
+  const [flattenTerritoriesObj, setFlattenTerritoriesObj] = useState<Record<string, Player>>({});
+  const [winingStatus, setWiningStatus] = useState<Player | null | 'draw'>(null);
+
+  const isLock = useMemo(() => {
+    return !!winingStatus
+  }, [winingStatus]);
 
   // 棋盤
   const mockBoard: Player[][] = useMemo(() => [
-    [null, null, 'A', null, null, null, null],
+    [null, 'A', null, null, null, null, null],
     [null, null, null, null, null, 'A', null],
-    [null, 'A', null,  null, 'B',null, null],
+    [null, 'A', null, null, 'B', null, null],
     [null, null, null, 'A', null, null, null],
     [null, 'B', null, null, null, 'B', null],
     [null, null, null, null, null, null, null],
@@ -52,8 +65,6 @@ export default function Play() {
     setVerticalWalls(mockVerticalWalls);
     setHorizontalWalls(mockHorizontalWalls);
   }, [mockBoard, mockVerticalWalls, mockHorizontalWalls]);
-
-  const updateBoard = () => {}
 
   const selectChess = (row: number, col: number) => {
     if (remainSteps < 2) {
@@ -104,7 +115,6 @@ export default function Play() {
     });
   }, [selectedChess, currentPlayer, remainSteps, setSelectedChess, setBoard]);
 
-
   /**
   * 計算可移動的位置
   * @param rowIndex - 行索引
@@ -113,26 +123,31 @@ export default function Play() {
   * @param maxSteps - 最大步數
   * @returns {Move[]} 可移動的位置
   */
-  const getAvailableMovesRecursive = useCallback((
+  const getTerritories = useCallback((
     rowIndex: number,
     colIndex: number,
     player: Player,
-    maxSteps: number = 100
-  ): Move[] => {
+    maxSteps: number = 50
+  ): { moves: string[], hasEnemy: boolean } => {
     // 使用 BFS (廣度優先搜索) 來找出所有可到達的位置
     const queue: { row: number, col: number, steps: number }[] = [{ row: rowIndex, col: colIndex, steps: 0 }];
     const visited = new Set<string>();
-    const moves: Move[] = [];
-    
+    const moves: string[] = [];
+    let hasEnemy = false;
+
+    // 將起始棋子的位置加入到 moves 陣列中
+    const startPosKey = `${rowIndex},${colIndex}`;
+    moves.push(startPosKey);
+
     // 標記起始位置為已訪問
-    visited.add(`${rowIndex},${colIndex}`);
-    
+    visited.add(startPosKey);
+
     while (queue.length > 0) {
       const { row, col, steps } = queue.shift()!;
-      
+
       // 如果已經達到最大步數，則停止
       if (steps >= maxSteps) continue;
-      
+
       // 檢查四個方向
       const directions = [
         { dr: -1, dc: 0 }, // 上
@@ -140,92 +155,91 @@ export default function Play() {
         { dr: 1, dc: 0 },  // 下
         { dr: 0, dc: -1 }  // 左
       ];
-      
+
       for (const { dr, dc } of directions) {
         const r1 = row + dr;
         const c1 = col + dc;
-        
+
         // 檢查是否在棋盤範圍內
         if (r1 >= 0 && r1 < size && c1 >= 0 && c1 < size) {
           // 檢查是否有牆擋住
           let hasWall = false;
-          
+
           // 檢查水平牆
           if (dr === 1 && horizontalWalls[row][col]) {
             hasWall = true;
           } else if (dr === -1 && row > 0 && horizontalWalls[row - 1][col]) {
             hasWall = true;
           }
-          
+
           // 檢查垂直牆
           if (dc === 1 && verticalWalls[row][col]) {
             hasWall = true;
           } else if (dc === -1 && col > 0 && verticalWalls[row][col - 1]) {
             hasWall = true;
           }
-          
+
           // 如果沒有牆且位置未訪問過
           if (!hasWall) {
             const posKey = `${r1},${c1}`;
-            
+
             if (!visited.has(posKey)) {
               visited.add(posKey);
-              
+
               // 檢查該位置是否有棋子
               const cellPlayer = board[r1][c1];
-              
+
               if (cellPlayer === null) {
                 // 空格，可以移動
-                moves.push({ row: r1, col: c1 });
+                moves.push(posKey);
                 queue.push({ row: r1, col: c1, steps: steps + 1 });
               } else if (cellPlayer === player) {
                 // 同陣營棋子，加入地盤但不能走到這個位置
-                moves.push({ row: r1, col: c1 });
+                moves.push(posKey);
                 queue.push({ row: r1, col: c1, steps: steps + 1 });
+              } else {
+                // 敵方棋子，設置標誌
+                hasEnemy = true;
+                break;
               }
-              // 如果是敵方棋子，則不加入地盤也不繼續搜索
             }
           }
         }
       }
+
+      if (hasEnemy) break;
     }
-    
-    return moves;
+
+    return { moves, hasEnemy };
   }, [size, horizontalWalls, verticalWalls, board]);
 
-  /**
-   * 計算指定棋子的地盤（所有可以到達的位置）
-   * @param chessRow - 棋子的行索引
-   * @param chessCol - 棋子的列索引
-   * @param player - 棋子的所屬玩家
-   * @returns {Move[]} 棋子的地盤（所有可以到達的位置）
-   */
+  // 在 calculateChessTerritory 函數中
   const calculateChessTerritory = useCallback((
     chessRow: number,
     chessCol: number,
     player: Player
-  ): Move[] => {
+  ): string[] => {
     if (player === null || !board.length) return [];
-    
+
     // 使用 BFS 計算所有可能的移動位置，包括同陣營棋子
-    const territory = getAvailableMovesRecursive(chessRow, chessCol, player);
-    
-    // 將棋子位置加入地盤（如果還沒加入的話）
-    if (!territory.some(pos => pos.row === chessRow && pos.col === chessCol)) {
-      territory.push({ row: chessRow, col: chessCol });
+    const { moves, hasEnemy } = getTerritories(chessRow, chessCol, player);
+
+    // 如果遇到敵方棋子，返回空陣列
+    if (hasEnemy) {
+      return [];
     }
-    
-    return territory;
-  }, [board, getAvailableMovesRecursive]);
+
+    return moves;
+  }, [board, getTerritories]);
 
   /**
    * 計算所有棋子的地盤
    * @returns {{ A: Move[][], B: Move[][] }} 每個玩家的所有棋子地盤，每顆棋子一個陣列
    */
-  const calculateAllTerritories = useCallback((): { A: Move[][], B: Move[][] } => {
+  const calculateAllTerritories = useCallback((): { A: string[][], B: string[][] } => {
     const territories = {
-      A: [] as Move[][],
-      B: [] as Move[][]
+      A: [] as string[][],
+      B: [] as string[][]
     };
 
     // 遍歷棋盤上的每個位置
@@ -235,26 +249,61 @@ export default function Play() {
         if (player) {
           // 計算該棋子的地盤
           const territory = calculateChessTerritory(row, col, player);
-          
+
           // 將地盤加入到對應玩家的地盤列表中，每顆棋子一個陣列
           territories[player].push(territory);
         }
       }
     }
-    
+
     return territories;
   }, [board, size, calculateChessTerritory]);
 
-  console.dir(calculateAllTerritories());
-  // console.dir(calculateChessTerritory(4,5,'B'));
-  // console.dir(calculateChessTerritory(0,2,'A'));
+  /**
+   * 當玩家改變時，重新計算地盤
+   */
+  useEffect(() => {
+    const calculatedTerritories: { A: string[][]; B: string[][] } = calculateAllTerritories();
+    console.log('calculatedTerritories',calculatedTerritories);
+
+    const newFlattenTerritoriesObj: Record<string, Player> = {};
+    const newUniqTerritories: { A: string[][]; B: string[][] } = {};
+
+    const keys = Object.keys(calculatedTerritories);
+    keys.forEach(key => {
+      const flattenTerritories = flatten(calculatedTerritories[key]);
+      newUniqTerritories[key] = uniq(flattenTerritories);
+      flattenTerritories.forEach(posKey => {
+        newFlattenTerritoriesObj[posKey] = key;
+      });
+    });
+
+    const isGameOver = keys.reduce((acc, curr) => acc && calculatedTerritories[curr].every(arr => arr.length !== 0), true);
+    if (isGameOver && newUniqTerritories['A'].length > newUniqTerritories['B'].length) {
+      setWiningStatus('A');
+    } else if (isGameOver && newUniqTerritories['A'].length < newUniqTerritories['B'].length) {
+      setWiningStatus('B');
+    } else if (isGameOver && newUniqTerritories['A'].length === newUniqTerritories['B'].length) {
+      setWiningStatus('draw');
+    }
+
+    setUniqTerritories(newUniqTerritories);
+    setFlattenTerritoriesObj(newFlattenTerritoriesObj);
+    setTerritories(calculatedTerritories);
+  }, [currentPlayer, calculateAllTerritories]);
 
   return (
     <div className="flex min-h-screen items-center justify-center gap-16 overflow-hidden font-[family-name:var(--font-geist-sans)]">
       <main className="flex flex-1 items-center justify-center gap-8 px-5">
-        <div className="fixed left-5 flex flex-col gap-2 rounded-md border-2 p-2">
-          <div className={`size-5 rounded-full bg-primary ${currentPlayer === 'A' ? 'animate-breathe' : ''}`}></div>
-          <div className={`size-5 rounded-full bg-secondary ${currentPlayer === 'B' ? 'animate-breathe' : ''}`}></div>
+        <div className="fixed left-5 flex flex-col gap-3 rounded-md border-2 p-3">
+          <div className="flex items-center gap-3">
+            <div className={`size-6 rounded-full bg-primary ${currentPlayer === 'A' ? 'animate-breathe' : ''}`}></div>
+            <span className="text-md">已佔領：{uniqTerritories['A']?.length || 0}</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className={`size-6 rounded-full bg-secondary ${currentPlayer === 'B' ? 'animate-breathe' : ''}`}></div>
+            <span className="text-md">已佔領：{uniqTerritories['B']?.length || 0}</span>
+          </div>
         </div>
         <div className="chessboard-container size-[90dvw] md:size-[90dvh]">
           <Chessboard
@@ -265,7 +314,8 @@ export default function Play() {
             currentPlayer={currentPlayer}
             selectedChess={selectedChess}
             remainSteps={remainSteps}
-            updateBoard={updateBoard}
+            flattenTerritoriesObj={flattenTerritoriesObj}
+            isLock={isLock}
             selectChess={selectChess}
             selectWall={selectWall}
             selectCell={selectCell}

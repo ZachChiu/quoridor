@@ -4,7 +4,6 @@ import type { Player, Move, Direction } from "@/types/chessboard.ts";
 import React, { useCallback, useEffect, useState } from "react";
 
 type Props = {
-  ref: React.RefObject<HTMLDivElement>;
   size: number;
   board: Player[][];
   currentPlayer: Player;
@@ -12,14 +11,14 @@ type Props = {
   horizontalWalls: (null | 'A' | 'B')[][];
   selectedChess: Move | null;
   remainSteps: number;
-  updateBoard: () => void;
+  flattenTerritoriesObj: Record<string, Player>;
+  isLock: boolean;
   selectChess: (row: number, col: number) => void;
   selectWall: (row: number, col: number, direction: Direction) => void;
   selectCell: (row: number, col: number) => void;
 };
 
 export default React.memo(function Chessboard({
-  ref,
   size,
   verticalWalls,
   horizontalWalls,
@@ -27,7 +26,8 @@ export default React.memo(function Chessboard({
   currentPlayer,
   selectedChess,
   remainSteps,
-  updateBoard,
+  flattenTerritoriesObj,
+  isLock,
   selectChess,
   selectWall,
   selectCell
@@ -192,10 +192,25 @@ export default React.memo(function Chessboard({
             const isTurn = currentPlayer === player;
             const isSelecting = selectedChess?.row === rowIndex && selectedChess?.col === colIndex;
             const isAvailableMove = availableMoves.some(move => move.row === rowIndex && move.col === colIndex);
+            const territory = flattenTerritoriesObj?.[`${rowIndex},${colIndex}`];
+
+            const cellBgMapping = {
+              'A': 'bg-primary-50',
+              'B': 'bg-secondary-50',
+            }
+
+            let cellBg = '';
+            if (isAvailableMove) {
+              cellBg = 'bg-green-100';
+            } else if (territory) {
+              cellBg = cellBgMapping[territory];
+            } else {
+              cellBg = 'bg-white';
+            }
 
             return (
               <div
-                className={`relative flex items-center justify-center ${isTurn || isAvailableMove ? 'cursor-pointer' : ''} ${isAvailableMove ? 'bg-green-100' : 'bg-white'}`}
+                className={`relative flex items-center justify-center ${isTurn || isAvailableMove ? 'cursor-pointer' : ''} ${cellBg}`}
                 key={`${rowIndex}-${colIndex}`}
                 onClick={() => onClickSelectChess(player, rowIndex, colIndex, isAvailableMove)}
               >
