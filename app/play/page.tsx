@@ -1,6 +1,8 @@
 'use client'
 import { useState, useEffect, useMemo, useCallback } from "react";
 import Chessboard from "../components/chessboard";
+import SectionShadow from "../components/sectionShadow";
+
 import type { Player, Direction, Move } from "@/types/chessboard.ts";
 import flatten from 'lodash-es/flatten';
 import uniq from 'lodash-es/uniq';
@@ -20,51 +22,59 @@ export default function Play() {
   const [uniqTerritories, setUniqTerritories] = useState<{ A: string[][]; B: string[][] }>({});
   const [flattenTerritoriesObj, setFlattenTerritoriesObj] = useState<Record<string, Player>>({});
   const [winingStatus, setWiningStatus] = useState<Player | null | 'draw'>(null);
+  const [isPlacingChess, setIsPlacingChess] = useState(false);
+  const [openingStep, setOpeningStep] = useState(['A', 'B', 'B', 'A']);
+
+  window.onbeforeunload = function(){
+    if (!confirm('遊戲尚未結束，確定要離開嗎？')) {
+      return '按一下「取消」停留在此頁';
+    }
+  };
 
   const isLock = useMemo(() => {
     return !!winingStatus
   }, [winingStatus]);
 
   // 棋盤
-  const mockBoard: Player[][] = useMemo(() => [
-    [null, 'A', null, null, null, null, null],
-    [null, null, null, null, null, 'A', null],
-    [null, 'A', null, null, 'B', null, null],
-    [null, null, null, 'A', null, null, null],
-    [null, 'B', null, null, null, 'B', null],
+  const templateBoard: Player[][] = useMemo(() => [
     [null, null, null, null, null, null, null],
-    [null, null, 'B', null, null, null, null],
+    [null, 'A', null, null, null, 'B', null],
+    [null, null, null, null, null, null, null],
+    [null, null, null, null, null, null, null],
+    [null, null, null, null, null, null, null],
+    [null, 'B', null, null, null, 'A', null],
+    [null, null, null, null, null, null, null],
   ], []);
 
   // 直牆：verticalWalls[row][col] 表示 (row, col) 右側有牆，值可為 'A'、'B' 或 null
-  const mockVerticalWalls: (null | 'A' | 'B')[][] = useMemo(() => [
-    [null, 'A', null, null, null, 'A', null],
-    [null, 'B', null, null, null, null, null],
-    [null, null, null, 'A', null, null, null],
-    ['B', 'B', null, null, null, null, null],
-    [null, null, null, null, 'B', 'B', null],
+  const templateVerticalWalls: (null | 'A' | 'B')[][] = useMemo(() => [
+    [null, null, null, null, null, null, null],
+    [null, null, null, null, null, null, null],
+    [null, null, null, null, null, null, null],
+    [null, null, null, null, null, null, null],
+    [null, null, null, null, null, null, null],
     [null, null, null, null, null, null, null],
     [null, null, null, null, null, null, null],
   ], []);
 
   // 橫牆：horizontalWalls[row][col] 表示 (row, col) 下方有牆，值可為 'A'、'B' 或 null
-  const mockHorizontalWalls: (null | 'A' | 'B')[][] = useMemo(() => [
-    [null, null, null, 'B', null, null, null],
-    [null, null, 'A', 'A', null, null, null],
-    ['A', null, 'A', 'A', null, null, null],
-    [null, 'A', null, null, null, 'B', null],
-    [null, null, null, null, null, 'B', null],
-    [null, 'A', null, null, null, null, null],
+  const templateHorizontalWalls: (null | 'A' | 'B')[][] = useMemo(() => [
+    [null, null, null, null, null, null, null],
+    [null, null, null, null, null, null, null],
+    [null, null, null, null, null, null, null],
+    [null, null, null, null, null, null, null],
+    [null, null, null, null, null, null, null],
+    [null, null, null, null, null, null, null],
     [null, null, null, null, null, null, null],
   ], []);
 
   useEffect(() => {
     setSize(7);
-    setBoard(mockBoard);
+    setBoard(templateBoard);
     setCurrentPlayer('B');
-    setVerticalWalls(mockVerticalWalls);
-    setHorizontalWalls(mockHorizontalWalls);
-  }, [mockBoard, mockVerticalWalls, mockHorizontalWalls]);
+    setVerticalWalls(templateVerticalWalls);
+    setHorizontalWalls(templateHorizontalWalls);
+  }, [templateBoard, templateVerticalWalls, templateHorizontalWalls]);
 
   const selectChess = (row: number, col: number) => {
     if (remainSteps < 2) {
@@ -264,7 +274,6 @@ export default function Play() {
    */
   useEffect(() => {
     const calculatedTerritories: { A: string[][]; B: string[][] } = calculateAllTerritories();
-    console.log('calculatedTerritories',calculatedTerritories);
 
     const newFlattenTerritoriesObj: Record<string, Player> = {};
     const newUniqTerritories: { A: string[][]; B: string[][] } = {};
@@ -295,15 +304,19 @@ export default function Play() {
   return (
     <div className="flex min-h-screen items-center justify-center gap-16 overflow-hidden font-[family-name:var(--font-geist-sans)]">
       <main className="flex flex-1 items-center justify-center gap-8 px-5">
-        <div className="fixed left-5 flex flex-col gap-3 rounded-md border-2 p-3">
-          <div className="flex items-center gap-3">
-            <div className={`size-6 rounded-full bg-primary ${currentPlayer === 'A' ? 'animate-breathe' : ''}`}></div>
-            <span className="text-md">已佔領：{uniqTerritories['A']?.length || 0}</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className={`size-6 rounded-full bg-secondary ${currentPlayer === 'B' ? 'animate-breathe' : ''}`}></div>
-            <span className="text-md">已佔領：{uniqTerritories['B']?.length || 0}</span>
-          </div>
+        <div className="fixed left-5 top-5 md:top-[5dvh]">
+          <SectionShadow>
+            <div className="relative flex size-full flex-col gap-3 rounded-xl border-2 border-gray-900 bg-white p-3">
+              <div className="flex items-center gap-3">
+                <div className={`size-6 rounded-full bg-primary ${currentPlayer === 'A' ? 'animate-breathe' : ''}`}></div>
+                <span className="text-md">已佔領：{uniqTerritories['A']?.length || 0}</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className={`size-6 rounded-full bg-secondary ${currentPlayer === 'B' ? 'animate-breathe' : ''}`}></div>
+                <span className="text-md">已佔領：{uniqTerritories['B']?.length || 0}</span>
+              </div>
+            </div>
+          </SectionShadow>
         </div>
         <div className="chessboard-container size-[90dvw] md:size-[90dvh]">
           <Chessboard

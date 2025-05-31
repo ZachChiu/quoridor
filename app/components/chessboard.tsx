@@ -2,6 +2,7 @@
 
 import type { Player, Move, Direction } from "@/types/chessboard.ts";
 import React, { useCallback, useEffect, useState } from "react";
+import SectionShadow from "./sectionShadow";
 
 type Props = {
   size: number;
@@ -158,7 +159,7 @@ export default React.memo(function Chessboard({
   return (
     <div className="relative size-full">
       {/* 列座標（A-H）*/}
-      <div className="absolute -bottom-5 left-0 flex w-full">
+      {/* <div className="absolute -bottom-5 left-0 flex w-full">
         {Array.from({ length: size }, (_, i) => (
           <div
             className="flex-1 text-center text-xs"
@@ -167,10 +168,10 @@ export default React.memo(function Chessboard({
             {letters[i]}
           </div>
         ))}
-      </div>
+      </div> */}
 
       {/* 行座標（1-7）*/}
-      <div className="absolute -left-5 top-0 flex h-full flex-col justify-center">
+      {/* <div className="absolute -left-5 top-0 flex h-full flex-col justify-center">
         {Array.from({ length: size }, (_, i) => (
           <div
             className="flex h-full items-center justify-center text-xs"
@@ -180,81 +181,83 @@ export default React.memo(function Chessboard({
             {size - i}
           </div>
         ))}
-      </div>
+      </div> */}
 
-      {/* 棋盤 */}
-      <div className={`grid-cols-${size} grid size-full gap-[2px] overflow-hidden rounded-lg border-8 bg-gray-200`}>
-        {Array.from({ length: size }, (_, rowIndex) =>
-          Array.from({ length: size }, (_, colIndex) => {
-            const player: Player = board?.[rowIndex]?.[colIndex];
-            const hasHorizontalWallPlayer = horizontalWalls?.[rowIndex]?.[colIndex];
-            const hasVerticalWall = verticalWalls?.[rowIndex]?.[colIndex];
-            const isTurn = currentPlayer === player;
-            const isSelecting = selectedChess?.row === rowIndex && selectedChess?.col === colIndex;
-            const isAvailableMove = availableMoves.some(move => move.row === rowIndex && move.col === colIndex);
-            const territory = flattenTerritoriesObj?.[`${rowIndex},${colIndex}`];
+      <SectionShadow>
+        {/* 棋盤 */}
+        <div className={`grid-cols-${size} relative grid size-full gap-1 overflow-hidden rounded-xl border-4 border-gray-900 bg-gray-300`}>
+          {Array.from({ length: size }, (_, rowIndex) =>
+            Array.from({ length: size }, (_, colIndex) => {
+              const player: Player = board?.[rowIndex]?.[colIndex];
+              const hasHorizontalWallPlayer = horizontalWalls?.[rowIndex]?.[colIndex];
+              const hasVerticalWall = verticalWalls?.[rowIndex]?.[colIndex];
+              const isTurn = currentPlayer === player;
+              const isSelecting = selectedChess?.row === rowIndex && selectedChess?.col === colIndex;
+              const isAvailableMove = availableMoves.some(move => move.row === rowIndex && move.col === colIndex);
+              const territory = flattenTerritoriesObj?.[`${rowIndex},${colIndex}`];
 
-            const cellBgMapping = {
-              'A': 'bg-primary-50',
-              'B': 'bg-secondary-50',
-            }
+              const cellBgMapping = {
+                'A': 'bg-primary-50',
+                'B': 'bg-secondary-50',
+              }
 
-            let cellBg = '';
-            if (isAvailableMove) {
-              cellBg = 'bg-green-100';
-            } else if (territory) {
-              cellBg = cellBgMapping[territory];
-            } else {
-              cellBg = 'bg-white';
-            }
+              let cellBg = '';
+              if (isAvailableMove) {
+                cellBg = 'bg-green-100';
+              } else if (territory) {
+                cellBg = cellBgMapping[territory];
+              } else {
+                cellBg = 'bg-white';
+              }
 
-            return (
-              <div
-                className={`relative flex items-center justify-center ${isTurn || isAvailableMove ? 'cursor-pointer' : ''} ${cellBg}`}
-                key={`${rowIndex}-${colIndex}`}
-                onClick={() => onClickSelectChess(player, rowIndex, colIndex, isAvailableMove)}
-              >
-                {/* 棋子 */}
-                {player && (
-                  <div className={`${player === 'A' ? 'bg-primary' : 'bg-secondary'} ${isSelecting || (!isSelecting && isTurn) ? 'infinite animate-breathe transition-transform duration-1000' : ''} absolute z-20 size-1/2 rounded-full`} />
-                )}
-                {/* 橫牆 */}
-                {hasHorizontalWallPlayer && (
-                  <div className={`${hasHorizontalWallPlayer === 'A' ? 'bg-primary' : 'bg-secondary'} absolute inset-x-0 bottom-0 z-10 h-2 translate-y-1/2 rounded`} />
-                )}
-                {/* 直牆 */}
-                {hasVerticalWall && (
-                  <div className={`${hasVerticalWall === 'A' ? 'bg-primary' : 'bg-secondary'} absolute inset-y-0 right-0 z-10 w-2 translate-x-1/2 rounded`} />
-                )}
-
-                {/* 可選擇的牆 */}
-                {isSelecting && (
-                <>
-                  {checkWallBuildable(rowIndex, colIndex, 'top') && (
-                    <div className={`absolute top-0 z-10 h-2 w-3/4 -translate-y-1/2 cursor-pointer rounded bg-gray-700 opacity-50 hover:opacity-100`}
-                        onClick={() => selectWall(rowIndex - 1, colIndex , 'top')}></div>
+              return (
+                <div
+                  className={`relative flex items-center justify-center ${isTurn || isAvailableMove ? 'cursor-pointer' : ''} ${cellBg}`}
+                  key={`${rowIndex}-${colIndex}`}
+                  onClick={() => onClickSelectChess(player, rowIndex, colIndex, isAvailableMove)}
+                >
+                  {/* 棋子 */}
+                  {player && (
+                    <div className={`${player === 'A' ? 'bg-primary' : 'bg-secondary'} ${isSelecting || (!isSelecting && isTurn) ? 'infinite animate-breathe transition-transform duration-1000' : ''} absolute z-20 size-1/2 rounded-full`} />
                   )}
-                  {checkWallBuildable(rowIndex, colIndex, 'bottom') && (
-                    <div className={`absolute bottom-0 z-10 h-2 w-3/4 translate-y-1/2 cursor-pointer rounded bg-gray-700 opacity-50 hover:opacity-100`}
-                        onClick={() => selectWall(rowIndex, colIndex, 'bottom')}></div>
+                  {/* 橫牆 */}
+                  {hasHorizontalWallPlayer && (
+                    <div className={`${hasHorizontalWallPlayer === 'A' ? 'bg-primary' : 'bg-secondary'} absolute inset-x-0 bottom-0 z-10 h-1 translate-y-full`} />
                   )}
-                  {checkWallBuildable(rowIndex, colIndex, 'left') && (
-                    <div className={`absolute left-0 z-10 h-3/4 w-2 -translate-x-1/2 cursor-pointer rounded bg-gray-700 opacity-50 hover:opacity-100`}
-                        onClick={() => selectWall(rowIndex , colIndex - 1, 'left')}></div>
+                  {/* 直牆 */}
+                  {hasVerticalWall && (
+                    <div className={`${hasVerticalWall === 'A' ? 'bg-primary' : 'bg-secondary'} absolute inset-y-0 right-0 z-10 w-1 translate-x-full`} />
                   )}
-                  {checkWallBuildable(rowIndex, colIndex, 'right') && (
-                    <div
-                      className={`absolute right-0 z-10 h-3/4 w-2 translate-x-1/2 cursor-pointer rounded bg-gray-700 opacity-50 hover:opacity-100`}
-                      onClick={() => selectWall(rowIndex, colIndex, 'right')}
-                    ></div>
+
+                  {/* 可選擇的牆 */}
+                  {isSelecting && (
+                  <>
+                    {checkWallBuildable(rowIndex, colIndex, 'top') && (
+                      <div className={`absolute top-0 z-10 h-3 w-3/4 -translate-y-[65%] cursor-pointer rounded bg-gray-700 opacity-50 hover:opacity-100`}
+                          onClick={() => selectWall(rowIndex - 1, colIndex , 'top')}></div>
+                    )}
+                    {checkWallBuildable(rowIndex, colIndex, 'bottom') && (
+                      <div className={`absolute bottom-0 z-10 h-3 w-3/4 translate-y-[65%] cursor-pointer rounded bg-gray-700 opacity-50 hover:opacity-100`}
+                          onClick={() => selectWall(rowIndex, colIndex, 'bottom')}></div>
+                    )}
+                    {checkWallBuildable(rowIndex, colIndex, 'left') && (
+                      <div className={`absolute left-0 z-10 h-3/4 w-3 -translate-x-[65%] cursor-pointer rounded bg-gray-700 opacity-50 hover:opacity-100`}
+                          onClick={() => selectWall(rowIndex , colIndex - 1, 'left')}></div>
+                    )}
+                    {checkWallBuildable(rowIndex, colIndex, 'right') && (
+                      <div
+                        className={`absolute right-0 z-10 h-3/4 w-3 translate-x-[65%] cursor-pointer rounded bg-gray-700 opacity-50 hover:opacity-100`}
+                        onClick={() => selectWall(rowIndex, colIndex, 'right')}
+                      ></div>
+                    )}
+                  </>
                   )}
-                </>
-                )}
-              </div>
-            )
-          })
-        )}
-      </div>
+                </div>
+              )
+            })
+          )}
+        </div>
+      </SectionShadow>
     </div>
   );
 });
