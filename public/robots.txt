@@ -1,0 +1,9 @@
+# *
+User-agent: *
+Allow: /
+
+# Host
+Host: https://quoridor.zachliu.com
+
+# Sitemaps
+Sitemap: https://quoridor.zachliu.com/sitemap.xml

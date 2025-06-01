@@ -37,7 +37,7 @@ export default React.memo(function Chessboard({
   selectCell,
   setChessPosition
 }: Props) {
-  const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+  // const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 
   const [availableMoves, setAvailableMoves] = useState<Move[]>([]);
 
@@ -251,7 +251,7 @@ export default React.memo(function Chessboard({
                   {isSelecting && (
                   <>
                     {checkWallBuildable(rowIndex, colIndex, 'top') && (
-                      <div className={`absolute top-0 z-10 h-3 w-3/4 -translate-y-[65%] cursor-pointer rounded bg-gray-700 opacity-50 hover:opacity-100`}
+                      <div className={`absolute top-0 z-10 h-3 w-3/4 translate-y-[-65%] cursor-pointer rounded bg-gray-700 opacity-50 hover:opacity-100`}
                           onClick={() => selectWall(rowIndex - 1, colIndex , 'top')}></div>
                     )}
                     {checkWallBuildable(rowIndex, colIndex, 'bottom') && (
@@ -259,7 +259,7 @@ export default React.memo(function Chessboard({
                           onClick={() => selectWall(rowIndex, colIndex, 'bottom')}></div>
                     )}
                     {checkWallBuildable(rowIndex, colIndex, 'left') && (
-                      <div className={`absolute left-0 z-10 h-3/4 w-3 -translate-x-[65%] cursor-pointer rounded bg-gray-700 opacity-50 hover:opacity-100`}
+                      <div className={`absolute left-0 z-10 h-3/4 w-3 translate-x-[-65%] cursor-pointer rounded bg-gray-700 opacity-50 hover:opacity-100`}
                           onClick={() => selectWall(rowIndex , colIndex - 1, 'left')}></div>
                     )}
                     {checkWallBuildable(rowIndex, colIndex, 'right') && (

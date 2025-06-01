@@ -12,7 +12,7 @@ declare global {
         event_category?: string;
         event_label?: string;
         value?: number;
-        [key: string]: any;
+        [key: string]: unknown;
       }
     ) => void;
   }
@@ -31,7 +31,7 @@ export const trackButtonClick = (
   category: string = '按鈕點擊',
   label: string = '',
   value?: number,
-  additionalParams: Record<string, any> = {}
+  additionalParams: Record<string, unknown> = {}
 ) => {
   // 確保 gtag 函數存在
   if (typeof window !== 'undefined' && window.gtag) {
@@ -63,7 +63,7 @@ export const trackPageView = (pagePath: string, pageTitle: string = '') => {
  * @param eventName - 事件名稱
  * @param params - 事件參數
  */
-export const trackEvent = (eventName: string, params: Record<string, any> = {}) => {
+export const trackEvent = (eventName: string, params: Record<string, unknown> = {}) => {
   if (typeof window !== 'undefined' && window.gtag) {
     window.gtag('event', eventName, params);
   }
