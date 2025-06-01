@@ -53,7 +53,7 @@ export const metadata: Metadata = {
     siteName: "圍棋圍牆 QUORIDOR",
     images: [
       {
-        url: `/og-image.svg`,
+        url: `/og-image.png`,
         width: 1200,
         height: 630,
         alt: "圍棋圍牆 QUORIDOR 遊戲畫面",
@@ -64,7 +64,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "圍棋圍牆 QUORIDOR | 策略棋盤遊戲",
     description: "圍棋圍牆 QUORIDOR 是一款策略棋盤遊戲，玩家需要在棋盤上建立牆壁，阻礙對手的棋子移動，最終佔領的地盤最多者勝利，快來體驗這款結合圍棋與迷宮元素的精彩遊戲！",
-    images: [`/og-image.svg`],
+    images: [`/og-image.png`],
   },
 };
 
