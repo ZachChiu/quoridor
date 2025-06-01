@@ -1,0 +1,9 @@
+# *
+User-agent: *
+Allow: /
+
+# Host
+Host: https://quridor.com
+
+# Sitemaps
+Sitemap: https://quridor.com/sitemap.xml
