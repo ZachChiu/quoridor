@@ -2,6 +2,7 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import Chessboard from "../components/chessboard";
 import SectionShadow from "../components/sectionShadow";
+import ChampionModal from "../components/ChampionModal";
 
 import type { Player, Direction, Move } from "@/types/chessboard.ts";
 import flatten from 'lodash-es/flatten';
@@ -22,18 +23,16 @@ export default function Play() {
   const [uniqTerritories, setUniqTerritories] = useState<{ A: string[][]; B: string[][] }>({});
   const [flattenTerritoriesObj, setFlattenTerritoriesObj] = useState<Record<string, Player>>({});
   const [winingStatus, setWiningStatus] = useState<Player | null | 'draw'>(null);
-  const [isPlacingChess, setIsPlacingChess] = useState(false);
-  const [openingStep, setOpeningStep] = useState(['A', 'B', 'B', 'A']);
+  const [openingStep, setOpeningStep] = useState<Player[]>(['A', 'B', 'B', 'A']);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const isPlacingChess = useMemo(() => !!openingStep.length ,[openingStep])
+  const isLock = useMemo(() => !!winingStatus, [winingStatus]);
 
-  window.onbeforeunload = function(){
-    if (!confirm('遊戲尚未結束，確定要離開嗎？')) {
-      return '按一下「取消」停留在此頁';
-    }
-  };
-
-  const isLock = useMemo(() => {
-    return !!winingStatus
-  }, [winingStatus]);
+  // window.onbeforeunload = function(){
+  //   if (!confirm('遊戲尚未結束，確定要離開嗎？')) {
+  //     return '按一下「取消」停留在此頁';
+  //   }
+  // };
 
   // 棋盤
   const templateBoard: Player[][] = useMemo(() => [
@@ -71,12 +70,12 @@ export default function Play() {
   useEffect(() => {
     setSize(7);
     setBoard(templateBoard);
-    setCurrentPlayer('B');
+    setCurrentPlayer(openingStep[0] || 'A' as Player);
     setVerticalWalls(templateVerticalWalls);
     setHorizontalWalls(templateHorizontalWalls);
-  }, [templateBoard, templateVerticalWalls, templateHorizontalWalls]);
+  }, [templateBoard, templateVerticalWalls, templateHorizontalWalls, openingStep]);
 
-  const selectChess = (row: number, col: number) => {
+  const selectChess = useCallback((row: number, col: number) => {
     if (remainSteps < 2) {
       return;
     }
@@ -85,7 +84,7 @@ export default function Play() {
       return;
     }
     setSelectedChess({ row, col });
-  }
+  }, [selectedChess, remainSteps]);
 
   const selectWall = useCallback((row: number, col: number, direction: Direction) => {
     switch (direction) {
@@ -124,6 +123,19 @@ export default function Play() {
       return newBoard;
     });
   }, [selectedChess, currentPlayer, remainSteps, setSelectedChess, setBoard]);
+
+  const setChessPosition = useCallback((row: number, col: number) => {
+    setBoard((prev) => {
+      const newBoard = [...prev];
+      newBoard[row][col] = currentPlayer;
+      return newBoard;
+    });
+    const newOpeningStep = [...openingStep];
+    newOpeningStep.shift()
+    setOpeningStep(newOpeningStep);
+
+    setCurrentPlayer(newOpeningStep[0] || 'A');
+  }, [currentPlayer, setBoard, openingStep, setCurrentPlayer]);
 
   /**
   * 計算可移動的位置
@@ -287,19 +299,52 @@ export default function Play() {
       });
     });
 
-    const isGameOver = keys.reduce((acc, curr) => acc && calculatedTerritories[curr].every(arr => arr.length !== 0), true);
-    if (isGameOver && newUniqTerritories['A'].length > newUniqTerritories['B'].length) {
-      setWiningStatus('A');
-    } else if (isGameOver && newUniqTerritories['A'].length < newUniqTerritories['B'].length) {
-      setWiningStatus('B');
-    } else if (isGameOver && newUniqTerritories['A'].length === newUniqTerritories['B'].length) {
-      setWiningStatus('draw');
+    const isGameOver = keys.every(key => calculatedTerritories[key].length !== 0 && calculatedTerritories[key].every(arr => arr.length !== 0));
+    if (isGameOver) {
+      setIsModalOpen(true);
+      if (newUniqTerritories['A'].length > newUniqTerritories['B'].length) {
+        setWiningStatus('A');
+      } else if (newUniqTerritories['A'].length < newUniqTerritories['B'].length) {
+        setWiningStatus('B');
+      } else if (newUniqTerritories['A'].length === newUniqTerritories['B'].length) {
+        setWiningStatus('draw');
+      }
     }
 
     setUniqTerritories(newUniqTerritories);
     setFlattenTerritoriesObj(newFlattenTerritoriesObj);
     setTerritories(calculatedTerritories);
   }, [currentPlayer, calculateAllTerritories]);
+
+  // 重新開始遊戲
+  const restartGame = useCallback(() => {
+    setSize(7);
+    setBoard(templateBoard);
+    setCurrentPlayer(openingStep[0] as Player);
+    setVerticalWalls(templateVerticalWalls);
+    setHorizontalWalls(templateHorizontalWalls);
+    setSelectedChess(null);
+    setRemainSteps(2);
+    setWiningStatus(null);
+    setOpeningStep(['A', 'B', 'B', 'A']);
+    setIsModalOpen(false);
+  }, [templateBoard, templateVerticalWalls, templateHorizontalWalls]);
+
+  // 當用戶嘗試離開頁面且遊戲尚未結束時顯示確認對話框
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (winingStatus === null) {
+        e.preventDefault();
+        e.returnValue = '遊戲尚未結束，確定要離開嗎？';
+        return e.returnValue;
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [winingStatus]);
 
   return (
     <div className="flex min-h-screen items-center justify-center gap-16 overflow-hidden font-[family-name:var(--font-geist-sans)]">
@@ -308,11 +353,11 @@ export default function Play() {
           <SectionShadow>
             <div className="relative flex size-full flex-col gap-3 rounded-xl border-2 border-gray-900 bg-white p-3">
               <div className="flex items-center gap-3">
-                <div className={`size-6 rounded-full bg-primary ${currentPlayer === 'A' ? 'animate-breathe' : ''}`}></div>
+                <div className={`size-6 rounded-full bg-primary ${!isLock && !isPlacingChess &&currentPlayer === 'A' ? 'animate-breathe' : ''}`}></div>
                 <span className="text-md">已佔領：{uniqTerritories['A']?.length || 0}</span>
               </div>
               <div className="flex items-center gap-3">
-                <div className={`size-6 rounded-full bg-secondary ${currentPlayer === 'B' ? 'animate-breathe' : ''}`}></div>
+                <div className={`size-6 rounded-full bg-secondary ${!isLock && !isPlacingChess &&currentPlayer === 'B' ? 'animate-breathe' : ''}`}></div>
                 <span className="text-md">已佔領：{uniqTerritories['B']?.length || 0}</span>
               </div>
             </div>
@@ -329,11 +374,22 @@ export default function Play() {
             remainSteps={remainSteps}
             flattenTerritoriesObj={flattenTerritoriesObj}
             isLock={isLock}
+            isPlacingChess={isPlacingChess}
             selectChess={selectChess}
             selectWall={selectWall}
             selectCell={selectCell}
+            setChessPosition={setChessPosition}
           ></Chessboard>
         </div>
+
+        {/* 冠軍訊息 Modal */}
+        <ChampionModal
+          winner={winingStatus}
+          uniqTerritories={uniqTerritories}
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onRestart={restartGame}
+        />
       </main>
     </div>
   );

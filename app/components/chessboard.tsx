@@ -14,9 +14,11 @@ type Props = {
   remainSteps: number;
   flattenTerritoriesObj: Record<string, Player>;
   isLock: boolean;
+  isPlacingChess: boolean;
   selectChess: (row: number, col: number) => void;
   selectWall: (row: number, col: number, direction: Direction) => void;
   selectCell: (row: number, col: number) => void;
+  setChessPosition: (row: number, col: number) => void;
 };
 
 export default React.memo(function Chessboard({
@@ -29,18 +31,22 @@ export default React.memo(function Chessboard({
   remainSteps,
   flattenTerritoriesObj,
   isLock,
+  isPlacingChess,
   selectChess,
   selectWall,
-  selectCell
+  selectCell,
+  setChessPosition
 }: Props) {
   const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 
   const [availableMoves, setAvailableMoves] = useState<Move[]>([]);
 
   const onClickSelectChess = (selectedPlayer: Player, row: number, col: number, isAvailableMove: boolean) => {
-    if (selectedPlayer === currentPlayer) {
+    if (!selectedPlayer && isPlacingChess) {
+      setChessPosition(row, col);
+    } else if (selectedPlayer === currentPlayer && !isPlacingChess) {
       selectChess(row, col);
-    } else if (isAvailableMove) {
+    } else if (isAvailableMove && !isPlacingChess) {
       selectCell(row, col);
     }
   };
@@ -201,25 +207,37 @@ export default React.memo(function Chessboard({
                 'B': 'bg-secondary-50',
               }
 
-              let cellBg = '';
+              const cellClass = [];
               if (isAvailableMove) {
-                cellBg = 'bg-green-100';
+                cellClass.push('bg-green-100');
               } else if (territory) {
-                cellBg = cellBgMapping[territory];
+                cellClass.push(cellBgMapping[territory]);
               } else {
-                cellBg = 'bg-white';
+                cellClass.push('bg-white');
+              }
+
+              if (!isLock && (isPlacingChess && !player)) {
+                cellClass.push('cursor-pointer');
+              } else if (!isLock && !isPlacingChess && (isTurn || isAvailableMove)) {
+                cellClass.push('cursor-pointer');
               }
 
               return (
                 <div
-                  className={`relative flex items-center justify-center ${isTurn || isAvailableMove ? 'cursor-pointer' : ''} ${cellBg}`}
+                  className={`group relative flex items-center justify-center  ${cellClass.join(' ')}`}
                   key={`${rowIndex}-${colIndex}`}
                   onClick={() => onClickSelectChess(player, rowIndex, colIndex, isAvailableMove)}
                 >
                   {/* 棋子 */}
                   {player && (
-                    <div className={`${player === 'A' ? 'bg-primary' : 'bg-secondary'} ${isSelecting || (!isSelecting && isTurn) ? 'infinite animate-breathe transition-transform duration-1000' : ''} absolute z-20 size-1/2 rounded-full`} />
+                    <div className={`${player === 'A' ? 'bg-primary' : 'bg-secondary'} ${!isLock && !isPlacingChess && (isSelecting || (!isSelecting && isTurn)) ? 'infinite animate-breathe transition-transform duration-1000' : ''} absolute z-20 size-1/2 rounded-full`} />
                   )}
+
+                  {/* 放置時的隱藏棋子 */}
+                  {!player && isPlacingChess && (
+                    <div className={`${currentPlayer === 'A' ? 'bg-primary' : 'bg-secondary'} absolute z-20 hidden size-1/2 rounded-full group-hover:block`} />
+                  )}
+
                   {/* 橫牆 */}
                   {hasHorizontalWallPlayer && (
                     <div className={`${hasHorizontalWallPlayer === 'A' ? 'bg-primary' : 'bg-secondary'} absolute inset-x-0 bottom-0 z-10 h-1 translate-y-full`} />

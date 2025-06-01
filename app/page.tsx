@@ -3,17 +3,20 @@
 
 import { useRouter } from "next/navigation";
 import SectionShadow from "./components/sectionShadow";
+import { trackButtonClick } from "./utils/analytics";
 
 
 export default function Home() {
   const router = useRouter();
 
   const handleStartLocalGame = () => {
+    trackButtonClick('開始本機對戰');
     router.push("/play");
   };
 
   const handleStartConnectGame = () => {
-    alert('還在準備中，請稍後再試');
+    // trackButtonClick('開始連線對戰');
+    alert('還在準備中啦哈哈哈');
   };
 
   return (
