@@ -3,7 +3,7 @@ User-agent: *
 Allow: /
 
 # Host
-Host: https://quoridor.zachliu.com
+Host: https://quridor.com
 
 # Sitemaps
-Sitemap: https://quoridor.zachliu.com/sitemap.xml
+Sitemap: https://quridor.com/sitemap.xml

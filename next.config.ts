@@ -5,9 +5,9 @@ const nextConfig: NextConfig = {
   output: "export",
   trailingSlash: true,
   env: {
-    SITE_URL: process.env.SITE_URL || 'https://quoridor.zachliu.com',
+    SITE_URL: process.env.SITE_URL || 'https://quridor.com',
   },
-  siteUrl: process.env.SITE_URL || 'https://quoridor.zachliu.com',
+  siteUrl: process.env.SITE_URL || 'https://quridor.com',
 };
 
 export default nextConfig;

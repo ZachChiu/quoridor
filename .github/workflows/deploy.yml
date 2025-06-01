@@ -1,0 +1,59 @@
+name: 部署到 Amazon S3
+
+on:
+  push:
+    branches: ["main", "dev"] # 當推送到 main 或 dev 分支時觸發
+  workflow_dispatch: # 允許手動觸發
+
+jobs:
+  # 構建和部署工作
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 檢出代碼
+        uses: actions/checkout@v4
+
+      - name: 設置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: 安裝依賴
+        run: npm ci
+
+      - name: 構建專案
+        run: npm run build
+        env:
+          # 根據分支設置不同的環境變數
+          NEXT_PUBLIC_ENV: ${{ github.ref == 'refs/heads/main' && 'production' || 'development' }}
+          SITE_URL: ${{ secrets.SITE_URL }}
+          PROD_CLOUDFRONT_DISTRIBUTION_ID: ${{ secrets.PROD_CLOUDFRONT_DISTRIBUTION_ID }}
+          DEV_CLOUDFRONT_DISTRIBUTION_ID: ${{ secrets.DEV_CLOUDFRONT_DISTRIBUTION_ID }}
+
+      - name: 配置 AWS 憑證
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: 部署到 S3 - 正式環境
+        if: github.ref == 'refs/heads/main'
+        run: |
+          aws s3 sync ./out s3://${{ secrets.PROD_S3_BUCKET_NAME }} --delete
+
+      - name: 部署到 S3 - 開發環境
+        if: github.ref == 'refs/heads/dev'
+        run: |
+          aws s3 sync ./out s3://${{ secrets.DEV_S3_BUCKET_NAME }} --delete
+
+      - name: 清除 CloudFront 快取 - 正式環境
+        if: github.ref == 'refs/heads/main' && env.PROD_CLOUDFRONT_DISTRIBUTION_ID != ''
+        run: |
+          aws cloudfront create-invalidation --distribution-id ${{ env.PROD_CLOUDFRONT_DISTRIBUTION_ID }} --paths "/*"
+
+      - name: 清除 CloudFront 快取 - 開發環境
+        if: github.ref == 'refs/heads/dev' && env.DEV_CLOUDFRONT_DISTRIBUTION_ID != ''
+        run: |
+          aws cloudfront create-invalidation --distribution-id ${{ env.DEV_CLOUDFRONT_DISTRIBUTION_ID }} --paths "/*"

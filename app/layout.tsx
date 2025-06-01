@@ -24,7 +24,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.SITE_URL || 'https://quoridor.zachliu.com'),
+  metadataBase: new URL(process.env.SITE_URL || 'https://quridor.com'),
   title: {
     default: "圍棋圍牆 QUORIDOR | 策略棋盤遊戲",
     template: "%s | 圍棋圍牆 QUORIDOR"

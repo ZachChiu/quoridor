@@ -356,11 +356,11 @@ export default function PlayGame() {const [size, setSize] = useState(0);
         <SectionShadow>
           <div className="relative flex size-full flex-col gap-3 rounded-xl border-2 border-gray-900 bg-white p-3">
             <div className="flex items-center gap-3">
-              <div className={`size-6 rounded-full bg-primary ${!isLock && !isPlacingChess &&currentPlayer === 'A' ? 'animate-breathe' : ''}`}></div>
+              <div className={`size-6 rounded-full bg-primary ${!isLock &&currentPlayer === 'A' ? 'animate-breathe' : ''}`}></div>
               <span className="text-md">已佔領：{uniqTerritories['A']?.length || 0}</span>
             </div>
             <div className="flex items-center gap-3">
-              <div className={`size-6 rounded-full bg-secondary ${!isLock && !isPlacingChess &&currentPlayer === 'B' ? 'animate-breathe' : ''}`}></div>
+              <div className={`size-6 rounded-full bg-secondary ${!isLock &&currentPlayer === 'B' ? 'animate-breathe' : ''}`}></div>
               <span className="text-md">已佔領：{uniqTerritories['B']?.length || 0}</span>
             </div>
           </div>
