@@ -7,6 +7,7 @@ import ChampionModal from "../components/championModal";
 import type { Player, Direction } from "@/types/chessboard.ts";
 import flatten from 'lodash-es/flatten';
 import uniq from 'lodash-es/uniq';
+import { trackButtonClick } from "@/utils/analytics";
 
 export default function PlayGame() {const [size, setSize] = useState(0);
   const [board, setBoard] = useState<Player[][]>([]);
@@ -333,6 +334,7 @@ export default function PlayGame() {const [size, setSize] = useState(0);
     setWiningStatus(null);
     setOpeningStep(['A', 'B', 'B', 'A']);
     setIsModalOpen(false);
+    trackButtonClick('重新開始遊戲');
   }, [templateBoard, templateVerticalWalls, templateHorizontalWalls, openingStep]);
 
   // 當用戶嘗試離開頁面且遊戲尚未結束時顯示確認對話框

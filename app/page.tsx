@@ -14,7 +14,7 @@ export default function Home() {
   };
 
   const handleStartConnectGame = () => {
-    // trackButtonClick('開始連線對戰');
+    trackButtonClick('開始連線對戰');
     alert('還在準備中啦哈哈哈');
   };
 
