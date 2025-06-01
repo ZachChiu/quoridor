@@ -88,6 +88,11 @@ body {
   50% { transform: scale(0.8); }
 }
 
-.animate-breathe {
-  animation: breathe 1.5s ease-in-out infinite;
+@keyframes shine {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
+}
+
+.animate-pulse-shine {
+  animation: breathe 1.5s ease-in-out infinite, shine 1s ease-in-out infinite;
 }

@@ -350,22 +350,54 @@ export default function PlayGame() {const [size, setSize] = useState(0);
     };
   }, [winingStatus]);
 
+  const tipText = useMemo(() => {
+    if (isPlacingChess) {
+      return (
+        <>請{<div className={`animate-pulse-shine inline-block size-6 rounded-full bg-primary ${currentPlayer === 'A' ? 'bg-primary' : 'bg-secondary'}`}></div>}放置棋子</>
+      );
+    } else if (winingStatus) {
+      return (
+        <>{winingStatus === 'draw' ? '遊戲結束！' : `遊戲結束！${winingStatus === 'A' ? '紅方勝利！' : '藍方勝利！'}`}</>
+      );
+    } else {
+      return (
+        <>請{<div className={`animate-pulse-shine inline-block size-6 rounded-full bg-primary ${currentPlayer === 'A' ? 'bg-primary' : 'bg-secondary'}`}></div>}移動棋子</>
+      );
+    }
+  }, [isPlacingChess, currentPlayer, winingStatus]);
   return (
     <>
+      {/* 賽況面板 */}
       <div className="fixed left-5 top-5 md:top-[5dvh]">
         <SectionShadow>
           <div className="relative flex size-full flex-col gap-3 rounded-xl border-2 border-gray-900 bg-white p-3">
             <div className="flex items-center gap-3">
-              <div className={`size-6 rounded-full bg-primary ${!isLock &&currentPlayer === 'A' ? 'animate-breathe' : ''}`}></div>
+              <div className={`size-6 rounded-full bg-primary ${!isLock &&currentPlayer === 'A' ? 'animate-pulse-shine' : ''}`}></div>
               <span className="text-md">已佔領：{uniqTerritories['A']?.length || 0}</span>
             </div>
             <div className="flex items-center gap-3">
-              <div className={`size-6 rounded-full bg-secondary ${!isLock &&currentPlayer === 'B' ? 'animate-breathe' : ''}`}></div>
+              <div className={`size-6 rounded-full bg-secondary ${!isLock &&currentPlayer === 'B' ? 'animate-pulse-shine' : ''}`}></div>
               <span className="text-md">已佔領：{uniqTerritories['B']?.length || 0}</span>
             </div>
           </div>
         </SectionShadow>
       </div>
+
+      {/* 提示面板 */}
+      {
+        tipText && <div className="fixed bottom-5 right-5 md:bottom-auto md:left-5 md:right-auto md:top-40">
+          <SectionShadow>
+            <div className="relative flex size-full flex-col gap-3 rounded-xl border-2 border-gray-900 bg-white p-3">
+              <div className="flex items-center gap-3">
+                <span className="text-md flex items-center gap-1">
+                  { tipText }
+                </span>
+              </div>
+            </div>
+          </SectionShadow>
+        </div>
+      }
+
       <div className="chessboard-container size-[90dvw] md:size-[90dvh]">
         <Chessboard
           size={size}

@@ -50,7 +50,7 @@ const ChampionModal: React.FC<ChampionModalProps> = ({ winner, isOpen, uniqTerri
 
           {winner !== 'draw' && (
             <div className="mb-6 flex justify-center">
-              <div className={`size-14 rounded-full ${winner === 'A' ? 'bg-primary' : 'bg-secondary'} animate-breathe`}></div>
+              <div className={`size-14 rounded-full ${winner === 'A' ? 'bg-primary' : 'bg-secondary'} animate-pulse-shine`}></div>
             </div>
           )}
 

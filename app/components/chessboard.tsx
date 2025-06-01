@@ -222,6 +222,24 @@ export default React.memo(function Chessboard({
                 cellClass.push('cursor-pointer');
               }
 
+              const chessClass = [];
+              if (isSelecting) {
+                chessClass.push('infinite animate-pulse-shine transition-transform duration-1000');
+              } else if (!selectedChess && isTurn && !isLock && !isPlacingChess) {
+                chessClass.push('infinite animate-pulse-shine transition-transform duration-1000');
+              }
+
+              switch (player) {
+                case 'A':
+                  chessClass.push('bg-primary');
+                  break;
+                case 'B':
+                  chessClass.push('bg-secondary');
+                  break;
+                default:
+                  break;
+              }
+
               return (
                 <div
                   className={`group relative flex items-center justify-center  ${cellClass.join(' ')}`}
@@ -230,12 +248,12 @@ export default React.memo(function Chessboard({
                 >
                   {/* 棋子 */}
                   {player && (
-                    <div className={`${player === 'A' ? 'bg-primary' : 'bg-secondary'} ${!isLock && !isPlacingChess && (isSelecting || (!isSelecting && isTurn)) ? 'infinite animate-breathe transition-transform duration-1000' : ''} absolute z-20 size-1/2 rounded-full`} />
+                    <div className={`${chessClass.join(' ')} absolute z-20 size-3/5 rounded-full`} />
                   )}
 
                   {/* 放置時的隱藏棋子 */}
                   {!player && isPlacingChess && (
-                    <div className={`${currentPlayer === 'A' ? 'bg-primary' : 'bg-secondary'} absolute z-20 hidden size-1/2 rounded-full group-hover:block`} />
+                    <div className={`${currentPlayer === 'A' ? 'bg-primary' : 'bg-secondary'} absolute z-20 hidden size-3/5 rounded-full group-hover:block`} />
                   )}
 
                   {/* 橫牆 */}
