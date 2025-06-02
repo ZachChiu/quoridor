@@ -12,7 +12,7 @@ interface ChampionModalProps {
 
 const IconButton: React.FC<ChampionModalProps> = ({ type = 'button', handleClickEvent, children, color }) => {
   return (
-    <SectionShadow roundedFull className='size-auto'>
+    <SectionShadow roundedFull className='!size-auto'>
       <button
         type={type}
         className={`${color ? color : 'bg-white'} relative rounded-full border-4 border-gray-900 p-3 text-xl hover:-translate-x-0.5 hover:-translate-y-0.5 focus:translate-x-1 focus:translate-y-1`}
