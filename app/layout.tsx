@@ -29,13 +29,13 @@ export const metadata: Metadata = {
     default: "圍牆圍棋 QUORIDOR | 策略棋盤遊戲",
     template: "%s | 圍牆圍棋 QUORIDOR"
   },
-  description: "圍牆圍棋 QUORIDOR 是一款策略棋盤遊戲，玩家需要在棋盤上建立牆壁，阻礙對手的棋子移動，最終佔領的地盤最多者勝利，快來體驗這款結合圍棋與迷宮元素的精彩遊戲！",
+  description: "體驗如同 Netflix 熱門影集「魔鬼的計謀 2」中的智力對決。在圍牆圍棋遊戲中運用策略與心理戰，佈局如同魔鬼的計謀，贏得勝利！",
   icons: {
     icon: '/favicon.ico',
     shortcut: '/favicon.ico',
     apple: '/favicon.ico',
   },
-  keywords: ["圍牆圍棋", "QUORIDOR", "棋盤遊戲", "策略遊戲", "圍棋", "迷宮遊戲", "益智遊戲"],
+  keywords: ["圍牆圍棋", "QUORIDOR", "魔鬼的計謀 2", "Netflix", "心理戰", "智力對決", "棋盤遊戲", "策略遊戲", "圍棋", "迷宮遊戲", "益智遊戲"],
   authors: [{ name: "Zach Chiu" }],
   creator: "Zach Chiu",
   publisher: "Zach Chiu",
@@ -48,8 +48,8 @@ export const metadata: Metadata = {
     type: "website",
     locale: "zh_TW",
     url: process.env.SITE_URL,
-    title: "圍牆圍棋 QUORIDOR | 策略棋盤遊戲",
-    description: "圍牆圍棋 QUORIDOR 是一款策略棋盤遊戲，玩家需要在棋盤上建立牆壁，阻礙對手的棋子移動，最終佔領的地盤最多者勝利，快來體驗這款結合圍棋與迷宮元素的精彩遊戲！",
+    title: "圍牆圍棋 QUORIDOR - 如同「魔鬼的計謀 2」的智力對決",
+    description: "體驗如同 Netflix 熱門影集「魔鬼的計謀 2」中的智力對決。在圍牆圍棋遊戲中運用策略與心理戰，佈局如同魔鬼的計謀，贏得勝利！",
     siteName: "圍牆圍棋 QUORIDOR",
     images: [
       {
@@ -62,8 +62,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "圍牆圍棋 QUORIDOR | 策略棋盤遊戲",
-    description: "圍牆圍棋 QUORIDOR 是一款策略棋盤遊戲，玩家需要在棋盤上建立牆壁，阻礙對手的棋子移動，最終佔領的地盤最多者勝利，快來體驗這款結合圍棋與迷宮元素的精彩遊戲！",
+    title: "圍牆圍棋 QUORIDOR - 如同「魔鬼的計謀 2」的智力對決",
+    description: "體驗如同 Netflix 熱門影集「魔鬼的計謀 2」中的智力對決。在圍牆圍棋遊戲中運用策略與心理戰，佈局如同魔鬼的計謀，贏得勝利！",
     images: [`/og-image.png`],
   },
 };
