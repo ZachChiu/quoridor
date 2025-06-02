@@ -8,6 +8,10 @@ export default {
   ],
   theme: {
     extend: {
+      screens: {
+        'portrait': {'raw': '(orientation: portrait)'},
+        'landscape': {'raw': '(orientation: landscape)'},
+      },
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",

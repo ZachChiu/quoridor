@@ -242,7 +242,7 @@ export default React.memo(function Chessboard({
 
               return (
                 <div
-                  className={`group relative flex items-center justify-center  ${cellClass.join(' ')}`}
+                  className={`group relative flex items-center justify-center ${cellClass.join(' ')}`}
                   key={`${rowIndex}-${colIndex}`}
                   onClick={() => onClickSelectChess(player, rowIndex, colIndex, isAvailableMove)}
                 >
@@ -253,7 +253,7 @@ export default React.memo(function Chessboard({
 
                   {/* 放置時的隱藏棋子 */}
                   {!player && isPlacingChess && (
-                    <div className={`${currentPlayer === 'A' ? 'bg-primary' : 'bg-secondary'} absolute z-20 hidden size-3/5 rounded-full group-hover:block`} />
+                    <div className={`${currentPlayer === 'A' ? 'bg-primary' : 'bg-secondary'} animate-pulse-shine absolute z-20 hidden size-3/5 rounded-full group-hover:block`} />
                   )}
 
                   {/* 橫牆 */}

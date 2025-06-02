@@ -1,13 +1,16 @@
 'use client'
 import { useState, useEffect, useMemo, useCallback } from "react";
+import Link from 'next/link';
 import Chessboard from "../components/chessboard";
 import SectionShadow from "../components/sectionShadow";
 import ChampionModal from "../components/championModal";
+import RuleContainer from "../components/ruleContainer";
 
 import type { Player, Direction } from "@/types/chessboard.ts";
 import flatten from 'lodash-es/flatten';
 import uniq from 'lodash-es/uniq';
 import { trackButtonClick } from "@/utils/analytics";
+import { MdTurnLeft } from "react-icons/md";
 
 export default function PlayGame() {const [size, setSize] = useState(0);
   const [board, setBoard] = useState<Player[][]>([]);
@@ -27,15 +30,9 @@ export default function PlayGame() {const [size, setSize] = useState(0);
   const [flattenTerritoriesObj, setFlattenTerritoriesObj] = useState<Record<string, Player>>({});
   const [winingStatus, setWiningStatus] = useState<Player | null | 'draw'>(null);
   const [openingStep, setOpeningStep] = useState<Player[]>(['A', 'B', 'B', 'A']);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isChampionModalOpen, setIsChampionModalOpen] = useState(false);
   const isPlacingChess = useMemo(() => !!openingStep.length ,[openingStep])
   const isLock = useMemo(() => !!winingStatus, [winingStatus]);
-
-  // window.onbeforeunload = function(){
-  //   if (!confirm('遊戲尚未結束，確定要離開嗎？')) {
-  //     return '按一下「取消」停留在此頁';
-  //   }
-  // };
 
   // 棋盤
   const templateBoard: Player[][] = useMemo(() => [
@@ -307,7 +304,7 @@ export default function PlayGame() {const [size, setSize] = useState(0);
 
     const isGameOver = keys.every(key => calculatedTerritories[key as 'A' | 'B'].length !== 0 && calculatedTerritories[key as 'A' | 'B'].every(arr => arr.length !== 0));
     if (isGameOver) {
-      setIsModalOpen(true);
+      setIsChampionModalOpen(true);
       if (newUniqTerritories['A'].length > newUniqTerritories['B'].length) {
         setWiningStatus('A');
       } else if (newUniqTerritories['A'].length < newUniqTerritories['B'].length) {
@@ -333,7 +330,7 @@ export default function PlayGame() {const [size, setSize] = useState(0);
     setRemainSteps(2);
     setWiningStatus(null);
     setOpeningStep(['A', 'B', 'B', 'A']);
-    setIsModalOpen(false);
+    setIsChampionModalOpen(false);
     trackButtonClick('重新開始遊戲');
   }, [templateBoard, templateVerticalWalls, templateHorizontalWalls, openingStep]);
 
@@ -369,8 +366,17 @@ export default function PlayGame() {const [size, setSize] = useState(0);
   }, [isPlacingChess, currentPlayer, winingStatus]);
   return (
     <>
+      <div className="fixed left-5 top-5 cursor-pointer">
+        <SectionShadow roundedFull className='size-auto'>
+          <Link href="/" className="relative z-50 block rounded-full border-4 border-gray-900 bg-white p-3 text-xl hover:-translate-x-0.5 hover:-translate-y-0.5 focus:translate-x-1 focus:translate-y-1">
+            <MdTurnLeft />
+          </Link>
+        </SectionShadow>
+      </div>
+      <RuleContainer className="left-5 top-[calc(2.25rem+52px)] "/>
+
       {/* 賽況面板 */}
-      <div className="fixed left-5 top-5 md:top-[5dvh]">
+      <div className="fixed right-5 top-5 md:top-[5dvh]">
         <SectionShadow>
           <div className="relative flex size-full flex-col gap-3 rounded-xl border-2 border-gray-900 bg-white p-3">
             <div className="flex items-center gap-3">
@@ -387,7 +393,7 @@ export default function PlayGame() {const [size, setSize] = useState(0);
 
       {/* 提示面板 */}
       {
-        tipText && <div className="fixed bottom-5 right-5 md:bottom-auto md:left-5 md:right-auto md:top-40">
+        tipText && <div className="fixed bottom-5 right-5 lg:bottom-auto lg:top-40">
           <SectionShadow>
             <div className="relative flex size-full flex-col gap-3 rounded-xl border-2 border-gray-900 bg-white p-3">
               <div className="flex items-center gap-3">
@@ -400,7 +406,7 @@ export default function PlayGame() {const [size, setSize] = useState(0);
         </div>
       }
 
-      <div className="chessboard-container size-[90dvw] md:size-[90dvh]">
+      <div className="chessboard-container size-[90dvw] md:size-[90dvh] md:portrait:size-[90dvw] md:landscape:size-[90dvh]">
         <Chessboard
           size={size}
           board={board}
@@ -423,8 +429,8 @@ export default function PlayGame() {const [size, setSize] = useState(0);
       <ChampionModal
         winner={winingStatus}
         uniqTerritories={uniqTerritories}
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        isOpen={isChampionModalOpen}
+        onClose={() => setIsChampionModalOpen(false)}
         onRestart={restartGame}
       />
     </>

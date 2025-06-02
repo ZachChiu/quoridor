@@ -2,6 +2,9 @@
 import React from 'react';
 import SectionShadow from './sectionShadow';
 import { Player } from '@/types/chessboard';
+import { MdClose } from "react-icons/md";
+import Button from './button';
+import IconButton from './iconButton';
 
 interface ChampionModalProps {
   winner: Player | 'draw' | null;
@@ -33,15 +36,11 @@ const ChampionModal: React.FC<ChampionModalProps> = ({ winner, isOpen, uniqTerri
         <div className={`relative w-full rounded-xl border-2 border-gray-900 bg-tertiary p-6 font-[family-name:var(--font-geist-sans)]`}>
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-2xl font-bold">{getTitle()}</h2>
-            <button
-              onClick={onClose}
-              className="text-gray-500 hover:text-gray-700"
-              aria-label="關閉"
+            <IconButton
+              handleClickEvent={onClose}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="size-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+              <MdClose />
+            </IconButton>
           </div>
 
           <div className="mb-4">
@@ -55,24 +54,18 @@ const ChampionModal: React.FC<ChampionModalProps> = ({ winner, isOpen, uniqTerri
           )}
 
           <div className="flex justify-center gap-4">
-            <SectionShadow>
-              <button
-                type="button"
-                className="relative w-full rounded-xl border-4 border-gray-900 bg-tertiary-500 p-4 text-xl hover:-translate-x-0.5 hover:-translate-y-0.5 focus:translate-x-1 focus:translate-y-1"
-                onClick={onRestart}
-              >
-                重新開始
-              </button>
-            </SectionShadow>
-            <SectionShadow>
-              <button
-                type="button"
-                className="relative w-full rounded-xl border-4 border-gray-900 bg-tertiary-400 p-4 text-xl hover:-translate-x-0.5 hover:-translate-y-0.5 focus:translate-x-1 focus:translate-y-1"
-                onClick={onClose}
-              >
-                關閉
-              </button>
-            </SectionShadow>
+            <Button
+              color='bg-tertiary-500'
+              handleClickEvent={onRestart}
+            >
+              重新開始
+            </Button>
+            <Button
+              color='bg-tertiary-400'
+              handleClickEvent={onClose}
+            >
+              關閉
+            </Button>
           </div>
         </div>
       </SectionShadow>
