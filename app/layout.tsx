@@ -24,7 +24,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.SITE_URL || 'https://quridor.com'),
+  metadataBase: new URL(process.env.SITE_URL || 'https://quoridorgame.com'),
   title: {
     default: "圍牆圍棋 QUORIDOR | 策略棋盤遊戲",
     template: "%s | 圍牆圍棋 QUORIDOR"
@@ -84,7 +84,7 @@ export default function RootLayout({
           </AnalyticsProvider>
         </Suspense>
       </body>
-      <GoogleAnalytics gaId="G-79SW4LKDFE" />
+      <GoogleAnalytics gaId="G-1CTRTGRPFF" />
     </html>
   );
 }

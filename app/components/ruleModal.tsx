@@ -18,7 +18,7 @@ const RuleModal: React.FC<ChampionModalProps> = ({ isOpen, onClose }) => {
         <SectionShadow>
           <div className={`relative w-full rounded-xl border-2 border-gray-900 bg-tertiary p-6 font-[family-name:var(--font-geist-sans)]`}>
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="flex items-center gap-2 text-2xl font-bold"><MdRule className="text-2xl" /> 遊玩方式</h2>
+              <h2 className="flex items-center gap-2 text-2xl font-bold"><MdRule className="text-2xl" />遊玩方式</h2>
               <IconButton
                 handleClickEvent={onClose}
               >
