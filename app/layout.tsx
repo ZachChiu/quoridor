@@ -31,9 +31,9 @@ export const metadata: Metadata = {
   },
   description: "圍牆圍棋 QUORIDOR 是一款策略棋盤遊戲，玩家需要在棋盤上建立牆壁，阻礙對手的棋子移動，最終佔領的地盤最多者勝利，快來體驗這款結合圍棋與迷宮元素的精彩遊戲！",
   icons: {
-    icon: '/favicon.svg',
-    shortcut: '/favicon.svg',
-    apple: '/favicon.svg',
+    icon: '/favicon.ico',
+    shortcut: '/favicon.ico',
+    apple: '/favicon.ico',
   },
   keywords: ["圍牆圍棋", "QUORIDOR", "棋盤遊戲", "策略遊戲", "圍棋", "迷宮遊戲", "益智遊戲"],
   authors: [{ name: "Zach Chiu" }],
