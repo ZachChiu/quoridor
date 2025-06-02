@@ -1,5 +1,5 @@
 /** @type {import('next-sitemap').IConfig} */
 module.exports = {
-  siteUrl: process.env.SITE_URL || 'https://quridor.com',
+  siteUrl: process.env.SITE_URL || 'https://quoridorgame.com',
   generateRobotsTxt: true,
 }
