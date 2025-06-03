@@ -15,15 +15,15 @@ const RuleModal: React.FC<ChampionModalProps> = ({ isOpen, onClose }) => {
     <div className={`fixed inset-0 z-50 flex w-full  items-center justify-center px-4 ${isOpen ? 'opacity-100' : 'pointer-events-none opacity-0'} transition-opacity duration-300`}>
       <div className="fixed inset-0 bg-black/50" onClick={onClose}></div>
       <div className='max-w-md'>
-        <SectionShadow>
+        <SectionShadow >
           <div className={`relative w-full rounded-xl border-2 border-gray-900 bg-tertiary p-6 font-[family-name:var(--font-geist-sans)]`}>
             <div className="mb-4 flex items-center justify-between">
               <h2 className="flex items-center gap-2 text-2xl font-bold"><MdRule className="text-2xl" />遊玩方式</h2>
-              <IconButton
-                handleClickEvent={onClose}
-              >
-                <MdClose />
-              </IconButton>
+              <div className="group cursor-pointer" onClick={onClose}>
+                <IconButton>
+                  <MdClose />
+                </IconButton>
+              </div>
             </div>
             <div className='content scrollbar-hide mb-6 max-h-[45dvh] space-y-4 overflow-y-auto pr-2 lg:max-h-[60dvh]'>
               <style jsx>{`
@@ -95,14 +95,12 @@ const RuleModal: React.FC<ChampionModalProps> = ({ isOpen, onClose }) => {
               </div>
             </div>
 
-            <div className="flex justify-center gap-4">
-              <Button
-                color='bg-tertiary-400'
-                handleClickEvent={onClose}
-              >
-                <span className="flex items-center gap-2"><MdPlayArrow /> 回到遊戲</span>
-              </Button>
-            </div>
+            <Button
+              color='bg-tertiary-400'
+              handleClickEvent={onClose}
+            >
+              <span className="flex items-center gap-2"><MdPlayArrow /> 回到遊戲</span>
+            </Button>
           </div>
         </SectionShadow>
       </div>

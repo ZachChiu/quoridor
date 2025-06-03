@@ -11,7 +11,7 @@ export default function ClientLayout({className}: {className?: string}) {
   };
   return (
     <>
-      <div className={`fixed cursor-pointer ${className ?? ''}`}>
+      <div className={`group fixed cursor-pointer ${className ?? ''}`}>
         <IconButton handleClickEvent={handleOpenRuleModal}>
           <MdOutlineQuestionMark />
         </IconButton>

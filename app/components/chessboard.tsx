@@ -258,11 +258,11 @@ export default React.memo(function Chessboard({
 
                   {/* 橫牆 */}
                   {hasHorizontalWallPlayer && (
-                    <div className={`${hasHorizontalWallPlayer === 'A' ? 'bg-primary' : 'bg-secondary'} absolute inset-x-0 bottom-0 z-10 h-1 translate-y-full`} />
+                    <div className={`${hasHorizontalWallPlayer === 'A' ? 'bg-primary' : 'bg-secondary-500'} absolute inset-x-0 bottom-0 z-10 h-1 translate-y-full`} />
                   )}
                   {/* 直牆 */}
                   {hasVerticalWall && (
-                    <div className={`${hasVerticalWall === 'A' ? 'bg-primary' : 'bg-secondary'} absolute inset-y-0 right-0 z-10 w-1 translate-x-full`} />
+                    <div className={`${hasVerticalWall === 'A' ? 'bg-primary' : 'bg-secondary-500'} absolute inset-y-0 right-0 z-10 w-1 translate-x-full`} />
                   )}
 
                   {/* 可選擇的牆 */}

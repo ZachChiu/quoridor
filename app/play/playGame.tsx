@@ -10,7 +10,7 @@ import type { Player, Direction } from "@/types/chessboard.ts";
 import flatten from 'lodash-es/flatten';
 import uniq from 'lodash-es/uniq';
 import { trackButtonClick } from "@/utils/analytics";
-import { MdTurnLeft } from "react-icons/md";
+import { MdHome  } from "react-icons/md";
 
 export default function PlayGame() {const [size, setSize] = useState(0);
   const [board, setBoard] = useState<Player[][]>([]);
@@ -366,13 +366,13 @@ export default function PlayGame() {const [size, setSize] = useState(0);
   }, [isPlacingChess, currentPlayer, winingStatus]);
   return (
     <>
-      <div className="fixed left-5 top-5 cursor-pointer">
+      <Link className="group fixed left-5 top-5 cursor-pointer" href="/" >
         <SectionShadow roundedFull className='size-auto'>
-          <Link href="/" className="relative z-50 block rounded-full border-4 border-gray-900 bg-white p-3 text-xl hover:-translate-x-0.5 hover:-translate-y-0.5 focus:translate-x-1 focus:translate-y-1">
-            <MdTurnLeft />
-          </Link>
+          <div className="relative z-50 block rounded-full border-4 border-gray-900 bg-white p-3 text-xl group-hover:-translate-x-0.5 group-hover:-translate-y-0.5 group-active:translate-x-1 group-active:translate-y-1">
+            <MdHome  />
+          </div>
         </SectionShadow>
-      </div>
+      </Link>
       <RuleContainer className="left-5 top-[calc(2.25rem+52px)] "/>
 
       {/* 賽況面板 */}
