@@ -34,14 +34,14 @@ const RuleModal: React.FC<ChampionModalProps> = ({ isOpen, onClose }) => {
               <div>
                 <h3 className="mb-2 flex items-center gap-2 text-xl font-bold"><MdMovie className="text-xl text-red-500" />《魔鬼的計謀2》中的智力對決</h3>
                 <p className="text-sm leading-relaxed">
-                  圍牆圍棋是一款源自法國的策略棋盤遊戲，在 Netflix 熱門影集《魔鬼的計謀2》中被巧妙地融入劇情。劇中主角們透過這種智力對決展現了精湛的戰略思維與計謀能力，正如他們在現實生活中的心理博弈般扣人心弦。
+                  牆壁圍棋 Wall Go 是一款領地佔領遊戲，在 Netflix 熱門影集《魔鬼的計謀2》中被巧妙地融入劇情。劇中主角們透過這種智力對決展現了精湛的戰略思維與計謀能力，正如他們在現實生活中的心理博弈般扣人心弦。
                 </p>
               </div>
 
               <div>
                 <h3 className="mb-2 flex items-center gap-2 text-xl font-bold"><MdInfo className="text-xl text-blue-500" /> 遊戲背景</h3>
                 <p className="text-sm leading-relaxed">
-                  在《魔鬼的計謀2》中，圍牆圍棋成為角色間智力較量的完美象徵，展現了如何透過策略性地設置障礙與路徑規劃來達成目標，這與劇中人物之間錯綜複雜的心理戰不謀而合。
+                  在《魔鬼的計謀2》中，牆壁圍棋成為角色間智力較量的完美象徵，展現了如何透過策略性地設置障礙與路徑規劃來達成目標，這與劇中人物之間錯綜複雜的心理戰不謀而合。
                 </p>
               </div>
 
@@ -84,7 +84,7 @@ const RuleModal: React.FC<ChampionModalProps> = ({ isOpen, onClose }) => {
               <div>
                 <h3 className="mb-2 flex items-center gap-2 text-xl font-bold"><MdEmojiEvents className="text-xl text-orange-500" /> 策略要點</h3>
                 <p className="mb-2 text-sm leading-relaxed">
-                  如同《魔鬼的計謀2》中角色們精心設計的計謀，圍牆圍棋要求玩家：
+                  如同《魔鬼的計謀2》中角色們精心設計的計謀，牆壁圍棋要求玩家：
                 </p>
                 <ul className="space-y-2 text-sm">
                   <li className="flex items-start gap-2"><MdArrowRight className="mt-0.5 shrink-0 text-lg text-orange-500" /> 巧妙平衡進攻與防守策略</li>

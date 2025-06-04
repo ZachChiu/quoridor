@@ -23,7 +23,7 @@ export default function Home() {
 
           <SectionShadow>
             <div className="relative flex size-full flex-col items-center justify-center gap-8 rounded-xl border-4 border-gray-900 bg-tertiary p-8 text-xl md:gap-12">
-              <h1 className="text-center text-2xl font-bold md:text-3xl lg:text-5xl">圍牆圍棋 QUORIDOR</h1>
+              <h1 className="text-center text-2xl font-bold md:text-3xl lg:text-5xl">牆壁圍棋 Wall Go</h1>
               <div className="flex flex-col gap-4">
                 <Link
                   href="/play"
