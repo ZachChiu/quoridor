@@ -26,16 +26,16 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.SITE_URL || 'https://quoridorgame.com'),
   title: {
-    default: "圍牆圍棋 QUORIDOR | 策略棋盤遊戲",
-    template: "%s | 圍牆圍棋 QUORIDOR"
+    default: "牆壁圍棋 Wall Go | QUORIDOR 類型的創意線上遊戲",
+    template: "%s | 牆壁圍棋 Wall Go"
   },
-  description: "體驗如同 Netflix 熱門影集「魔鬼的計謀 2」中的智力對決。在圍牆圍棋遊戲中運用策略與心理戰，佈局如同魔鬼的計謀，贏得勝利！",
+  description: "體驗如同 Netflix 熱門影集「魔鬼的計謀 2」中的牆壁圍棋 Wall Go。在遊戲中運用策略與心理戰，佈局如同魔鬼的計謀，贏得勝利！",
   icons: {
     icon: '/favicon.ico',
     shortcut: '/favicon.ico',
     apple: '/favicon.ico',
   },
-  keywords: ["圍牆圍棋", "QUORIDOR", "魔鬼的計謀 2", "Netflix", "心理戰", "智力對決", "棋盤遊戲", "策略遊戲", "圍棋", "迷宮遊戲", "益智遊戲"],
+  keywords: ["牆壁圍棋", "Wall Go", "QUORIDOR", "魔鬼的計謀 2", "Netflix", "心理戰", "智力對決", "棋盤遊戲", "策略遊戲", "圍棋", "迷宮遊戲", "益智遊戲"],
   authors: [{ name: "Zach Chiu" }],
   creator: "Zach Chiu",
   publisher: "Zach Chiu",
@@ -48,22 +48,22 @@ export const metadata: Metadata = {
     type: "website",
     locale: "zh_TW",
     url: process.env.SITE_URL,
-    title: "圍牆圍棋 QUORIDOR - 如同「魔鬼的計謀 2」的智力對決",
-    description: "體驗如同 Netflix 熱門影集「魔鬼的計謀 2」中的智力對決。在圍牆圍棋遊戲中運用策略與心理戰，佈局如同魔鬼的計謀，贏得勝利！",
-    siteName: "圍牆圍棋 QUORIDOR",
+    title: "牆壁圍棋 Wall Go - 如同「魔鬼的計謀 2」的智力對決",
+    description: "體驗如同 Netflix 熱門影集「魔鬼的計謀 2」中的牆壁圍棋 Wall Go。在遊戲中運用策略與心理戰，佈局如同魔鬼的計謀，贏得勝利！",
+    siteName: "牆壁圍棋 Wall Go",
     images: [
       {
         url: `/og-image.png`,
         width: 1200,
         height: 630,
-        alt: "圍牆圍棋 QUORIDOR 遊戲畫面",
+        alt: "牆壁圍棋 Wall Go 遊戲畫面",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "圍牆圍棋 QUORIDOR - 如同「魔鬼的計謀 2」的智力對決",
-    description: "體驗如同 Netflix 熱門影集「魔鬼的計謀 2」中的智力對決。在圍牆圍棋遊戲中運用策略與心理戰，佈局如同魔鬼的計謀，贏得勝利！",
+    title: "牆壁圍棋 Wall Go - 如同「魔鬼的計謀 2」的智力對決",
+    description: "體驗如同 Netflix 熱門影集「魔鬼的計謀 2」中的牆壁圍棋 Wall Go。在遊戲中運用策略與心理戰，佈局如同魔鬼的計謀，贏得勝利！",
     images: [`/og-image.png`],
   },
 };

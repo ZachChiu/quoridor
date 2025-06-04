@@ -3,7 +3,7 @@ User-agent: *
 Allow: /
 
 # Host
-Host: https://quoridorgame.com
+Host: https://quoridorgame.com/
 
 # Sitemaps
 Sitemap: https://quoridorgame.com/sitemap.xml
