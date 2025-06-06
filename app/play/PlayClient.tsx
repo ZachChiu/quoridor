@@ -1,18 +1,19 @@
 'use client'
 import { useState, useEffect, useMemo, useCallback } from "react";
 import Link from 'next/link';
-import Chessboard from "../components/chessboard";
-import SectionShadow from "../components/sectionShadow";
-import ChampionModal from "../components/championModal";
-import RuleContainer from "../components/ruleContainer";
+import Chessboard from "../components/Chessboard";
+import SectionShadow from "../components/SectionShadow";
+import ChampionModal from "../components/ChampionModal";
 
 import type { Player, Direction } from "@/types/chessboard.ts";
 import flatten from 'lodash-es/flatten';
 import uniq from 'lodash-es/uniq';
 import { trackButtonClick } from "@/utils/analytics";
-import { MdHome  } from "react-icons/md";
+import { MdHome, MdOutlineQuestionMark  } from "react-icons/md";
+import IconButton from "@/components/IconButton";
+import { useRuleModal } from "@/contexts/RuleModalContext";
 
-export default function PlayGame() {const [size, setSize] = useState(0);
+export default function PlayClient() {const [size, setSize] = useState(0);
   const [board, setBoard] = useState<Player[][]>([]);
   const [currentPlayer, setCurrentPlayer] = useState<Player>('A');
   const [verticalWalls, setVerticalWalls] = useState<(null | 'A' | 'B')[][]>([]);
@@ -364,6 +365,14 @@ export default function PlayGame() {const [size, setSize] = useState(0);
       );
     }
   }, [isPlacingChess, currentPlayer, winingStatus]);
+
+  const { ruleModalState, setRuleModalState } = useRuleModal();
+  const handleRuleBtnOpen = () => {
+    setRuleModalState({
+      ...ruleModalState,
+      isOpen: true
+    })
+  }
   return (
     <>
       <Link className="group fixed left-5 top-5 cursor-pointer" href="/" >
@@ -373,7 +382,11 @@ export default function PlayGame() {const [size, setSize] = useState(0);
           </div>
         </SectionShadow>
       </Link>
-      <RuleContainer className="left-5 top-[calc(2.25rem+52px)] "/>
+      <div className={`group fixed left-5 top-[calc(2.25rem+52px)] cursor-pointer`}>
+        <IconButton handleClickEvent={() => handleRuleBtnOpen()}>
+          <MdOutlineQuestionMark />
+        </IconButton>
+      </div>
 
       {/* 賽況面板 */}
       <div className="fixed right-5 top-5 md:top-[5dvh]">

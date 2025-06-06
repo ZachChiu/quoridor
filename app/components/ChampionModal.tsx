@@ -1,10 +1,10 @@
 'use client'
 import React from 'react';
-import SectionShadow from './sectionShadow';
+import SectionShadow from './SectionShadow';
 import { Player } from '@/types/chessboard';
 import { MdClose } from "react-icons/md";
-import Button from './button';
-import IconButton from './iconButton';
+import Button from './Button';
+import IconButton from './IconButton';
 
 interface ChampionModalProps {
   winner: Player | 'draw' | null;

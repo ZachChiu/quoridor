@@ -1,10 +1,10 @@
 {
   "name": "quoridor",
-  "version": "25.6.5",
+  "version": "25.6.6",
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next-sitemap && next build",
+    "build": "next build",
     "postbuild": "next-sitemap",
     "start": "next start",
     "lint": "next lint"
