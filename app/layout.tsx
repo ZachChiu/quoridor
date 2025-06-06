@@ -4,6 +4,9 @@ import { Suspense } from 'react'
 import { GoogleAnalytics } from '@next/third-parties/google'
 import "./globals.css";
 import AnalyticsProvider from "./providers/analytics-provider";
+import { GameProvider } from "./contexts/GameContext";
+import { RuleModalProvider } from "./contexts/RuleModalContext";
+import RuleModal from "./components/RuleModal";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -78,13 +81,20 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} select-none antialiased`}
       >
-        <Suspense fallback={null}>
-          <AnalyticsProvider>
-            {children}
-          </AnalyticsProvider>
-        </Suspense>
+        <RuleModalProvider>
+          <GameProvider>
+            <Suspense fallback={null}>
+              <AnalyticsProvider>
+                {children}
+                <RuleModal />
+              </AnalyticsProvider>
+            </Suspense>
+          </GameProvider>
+        </RuleModalProvider>
       </body>
-      <GoogleAnalytics gaId="G-1CTRTGRPFF" />
+      {process.env.NEXT_PUBLIC_APP_ENV === "production" && (
+        <GoogleAnalytics gaId="G-1CTRTGRPFF" />
+      )}
     </html>
   );
 }
