@@ -1,25 +1,30 @@
-'use client'
+"use client"
 import React from 'react';
-import SectionShadow from './sectionShadow';
-import Button from './button';
-import IconButton from './iconButton';
+import SectionShadow from './SectionShadow';
+import Button from './Button';
+import IconButton from './IconButton';
 import { MdClose, MdRule, MdEmojiEvents, MdGavel, MdTouchApp, MdMilitaryTech, MdArrowRight, MdPlayArrow, MdMovie, MdInfo, MdStarRate } from "react-icons/md";
+import { useRuleModal } from '@/contexts/RuleModalContext';
 
-interface ChampionModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-}
+const RuleModal: React.FC = () => {
+  const { ruleModalState, setRuleModalState } = useRuleModal();
 
-const RuleModal: React.FC<ChampionModalProps> = ({ isOpen, onClose }) => {
+  const handleRuleBtnOpen = () => {
+    setRuleModalState({
+      ...ruleModalState,
+      isOpen: false
+    });
+  };
+
   return (
-    <div className={`fixed inset-0 z-50 flex w-full  items-center justify-center px-4 ${isOpen ? 'opacity-100' : 'pointer-events-none opacity-0'} transition-opacity duration-300`}>
-      <div className="fixed inset-0 bg-black/50" onClick={onClose}></div>
+    <div className={`fixed inset-0 z-50 flex w-full  items-center justify-center px-4 ${ruleModalState.isOpen ? 'opacity-100' : 'pointer-events-none opacity-0'} transition-opacity duration-300`}>
+      <div className="fixed inset-0 bg-black/50" onClick={() => handleRuleBtnOpen()}></div>
       <div className='max-w-md'>
         <SectionShadow >
           <div className={`relative w-full rounded-xl border-2 border-gray-900 bg-tertiary p-6 font-[family-name:var(--font-geist-sans)]`}>
             <div className="mb-4 flex items-center justify-between">
               <h2 className="flex items-center gap-2 text-2xl font-bold"><MdRule className="text-2xl" />遊玩方式</h2>
-              <div className="group cursor-pointer" onClick={onClose}>
+              <div className="group cursor-pointer" onClick={() => handleRuleBtnOpen()}>
                 <IconButton>
                   <MdClose />
                 </IconButton>
@@ -97,7 +102,7 @@ const RuleModal: React.FC<ChampionModalProps> = ({ isOpen, onClose }) => {
 
             <Button
               color='bg-tertiary-400'
-              handleClickEvent={onClose}
+              handleClickEvent={() => handleRuleBtnOpen()}
             >
               <span className="flex items-center gap-2"><MdPlayArrow /> 回到遊戲</span>
             </Button>

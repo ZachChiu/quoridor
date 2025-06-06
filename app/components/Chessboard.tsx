@@ -2,7 +2,8 @@
 
 import type { Player, Move, Direction } from "@/types/chessboard.ts";
 import React, { useCallback, useEffect, useState } from "react";
-import SectionShadow from "./sectionShadow";
+import SectionShadow from "./SectionShadow";
+// import { useGame } from "@/contexts/GameContext";
 
 type Props = {
   size: number;
@@ -40,6 +41,7 @@ export default React.memo(function Chessboard({
   // const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 
   const [availableMoves, setAvailableMoves] = useState<Move[]>([]);
+  // const { gameState } = useGame();
 
   const onClickSelectChess = (selectedPlayer: Player, row: number, col: number, isAvailableMove: boolean) => {
     if (!selectedPlayer && isPlacingChess) {

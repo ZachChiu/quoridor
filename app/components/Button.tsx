@@ -1,6 +1,6 @@
 'use client'
 import React from 'react';
-import SectionShadow from './sectionShadow';
+import SectionShadow from './SectionShadow';
 import { ButtonHTMLAttributes } from 'react';
 
 interface ChampionModalProps {
@@ -16,7 +16,7 @@ const Button: React.FC<ChampionModalProps> = ({ type = 'button', handleClickEven
     <SectionShadow className='group cursor-pointer' roundedFull={roundedFull} handleClickEvent={handleClickEvent}>
       <button
         type={type}
-        className={`${color ? color : 'bg-white'} ${roundedFull ? 'rounded-full' : 'rounded-xl'} relative w-full border-4 border-gray-900 p-4 text-xl group-hover:-translate-x-0.5 group-hover:-translate-y-0.5 group-active:translate-x-1 group-active:translate-y-1`}
+        className={`${color ? color : 'bg-white'} ${roundedFull ? 'rounded-full' : 'rounded-xl'} relative w-full border-4 border-gray-900 p-3 text-sm group-hover:-translate-x-0.5 group-hover:-translate-y-0.5 group-active:translate-x-1 group-active:translate-y-1 lg:p-4 lg:text-xl`}
       >
         {children}
       </button>

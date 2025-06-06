@@ -1,6 +1,6 @@
 'use client'
 import React from 'react';
-import SectionShadow from './sectionShadow';
+import SectionShadow from './SectionShadow';
 import { ButtonHTMLAttributes } from 'react';
 
 interface ChampionModalProps {
