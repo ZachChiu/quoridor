@@ -3,7 +3,7 @@ import React from 'react';
 import SectionShadow from './SectionShadow';
 import Button from './Button';
 import IconButton from './IconButton';
-import { MdClose, MdRule, MdEmojiEvents, MdGavel, MdTouchApp, MdMilitaryTech, MdArrowRight, MdPlayArrow, MdMovie, MdInfo, MdStarRate } from "react-icons/md";
+import { MdClose, MdRule, MdEmojiEvents, MdGavel, MdTouchApp, MdMilitaryTech, MdArrowRight, MdPlayArrow, MdMovie, MdInfo, MdStarRate, MdPeople } from "react-icons/md";
 import { useRuleModal } from '@/contexts/RuleModalContext';
 
 const RuleModal: React.FC = () => {
@@ -21,7 +21,7 @@ const RuleModal: React.FC = () => {
       <div className="fixed inset-0 bg-black/50" onClick={() => handleRuleBtnOpen()}></div>
       <div className='max-w-md'>
         <SectionShadow >
-          <div className={`relative w-full rounded-xl border-2 border-gray-900 bg-tertiary p-6 font-[family-name:var(--font-geist-sans)]`}>
+          <div className={`relative w-full rounded-xl border-2 border-gray-900 bg-primary p-6 font-[family-name:var(--font-geist-sans)]`}>
             <div className="mb-4 flex items-center justify-between">
               <h2 className="flex items-center gap-2 text-2xl font-bold"><MdRule className="text-2xl" />遊玩方式</h2>
               <div className="group cursor-pointer" onClick={() => handleRuleBtnOpen()}>
@@ -54,10 +54,25 @@ const RuleModal: React.FC = () => {
                 <h3 className="mb-2 flex items-center gap-2 text-xl font-bold"><MdGavel className="text-xl text-amber-500" /> 基本規則</h3>
                 <ul className="space-y-2 text-sm">
                   <li className="flex items-start gap-2"><MdArrowRight className="mt-0.5 shrink-0 text-lg text-amber-500" /> 遊戲在一個 7×7 的棋盤上進行</li>
-                  <li className="flex items-start gap-2"><MdArrowRight className="mt-0.5 shrink-0 text-lg text-amber-500" /> 遊戲開始時，雙方各有兩顆固定位置的棋子已放置在棋盤上</li>
-                  <li className="flex items-start gap-2"><MdArrowRight className="mt-0.5 shrink-0 text-lg text-amber-500" /> 接著依序進行佈局：紅方先放置一顆棋子，藍方放置兩顆，紅方再放置一顆，然後紅方開始進攻，接著藍方進攻，依此類推</li>
-                  <li className="flex items-start gap-2"><MdArrowRight className="mt-0.5 shrink-0 text-lg text-amber-500" /> 遊戲目標是圍住最多的領地區域</li>
                 </ul>
+                <div className="mt-4 pl-4">
+                  <h4 className="mb-1 flex items-center gap-1 text-base font-semibold text-player-A"><MdPeople className="text-base" /> 兩人玩法</h4>
+                  <ul className="ml-2 space-y-1 text-sm">
+                    <li className="flex items-start gap-2"><MdArrowRight className="mt-0.5 shrink-0 text-lg text-player-A" /> 遊戲開始時，紅方與藍方各有兩顆固定位置的棋子已放置在棋盤上。</li>
+                    <li className="flex items-start gap-2"><MdArrowRight className="mt-0.5 shrink-0 text-lg text-player-A" /> 接著依序進行佈局：紅方先放置一顆棋子，藍方放置兩顆，紅方再放置一顆。</li>
+                    <li className="flex items-start gap-2"><MdArrowRight className="mt-0.5 shrink-0 text-lg text-player-A" /> 然後紅方開始進攻，接著藍方進攻，依此輪流。</li>
+                    <li className="flex items-start gap-2"><MdArrowRight className="mt-0.5 shrink-0 text-lg text-player-A" /> 遊戲目標是圍住最多的領地區域。</li>
+                  </ul>
+                </div>
+                <div className="mt-4 pl-4">
+                  <h4 className="mb-1 flex items-center gap-1 text-base font-semibold text-player-B"><MdPeople className="text-base" /> 三人玩法</h4>
+                  <ul className="ml-2 space-y-1 text-sm">
+                    <li className="flex items-start gap-2"><MdArrowRight className="mt-0.5 shrink-0 text-lg text-player-B" /> 遊戲開始時，紅方、藍方、黃方將依照紅方、藍方、黃方、黃方、藍方、紅方的順序擺放棋子。</li>
+                    <li className="flex items-start gap-2"><MdArrowRight className="mt-0.5 shrink-0 text-lg text-player-B" /> 進攻階段按紅方、藍方、黃方順序輪流進行。</li>
+                    <li className="flex items-start gap-2"><MdArrowRight className="mt-0.5 shrink-0 text-lg text-player-B" /> 每一方有一次的破牆機會，破牆後可繼續移動。</li>
+                    <li className="flex items-start gap-2"><MdArrowRight className="mt-0.5 shrink-0 text-lg text-player-B" /> 遊戲結束時，領地最多者獲勝，若有兩人同分則並列冠軍，三人同分則為平手。</li>
+                  </ul>
+                </div>
               </div>
 
               <div>
@@ -101,7 +116,7 @@ const RuleModal: React.FC = () => {
             </div>
 
             <Button
-              color='bg-tertiary-400'
+              color='bg-primary-400'
               handleClickEvent={() => handleRuleBtnOpen()}
             >
               <span className="flex items-center gap-2"><MdPlayArrow /> 回到遊戲</span>

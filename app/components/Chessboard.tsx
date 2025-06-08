@@ -3,23 +3,26 @@
 import type { Player, Move, Direction } from "@/types/chessboard.ts";
 import React, { useCallback, useEffect, useState } from "react";
 import SectionShadow from "./SectionShadow";
-// import { useGame } from "@/contexts/GameContext";
+import { FaHouseChimneyCrack } from "react-icons/fa6";
 
 type Props = {
   size: number;
   board: Player[][];
   currentPlayer: Player;
-  verticalWalls: (null | 'A' | 'B')[][];
-  horizontalWalls: (null | 'A' | 'B')[][];
+  verticalWalls: Player[][];
+  horizontalWalls: Player[][];
   selectedChess: Move | null;
   remainSteps: number;
   flattenTerritoriesObj: Record<string, Player>;
   isLock: boolean;
   isPlacingChess: boolean;
+  breakWallCountObj: Record<Exclude<Player, null>, number>;
+  isBreakWallAvailable: boolean;
   selectChess: (row: number, col: number) => void;
   selectWall: (row: number, col: number, direction: Direction) => void;
   selectCell: (row: number, col: number) => void;
   setChessPosition: (row: number, col: number) => void;
+  onClickBreakWall: (row: number, col: number, direction: 'horizontal' | 'vertical') => void;
 };
 
 export default React.memo(function Chessboard({
@@ -36,12 +39,15 @@ export default React.memo(function Chessboard({
   selectChess,
   selectWall,
   selectCell,
-  setChessPosition
+  setChessPosition,
+  breakWallCountObj,
+  isBreakWallAvailable,
+  onClickBreakWall,
 }: Props) {
   // const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 
   const [availableMoves, setAvailableMoves] = useState<Move[]>([]);
-  // const { gameState } = useGame();
+  const breakWallCount = breakWallCountObj?.[currentPlayer as Exclude<Player, null>];
 
   const onClickSelectChess = (selectedPlayer: Player, row: number, col: number, isAvailableMove: boolean) => {
     if (!selectedPlayer && isPlacingChess) {
@@ -196,21 +202,24 @@ export default React.memo(function Chessboard({
         <div className={`grid-cols-${size} relative grid size-full gap-1 overflow-hidden rounded-xl border-4 border-gray-900 bg-gray-300`}>
           {Array.from({ length: size }, (_, rowIndex) =>
             Array.from({ length: size }, (_, colIndex) => {
-              const player: Player = board?.[rowIndex]?.[colIndex];
+              const cellPlayer: Player = board?.[rowIndex]?.[colIndex];
               const hasHorizontalWallPlayer = horizontalWalls?.[rowIndex]?.[colIndex];
               const hasVerticalWall = verticalWalls?.[rowIndex]?.[colIndex];
-              const isTurn = currentPlayer === player;
+              const isTurn = currentPlayer === cellPlayer;
               const isSelecting = selectedChess?.row === rowIndex && selectedChess?.col === colIndex;
               const isAvailableMove = availableMoves.some(move => move.row === rowIndex && move.col === colIndex);
               const territory = flattenTerritoriesObj?.[`${rowIndex},${colIndex}`];
 
               const cellBgMapping = {
-                'A': 'bg-primary-50',
-                'B': 'bg-secondary-50',
+                'A': 'bg-player-A-50',
+                'B': 'bg-player-B-50',
+                'C': 'bg-player-C-50',
               }
 
               const cellClass = [];
-              if (isAvailableMove) {
+              if (isPlacingChess) {
+                cellClass.push('bg-white');
+              } else if (isAvailableMove) {
                 cellClass.push('bg-green-100');
               } else if (territory) {
                 cellClass.push(cellBgMapping[territory]);
@@ -218,7 +227,7 @@ export default React.memo(function Chessboard({
                 cellClass.push('bg-white');
               }
 
-              if (!isLock && (isPlacingChess && !player)) {
+              if (!isLock && (isPlacingChess && !cellPlayer)) {
                 cellClass.push('cursor-pointer');
               } else if (!isLock && !isPlacingChess && (isTurn || isAvailableMove)) {
                 cellClass.push('cursor-pointer');
@@ -231,40 +240,78 @@ export default React.memo(function Chessboard({
                 chessClass.push('infinite animate-pulse-shine transition-transform duration-1000');
               }
 
-              switch (player) {
+              switch (cellPlayer) {
                 case 'A':
-                  chessClass.push('bg-primary');
+                  chessClass.push('bg-player-A');
                   break;
                 case 'B':
-                  chessClass.push('bg-secondary');
+                  chessClass.push('bg-player-B');
+                  break;
+                case 'C':
+                  chessClass.push('bg-player-C');
                   break;
                 default:
                   break;
+              }
+
+              // 在每一格內
+              let isHorizontalWallBreakable = false;
+              let isVerticalWallBreakable = false;
+
+              if (isBreakWallAvailable && breakWallCount > 0 && selectedChess) {
+                // 下方橫牆（自己這格 or 上面那格）
+                if (
+                  (rowIndex === selectedChess.row && colIndex === selectedChess.col) ||
+                  (rowIndex === selectedChess.row - 1 && colIndex === selectedChess.col)
+                ) {
+                  isHorizontalWallBreakable = true;
+                }
+                // 右側直牆（自己這格 or 左邊那格）
+                if (
+                  (rowIndex === selectedChess.row && colIndex === selectedChess.col) ||
+                  (rowIndex === selectedChess.row && colIndex === selectedChess.col - 1)
+                ) {
+                  isVerticalWallBreakable = true;
+                }
               }
 
               return (
                 <div
                   className={`group relative flex items-center justify-center ${cellClass.join(' ')}`}
                   key={`${rowIndex}-${colIndex}`}
-                  onClick={() => onClickSelectChess(player, rowIndex, colIndex, isAvailableMove)}
+                  onClick={() => onClickSelectChess(cellPlayer, rowIndex, colIndex, isAvailableMove)}
                 >
                   {/* 棋子 */}
-                  {player && (
+                  {cellPlayer && (
                     <div className={`${chessClass.join(' ')} absolute z-20 size-3/5 rounded-full`} />
                   )}
 
                   {/* 放置時的隱藏棋子 */}
-                  {!player && isPlacingChess && (
-                    <div className={`${currentPlayer === 'A' ? 'bg-primary' : 'bg-secondary'} animate-pulse-shine absolute z-20 hidden size-3/5 rounded-full group-hover:block`} />
+                  {!cellPlayer && isPlacingChess && (
+                    <div className={`bg-player-${currentPlayer} animate-pulse-shine absolute z-20 hidden size-3/5 rounded-full group-hover:block`} />
                   )}
 
                   {/* 橫牆 */}
                   {hasHorizontalWallPlayer && (
-                    <div className={`${hasHorizontalWallPlayer === 'A' ? 'bg-primary' : 'bg-secondary-500'} absolute inset-x-0 bottom-0 z-10 h-1 translate-y-full`} />
+                    <div className={`bg-player-${hasHorizontalWallPlayer} absolute inset-x-0 bottom-0 z-10 h-1 translate-y-full`}>
+                      {isHorizontalWallBreakable && (
+                        <FaHouseChimneyCrack
+                          className="animate-shine infinite absolute bottom-0 left-1/2 z-10 -translate-x-1/2 translate-y-1/3 cursor-pointer text-xl text-gray-700" 
+                          onClick={() => onClickBreakWall(rowIndex, colIndex, 'horizontal')}
+                        />
+                      )}
+                    </div>
                   )}
                   {/* 直牆 */}
                   {hasVerticalWall && (
-                    <div className={`${hasVerticalWall === 'A' ? 'bg-primary' : 'bg-secondary-500'} absolute inset-y-0 right-0 z-10 w-1 translate-x-full`} />
+                    <div className={`bg-player-${hasVerticalWall} absolute inset-y-0 right-0 z-10 w-1 translate-x-full`}>
+                      {isVerticalWallBreakable && (
+                        <FaHouseChimneyCrack
+                          className="animate-shine infinite absolute right-0 top-1/2 z-10 -translate-y-1/2 translate-x-1/3 cursor-pointer text-xl text-gray-700" 
+                          onClick={() => onClickBreakWall(rowIndex, colIndex, 'vertical')}
+                        />
+                      )}
+                    </div>
                   )}
 
                   {/* 可選擇的牆 */}
