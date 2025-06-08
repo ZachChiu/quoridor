@@ -79,7 +79,7 @@ export default function RootLayout({
   return (
     <html lang="zh-TW">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} select-none antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} select-none bg-gradient-to-br from-gray-200 via-white to-gray-300 antialiased`}
       >
         <RuleModalProvider>
           <GameProvider>

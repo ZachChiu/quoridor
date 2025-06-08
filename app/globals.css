@@ -5,41 +5,53 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
-  --primary: #F28B82;
-  --primary-50: #fef2f2;
-  --primary-100: #fee2e2;
-  --primary-200: #fecaca;
-  --primary-300: #fca5a5;
-  --primary-400: #f87171;
-  --primary-500: #F28B82;
-  --primary-600: #e05252;
-  --primary-700: #c53030;
-  --primary-800: #9b2c2c;
-  --primary-900: #7f1d1d;
+  --player-A: #F28B82;
+  --player-A-50: #fef2f2;
+  --player-A-100: #fee2e2;
+  --player-A-200: #fecaca;
+  --player-A-300: #fca5a5;
+  --player-A-400: #f87171;
+  --player-A-500: #F28B82;
+  --player-A-600: #e05252;
+  --player-A-700: #c53030;
+  --player-A-800: #9b2c2c;
+  --player-A-900: #7f1d1d;
 
-  --secondary: #4AADFE;
-  --secondary-50: #f0f9ff;
-  --secondary-100: #e0f2fe;
-  --secondary-200: #bae6fd;
-  --secondary-300: #7dd3fc;
-  --secondary-400: #4AADFE;
-  --secondary-500: #0ea5e9;
-  --secondary-600: #0284c7;
-  --secondary-700: #0369a1;
-  --secondary-800: #075985;
-  --secondary-900: #0c4a6e;
+  --player-B: #4AADFE;
+  --player-B-50: #f0f9ff;
+  --player-B-100: #e0f2fe;
+  --player-B-200: #bae6fd;
+  --player-B-300: #7dd3fc;
+  --player-B-400: #4AADFE;
+  --player-B-500: #0ea5e9;
+  --player-B-600: #0284c7;
+  --player-B-700: #0369a1;
+  --player-B-800: #075985;
+  --player-B-900: #0c4a6e;
 
-  --tertiary: #fff4da;
-  --tertiary-50: #fffdf7;
-  --tertiary-100: #fff9e8;
-  --tertiary-200: #fff4da;
-  --tertiary-300: #ffe8b3;
-  --tertiary-400: #ffd580;
-  --tertiary-500: #ffc247;
-  --tertiary-600: #ffa620;
-  --tertiary-700: #f98c00;
-  --tertiary-800: #cc7000;
-  --tertiary-900: #a65900;
+  --player-C: #FFCA28;
+  --player-C-50: #FFFDE7;
+  --player-C-100: #FFF9C4;
+  --player-C-200: #FFF59D;
+  --player-C-300: #FFF176;
+  --player-C-400: #FFEE58;
+  --player-C-500: #FFEB3B;
+  --player-C-600: #FDD835;
+  --player-C-700: #FBC02D;
+  --player-C-800: #F9A825;
+  --player-C-900: #F57F17;
+
+  --primary: #fff4da;
+  --primary-50: #fffdf7;
+  --primary-100: #fff9e8;
+  --primary-200: #fff4da;
+  --primary-300: #ffe8b3;
+  --primary-400: #ffd580;
+  --primary-500: #ffc247;
+  --primary-600: #ffa620;
+  --primary-700: #f98c00;
+  --primary-800: #cc7000;
+  --primary-900: #a65900;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -63,6 +75,10 @@ body {
 @keyframes shine {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.8; }
+}
+
+.animate-shine {
+  animation: shine 1s ease-in-out infinite;
 }
 
 .animate-pulse-shine {
