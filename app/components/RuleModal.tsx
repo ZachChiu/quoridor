@@ -80,6 +80,7 @@ const RuleModal: React.FC = () => {
                 <ul className="space-y-2 text-sm">
                   <li className="flex items-start gap-2"><MdArrowRight className="mt-0.5 shrink-0 text-lg text-green-500" /> <div className="flex-1"><strong>棋子移動</strong>：每回合可將棋子向上、下、左、右任一方向移動最多兩格</div></li>
                   <li className="flex items-start gap-2"><MdArrowRight className="mt-0.5 shrink-0 text-lg text-green-500" /> <div className="flex-1"><strong>圍牆設置</strong>：圍牆只能設置在尚未有圍牆的格子之間</div></li>
+                  <li className="flex items-start gap-2"><MdArrowRight className="mt-0.5 shrink-0 text-lg text-green-500" /> <div className="flex-1"><strong>破牆</strong>：在三人對戰中，當棋子被牆擋住時，每位玩家每局可使用一次「破牆」機會，直接穿越一個牆壁</div></li>
                 </ul>
               </div>
 
@@ -119,7 +120,7 @@ const RuleModal: React.FC = () => {
               color='bg-primary-400'
               handleClickEvent={() => handleRuleBtnOpen()}
             >
-              <span className="flex items-center gap-2"><MdPlayArrow /> 回到遊戲</span>
+              <span className="flex items-center gap-2"><MdPlayArrow className='text-2xl'/> 回到遊戲</span>
             </Button>
           </div>
         </SectionShadow>

@@ -317,17 +317,17 @@ export default function PlayClient() {
    * 當玩家改變時，重新計算地盤
    */
   useEffect(() => {
+    if (isPlacingChess) {
+      return
+    }
     const calculatedTerritories: { A: string[][]; B: string[][]; C?: string[][] } = calculateAllTerritories();
 
     const newFlattenTerritoriesObj: Record<string, Player> = {};
     const newUniqTerritories: { A: string[]; B: string[]; C?: string[] } = {
       A: [],
-      B: []
+      B: [],
+      ...(gameState.playersNum >= 3 ? { C: [] } : {})
     };
-
-    if (gameState.playersNum === 3) {
-      newUniqTerritories.C = [] as string[];
-    }
 
     const keys = Object.keys(calculatedTerritories);
     keys.forEach(key => {
@@ -343,15 +343,9 @@ export default function PlayClient() {
       const numberOfA = newUniqTerritories['A']?.length || 0;
       const numberOfB = newUniqTerritories['B'].length || 0;
       const numberOfC = newUniqTerritories['C']?.length || 0;
-      const calcArr = [numberOfA, numberOfB];
-
-      if (gameState.playersNum === 3) {
-        calcArr.push(numberOfC);
-      }
-
+      const calcArr = [numberOfA, numberOfB, ...(gameState.playersNum >= 3 ? [numberOfC] : [])];
       const maxNumber = max(calcArr);
       const minNumber = min(calcArr);
-
       if (maxNumber === minNumber) {
         // 平手
         setWiningStatus(['draw']);
@@ -360,7 +354,7 @@ export default function PlayClient() {
         const winners: Player[] = [];
         if (numberOfA === maxNumber) winners.push('A');
         if (numberOfB === maxNumber) winners.push('B');
-        if (gameState.playersNum === 3 && numberOfC === maxNumber) winners.push('C');
+        if (gameState.playersNum >= 3 && numberOfC === maxNumber) winners.push('C');
         setWiningStatus(winners);
       }
       setIsChampionModalOpen(true);
@@ -401,6 +395,8 @@ export default function PlayClient() {
     trackButtonClick(`restart_local_game_${gameState.playersNum}p`);
     setFlattenTerritoriesObj({});
     setBreakWallCountObj({ A: 1, B: 1, C: 1 });
+    setUniqTerritories({ A: [], B: [], ...(gameState.playersNum >= 3 ? { C: [] } : {}) });
+    setFlattenTerritoriesObj({});
   }, []);
 
   useEffect(() => {

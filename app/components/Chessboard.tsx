@@ -199,7 +199,7 @@ export default React.memo(function Chessboard({
 
       <SectionShadow>
         {/* 棋盤 */}
-        <div className={`grid-cols-${size} relative grid size-full gap-1 overflow-hidden rounded-xl border-4 border-gray-900 bg-gray-300`}>
+        <div className={`grid-cols-${size} relative grid size-full gap-1 overflow-hidden rounded-xl border-4 border-gray-900 bg-gray-200`}>
           {Array.from({ length: size }, (_, rowIndex) =>
             Array.from({ length: size }, (_, colIndex) => {
               const cellPlayer: Player = board?.[rowIndex]?.[colIndex];
