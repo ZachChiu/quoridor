@@ -3,7 +3,7 @@
 import type { Player, Move, Direction } from "@/types/chessboard.ts";
 import React, { useCallback, useEffect, useState } from "react";
 import SectionShadow from "./SectionShadow";
-import { FaHouseChimneyCrack } from "react-icons/fa6";
+import { MdRemoveModerator } from "react-icons/md";
 
 type Props = {
   size: number;
@@ -199,7 +199,7 @@ export default React.memo(function Chessboard({
 
       <SectionShadow>
         {/* 棋盤 */}
-        <div className={`grid-cols-${size} relative grid size-full gap-1 overflow-hidden rounded-xl border-4 border-gray-900 bg-gray-300`}>
+        <div className={`grid-cols-${size} relative grid size-full gap-1 overflow-hidden rounded-xl border-4 border-gray-900 bg-gray-200`}>
           {Array.from({ length: size }, (_, rowIndex) =>
             Array.from({ length: size }, (_, colIndex) => {
               const cellPlayer: Player = board?.[rowIndex]?.[colIndex];
@@ -295,7 +295,7 @@ export default React.memo(function Chessboard({
                   {hasHorizontalWallPlayer && (
                     <div className={`bg-player-${hasHorizontalWallPlayer} absolute inset-x-0 bottom-0 z-10 h-1 translate-y-full`}>
                       {isHorizontalWallBreakable && (
-                        <FaHouseChimneyCrack
+                        <MdRemoveModerator
                           className="animate-shine infinite absolute bottom-0 left-1/2 z-10 -translate-x-1/2 translate-y-1/3 cursor-pointer text-xl text-gray-700" 
                           onClick={() => onClickBreakWall(rowIndex, colIndex, 'horizontal')}
                         />
@@ -306,7 +306,7 @@ export default React.memo(function Chessboard({
                   {hasVerticalWall && (
                     <div className={`bg-player-${hasVerticalWall} absolute inset-y-0 right-0 z-10 w-1 translate-x-full`}>
                       {isVerticalWallBreakable && (
-                        <FaHouseChimneyCrack
+                        <MdRemoveModerator
                           className="animate-shine infinite absolute right-0 top-1/2 z-10 -translate-y-1/2 translate-x-1/3 cursor-pointer text-xl text-gray-700" 
                           onClick={() => onClickBreakWall(rowIndex, colIndex, 'vertical')}
                         />

@@ -1,6 +1,6 @@
 {
   "name": "quoridor",
-  "version": "25.6.7",
+  "version": "25.6.8",
   "private": true,
   "scripts": {
     "dev": "next dev",
