@@ -154,7 +154,7 @@ const RoomListModal: React.FC<Props> = ({ isOpen, onClose }) => {
                             </div>
                           </div>
                           <div className="flex items-center opacity-0 transition-opacity group-hover:opacity-100">
-                            <span className="text font-bold">加入</span>
+                            <span className="text font-bold text-base">加入</span>
                             <MdArrowRight className="text-xl" />
                           </div>
                         </div>
