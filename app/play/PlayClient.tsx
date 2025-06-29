@@ -38,6 +38,7 @@ interface GamePlayState {
   openingStep: Player[];
   isChampionModalOpen: boolean;
   breakWallCountObj: { A: number; B: number; C: number };
+  playersNum: number; // 整合原本的 gameState.playersNum
 }
 
 export default function PlayClient() {
@@ -57,18 +58,20 @@ export default function PlayClient() {
     winingStatus: [],
     openingStep: [],
     isChampionModalOpen: false,
-    breakWallCountObj: { A: 1, B: 1, C: 1 }
+    breakWallCountObj: { A: 1, B: 1, C: 1 },
+    playersNum: gameState.playersNum // 從原始設定取得正確的玩家數量
   });
   
   const { 
     size, board, currentPlayer, verticalWalls, horizontalWalls, 
     selectedChess, remainSteps, uniqTerritories, flattenTerritoriesObj,
-    winingStatus, openingStep, isChampionModalOpen, breakWallCountObj 
+    winingStatus, openingStep, isChampionModalOpen, breakWallCountObj,
+    playersNum // 整合後的玩家數量
   } = gamePlayState;
   
   const isPlacingChess = useMemo(() => !!openingStep.length, [openingStep]);
   const isLock = useMemo(() => !!winingStatus.length, [winingStatus]);
-  const isBreakWallAvailable = useMemo(() => gameState.playersNum > 2, [gameState.playersNum]);
+  const isBreakWallAvailable = useMemo(() => playersNum > 2, [playersNum]);
   
   // 統一狀態更新函數
   const updateGameState = useCallback((updates: Partial<GamePlayState>) => {
@@ -131,14 +134,14 @@ export default function PlayClient() {
   
   // 輔助函數：取得下一個玩家
   const getNextPlayer = useCallback((current: Player): Player => {
-    const turnOrder: Player[] = gameState.playersNum === 2 
+    const turnOrder: Player[] = playersNum === 2 
       ? [...playerTemplates.turnOrderTwo]
       : [...playerTemplates.turnOrderThree];
     
     const currentIndex = turnOrder.indexOf(current);
     const nextIndex = (currentIndex + 1) % turnOrder.length;
     return turnOrder[nextIndex];
-  }, [gameState.playersNum]);
+  }, [playersNum]);
   
   // 輔助函數：移除水平牆壁
   const removeHorizontalWall = useCallback((row: number, col: number): Player[][] => {
@@ -363,7 +366,7 @@ export default function PlayClient() {
       B: [] as string[][],
     };
 
-    if (gameState.playersNum === 3) {
+    if (playersNum === 3) {
       territories.C = [] as string[][];
     }
 
@@ -382,7 +385,7 @@ export default function PlayClient() {
     }
 
     return territories;
-  }, [board, size, calculateChessTerritory, gameState.playersNum]);
+  }, [board, size, calculateChessTerritory, playersNum]);
 
   /**
    * 當玩家改變時，重新計算地盤
@@ -397,7 +400,7 @@ export default function PlayClient() {
     const newUniqTerritories: { A: string[]; B: string[]; C?: string[] } = {
       A: [],
       B: [],
-      ...(gameState.playersNum >= 3 ? { C: [] } : {})
+      ...(playersNum >= 3 ? { C: [] } : {})
     };
 
     const keys = Object.keys(calculatedTerritories);
@@ -414,7 +417,7 @@ export default function PlayClient() {
       const numberOfA = newUniqTerritories['A']?.length || 0;
       const numberOfB = newUniqTerritories['B'].length || 0;
       const numberOfC = newUniqTerritories['C']?.length || 0;
-      const calcArr = [numberOfA, numberOfB, ...(gameState.playersNum >= 3 ? [numberOfC] : [])];
+      const calcArr = [numberOfA, numberOfB, ...(playersNum >= 3 ? [numberOfC] : [])];
       const maxNumber = max(calcArr);
       const minNumber = min(calcArr);
       if (maxNumber === minNumber) {
@@ -425,7 +428,7 @@ export default function PlayClient() {
         const winners: Player[] = [];
         if (numberOfA === maxNumber) winners.push('A');
         if (numberOfB === maxNumber) winners.push('B');
-        if (gameState.playersNum >= 3 && numberOfC === maxNumber) winners.push('C');
+        if (playersNum >= 3 && numberOfC === maxNumber) winners.push('C');
         updateGameState({ winingStatus: winners });
       }
       updateGameState({ isChampionModalOpen: true });
@@ -436,7 +439,7 @@ export default function PlayClient() {
       flattenTerritoriesObj: newFlattenTerritoriesObj 
     });
     // setTerritories(calculatedTerritories);
-  }, [currentPlayer, calculateAllTerritories, gameState.playersNum, isPlacingChess]);
+  }, [currentPlayer, calculateAllTerritories, playersNum, isPlacingChess]);
 
   /**
    * 重新開始遊戲
@@ -451,10 +454,10 @@ export default function PlayClient() {
       isChampionModalOpen: false,
       flattenTerritoriesObj: {},
       breakWallCountObj: { A: 1, B: 1, C: 1 },
-      uniqTerritories: { A: [], B: [], ...(gameState.playersNum >= 3 ? { C: [] } : {}) }
+      uniqTerritories: { A: [], B: [], ...(playersNum >= 3 ? { C: [] } : {}) }
     };
     
-    switch (gameState.playersNum) {
+    switch (playersNum) {
       case 2:
         newGameState = {
           ...newGameState,
@@ -478,8 +481,8 @@ export default function PlayClient() {
     }
 
     updateGameState(newGameState);
-    trackButtonClick(`restart_local_game_${gameState.playersNum}p`);
-  }, [gameState.playersNum, updateGameState]);
+    trackButtonClick(`restart_local_game_${playersNum}p`);
+  }, [playersNum, updateGameState]);
 
   useEffect(() => {
     restartGame();
