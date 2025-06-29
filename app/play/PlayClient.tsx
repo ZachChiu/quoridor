@@ -580,10 +580,14 @@ export default function PlayClient() {
     <>
       {/* RTD 載入遮罩 */}
       {isLoadingRTD.current && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
-          <div className="flex flex-col items-center space-y-4 rounded-lg bg-white p-8 shadow-xl">
-            <div className="h-12 w-12 animate-spin rounded-full border-4 border-gray-300 border-t-blue-600"></div>
-            <p className="text-lg font-medium text-gray-700">正在載入遊戲資料...</p>
+        <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
+          <div className="w-fit h-fit">
+            <SectionShadow>
+              <div className="relative flex flex-col items-center space-y-4 rounded-xl bg-white p-8 shadow-xl border-4 border-gray-900">
+                <div className="h-12 w-12 animate-spin rounded-full border-4 border-gray-300 border-t-gray-900"></div>
+                <p className="text-lg font-medium text-gray-700">正在載入遊戲資料...</p>
+              </div>
+            </SectionShadow>
           </div>
         </div>
       )}
