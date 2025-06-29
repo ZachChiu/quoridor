@@ -13,7 +13,8 @@ import playerTemplates from "@/config/playerTemplates";
 import { Player } from "./types/chessboard";
 import { RiTeamFill } from "react-icons/ri";
 import { MdDoorBack } from "react-icons/md";
-import { useRoomListModal } from "@/contexts/RoomListModalContext";
+import RoomListModal from "./components/RoomListModal";
+import { useConfirm } from "./hook/useConfirm";
 
 export default function HomeClient() {
   const router = useRouter();
@@ -94,13 +95,11 @@ export default function HomeClient() {
     });
   };
 
-  const { roomListModalState, setRoomListModalState } = useRoomListModal();
-  const handleRoomListBtnOpen = () => {
-    setRoomListModalState({
-      ...roomListModalState,
-      isOpen: true,
-    });
-  };
+  const {
+    isOpen: isRoomListModalOpen,
+    confirm: confirmRoomList,
+    handleCancel: handleRoomListCancel,
+  } = useConfirm();
 
   return (
     <div className="relative z-20">
@@ -110,10 +109,15 @@ export default function HomeClient() {
         </IconButton>
       </div>
       <div className="group fixed right-5 top-[calc(2.25rem+52px)] cursor-pointer">
-        <IconButton handleClickEvent={() => handleRoomListBtnOpen()}>
+        <IconButton handleClickEvent={() => confirmRoomList()}>
           <RiTeamFill />
         </IconButton>
       </div>
+
+      <RoomListModal
+        isOpen={isRoomListModalOpen}
+        onClose={handleRoomListCancel}
+      />
 
       {!showLocalGameOptions && !showOnlineGameOptions && (
         <div className="flex flex-col gap-4">

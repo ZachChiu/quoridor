@@ -10,24 +10,20 @@ import {
   MdInfo,
   MdRefresh,
 } from "react-icons/md";
-import { useRoomListModal } from "@/contexts/RoomListModalContext";
 import { RiDeleteBin2Fill, RiTeamFill } from "react-icons/ri";
 import { getAllGameTokens, clearAllGameRooms } from "@/lib/gameService";
-import { TbMoodEmptyFilled } from "react-icons/tb";
+import { TbMoodAnnoyed2 } from "react-icons/tb";
 import { GiSwordWound } from "react-icons/gi";
 
-const RoomListModal: React.FC = () => {
-  const { roomListModalState, setRoomListModalState } = useRoomListModal();
+interface Props {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+const RoomListModal: React.FC<Props> = ({ isOpen, onClose }) => {
   const [gameTokens, setGameTokens] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const handleRoomListBtnOpen = () => {
-    setRoomListModalState({
-      ...roomListModalState,
-      isOpen: false,
-    });
-  };
 
   const handleRoomListClear = async () => {
     try {
@@ -58,22 +54,20 @@ const RoomListModal: React.FC = () => {
   };
 
   useEffect(() => {
-    if (roomListModalState.isOpen) {
+    if (isOpen) {
       loadGameRooms();
     }
-  }, [roomListModalState.isOpen]);
+  }, [isOpen]);
 
   return (
     <div
       className={`fixed inset-0 z-50 flex w-full  items-center justify-center px-4 ${
-        roomListModalState.isOpen
-          ? "opacity-100"
-          : "pointer-events-none opacity-0"
+        isOpen ? "opacity-100" : "pointer-events-none opacity-0"
       } transition-opacity duration-300`}
     >
       <div
         className="fixed inset-0 bg-black/50"
-        onClick={() => handleRoomListBtnOpen()}
+        onClick={() => onClose()}
       ></div>
       <div className="max-w-md min-w-[28rem]">
         <SectionShadow>
@@ -96,7 +90,7 @@ const RoomListModal: React.FC = () => {
                 </div>
                 <div
                   className="group cursor-pointer"
-                  onClick={() => handleRoomListBtnOpen()}
+                  onClick={() => onClose()}
                 >
                   <IconButton>
                     <MdClose />
@@ -131,8 +125,9 @@ const RoomListModal: React.FC = () => {
 
               {!isLoading && !error && gameTokens.length === 0 && (
                 <div className="flex flex-col items-center justify-center py-8 text-gray-800">
-                  <TbMoodEmptyFilled className="mb-2 text-4xl" />
-                  <p className="text-center">目前沒有可用的遊戲房間</p>
+                  <TbMoodAnnoyed2 className="mb-2 text-4xl" />
+                  <p className="text-center">目前沒有戰場</p>
+                  <p className="text-center">又是和平的一天</p>
                 </div>
               )}
 
@@ -183,7 +178,7 @@ const RoomListModal: React.FC = () => {
               </div>
               <Button
                 color="bg-primary-400"
-                handleClickEvent={() => handleRoomListBtnOpen()}
+                handleClickEvent={() => onClose()}
               >
                 <span className="flex items-center gap-2">
                   <MdPlayArrow className="text-2xl" /> 回到大廳

@@ -100,17 +100,14 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} select-none bg-gradient-to-br from-gray-200 via-white to-gray-300 antialiased`}
       >
         <RuleModalProvider>
-          <RoomListModalProvider>
-            <GameProvider>
-              <Suspense fallback={null}>
-                <AnalyticsProvider>
-                  {children}
-                  <RuleModal />
-                  <RoomListModal />
-                </AnalyticsProvider>
-              </Suspense>
-            </GameProvider>
-          </RoomListModalProvider>
+          <GameProvider>
+            <Suspense fallback={null}>
+              <AnalyticsProvider>
+                {children}
+                <RuleModal />
+              </AnalyticsProvider>
+            </Suspense>
+          </GameProvider>
         </RuleModalProvider>
       </body>
       {process.env.NEXT_PUBLIC_APP_ENV === "production" && (
