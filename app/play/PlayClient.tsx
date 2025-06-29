@@ -17,7 +17,7 @@ import max from 'lodash-es/max';
 import min from 'lodash-es/min';
 
 import { trackButtonClick } from "@/utils/analytics";
-import { MdHome, MdOutlineQuestionMark  } from "react-icons/md";
+import { MdHome, MdOutlineQuestionMark, MdShare } from "react-icons/md";
 import { useRuleModal } from "@/contexts/RuleModalContext";
 import { useGame } from "@/contexts/GameContext";
 import playerTemplates from "@/config/playerTemplates";
@@ -28,7 +28,9 @@ import { updateGameState as syncGameStateToRTD, subscribeToGameState, GamePlaySt
 export default function PlayClient() {
   const { gameState } = useGame();
   const searchParams = useSearchParams();
+  const [showShareToast, setShowShareToast] = useState(false);
   const gameToken = searchParams.get('token');
+  const isOnlineMode = !!gameToken;
   
   // RTD 初始資料載入狀態
   const isLoadingRTD = useRef(!!gameToken);
@@ -524,6 +526,27 @@ export default function PlayClient() {
       isOpen: true
     })
   }
+
+  // 分享連線功能
+  const handleShareGame = async () => {
+    if (!isOnlineMode) return;
+    
+    try {
+      const currentUrl = window.location.href;
+      await navigator.clipboard.writeText(currentUrl);
+    } catch (err) {
+      // 備用方案：使用舊式複製方法
+      const textArea = document.createElement('textarea');
+      textArea.value = window.location.href;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+    } finally {
+      setShowShareToast(true);
+      setTimeout(() => setShowShareToast(false), 4000);
+    }
+  }
   return (
     <>
       {/* RTD 載入遮罩 */}
@@ -554,6 +577,16 @@ export default function PlayClient() {
 
       {/* 提示面板 */}
       <GameTips isPlacingChess={isPlacingChess} currentPlayer={currentPlayer} winingStatus={winingStatus} breakWallCountObj={breakWallCountObj}/>
+
+      {/* 分享連線按鈕 - 只在連線模式顯示 */}
+      {isOnlineMode && (
+        <div className={`group fixed left-5 top-[calc(2.25rem+52px+1rem+52px)] cursor-pointer`}>
+          <IconButton handleClickEvent={handleShareGame}>
+            <MdShare />
+          </IconButton>
+        </div>
+      )}
+      
 
       <div className="chessboard-container size-[90dvw] md:size-[90dvh] md:portrait:size-[90dvw] md:landscape:size-[90dvh]">
         <Chessboard
@@ -592,6 +625,16 @@ export default function PlayClient() {
         onClose={handleBreakWallCancel}
         onCheck={handleBreakWallConfirm}
       />
+
+      {/* 分享成功提示 Toast */}
+      {showShareToast && (
+        <div className="fixed top-2/3 left-1/2 transform -translate-x-1/2 z-[9999] bg-gradient-to-r from-red-600 to-orange-500 text-white px-8 py-4 rounded-xl shadow-2xl">
+          <p className="font-bold text-xl tracking-wide drop-shadow-lg">⚔️ 戰場連結已就緒！</p>
+          <p className="text-white font-medium animate-pulse">
+            🔥 召喚你的對手，決戰時刻即將展開！
+          </p>
+        </div>
+      )}
     </>
   );
 }
