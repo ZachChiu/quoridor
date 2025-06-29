@@ -18,7 +18,7 @@ import max from 'lodash-es/max';
 import min from 'lodash-es/min';
 
 import { trackButtonClick } from "@/utils/analytics";
-import { MdHome, MdOutlineQuestionMark, MdShare, MdWarning, MdClose } from "react-icons/md";
+import { MdHome, MdOutlineQuestionMark, MdShare, MdWarning, MdPlayArrow } from "react-icons/md";
 import { useRuleModal } from "@/contexts/RuleModalContext";
 import { useGame } from "@/contexts/GameContext";
 import playerTemplates from "@/config/playerTemplates";
@@ -672,21 +672,15 @@ export default function PlayClient() {
         <div className='max-w-md'>
           <SectionShadow>
             <div className={`relative w-full rounded-xl border-2 border-gray-900 bg-primary p-6 font-[family-name:var(--font-geist-sans)]`}>
-              <div className="mb-4 flex items-center justify-between">
-                <h2 className="flex items-center gap-2 text-2xl font-bold">
-                  <MdWarning className="text-2xl text-red-500" />戰場遺失
-                </h2>
+              <div className="mb-4 flex items-center justify-start gap-2 text-2xl font-bold">
+                <MdWarning className="text-2xl text-red-500" />戰場遺失
               </div>
-              <div className="mb-6">
-                <p className="leading-relaxed">
-                  不是你的對手跑路了，就是你在搞，不要亂打 token，給我回去重來！！！
-                </p>
+              <div className="mb-6 leading-relaxed">
+                不是你的對手跑路了，就是你在搞，不要亂打 token，給我回去重來！！！
               </div>
-              <div className="flex justify-end">
-                <Button handleClickEvent={handleRTDTimeoutConfirm} color="bg-red-500 hover:bg-red-600 text-white font-bold">
-                  確定
-                </Button>
-              </div>
+              <Button color='bg-primary-400' handleClickEvent={handleRTDTimeoutConfirm}>
+                <span className="flex items-center gap-2"><MdPlayArrow className='text-2xl'/> 確定</span>
+              </Button>
             </div>
           </SectionShadow>
         </div>
