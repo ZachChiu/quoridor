@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Chessboard from "@/components/Chessboard";
 import SectionShadow from "@/components/SectionShadow";
@@ -8,6 +8,7 @@ import ChampionModal from "@/components/ChampionModal";
 import GameStatus from "@/components/GameStatus";
 import GameTips from "@/components/GameTips";
 import IconButton from "@/components/IconButton";
+import Button from "@/components/Button";
 
 import type { Player, Direction } from "@/types/chessboard.ts";
 import flatten from 'lodash-es/flatten';
@@ -17,7 +18,7 @@ import max from 'lodash-es/max';
 import min from 'lodash-es/min';
 
 import { trackButtonClick } from "@/utils/analytics";
-import { MdHome, MdOutlineQuestionMark, MdShare } from "react-icons/md";
+import { MdHome, MdOutlineQuestionMark, MdShare, MdWarning, MdClose } from "react-icons/md";
 import { useRuleModal } from "@/contexts/RuleModalContext";
 import { useGame } from "@/contexts/GameContext";
 import playerTemplates from "@/config/playerTemplates";
@@ -28,13 +29,16 @@ import { updateGameState as syncGameStateToRTD, subscribeToGameState, GamePlaySt
 export default function PlayClient() {
   const { gameState } = useGame();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const [showShareToast, setShowShareToast] = useState(false);
+  const [showRTDTimeoutError, setShowRTDTimeoutError] = useState(false);
   const gameToken = searchParams.get('token');
   const isOnlineMode = !!gameToken;
   
   // RTD 初始資料載入狀態
   const isLoadingRTD = useRef(!!gameToken);
   const rtdInitialized = useRef(!gameToken);
+  const rtdTimeoutTimer = useRef<NodeJS.Timeout | null>(null);
   
   // 統一管理遊戲狀態
   const [gamePlayState, setGamePlayState] = useState<GamePlayState>({
@@ -73,6 +77,15 @@ export default function PlayClient() {
     isLoadingRTD.current = true;
     rtdInitialized.current = false;
     
+    // 設定 10 秒超時計時器
+    rtdTimeoutTimer.current = setTimeout(() => {
+      if (!rtdInitialized.current) {
+        // console.error('RTD 初始化超時：10 秒內未收到初始資料');
+        setShowRTDTimeoutError(true);
+        isLoadingRTD.current = false;
+      }
+    }, 10000);
+    
     // 監聽遊戲狀態變化
     const unsubscribe = subscribeToGameState(gameToken, (rtdGameState) => {
       // console.log('遊戲狀態變化:', rtdGameState);
@@ -85,15 +98,31 @@ export default function PlayClient() {
           // console.log('RTD 初始資料載入完成');
           isLoadingRTD.current = false;
           rtdInitialized.current = true;
+          
+          // 清除超時計時器
+          if (rtdTimeoutTimer.current) {
+            clearTimeout(rtdTimeoutTimer.current);
+            rtdTimeoutTimer.current = null;
+          }
         }
       }
     });
     
-    // 清理監聽器
+    // 清理監聽器和計時器
     return () => {
       unsubscribe();
+      if (rtdTimeoutTimer.current) {
+        clearTimeout(rtdTimeoutTimer.current);
+        rtdTimeoutTimer.current = null;
+      }
     };
   }, [gameToken]);
+  
+  // RTD 超時錯誤處理
+  const handleRTDTimeoutConfirm = useCallback(() => {
+    setShowRTDTimeoutError(false);
+    router.push('/');
+  }, [router]);
   
   // 統一狀態更新函數
   const updateGameState = useCallback(async (updates: Partial<GamePlayState>) => {
@@ -572,20 +601,29 @@ export default function PlayClient() {
         </IconButton>
       </div>
 
-      {/* 賽況面板 */}
-      <GameStatus isLock={isLock || isLoadingRTD.current} currentPlayer={currentPlayer} uniqTerritories={uniqTerritories} />
-
-      {/* 提示面板 */}
-      <GameTips isPlacingChess={isPlacingChess} currentPlayer={currentPlayer} winingStatus={winingStatus} breakWallCountObj={breakWallCountObj}/>
-
-      {/* 分享連線按鈕 - 只在連線模式顯示 */}
-      {isOnlineMode && (
+       {/* 分享連線按鈕 - 只在連線模式顯示 */}
+       {isOnlineMode && (
         <div className={`group fixed left-5 top-[calc(2.25rem+52px+1rem+52px)] cursor-pointer`}>
           <IconButton handleClickEvent={handleShareGame}>
             <MdShare />
           </IconButton>
         </div>
       )}
+      {/* 分享成功提示 Toast */}
+      {showShareToast && (
+        <div className="fixed top-2/3 left-1/2 transform -translate-x-1/2 z-[9999] bg-gradient-to-r from-red-600 to-orange-500 text-white px-8 py-4 rounded-xl shadow-2xl">
+          <p className="font-bold text-xl tracking-wide drop-shadow-lg">⚔️ 戰場連結已就緒！</p>
+          <p className="text-white font-medium animate-pulse">
+            🔥 召喚你的對手，決戰時刻即將展開！
+          </p>
+        </div>
+      )}
+
+      {/* 賽況面板 */}
+      <GameStatus isLock={isLock || isLoadingRTD.current} currentPlayer={currentPlayer} uniqTerritories={uniqTerritories} />
+
+      {/* 提示面板 */}
+      <GameTips isPlacingChess={isPlacingChess} currentPlayer={currentPlayer} winingStatus={winingStatus} breakWallCountObj={breakWallCountObj}/>
       
 
       <div className="chessboard-container size-[90dvw] md:size-[90dvh] md:portrait:size-[90dvw] md:landscape:size-[90dvh]">
@@ -626,15 +664,31 @@ export default function PlayClient() {
         onCheck={handleBreakWallConfirm}
       />
 
-      {/* 分享成功提示 Toast */}
-      {showShareToast && (
-        <div className="fixed top-2/3 left-1/2 transform -translate-x-1/2 z-[9999] bg-gradient-to-r from-red-600 to-orange-500 text-white px-8 py-4 rounded-xl shadow-2xl">
-          <p className="font-bold text-xl tracking-wide drop-shadow-lg">⚔️ 戰場連結已就緒！</p>
-          <p className="text-white font-medium animate-pulse">
-            🔥 召喚你的對手，決戰時刻即將展開！
-          </p>
+      {/* RTD 超時錯誤彈窗 */}
+      <div className={`fixed inset-0 z-50 flex w-full items-center justify-center px-4 ${showRTDTimeoutError ? 'opacity-100' : 'pointer-events-none opacity-0'} transition-opacity duration-300`}>
+        <div className="fixed inset-0 bg-black/50"></div>
+        <div className='max-w-md'>
+          <SectionShadow>
+            <div className={`relative w-full rounded-xl border-2 border-gray-900 bg-primary p-6 font-[family-name:var(--font-geist-sans)]`}>
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="flex items-center gap-2 text-2xl font-bold">
+                  <MdWarning className="text-2xl text-red-500" />戰場遺失
+                </h2>
+              </div>
+              <div className="mb-6">
+                <p className="leading-relaxed">
+                  不是你的對手跑路了，就是你在搞，不要亂打 token，給我回去重來！！！
+                </p>
+              </div>
+              <div className="flex justify-end">
+                <Button handleClickEvent={handleRTDTimeoutConfirm} color="bg-red-500 hover:bg-red-600 text-white font-bold">
+                  確定
+                </Button>
+              </div>
+            </div>
+          </SectionShadow>
         </div>
-      )}
+      </div>
     </>
   );
 }
