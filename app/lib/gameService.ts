@@ -1,5 +1,5 @@
 import { database } from './firebase';
-import { ref, set, onValue, off } from 'firebase/database';
+import { ref, set, onValue, off, get } from 'firebase/database';
 import type { Player } from '@/types/chessboard.ts';
 
 // 遊戲狀態
@@ -112,3 +112,20 @@ export function subscribeToGameState(
     unsubscribe();
   };
 }
+
+/**
+ * 獲取所有線上遊戲房間 Token
+ */
+export async function getAllGameTokens(): Promise<string[]> {
+  const gamesRef = ref(database, 'games');
+  const snapshot = await get(gamesRef);
+  
+  if (!snapshot.exists()) {
+    return [];
+  }
+  
+  const tokens = Object.keys(snapshot.val());
+  // console.log('所有遊戲房間 Token:', tokens);
+  return tokens;
+}
+
