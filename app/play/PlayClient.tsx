@@ -23,109 +23,191 @@ import playerTemplates from "@/config/playerTemplates";
 import BreakWallConfirmModal from "@/components/BreakWallConfirmModal";
 import { useConfirm } from "@/hook/useConfirm";
 
+// 統一的遊戲狀態介面定義
+interface GamePlayState {
+  size: number;
+  board: Player[][];
+  currentPlayer: Player;
+  verticalWalls: Player[][];
+  horizontalWalls: Player[][];
+  selectedChess: { row: number; col: number } | null;
+  remainSteps: number;
+  uniqTerritories: { A: string[]; B: string[]; C?: string[] };
+  flattenTerritoriesObj: Record<string, Player>;
+  winingStatus: (Player | 'draw')[];
+  openingStep: Player[];
+  isChampionModalOpen: boolean;
+  breakWallCountObj: { A: number; B: number; C: number };
+}
+
 export default function PlayClient() {
   const { gameState } = useGame();
-  const [size, setSize] = useState(0);
-  const [board, setBoard] = useState<Player[][]>(playerTemplates.templateBoardTwo);
-  const [currentPlayer, setCurrentPlayer] = useState<Player>('A');
-  const [verticalWalls, setVerticalWalls] = useState<Player[][]>(playerTemplates.templateVerticalWalls);
-  const [horizontalWalls, setHorizontalWalls] = useState<Player[][]>(playerTemplates.templateHorizontalWalls);
-  const [selectedChess, setSelectedChess] = useState<{ row: number; col: number } | null>(null);
-  const [remainSteps, setRemainSteps] = useState(2);
-  // const [territories, setTerritories] = useState<{ A: string[][]; B: string[][] }>({
-  //   A: [],
-  //   B: []
-  // });
-  const [uniqTerritories, setUniqTerritories] = useState<{ A: string[]; B: string[]; C?: string[] }>({
-    A: [],
-    B: []
+  
+  // 統一管理遊戲狀態
+  const [gamePlayState, setGamePlayState] = useState<GamePlayState>({
+    size: 0,
+    board: playerTemplates.templateBoardTwo,
+    currentPlayer: 'A',
+    verticalWalls: playerTemplates.templateVerticalWalls,
+    horizontalWalls: playerTemplates.templateHorizontalWalls,
+    selectedChess: null,
+    remainSteps: 2,
+    uniqTerritories: { A: [], B: [] },
+    flattenTerritoriesObj: {},
+    winingStatus: [],
+    openingStep: [],
+    isChampionModalOpen: false,
+    breakWallCountObj: { A: 1, B: 1, C: 1 }
   });
-  const [flattenTerritoriesObj, setFlattenTerritoriesObj] = useState<Record<string, Player>>({});
-  const [winingStatus, setWiningStatus] = useState<(Player | 'draw')[]>([]);
-  const [openingStep, setOpeningStep] = useState<Player[]>([]);
-  const [isChampionModalOpen, setIsChampionModalOpen] = useState(false);
-  const isPlacingChess = useMemo(() => !!openingStep.length ,[openingStep])
+  
+  const { 
+    size, board, currentPlayer, verticalWalls, horizontalWalls, 
+    selectedChess, remainSteps, uniqTerritories, flattenTerritoriesObj,
+    winingStatus, openingStep, isChampionModalOpen, breakWallCountObj 
+  } = gamePlayState;
+  
+  const isPlacingChess = useMemo(() => !!openingStep.length, [openingStep]);
   const isLock = useMemo(() => !!winingStatus.length, [winingStatus]);
-  const [breakWallCountObj, setBreakWallCountObj] = useState({ A: 1, B: 1, C: 1 });
   const isBreakWallAvailable = useMemo(() => gameState.playersNum > 2, [gameState.playersNum]);
+  
+  // 統一狀態更新函數
+  const updateGameState = useCallback((updates: Partial<GamePlayState>) => {
+    setGamePlayState(prev => ({ ...prev, ...updates }));
+  }, []);
+  
+  // TODO 遊戲狀態存檔功能
+  const saveGameState = useCallback(() => {
+    const saveData = {
+      ...gamePlayState,
+      timestamp: Date.now(),
+      version: '1.0'
+    };
+    localStorage.setItem('quoridor_game_save', JSON.stringify(saveData));
+    console.log('遊戲已存檔');
+  }, [gamePlayState]);
+  
+  // TODO 遊戲狀態讀檔功能
+  const loadGameState = useCallback(() => {
+    const savedData = localStorage.getItem('quoridor_game_save');
+    if (savedData) {
+      try {
+        const parsed = JSON.parse(savedData);
+        const { timestamp, version, ...gameData } = parsed;
+        setGamePlayState(gameData);
+        console.log('遊戲已讀檔', { timestamp, version });
+        return true;
+      } catch (error) {
+        console.error('讀檔失敗:', error);
+        return false;
+      }
+    }
+    return false;
+  }, []);
 
   const selectChess = useCallback((row: number, col: number) => {
     if (remainSteps < 2) {
       return;
     }
     if (row === selectedChess?.row && col === selectedChess?.col) {
-      setSelectedChess(null);
+      updateGameState({ selectedChess: null });
       return;
     }
-    setSelectedChess({ row, col });
-  }, [selectedChess, remainSteps]);
+    updateGameState({ selectedChess: { row, col } });
+  }, [selectedChess, remainSteps, updateGameState]);
+
+  // 輔助函數：更新水平牆壁
+  const updateHorizontalWall = useCallback((row: number, col: number, player: Player): Player[][] => {
+    const newWalls = horizontalWalls.map(wallRow => [...wallRow]);
+    newWalls[row][col] = player;
+    return newWalls;
+  }, [horizontalWalls]);
+  
+  // 輔助函數：更新垂直牆壁
+  const updateVerticalWall = useCallback((row: number, col: number, player: Player): Player[][] => {
+    const newWalls = verticalWalls.map(wallRow => [...wallRow]);
+    newWalls[row][col] = player;
+    return newWalls;
+  }, [verticalWalls]);
+  
+  // 輔助函數：取得下一個玩家
+  const getNextPlayer = useCallback((current: Player): Player => {
+    const turnOrder: Player[] = gameState.playersNum === 2 
+      ? [...playerTemplates.turnOrderTwo]
+      : [...playerTemplates.turnOrderThree];
+    
+    const currentIndex = turnOrder.indexOf(current);
+    const nextIndex = (currentIndex + 1) % turnOrder.length;
+    return turnOrder[nextIndex];
+  }, [gameState.playersNum]);
+  
+  // 輔助函數：移除水平牆壁
+  const removeHorizontalWall = useCallback((row: number, col: number): Player[][] => {
+    const newWalls = horizontalWalls.map(wallRow => [...wallRow]);
+    newWalls[row][col] = null;
+    return newWalls;
+  }, [horizontalWalls]);
+  
+  // 輔助函數：移除垂直牆壁
+  const removeVerticalWall = useCallback((row: number, col: number): Player[][] => {
+    const newWalls = verticalWalls.map(wallRow => [...wallRow]);
+    newWalls[row][col] = null;
+    return newWalls;
+  }, [verticalWalls]);
+  
+  // 輔助函數：減少玩家破牆次數
+  const decreaseBreakWallCount = useCallback((player: Player) => {
+    return {
+      ...breakWallCountObj,
+      [player as Exclude<Player, null>]: breakWallCountObj[player as Exclude<Player, null>] - 1
+    };
+  }, [breakWallCountObj]);
 
   const selectWall = useCallback((row: number, col: number, direction: Direction) => {
-    switch (direction) {
-      case 'top':
-      case 'bottom':
-        setHorizontalWalls((prev) => {
-          const newWalls = [...prev];
-          newWalls[row][col] = currentPlayer;
-          return newWalls;
-        });
-        break;
-      case 'left':
-      case 'right':
-        setVerticalWalls((prev) => {
-          const newWalls = [...prev];
-          newWalls[row][col] = currentPlayer;
-          return newWalls;
-        });
-        break;
+    const updates: Partial<GamePlayState> = {};
+    
+    // 根據方向更新對應的牆壁
+    if (direction === 'top' || direction === 'bottom') {
+      updates.horizontalWalls = updateHorizontalWall(row, col, currentPlayer);
+    } else if (direction === 'left' || direction === 'right') {
+      updates.verticalWalls = updateVerticalWall(row, col, currentPlayer);
     }
 
-    let newCurrentPlayer: Player = null;
-    const turnOrder: Player[] = []
-    switch (gameState.playersNum) {
-      case 2:
-        turnOrder.push(...playerTemplates.turnOrderTwo);
-        newCurrentPlayer = turnOrder[turnOrder.indexOf(currentPlayer) + 1] || turnOrder[0];
-        break;
-      case 3:
-        turnOrder.push(...playerTemplates.turnOrderThree);
-        newCurrentPlayer = turnOrder[turnOrder.indexOf(currentPlayer) + 1] || turnOrder[0];
-        break;
-      default:
-        break;
-    }
-
-    setCurrentPlayer(newCurrentPlayer);
-    setRemainSteps(2);
-    setSelectedChess(null);
-  }, [currentPlayer, setHorizontalWalls, setVerticalWalls, gameState.playersNum]);
+    // 切換到下一個玩家並重置狀態
+    updates.currentPlayer = getNextPlayer(currentPlayer);
+    updates.remainSteps = 2;
+    updates.selectedChess = null;
+    
+    updateGameState(updates);
+  }, [currentPlayer, updateHorizontalWall, updateVerticalWall, getNextPlayer, updateGameState]);
 
   const selectCell = useCallback((row: number, col: number) => {
     if (!selectedChess) return;
-    setSelectedChess({ row, col });
+    
     const gap = remainSteps - (Math.abs((selectedChess.row) - row) + Math.abs((selectedChess.col) - col));
-    setRemainSteps(gap);
-
-    setBoard((prev) => {
-      const newBoard = [...prev];
-      newBoard[selectedChess.row][selectedChess.col] = null;
-      newBoard[row][col] = currentPlayer;
-      return newBoard;
+    const newBoard = board.map(boardRow => [...boardRow]);
+    newBoard[selectedChess.row][selectedChess.col] = null;
+    newBoard[row][col] = currentPlayer;
+    
+    updateGameState({
+      selectedChess: { row, col },
+      remainSteps: gap,
+      board: newBoard
     });
-  }, [selectedChess, currentPlayer, remainSteps, setSelectedChess, setBoard]);
+  }, [selectedChess, currentPlayer, remainSteps, board, updateGameState]);
 
   const setChessPosition = useCallback((row: number, col: number) => {
-    setBoard((prev) => {
-      const newBoard = [...prev];
-      newBoard[row][col] = currentPlayer;
-      return newBoard;
-    });
+    const newBoard = board.map(boardRow => [...boardRow]);
+    newBoard[row][col] = currentPlayer;
+    
     const newOpeningStep = [...openingStep];
-    newOpeningStep.shift()
-    setOpeningStep(newOpeningStep);
-
-    setCurrentPlayer(newOpeningStep[0] || 'A');
-  }, [currentPlayer, setBoard, openingStep, setCurrentPlayer]);
+    newOpeningStep.shift();
+    
+    updateGameState({
+      board: newBoard,
+      openingStep: newOpeningStep,
+      currentPlayer: newOpeningStep[0] || 'A'
+    });
+  }, [currentPlayer, board, openingStep, updateGameState]);
 
   const {
     isOpen: isBreakWallModalOpen,
@@ -139,31 +221,20 @@ export default function PlayClient() {
 
     const ok = await confirmBreakWall();
     if (ok) {
-      setBreakWallCountObj((prev) => ({
-        ...prev,
-        [currentPlayer as Exclude<Player, null>]: prev[currentPlayer as Exclude<Player, null>] - 1
-      }));
+      const updates: Partial<GamePlayState> = {
+        breakWallCountObj: decreaseBreakWallCount(currentPlayer)
+      };
 
-      switch (direction) {
-        case 'horizontal':
-          setHorizontalWalls((prev) => {
-            const newWalls = [...prev];
-            newWalls[row][col] = null;
-            return newWalls;
-          });
-          break;
-        case 'vertical':
-          setVerticalWalls((prev) => {
-            const newWalls = [...prev];
-            newWalls[row][col] = null;
-            return newWalls;
-          });
-          break;
-        default:
-          break;
+      // 根據方向移除對應的牆壁
+      if (direction === 'horizontal') {
+        updates.horizontalWalls = removeHorizontalWall(row, col);
+      } else if (direction === 'vertical') {
+        updates.verticalWalls = removeVerticalWall(row, col);
       }
+      
+      updateGameState(updates);
     }
-  }, [confirmBreakWall, setBreakWallCountObj, setVerticalWalls, setHorizontalWalls, currentPlayer, isBreakWallAvailable]);
+  }, [confirmBreakWall, decreaseBreakWallCount, removeHorizontalWall, removeVerticalWall, currentPlayer, isBreakWallAvailable, updateGameState]);
 
   /**
   * 計算可移動的位置
@@ -348,20 +419,22 @@ export default function PlayClient() {
       const minNumber = min(calcArr);
       if (maxNumber === minNumber) {
         // 平手
-        setWiningStatus(['draw']);
+        updateGameState({ winingStatus: ['draw'] });
       } else {
         // 找出所有分數等於 maxNumber 的玩家
         const winners: Player[] = [];
         if (numberOfA === maxNumber) winners.push('A');
         if (numberOfB === maxNumber) winners.push('B');
         if (gameState.playersNum >= 3 && numberOfC === maxNumber) winners.push('C');
-        setWiningStatus(winners);
+        updateGameState({ winingStatus: winners });
       }
-      setIsChampionModalOpen(true);
+      updateGameState({ isChampionModalOpen: true });
     }
 
-    setUniqTerritories(newUniqTerritories);
-    setFlattenTerritoriesObj(newFlattenTerritoriesObj);
+    updateGameState({ 
+      uniqTerritories: newUniqTerritories,
+      flattenTerritoriesObj: newFlattenTerritoriesObj 
+    });
     // setTerritories(calculatedTerritories);
   }, [currentPlayer, calculateAllTerritories, gameState.playersNum, isPlacingChess]);
 
@@ -369,35 +442,44 @@ export default function PlayClient() {
    * 重新開始遊戲
    */
   const restartGame = useCallback(() => {
+    let newGameState: Partial<GamePlayState> = {
+      size: 7,
+      currentPlayer: 'A' as Player,
+      selectedChess: null,
+      remainSteps: 2,
+      winingStatus: [],
+      isChampionModalOpen: false,
+      flattenTerritoriesObj: {},
+      breakWallCountObj: { A: 1, B: 1, C: 1 },
+      uniqTerritories: { A: [], B: [], ...(gameState.playersNum >= 3 ? { C: [] } : {}) }
+    };
+    
     switch (gameState.playersNum) {
       case 2:
-        setBoard(cloneDeep(playerTemplates.templateBoardTwo));
-        setVerticalWalls(cloneDeep(playerTemplates.templateVerticalWalls));
-        setHorizontalWalls(cloneDeep(playerTemplates.templateHorizontalWalls));
-        setOpeningStep(cloneDeep(playerTemplates.openingStepTwo));
+        newGameState = {
+          ...newGameState,
+          board: cloneDeep(playerTemplates.templateBoardTwo),
+          verticalWalls: cloneDeep(playerTemplates.templateVerticalWalls),
+          horizontalWalls: cloneDeep(playerTemplates.templateHorizontalWalls),
+          openingStep: cloneDeep(playerTemplates.openingStepTwo)
+        };
         break;
       case 3:
-        setBoard(cloneDeep(playerTemplates.templateBoardThree));
-        setVerticalWalls(cloneDeep(playerTemplates.templateVerticalWalls));
-        setHorizontalWalls(cloneDeep(playerTemplates.templateHorizontalWalls));
-        setOpeningStep(cloneDeep(playerTemplates.openingStepThree));
+        newGameState = {
+          ...newGameState,
+          board: cloneDeep(playerTemplates.templateBoardThree),
+          verticalWalls: cloneDeep(playerTemplates.templateVerticalWalls),
+          horizontalWalls: cloneDeep(playerTemplates.templateHorizontalWalls),
+          openingStep: cloneDeep(playerTemplates.openingStepThree)
+        };
         break;
       default:
         break;
     }
 
-    setSize(7);
-    setCurrentPlayer(openingStep[0] || 'A' as Player);
-    setSelectedChess(null);
-    setRemainSteps(2);
-    setWiningStatus([]);
-    setIsChampionModalOpen(false);
+    updateGameState(newGameState);
     trackButtonClick(`restart_local_game_${gameState.playersNum}p`);
-    setFlattenTerritoriesObj({});
-    setBreakWallCountObj({ A: 1, B: 1, C: 1 });
-    setUniqTerritories({ A: [], B: [], ...(gameState.playersNum >= 3 ? { C: [] } : {}) });
-    setFlattenTerritoriesObj({});
-  }, []);
+  }, [gameState.playersNum, updateGameState]);
 
   useEffect(() => {
     restartGame();
@@ -474,7 +556,7 @@ export default function PlayClient() {
         winners={winingStatus}
         uniqTerritories={uniqTerritories}
         isOpen={isChampionModalOpen}
-        onClose={() => setIsChampionModalOpen(false)}
+        onClose={() => updateGameState({ isChampionModalOpen: false })}
         onRestart={restartGame}
       />
 
