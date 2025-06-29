@@ -32,6 +32,7 @@ export default function PlayClient() {
   const router = useRouter();
   const [showShareToast, setShowShareToast] = useState(false);
   const [showRTDTimeoutError, setShowRTDTimeoutError] = useState(false);
+  const shareToastTimeout = useRef<NodeJS.Timeout | null>(null);
   const gameToken = searchParams.get('token');
   const isOnlineMode = !!gameToken;
   
@@ -573,7 +574,13 @@ export default function PlayClient() {
       document.body.removeChild(textArea);
     } finally {
       setShowShareToast(true);
-      setTimeout(() => setShowShareToast(false), 4000);
+      if (shareToastTimeout.current) {
+        clearTimeout(shareToastTimeout.current);
+      }
+      shareToastTimeout.current = setTimeout(() => {
+        setShowShareToast(false);
+        shareToastTimeout.current = null;
+      }, 4000);
     }
   }
   return (
