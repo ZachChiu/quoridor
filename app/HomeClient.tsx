@@ -8,6 +8,9 @@ import IconButton from "./components/IconButton";
 import { LuSwords } from "react-icons/lu";
 import { useGame } from "@/contexts/GameContext";
 import { useRuleModal } from "@/contexts/RuleModalContext";
+import { createGameRoom } from "@/lib/gameService";
+import playerTemplates from "@/config/playerTemplates";
+import { Player } from "./types/chessboard";
 
 export default function HomeClient() {
   const router = useRouter();
@@ -23,11 +26,56 @@ export default function HomeClient() {
   };
 
   const handleStartConnectGame = () => {
-    // trackButtonClick('開始連線對戰');
-    alert('還在準備中啦哈哈哈');
+    setShowOnlineGameOptions(true);
+    trackButtonClick('start_online_game');
+  };
+
+  const handleStartOnlineGame = async (playersNum: number) => {
+    try {
+      setIsCreatingRoom(true);
+      
+      // 建立初始遊戲狀態
+      const initialGameState = {
+        size: 7,
+        board: playersNum === 2 ? playerTemplates.templateBoardTwo : playerTemplates.templateBoardThree,
+        currentPlayer: 'A' as Player,
+        verticalWalls: playerTemplates.templateVerticalWalls,
+        horizontalWalls: playerTemplates.templateHorizontalWalls,
+        selectedChess: null,
+        remainSteps: 2,
+        uniqTerritories: playersNum === 2 ? { A: [], B: [] } : { A: [], B: [], C: [] },
+        flattenTerritoriesObj: {},
+        winingStatus: [],
+        openingStep: playersNum === 2 ? playerTemplates.openingStepTwo : playerTemplates.openingStepThree,
+        isChampionModalOpen: false,
+        breakWallCountObj: { A: 1, B: 1, C: 1 },
+        playersNum
+      };
+      
+      // 建立線上遊戲房間並取得 token
+      const token = await createGameRoom(playersNum, initialGameState);
+      
+      // 更新本地遊戲狀態
+      setGameState({
+        ...gameState,
+        playersNum
+      });
+      
+      // 導向遊戲頁面並帶上 token
+      router.push(`/play?token=${token}`);
+      trackButtonClick(`start_online_game_${playersNum}p`);
+      
+    } catch (error) {
+      console.error('建立線上遊戲房間失敗:', error);
+      alert('建立遊戲房間失敗，請稍後再試');
+    } finally {
+      setIsCreatingRoom(false);
+    }
   };
 
   const [showLocalGameOptions, setShowLocalGameOptions] = useState(false);
+  const [showOnlineGameOptions, setShowOnlineGameOptions] = useState(false);
+  const [isCreatingRoom, setIsCreatingRoom] = useState(false);
 
   const { ruleModalState, setRuleModalState } = useRuleModal();
   const handleRuleBtnOpen = () => {
@@ -44,7 +92,7 @@ export default function HomeClient() {
           <MdOutlineQuestionMark />
         </IconButton>
       </div>
-      {!showLocalGameOptions &&
+      {!showLocalGameOptions && !showOnlineGameOptions &&
         <div className="flex flex-col gap-4">
           <Button
             color="bg-primary-500 flex items-center justify-center gap-2"
@@ -79,6 +127,30 @@ export default function HomeClient() {
             handleClickEvent={() => handleStartLocalGame(3)}
           >
             <LuSwords className="text-2xl"/> 三人對戰
+          </Button>
+        </div>
+      }
+      {showOnlineGameOptions &&
+        <div className={`flex flex-col gap-4`}>
+          <Button
+            color="bg-primary-500 flex justify-center items-center gap-2"
+            handleClickEvent={() => setShowOnlineGameOptions(false)}
+          >
+            <MdDoorBack className="text-2xl"/> 返回
+          </Button>
+          <Button
+            color="bg-primary-600 flex items-center gap-2"
+            handleClickEvent={() => handleStartOnlineGame(2)}
+            disabled={isCreatingRoom}
+          >
+            <MdOutlinePublic className="text-2xl"/> {isCreatingRoom ? '建立中...' : '雙人連線對戰'}
+          </Button>
+          <Button
+            color="bg-primary-700 flex items-center gap-2"
+            handleClickEvent={() => handleStartOnlineGame(3)}
+            disabled={isCreatingRoom}
+          >
+            <MdOutlinePublic className="text-2xl"/> {isCreatingRoom ? '建立中...' : '三人連線對戰'}
           </Button>
         </div>
       }

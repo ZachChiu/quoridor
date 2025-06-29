@@ -1,5 +1,6 @@
 'use client'
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Chessboard from "@/components/Chessboard";
 import SectionShadow from "@/components/SectionShadow";
@@ -22,31 +23,20 @@ import { useGame } from "@/contexts/GameContext";
 import playerTemplates from "@/config/playerTemplates";
 import BreakWallConfirmModal from "@/components/BreakWallConfirmModal";
 import { useConfirm } from "@/hook/useConfirm";
-
-// 統一的遊戲狀態介面定義
-interface GamePlayState {
-  size: number;
-  board: Player[][];
-  currentPlayer: Player;
-  verticalWalls: Player[][];
-  horizontalWalls: Player[][];
-  selectedChess: { row: number; col: number } | null;
-  remainSteps: number;
-  uniqTerritories: { A: string[]; B: string[]; C?: string[] };
-  flattenTerritoriesObj: Record<string, Player>;
-  winingStatus: (Player | 'draw')[];
-  openingStep: Player[];
-  isChampionModalOpen: boolean;
-  breakWallCountObj: { A: number; B: number; C: number };
-  playersNum: number; // 整合原本的 gameState.playersNum
-}
+import { updateGameState as syncGameStateToRTD, subscribeToGameState, GamePlayState } from "@/lib/gameService";
 
 export default function PlayClient() {
   const { gameState } = useGame();
+  const searchParams = useSearchParams();
+  const gameToken = searchParams.get('token');
+  
+  // RTD 初始資料載入狀態
+  const isLoadingRTD = useRef(!!gameToken);
+  const rtdInitialized = useRef(!gameToken);
   
   // 統一管理遊戲狀態
   const [gamePlayState, setGamePlayState] = useState<GamePlayState>({
-    size: 0,
+    size: 7,
     board: playerTemplates.templateBoardTwo,
     currentPlayer: 'A',
     verticalWalls: playerTemplates.templateVerticalWalls,
@@ -59,53 +49,73 @@ export default function PlayClient() {
     openingStep: [],
     isChampionModalOpen: false,
     breakWallCountObj: { A: 1, B: 1, C: 1 },
-    playersNum: gameState.playersNum // 從原始設定取得正確的玩家數量
+    playersNum: gameState.playersNum 
   });
   
   const { 
     size, board, currentPlayer, verticalWalls, horizontalWalls, 
     selectedChess, remainSteps, uniqTerritories, flattenTerritoriesObj,
     winingStatus, openingStep, isChampionModalOpen, breakWallCountObj,
-    playersNum // 整合後的玩家數量
+    playersNum 
   } = gamePlayState;
   
   const isPlacingChess = useMemo(() => !!openingStep.length, [openingStep]);
   const isLock = useMemo(() => !!winingStatus.length, [winingStatus]);
   const isBreakWallAvailable = useMemo(() => playersNum > 2, [playersNum]);
   
-  // 統一狀態更新函數
-  const updateGameState = useCallback((updates: Partial<GamePlayState>) => {
-    setGamePlayState(prev => ({ ...prev, ...updates }));
-  }, []);
-  
-  // TODO 遊戲狀態存檔功能
-  const saveGameState = useCallback(() => {
-    const saveData = {
-      ...gamePlayState,
-      timestamp: Date.now(),
-      version: '1.0'
-    };
-    localStorage.setItem('quoridor_game_save', JSON.stringify(saveData));
-    console.log('遊戲已存檔');
-  }, [gamePlayState]);
-  
-  // TODO 遊戲狀態讀檔功能
-  const loadGameState = useCallback(() => {
-    const savedData = localStorage.getItem('quoridor_game_save');
-    if (savedData) {
-      try {
-        const parsed = JSON.parse(savedData);
-        const { timestamp, version, ...gameData } = parsed;
-        setGamePlayState(gameData);
-        console.log('遊戲已讀檔', { timestamp, version });
-        return true;
-      } catch (error) {
-        console.error('讀檔失敗:', error);
-        return false;
+  // 線上模式：監聽並同步 RTD 狀態
+  useEffect(() => {
+    if (!gameToken) return;
+    
+    // console.log('開始監聽 RTD 狀態，gameToken:', gameToken);
+    isLoadingRTD.current = true;
+    rtdInitialized.current = false;
+    
+    // 監聽遊戲狀態變化
+    const unsubscribe = subscribeToGameState(gameToken, (rtdGameState) => {
+      // console.log('遊戲狀態變化:', rtdGameState);
+      if (rtdGameState) {
+        // 從 RTD 取得狀態並更新本地狀態（不觸發再次同步到 RTD）
+        setGamePlayState(rtdGameState);
+        
+        // 標記 RTD 初始資料已載入完成
+        if (!rtdInitialized.current) {
+          // console.log('RTD 初始資料載入完成');
+          isLoadingRTD.current = false;
+          rtdInitialized.current = true;
+        }
       }
+    });
+    
+    // 清理監聽器
+    return () => {
+      unsubscribe();
+    };
+  }, [gameToken]);
+  
+  // 統一狀態更新函數
+  const updateGameState = useCallback(async (updates: Partial<GamePlayState>) => {
+    // 如果是連線模式且 RTD 初始資料尚未載入完成，則不執行更新
+    if (gameToken && !rtdInitialized.current) {
+      // console.log('RTD 初始資料尚未載入完成，跳過狀態更新:', updates);
+      return;
     }
-    return false;
-  }, []);
+    
+    // 先更新本地狀態
+    setGamePlayState(prev => {
+      const newState = { ...prev, ...updates };
+      
+      // 如果是連線對戰模式，同步到 RTD
+      if (gameToken && rtdInitialized.current) {
+        // console.log('同步遊戲狀態到 RTD:', updates);
+        syncGameStateToRTD(gameToken, newState).catch(error => {
+          // console.error('同步遊戲狀態到 RTD 失敗:', error);
+        });
+      }
+      
+      return newState;
+    });
+  }, [gameToken]);
 
   const selectChess = useCallback((row: number, col: number) => {
     if (remainSteps < 2) {
@@ -484,9 +494,12 @@ export default function PlayClient() {
     trackButtonClick(`restart_local_game_${playersNum}p`);
   }, [playersNum, updateGameState]);
 
-  useEffect(() => {
-    restartGame();
-  }, [restartGame]);
+  /// 連線對戰的話，不用重新開始，直接載入 RTD 資料
+  if (!gameToken) {
+    useEffect(() => {
+      restartGame();
+    }, [restartGame]);
+  }
 
 
   // 當用戶嘗試離開頁面且遊戲尚未結束時顯示確認對話框
@@ -513,6 +526,16 @@ export default function PlayClient() {
   }
   return (
     <>
+      {/* RTD 載入遮罩 */}
+      {isLoadingRTD.current && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
+          <div className="flex flex-col items-center space-y-4 rounded-lg bg-white p-8 shadow-xl">
+            <div className="h-12 w-12 animate-spin rounded-full border-4 border-gray-300 border-t-blue-600"></div>
+            <p className="text-lg font-medium text-gray-700">正在載入遊戲資料...</p>
+          </div>
+        </div>
+      )}
+      
       <Link className="group fixed left-5 top-5 cursor-pointer" href="/" >
         <SectionShadow roundedFull className='size-auto'>
           <div className="relative z-50 block rounded-full border-4 border-gray-900 bg-white p-3 text-xl group-hover:-translate-x-0.5 group-hover:-translate-y-0.5 group-active:translate-x-1 group-active:translate-y-1">
@@ -527,7 +550,7 @@ export default function PlayClient() {
       </div>
 
       {/* 賽況面板 */}
-      <GameStatus isLock={isLock} currentPlayer={currentPlayer} uniqTerritories={uniqTerritories} />
+      <GameStatus isLock={isLock || isLoadingRTD.current} currentPlayer={currentPlayer} uniqTerritories={uniqTerritories} />
 
       {/* 提示面板 */}
       <GameTips isPlacingChess={isPlacingChess} currentPlayer={currentPlayer} winingStatus={winingStatus} breakWallCountObj={breakWallCountObj}/>
@@ -544,7 +567,7 @@ export default function PlayClient() {
           flattenTerritoriesObj={flattenTerritoriesObj}
           breakWallCountObj={breakWallCountObj}
           isBreakWallAvailable={isBreakWallAvailable}
-          isLock={isLock}
+          isLock={isLock || isLoadingRTD.current}
           isPlacingChess={isPlacingChess}
           selectChess={selectChess}
           selectWall={selectWall}
