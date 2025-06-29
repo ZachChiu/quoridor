@@ -610,14 +610,16 @@ export default function PlayClient() {
         </div>
       )}
       {/* 分享成功提示 Toast */}
-      {showShareToast && (
-        <div className="fixed top-2/3 left-1/2 transform -translate-x-1/2 z-[9999] bg-gradient-to-r from-red-600 to-orange-500 text-white px-8 py-4 rounded-xl shadow-2xl">
-          <p className="font-bold text-xl tracking-wide drop-shadow-lg">⚔️ 戰場連結已就緒！</p>
-          <p className="text-white font-medium animate-pulse">
-            🔥 召喚你的對手，決戰時刻即將展開！
-          </p>
-        </div>
-      )}
+      <div className={`fixed top-2/3 left-1/2 transform -translate-x-1/2 z-[100] ${showShareToast ? 'opacity-100' : 'pointer-events-none  opacity-0'} transition-opacity duration-300`}>
+        <SectionShadow>
+          <div className="relative bg-white border-2 border-gray-900 px-8 py-4 rounded-xl shadow-2xl">
+            <p className="font-bold text-xl tracking-wide">⚔️ 戰場連結已就緒！</p>
+            <p className="font-medium animate-pulse">
+                🔥 召喚你的對手，決戰時刻即將展開！ 🔥
+            </p>
+          </div>
+        </SectionShadow>
+      </div>
 
       {/* 賽況面板 */}
       <GameStatus isLock={isLock || isLoadingRTD.current} currentPlayer={currentPlayer} uniqTerritories={uniqTerritories} />
