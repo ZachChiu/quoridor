@@ -129,3 +129,22 @@ export async function getAllGameTokens(): Promise<string[]> {
   return tokens;
 }
 
+/**
+ * 清空所有線上遊戲房間
+ */
+export async function clearAllGameRooms(): Promise<void> { 
+  const gamesRef = ref(database, 'games');
+  const snapshot = await get(gamesRef);
+  
+  if (!snapshot.exists()) {
+    return;
+  }
+  
+  const tokens = Object.keys(snapshot.val());
+  
+  await Promise.all(
+    tokens.map((token) => set(ref(database, `games/${token}`), null))
+  );
+}
+
+

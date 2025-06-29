@@ -8,12 +8,11 @@ import {
   MdPlayArrow,
   MdArrowRight,
   MdInfo,
-  MdPeople,
   MdRefresh,
 } from "react-icons/md";
 import { useRoomListModal } from "@/contexts/RoomListModalContext";
-import { RiTeamFill } from "react-icons/ri";
-import { getAllGameTokens } from "@/lib/gameService";
+import { RiDeleteBin2Fill, RiTeamFill } from "react-icons/ri";
+import { getAllGameTokens, clearAllGameRooms } from "@/lib/gameService";
 import { TbMoodEmptyFilled } from "react-icons/tb";
 import { GiSwordWound } from "react-icons/gi";
 
@@ -30,6 +29,16 @@ const RoomListModal: React.FC = () => {
     });
   };
 
+  const handleRoomListClear = async () => {
+    try {
+      await clearAllGameRooms();
+      setGameTokens([]);
+    } catch (err) {
+      // console.error("清空房間失敗:", err);
+      setError("清空房間失敗，請稍後再試");
+    }
+  };
+
   const loadGameRooms = async () => {
     setIsLoading(true);
     setError(null);
@@ -37,7 +46,7 @@ const RoomListModal: React.FC = () => {
       const tokens = await getAllGameTokens();
       setGameTokens(tokens);
     } catch (err) {
-      console.error("載入房間列表失敗:", err);
+      // console.error("載入房間列表失敗:", err);
       setError("載入房間列表失敗，請稍後再試");
     } finally {
       setIsLoading(false);
@@ -161,14 +170,26 @@ const RoomListModal: React.FC = () => {
               )}
             </div>
 
-            <Button
-              color="bg-primary-400"
-              handleClickEvent={() => handleRoomListBtnOpen()}
-            >
-              <span className="flex items-center gap-2">
-                <MdPlayArrow className="text-2xl" /> 回到大廳
-              </span>
-            </Button>
+            <div className="w-full flex items-center justify-between gap-4">
+              <div className="w-[45%]">
+                <Button
+                  color="bg-primary-600"
+                  handleClickEvent={() => handleRoomListClear()}
+                >
+                  <span className="flex items-center gap-2">
+                    <RiDeleteBin2Fill className="text-2xl" /> 清空
+                  </span>
+                </Button>
+              </div>
+              <Button
+                color="bg-primary-400"
+                handleClickEvent={() => handleRoomListBtnOpen()}
+              >
+                <span className="flex items-center gap-2">
+                  <MdPlayArrow className="text-2xl" /> 回到大廳
+                </span>
+              </Button>
+            </div>
           </div>
         </SectionShadow>
       </div>
