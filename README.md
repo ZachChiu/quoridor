@@ -8,10 +8,9 @@
 
 ## 技術棧
 
-- **前端框架**：Next.js 15
-- **UI 框架**：React 19
+- **前端框架**：Next.js 15、React 19
+- **UI**：Tailwind CSS
 - **語言**：TypeScript
-- **樣式**：Tailwind CSS
 - **工具庫**：Lodash
 - **圖標**：React Icons
 - **分析**：Google Analytics
