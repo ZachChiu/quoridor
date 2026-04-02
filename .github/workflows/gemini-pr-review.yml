@@ -1,0 +1,82 @@
+name: Gemini PR Review
+
+on:
+  pull_request:
+    branches:
+      - main
+      - dev
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Generate PR diff
+        id: diff
+        run: |
+          git fetch origin ${{ github.base_ref }}
+          git diff origin/${{ github.base_ref }}...HEAD > pr_diff.txt
+          echo "Diff generated."
+      - name: Call Gemini API
+        id: gemini
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          # 1. 讀取 diff 檔案 (限制 12000 字元，避免 PR 太大導致腳本崩潰)
+          DIFF_CONTENT=$(cat pr_diff.txt | head -c 12000)
+          
+          # 2. 構建 JSON
+          jq -n --arg msg "你是代碼審查助手。請檢查以下 PR 差異，提出具體改進建議、潛在風險：\n\n$DIFF_CONTENT" \
+            '{contents: [{parts: [{text: $msg}]}]}' > request.json
+          
+          # 3. 呼叫 API (斜線 \ 後面必須直接換行)
+          RESPONSE=$(curl -s -X POST "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}" \
+            -H "Content-Type: application/json" \
+            -d @request.json)
+          
+          # 4. 【除錯用】印出原始回應
+          echo "=== Gemini API 原始回應 ==="
+          echo "$RESPONSE"
+          echo "==========================="
+          
+          # 5. 解析回應內容
+          SUMMARY=$(echo "$RESPONSE" | jq -r '.candidates[0].content.parts[0].text // empty')
+          
+          # 6. 例外處理
+          if [ -z "$SUMMARY" ]; then
+            ERROR_MSG=$(echo "$RESPONSE" | jq -r '.error.message // "未知錯誤，請查看 Actions Log 裡的原始回應"')
+            SUMMARY="❌ AI 未能生成回應，API 錯誤訊息：$ERROR_MSG"
+          fi
+          
+          # 7. 存入環境檔案
+          echo "summary<<EOF" >> $GITHUB_OUTPUT
+          echo "$SUMMARY" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Post review comment
+        uses: actions/github-script@v8
+        env:
+          # 將上一步的輸出先存入環境變數，這是最安全的做法
+          GEMINI_RESULT: ${{ steps.gemini.outputs.summary }}
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            // 從環境變數讀取內容，這樣就不會產生語法錯誤
+            const summary = process.env.GEMINI_RESULT;
+            
+            const commentBody = `### 🤖 Gemini AI Code Review 建議\n\n${summary}`;
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: commentBody
+            });
