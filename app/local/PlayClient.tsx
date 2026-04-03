@@ -16,6 +16,8 @@ import max from 'lodash-es/max';
 import min from 'lodash-es/min';
 
 import { trackButtonClick } from "@/utils/analytics";
+import { buildPieceIndex, getPieceNumber, updatePieceIndex, serializeWGF } from "@/utils/wgf";
+import type { GameAction, PieceIndex, PiecePlacement } from "@/types/wgf";
 import { MdHome, MdOutlineQuestionMark  } from "react-icons/md";
 import { useRuleModal } from "@/contexts/RuleModalContext";
 import { useGame } from "@/contexts/GameContext";
@@ -23,7 +25,7 @@ import playerTemplates from "@/config/playerTemplates";
 import BreakWallConfirmModal from "@/components/BreakWallConfirmModal";
 import { useConfirm } from "@/hook/useConfirm";
 
-export default function PlayClient({ roomId }: { roomId?: string }) {
+export default function PlayClient() {
   const { gameState } = useGame();
   const [size, setSize] = useState(0);
   const [board, setBoard] = useState<Player[][]>(playerTemplates.templateBoardTwo);
@@ -48,6 +50,23 @@ export default function PlayClient({ roomId }: { roomId?: string }) {
   const isLock = useMemo(() => !!winingStatus.length, [winingStatus]);
   const [breakWallCountObj, setBreakWallCountObj] = useState({ A: 1, B: 1, C: 1 });
   const isBreakWallAvailable = useMemo(() => gameState.playersNum > 2, [gameState.playersNum]);
+
+  // WGF 棋譜記錄
+  const [pieceIndex, setPieceIndex] = useState<PieceIndex>({ A: [], B: [], C: [] });
+  const [wgfInitPositions, setWgfInitPositions] = useState<PiecePlacement[]>([]);
+  const [openingPlacements, setOpeningPlacements] = useState<PiecePlacement[]>([]);
+  const [gameTurns, setGameTurns] = useState<GameAction[][]>([]);
+  const [currentTurnActions, setCurrentTurnActions] = useState<GameAction[]>([]);
+
+  useEffect(() => {
+    if (gameTurns.length === 0) return;
+    console.log('[WGF]', serializeWGF({
+      playersNum: gameState.playersNum as 2 | 3,
+      initPositions: wgfInitPositions,
+      openingPlacements,
+      turns: gameTurns,
+    }));
+  }, [gameTurns, gameState.playersNum, wgfInitPositions, openingPlacements]);
 
   const selectChess = useCallback((row: number, col: number) => {
     if (remainSteps < 2) {
@@ -95,10 +114,18 @@ export default function PlayClient({ roomId }: { roomId?: string }) {
         break;
     }
 
+    if (currentPlayer) {
+      const wallDir = (direction === 'top' || direction === 'bottom') ? 'H' : 'V';
+      const wallAction: GameAction = { type: 'placeWall', player: currentPlayer, piece: 0, dir: wallDir, row, col };
+      const completedTurn = [...currentTurnActions, wallAction];
+      setGameTurns(prev => [...prev, completedTurn]);
+      setCurrentTurnActions([]);
+    }
+
     setCurrentPlayer(newCurrentPlayer);
     setRemainSteps(2);
     setSelectedChess(null);
-  }, [currentPlayer, setHorizontalWalls, setVerticalWalls, gameState.playersNum]);
+  }, [currentPlayer, currentTurnActions, setHorizontalWalls, setVerticalWalls, gameState.playersNum]);
 
   const selectCell = useCallback((row: number, col: number) => {
     if (!selectedChess) return;
@@ -112,7 +139,13 @@ export default function PlayClient({ roomId }: { roomId?: string }) {
       newBoard[row][col] = currentPlayer;
       return newBoard;
     });
-  }, [selectedChess, currentPlayer, remainSteps, setSelectedChess, setBoard]);
+
+    if (currentPlayer) {
+      const piece = getPieceNumber(pieceIndex, currentPlayer, selectedChess.row, selectedChess.col);
+      setCurrentTurnActions(prev => [...prev, { type: 'move', player: currentPlayer, piece, row, col }]);
+      setPieceIndex(prev => updatePieceIndex(prev, currentPlayer, selectedChess.row, selectedChess.col, row, col));
+    }
+  }, [selectedChess, currentPlayer, remainSteps, pieceIndex, setSelectedChess, setBoard]);
 
   const setChessPosition = useCallback((row: number, col: number) => {
     setBoard((prev) => {
@@ -123,9 +156,14 @@ export default function PlayClient({ roomId }: { roomId?: string }) {
     const newOpeningStep = [...openingStep];
     newOpeningStep.shift()
     setOpeningStep(newOpeningStep);
-
     setCurrentPlayer(newOpeningStep[0] || 'A');
-  }, [currentPlayer, setBoard, openingStep, setCurrentPlayer]);
+
+    if (currentPlayer) {
+      const piece = pieceIndex[currentPlayer].length + 1;
+      setOpeningPlacements(prev => [...prev, { player: currentPlayer, piece, row, col }]);
+      setPieceIndex(prev => ({ ...prev, [currentPlayer]: [...prev[currentPlayer], { row, col }] }));
+    }
+  }, [currentPlayer, setBoard, openingStep, setCurrentPlayer, pieceIndex]);
 
   const {
     isOpen: isBreakWallModalOpen,
@@ -161,6 +199,11 @@ export default function PlayClient({ roomId }: { roomId?: string }) {
           break;
         default:
           break;
+      }
+
+      if (currentPlayer) {
+        const breakDir = direction === 'horizontal' ? 'H' : 'V';
+        setCurrentTurnActions(prev => [...prev, { type: 'breakWall', player: currentPlayer, piece: 0, dir: breakDir, row, col }]);
       }
     }
   }, [confirmBreakWall, setBreakWallCountObj, setVerticalWalls, setHorizontalWalls, currentPlayer, isBreakWallAvailable]);
@@ -397,6 +440,21 @@ export default function PlayClient({ roomId }: { roomId?: string }) {
     setBreakWallCountObj({ A: 1, B: 1, C: 1 });
     setUniqTerritories({ A: [], B: [], ...(gameState.playersNum >= 3 ? { C: [] } : {}) });
     setFlattenTerritoriesObj({});
+
+    if (gameState.playersNum === 3) {
+      setPieceIndex({ A: [], B: [], C: [] });
+      setWgfInitPositions([]);
+    } else {
+      const index = buildPieceIndex(playerTemplates.templateBoardTwo);
+      setPieceIndex(index);
+      const initPos: PiecePlacement[] = (['A', 'B', 'C'] as const).flatMap(p =>
+        index[p].map(({ row, col }, i) => ({ player: p, piece: i + 1, row, col }))
+      );
+      setWgfInitPositions(initPos);
+    }
+    setOpeningPlacements([]);
+    setGameTurns([]);
+    setCurrentTurnActions([]);
   }, []);
 
   useEffect(() => {

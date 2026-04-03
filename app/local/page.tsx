@@ -7,17 +7,12 @@ export const generateMetadata = async (): Promise<Metadata> => {
   };
 };
 
-export default function Play({
-  searchParams,
-}: {
-  searchParams: { roomId?: string };
-}) {
-  const roomId = searchParams?.roomId;
+export default function Local() {
   return (
     <div className="flex min-h-screen items-center justify-center gap-16 overflow-hidden font-[family-name:var(--font-geist-sans)]">
       <main className="flex flex-1 items-center justify-center gap-8">
         <h1 className="hidden">遊戲對戰 | 牆壁圍棋 Wall Go</h1>
-        <PlayClient/>
+        <PlayClient />
       </main>
     </div>
   );
