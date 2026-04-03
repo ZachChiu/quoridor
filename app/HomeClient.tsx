@@ -1,6 +1,7 @@
 'use client'
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { signInAnonymously } from "firebase/auth";
 import { trackButtonClick } from "@/utils/analytics";
 import { MdDoorBack, MdOutlinePublic, MdOutlineQuestionMark } from "react-icons/md";
 import Button from "./components/Button";
@@ -8,6 +9,9 @@ import IconButton from "./components/IconButton";
 import { LuSwords } from "react-icons/lu";
 import { useGame } from "@/contexts/GameContext";
 import { useRuleModal } from "@/contexts/RuleModalContext";
+import { auth } from "@/utils/firebase";
+import { createRoom } from "@/utils/gameService";
+import type { RoomPlayer } from "@/types/room";
 
 export default function HomeClient() {
   const router = useRouter();
@@ -24,6 +28,7 @@ export default function HomeClient() {
 
   const [showLocalGameOptions, setShowLocalGameOptions] = useState(false);
   const [showConnectGameOptions, setShowConnectGameOptions] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
 
   const { ruleModalState, setRuleModalState } = useRuleModal();
   const handleRuleBtnOpen = () => {
@@ -33,18 +38,23 @@ export default function HomeClient() {
     })
   }
 
-  const generateRoomId = () => {
-    return Math.random().toString(36).substring(2, 10).toUpperCase();
-  };
-
-  const handleStartConnectGame = (playersNum: number) => {
-    const roomId = generateRoomId();
-    setGameState({
-      ...gameState,
-      playersNum,
-    });
-    router.push(`/match?roomId=${roomId}`);
-    trackButtonClick(`start_connect_game_${playersNum}p`);
+  const handleStartConnectGame = async (playersNum: number) => {
+    if (isCreating) return;
+    setIsCreating(true);
+    try {
+      const { user } = await signInAnonymously(auth);
+      const player: RoomPlayer = {
+        uid: user.uid,
+        displayName: `玩家 ${user.uid.slice(0, 4).toUpperCase()}`,
+        joinedAt: Date.now(),
+      };
+      const roomId = await createRoom(playersNum as 2 | 3, 'A', player);
+      setGameState({ ...gameState, playersNum });
+      router.push(`/match?roomId=${roomId}`);
+      trackButtonClick(`start_connect_game_${playersNum}p`);
+    } finally {
+      setIsCreating(false);
+    }
   };
 
   return (

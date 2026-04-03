@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import Link from 'next/link';
 import Chessboard from "@/components/Chessboard";
 import SectionShadow from "@/components/SectionShadow";
@@ -7,6 +7,7 @@ import ChampionModal from "@/components/ChampionModal";
 import GameStatus from "@/components/GameStatus";
 import GameTips from "@/components/GameTips";
 import IconButton from "@/components/IconButton";
+import ShareLinkModal from "@/components/ShareLinkModal";
 
 import type { Player, Direction } from "@/types/chessboard.ts";
 import flatten from 'lodash-es/flatten';
@@ -15,18 +16,116 @@ import cloneDeep from 'lodash-es/cloneDeep';
 import max from 'lodash-es/max';
 import min from 'lodash-es/min';
 
+import { signInAnonymously } from 'firebase/auth';
+import { auth } from '@/utils/firebase';
+import { joinRoom, getRoom, subscribeRoom } from '@/utils/gameService';
+import type { Room, RoomPlayer } from '@/types/room';
+
 import { trackButtonClick } from "@/utils/analytics";
 import { buildPieceIndex, getPieceNumber, updatePieceIndex, serializeWGF } from "@/utils/wgf";
 import type { GameAction, PieceIndex, PiecePlacement } from "@/types/wgf";
-import { MdHome, MdOutlineQuestionMark  } from "react-icons/md";
+import { MdHome, MdOutlineQuestionMark } from "react-icons/md";
 import { useRuleModal } from "@/contexts/RuleModalContext";
 import { useGame } from "@/contexts/GameContext";
 import playerTemplates from "@/config/playerTemplates";
 import BreakWallConfirmModal from "@/components/BreakWallConfirmModal";
 import { useConfirm } from "@/hook/useConfirm";
 
-export default function PlayClient() {
+type OnlinePhase = 'initializing' | 'waiting' | 'playing' | 'error';
+
+interface PlayClientProps {
+  roomId?: string;
+}
+
+export default function PlayClient({ roomId }: PlayClientProps) {
   const { gameState } = useGame();
+  const isOnline = !!roomId;
+
+  // ─── 連線狀態（只在 online 模式使用）────────────────────────────────────────
+  const [phase, setPhase] = useState<OnlinePhase>('initializing');
+  const [room, setRoom] = useState<Room | null>(null);
+  const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [error, setError] = useState('');
+  const initialized = useRef(false);
+
+  const shareUrl =
+    isOnline && typeof window !== 'undefined'
+      ? `${window.location.origin}/match?roomId=${roomId}`
+      : '';
+
+  const playersNum = isOnline ? (room?.playersNum ?? 2) : gameState.playersNum;
+
+  // ─── Firebase 初始化（online only）──────────────────────────────────────────
+  useEffect(() => {
+    if (!isOnline || initialized.current) return;
+    initialized.current = true;
+
+    let unsubscribe: (() => void) | undefined;
+
+    (async () => {
+      try {
+        const { user } = await signInAnonymously(auth);
+
+        const existing = await getRoom(roomId!);
+        if (!existing) {
+          setError('不存在的對局');
+          setPhase('error');
+          return;
+        }
+
+        const slots = (['A', 'B', 'C'] as const).slice(0, existing.playersNum);
+        const myExistingKey = slots.find(s => existing.players[s]?.uid === user.uid);
+
+        let assignedKey: 'A' | 'B' | 'C';
+
+        if (myExistingKey) {
+          assignedKey = myExistingKey;
+        } else {
+          const next = slots.find(s => !existing.players[s]);
+          if (!next) {
+            setError('房間已滿，無法加入');
+            setPhase('error');
+            return;
+          }
+          const player: RoomPlayer = {
+            uid: user.uid,
+            displayName: `玩家 ${user.uid.slice(0, 4).toUpperCase()}`,
+            joinedAt: Date.now(),
+          };
+          await joinRoom(roomId!, next, player);
+          assignedKey = next;
+        }
+
+        // TODO: setMyPlayerKey(assignedKey) — wire up during firebase integration
+
+        unsubscribe = subscribeRoom(roomId!, (updated) => {
+          if (!updated) return;
+          setRoom(updated);
+          const joined = Object.keys(updated.players).length;
+          if (joined >= updated.playersNum) {
+            setPhase('playing');
+            setShareModalOpen(false);
+          } else {
+            setPhase('waiting');
+          }
+        });
+
+        if (assignedKey === 'A') {
+          setShareModalOpen(true);
+        }
+      } catch (e) {
+        console.error(e);
+        setError('連線失敗，請重新整理後再試');
+        setPhase('error');
+      }
+    })();
+
+    return () => {
+      unsubscribe?.();
+    };
+  }, [isOnline, roomId]);
+
+  // ─── 棋盤狀態 ────────────────────────────────────────────────────────────────
   const [size, setSize] = useState(0);
   const [board, setBoard] = useState<Player[][]>(playerTemplates.templateBoardTwo);
   const [currentPlayer, setCurrentPlayer] = useState<Player>('A');
@@ -34,10 +133,6 @@ export default function PlayClient() {
   const [horizontalWalls, setHorizontalWalls] = useState<Player[][]>(playerTemplates.templateHorizontalWalls);
   const [selectedChess, setSelectedChess] = useState<{ row: number; col: number } | null>(null);
   const [remainSteps, setRemainSteps] = useState(2);
-  // const [territories, setTerritories] = useState<{ A: string[][]; B: string[][] }>({
-  //   A: [],
-  //   B: []
-  // });
   const [uniqTerritories, setUniqTerritories] = useState<{ A: string[]; B: string[]; C?: string[] }>({
     A: [],
     B: []
@@ -46,10 +141,10 @@ export default function PlayClient() {
   const [winingStatus, setWiningStatus] = useState<(Player | 'draw')[]>([]);
   const [openingStep, setOpeningStep] = useState<Player[]>([]);
   const [isChampionModalOpen, setIsChampionModalOpen] = useState(false);
-  const isPlacingChess = useMemo(() => !!openingStep.length ,[openingStep])
+  const isPlacingChess = useMemo(() => !!openingStep.length, [openingStep])
   const isLock = useMemo(() => !!winingStatus.length, [winingStatus]);
   const [breakWallCountObj, setBreakWallCountObj] = useState({ A: 1, B: 1, C: 1 });
-  const isBreakWallAvailable = useMemo(() => gameState.playersNum > 2, [gameState.playersNum]);
+  const isBreakWallAvailable = useMemo(() => playersNum > 2, [playersNum]);
 
   // WGF 棋譜記錄
   const [pieceIndex, setPieceIndex] = useState<PieceIndex>({ A: [], B: [], C: [] });
@@ -61,17 +156,15 @@ export default function PlayClient() {
   useEffect(() => {
     if (gameTurns.length === 0) return;
     console.log('[WGF]', serializeWGF({
-      playersNum: gameState.playersNum as 2 | 3,
+      playersNum: playersNum as 2 | 3,
       initPositions: wgfInitPositions,
       openingPlacements,
       turns: gameTurns,
     }));
-  }, [gameTurns, gameState.playersNum, wgfInitPositions, openingPlacements]);
+  }, [gameTurns, playersNum, wgfInitPositions, openingPlacements]);
 
   const selectChess = useCallback((row: number, col: number) => {
-    if (remainSteps < 2) {
-      return;
-    }
+    if (remainSteps < 2) return;
     if (row === selectedChess?.row && col === selectedChess?.col) {
       setSelectedChess(null);
       return;
@@ -101,7 +194,7 @@ export default function PlayClient() {
 
     let newCurrentPlayer: Player = null;
     const turnOrder: Player[] = []
-    switch (gameState.playersNum) {
+    switch (playersNum) {
       case 2:
         turnOrder.push(...playerTemplates.turnOrderTwo);
         newCurrentPlayer = turnOrder[turnOrder.indexOf(currentPlayer) + 1] || turnOrder[0];
@@ -125,7 +218,7 @@ export default function PlayClient() {
     setCurrentPlayer(newCurrentPlayer);
     setRemainSteps(2);
     setSelectedChess(null);
-  }, [currentPlayer, currentTurnActions, setHorizontalWalls, setVerticalWalls, gameState.playersNum]);
+  }, [currentPlayer, currentTurnActions, setHorizontalWalls, setVerticalWalls, playersNum]);
 
   const selectCell = useCallback((row: number, col: number) => {
     if (!selectedChess) return;
@@ -208,90 +301,67 @@ export default function PlayClient() {
     }
   }, [confirmBreakWall, setBreakWallCountObj, setVerticalWalls, setHorizontalWalls, currentPlayer, isBreakWallAvailable]);
 
-  /**
-  * 計算可移動的位置
-  * @param rowIndex - 行索引
-  * @param colIndex - 列索引
-  * @param player - 棋子所屬玩家
-  * @param maxSteps - 最大步數
-  * @returns {Move[]} 可移動的位置
-  */
   const getTerritories = useCallback((
     rowIndex: number,
     colIndex: number,
     player: Player,
     maxSteps: number = 50
   ): { moves: string[], hasEnemy: boolean } => {
-    // 使用 BFS (廣度優先搜索) 來找出所有可到達的位置
     const queue: { row: number, col: number, steps: number }[] = [{ row: rowIndex, col: colIndex, steps: 0 }];
     const visited = new Set<string>();
     const moves: string[] = [];
     let hasEnemy = false;
 
-    // 將起始棋子的位置加入到 moves 陣列中
     const startPosKey = `${rowIndex},${colIndex}`;
     moves.push(startPosKey);
-
-    // 標記起始位置為已訪問
     visited.add(startPosKey);
 
     while (queue.length > 0) {
       const { row, col, steps } = queue.shift()!;
 
-      // 如果已經達到最大步數，則停止
       if (steps >= maxSteps) continue;
 
-      // 檢查四個方向
       const directions = [
-        { dr: -1, dc: 0 }, // 上
-        { dr: 0, dc: 1 },  // 右
-        { dr: 1, dc: 0 },  // 下
-        { dr: 0, dc: -1 }  // 左
+        { dr: -1, dc: 0 },
+        { dr: 0, dc: 1 },
+        { dr: 1, dc: 0 },
+        { dr: 0, dc: -1 }
       ];
 
       for (const { dr, dc } of directions) {
         const r1 = row + dr;
         const c1 = col + dc;
 
-        // 檢查是否在棋盤範圍內
         if (r1 >= 0 && r1 < size && c1 >= 0 && c1 < size) {
-          // 檢查是否有牆擋住
           let hasWall = false;
 
-          // 檢查水平牆
           if (dr === 1 && horizontalWalls[row][col]) {
             hasWall = true;
           } else if (dr === -1 && row > 0 && horizontalWalls[row - 1][col]) {
             hasWall = true;
           }
 
-          // 檢查垂直牆
           if (dc === 1 && verticalWalls[row][col]) {
             hasWall = true;
           } else if (dc === -1 && col > 0 && verticalWalls[row][col - 1]) {
             hasWall = true;
           }
 
-          // 如果沒有牆且位置未訪問過
           if (!hasWall) {
             const posKey = `${r1},${c1}`;
 
             if (!visited.has(posKey)) {
               visited.add(posKey);
 
-              // 檢查該位置是否有棋子
               const cellPlayer = board[r1][c1];
 
               if (cellPlayer === null) {
-                // 空格，可以移動
                 moves.push(posKey);
                 queue.push({ row: r1, col: c1, steps: steps + 1 });
               } else if (cellPlayer === player) {
-                // 同陣營棋子，加入地盤但不能走到這個位置
                 moves.push(posKey);
                 queue.push({ row: r1, col: c1, steps: steps + 1 });
               } else {
-                // 敵方棋子，設置標誌
                 hasEnemy = true;
                 break;
               }
@@ -306,7 +376,6 @@ export default function PlayClient() {
     return { moves, hasEnemy };
   }, [size, horizontalWalls, verticalWalls, board]);
 
-  // 在 calculateChessTerritory 函數中
   const calculateChessTerritory = useCallback((
     chessRow: number,
     chessCol: number,
@@ -314,62 +383,46 @@ export default function PlayClient() {
   ): string[] => {
     if (player === null || !board.length) return [];
 
-    // 使用 BFS 計算所有可能的移動位置，包括同陣營棋子
     const { moves, hasEnemy } = getTerritories(chessRow, chessCol, player);
 
-    // 如果遇到敵方棋子，返回空陣列
-    if (hasEnemy) {
-      return [];
-    }
+    if (hasEnemy) return [];
 
     return moves;
   }, [board, getTerritories]);
 
-  /**
-   * 計算所有棋子的地盤
-   * @returns {{ A: Move[][], B: Move[][] }} 每個玩家的所有棋子地盤，每顆棋子一個陣列
-   */
   const calculateAllTerritories = useCallback((): { A: string[][], B: string[][], C?: string[][] } => {
     const territories: { A: string[][]; B: string[][]; C?: string[][] } = {
       A: [] as string[][],
       B: [] as string[][],
     };
 
-    if (gameState.playersNum === 3) {
+    if (playersNum === 3) {
       territories.C = [] as string[][];
     }
 
-    // 遍歷棋盤上的每個位置
     for (let row = 0; row < size; row++) {
       for (let col = 0; col < size; col++) {
         const player = board[row][col];
         if (player) {
-          // 計算該棋子的地盤
           const territory = calculateChessTerritory(row, col, player);
-
-          // 將地盤加入到對應玩家的地盤列表中，每顆棋子一個陣列
           territories[player]?.push(territory);
         }
       }
     }
 
     return territories;
-  }, [board, size, calculateChessTerritory, gameState.playersNum]);
+  }, [board, size, calculateChessTerritory, playersNum]);
 
-  /**
-   * 當玩家改變時，重新計算地盤
-   */
   useEffect(() => {
-    if (isPlacingChess) {
-      return
-    }
-    const calculatedTerritories: { A: string[][]; B: string[][]; C?: string[][] } = calculateAllTerritories();
+    if (isPlacingChess) return;
+
+    const calculatedTerritories = calculateAllTerritories();
 
     const newFlattenTerritoriesObj: Record<string, Player> = {};
     const newUniqTerritories: { A: string[]; B: string[]; C?: string[] } = {
       A: [],
       B: [],
-      ...(gameState.playersNum >= 3 ? { C: [] } : {})
+      ...(playersNum >= 3 ? { C: [] } : {})
     };
 
     const keys = Object.keys(calculatedTerritories);
@@ -386,18 +439,16 @@ export default function PlayClient() {
       const numberOfA = newUniqTerritories['A']?.length || 0;
       const numberOfB = newUniqTerritories['B'].length || 0;
       const numberOfC = newUniqTerritories['C']?.length || 0;
-      const calcArr = [numberOfA, numberOfB, ...(gameState.playersNum >= 3 ? [numberOfC] : [])];
+      const calcArr = [numberOfA, numberOfB, ...(playersNum >= 3 ? [numberOfC] : [])];
       const maxNumber = max(calcArr);
       const minNumber = min(calcArr);
       if (maxNumber === minNumber) {
-        // 平手
         setWiningStatus(['draw']);
       } else {
-        // 找出所有分數等於 maxNumber 的玩家
         const winners: Player[] = [];
         if (numberOfA === maxNumber) winners.push('A');
         if (numberOfB === maxNumber) winners.push('B');
-        if (gameState.playersNum >= 3 && numberOfC === maxNumber) winners.push('C');
+        if (playersNum >= 3 && numberOfC === maxNumber) winners.push('C');
         setWiningStatus(winners);
       }
       setIsChampionModalOpen(true);
@@ -405,14 +456,10 @@ export default function PlayClient() {
 
     setUniqTerritories(newUniqTerritories);
     setFlattenTerritoriesObj(newFlattenTerritoriesObj);
-    // setTerritories(calculatedTerritories);
-  }, [currentPlayer, calculateAllTerritories, gameState.playersNum, isPlacingChess]);
+  }, [currentPlayer, calculateAllTerritories, playersNum, isPlacingChess]);
 
-  /**
-   * 重新開始遊戲
-   */
   const restartGame = useCallback(() => {
-    switch (gameState.playersNum) {
+    switch (playersNum) {
       case 2:
         setBoard(cloneDeep(playerTemplates.templateBoardTwo));
         setVerticalWalls(cloneDeep(playerTemplates.templateVerticalWalls));
@@ -435,13 +482,13 @@ export default function PlayClient() {
     setRemainSteps(2);
     setWiningStatus([]);
     setIsChampionModalOpen(false);
-    trackButtonClick(`restart_local_game_${gameState.playersNum}p`);
+    trackButtonClick(`restart_local_game_${playersNum}p`);
     setFlattenTerritoriesObj({});
     setBreakWallCountObj({ A: 1, B: 1, C: 1 });
-    setUniqTerritories({ A: [], B: [], ...(gameState.playersNum >= 3 ? { C: [] } : {}) });
+    setUniqTerritories({ A: [], B: [], ...(playersNum >= 3 ? { C: [] } : {}) });
     setFlattenTerritoriesObj({});
 
-    if (gameState.playersNum === 3) {
+    if (playersNum === 3) {
       setPieceIndex({ A: [], B: [], C: [] });
       setWgfInitPositions([]);
     } else {
@@ -455,14 +502,13 @@ export default function PlayClient() {
     setOpeningPlacements([]);
     setGameTurns([]);
     setCurrentTurnActions([]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     restartGame();
   }, [restartGame]);
 
-
-  // 當用戶嘗試離開頁面且遊戲尚未結束時顯示確認對話框
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (winingStatus === null) {
@@ -479,69 +525,127 @@ export default function PlayClient() {
 
   const { ruleModalState, setRuleModalState } = useRuleModal();
   const handleRuleBtnOpen = () => {
-    setRuleModalState({
-      ...ruleModalState,
-      isOpen: true
-    })
+    setRuleModalState({ ...ruleModalState, isOpen: true });
   }
+
+  // ─── 連線模式：初始化中 / 錯誤 ─────────────────────────────────────────────
+  if (isOnline && phase === 'initializing') {
+    return (
+      <div className="flex items-center gap-3 text-lg">
+        <div className="size-4 animate-spin rounded-full border-2 border-gray-900 border-t-transparent"></div>
+        正在連線…
+      </div>
+    );
+  }
+
+  if (isOnline && phase === 'error') {
+    return (
+      <div className="flex flex-col items-center gap-6">
+        <p className="text-lg text-red-500">{error}</p>
+        <Link href="/" className="underline hover:opacity-70">返回首頁</Link>
+      </div>
+    );
+  }
+
+  const joinedCount = Object.keys(room?.players ?? {}).length;
+  const totalCount = room?.playersNum ?? 2;
+
   return (
     <>
-      <Link className="group fixed left-5 top-5 cursor-pointer" href="/" >
+      {/* 首頁按鈕 */}
+      <Link className="group fixed left-5 top-5 cursor-pointer" href="/">
         <SectionShadow roundedFull className='size-auto'>
           <div className="relative z-50 block rounded-full border-4 border-gray-900 bg-white p-3 text-xl group-hover:-translate-x-0.5 group-hover:-translate-y-0.5 group-active:translate-x-1 group-active:translate-y-1">
-            <MdHome  />
+            <MdHome />
           </div>
         </SectionShadow>
       </Link>
-      <div className={`group fixed left-5 top-[calc(2.25rem+52px)] cursor-pointer`}>
+      <div className="group fixed left-5 top-[calc(2.25rem+52px)] cursor-pointer">
         <IconButton handleClickEvent={() => handleRuleBtnOpen()}>
           <MdOutlineQuestionMark />
         </IconButton>
       </div>
 
-      {/* 賽況面板 */}
-      <GameStatus isLock={isLock} currentPlayer={currentPlayer} uniqTerritories={uniqTerritories} />
+      {/* 連線模式：等待畫面 */}
+      {isOnline && phase === 'waiting' && (
+        <div className="flex flex-col items-center gap-6">
+          <div className="flex items-center gap-3 text-lg">
+            <div className="size-4 animate-spin rounded-full border-2 border-gray-900 border-t-transparent"></div>
+            等待其他玩家加入…
+          </div>
+          <p className="text-sm text-gray-500">
+            {joinedCount} / {totalCount} 玩家已加入
+          </p>
+          <SectionShadow>
+            <button
+              onClick={() => setShareModalOpen(true)}
+              className="relative z-10 flex items-center gap-2 rounded-xl border-4 border-gray-900 bg-white px-6 py-3 font-bold transition-transform hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-1 active:translate-y-1"
+            >
+              分享邀請連結
+            </button>
+          </SectionShadow>
+        </div>
+      )}
 
-      {/* 提示面板 */}
-      <GameTips isPlacingChess={isPlacingChess} currentPlayer={currentPlayer} winingStatus={winingStatus} breakWallCountObj={breakWallCountObj}/>
+      {/* 棋盤（本地模式 or 連線模式已開始）*/}
+      {(!isOnline || phase === 'playing') && (
+        <>
+          {/* 賽況面板 */}
+          <GameStatus isLock={isLock} currentPlayer={currentPlayer} uniqTerritories={uniqTerritories} />
 
-      <div className="chessboard-container size-[90dvw] md:size-[90dvh] md:portrait:size-[90dvw] md:landscape:size-[90dvh]">
-        <Chessboard
-          size={size}
-          board={board}
-          verticalWalls={verticalWalls}
-          horizontalWalls={horizontalWalls}
-          currentPlayer={currentPlayer}
-          selectedChess={selectedChess}
-          remainSteps={remainSteps}
-          flattenTerritoriesObj={flattenTerritoriesObj}
-          breakWallCountObj={breakWallCountObj}
-          isBreakWallAvailable={isBreakWallAvailable}
-          isLock={isLock}
-          isPlacingChess={isPlacingChess}
-          selectChess={selectChess}
-          selectWall={selectWall}
-          selectCell={selectCell}
-          setChessPosition={setChessPosition}
-          onClickBreakWall={onClickBreakWall}
-        ></Chessboard>
-      </div>
+          {/* 提示面板 */}
+          <GameTips isPlacingChess={isPlacingChess} currentPlayer={currentPlayer} winingStatus={winingStatus} breakWallCountObj={breakWallCountObj} />
 
-      {/* 冠軍訊息 Modal */}
-      <ChampionModal
-        winners={winingStatus}
-        uniqTerritories={uniqTerritories}
-        isOpen={isChampionModalOpen}
-        onClose={() => setIsChampionModalOpen(false)}
-        onRestart={restartGame}
-      />
+          <div className="chessboard-container size-[90dvw] md:size-[90dvh] md:portrait:size-[90dvw] md:landscape:size-[90dvh]">
+            <Chessboard
+              size={size}
+              board={board}
+              verticalWalls={verticalWalls}
+              horizontalWalls={horizontalWalls}
+              currentPlayer={currentPlayer}
+              selectedChess={selectedChess}
+              remainSteps={remainSteps}
+              flattenTerritoriesObj={flattenTerritoriesObj}
+              breakWallCountObj={breakWallCountObj}
+              isBreakWallAvailable={isBreakWallAvailable}
+              isLock={isLock}
+              isPlacingChess={isPlacingChess}
+              selectChess={selectChess}
+              selectWall={selectWall}
+              selectCell={selectCell}
+              setChessPosition={setChessPosition}
+              onClickBreakWall={onClickBreakWall}
+            />
+          </div>
 
-      {/* 破牆確認 Modal */}
-      <BreakWallConfirmModal
-        isOpen={isBreakWallModalOpen}
-        onClose={handleBreakWallCancel}
-        onCheck={handleBreakWallConfirm}
-      />
+          {/* 冠軍訊息 Modal */}
+          <ChampionModal
+            winners={winingStatus}
+            uniqTerritories={uniqTerritories}
+            isOpen={isChampionModalOpen}
+            onClose={() => setIsChampionModalOpen(false)}
+            onRestart={restartGame}
+          />
+
+          {/* 破牆確認 Modal */}
+          <BreakWallConfirmModal
+            isOpen={isBreakWallModalOpen}
+            onClose={handleBreakWallCancel}
+            onCheck={handleBreakWallConfirm}
+          />
+        </>
+      )}
+
+      {/* 連線模式：分享連結 Modal */}
+      {isOnline && (
+        <ShareLinkModal
+          isOpen={shareModalOpen}
+          shareUrl={shareUrl}
+          joinedCount={joinedCount}
+          totalCount={totalCount}
+          onClose={() => setShareModalOpen(false)}
+        />
+      )}
     </>
   );
 }

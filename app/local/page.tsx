@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import PlayClient from "./PlayClient";
+import PlayClient from "../components/PlayClient";
 
 export const generateMetadata = async (): Promise<Metadata> => {
   return {

@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-此檔案提供 Claude Code (claude.ai/code) 在此專案中工作時的指引。
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## 指令
 
@@ -17,26 +17,70 @@ npm start       # 在本地端提供 /out 靜態檔案
 
 靜態 **Next.js 15** 應用程式（`output: "export"`）— 所有遊戲邏輯皆在客戶端執行。
 
-**透過 React Context 管理狀態**（兩個 Provider 都包裹在 `app/layout.tsx` 中）：
-- `GameContext` — 玩家人數（2 或 3）、遊戲流程狀態
-- `RuleModalContext` — 規則說明 Modal 的顯示狀態
+### 路由
 
-**核心遊戲邏輯完全位於 `app/play/PlayClient.tsx`**：
-- 7×7 棋盤（`Player[][]`），水平與垂直牆壁分開存陣列
-- `getAvailableMovesRecursive()` — 遞迴走法驗證，使用 visited set
-- 洪水填充領地計算 → 勝負判定
-- 三人模式破牆機制（記錄於 `breakWallCountObj`，每位玩家最多 1 次）
-- 開局階段：玩家逐一手動放置棋子（`openingStep[]`）
+| 路由 | 說明 |
+|---|---|
+| `/` | 首頁（`HomeClient.tsx`）— 選擇本機或連線對戰、建立房間 |
+| `/local` | 本機對戰（`local/PlayClient.tsx`） |
+| `/match?roomId=…` | 連線對戰（`MatchClient` → `components/PlayClient`） |
 
-**`app/components/Chessboard.tsx`** 負責棋盤渲染與點擊事件派發；以 `React.memo()` 包裹。
+### 狀態管理（React Context，全包在 `app/layout.tsx`）
 
-**`app/config/playerTemplates.tsx`** 存放 2 人與 3 人模式的初始棋盤狀態、回合順序與牆壁模板。
+- `GameContext` — 玩家人數（2 或 3）、遊戲流程狀態；本機模式用
+- `RuleModalContext` — 規則說明 Modal 顯示狀態
+- `UserContext` — Firebase 匿名 UID，自動登入並持久化至 Cookie
 
-**型別**：`Player`（`'A' | 'B' | 'C' | null`）、`Direction`、`Move` — 定義於 `app/types/chessboard.ts`。
+### 核心遊戲邏輯：`app/components/PlayClient.tsx`
+
+單一元件同時支援本機與連線模式，靠 `roomId?: string` prop 判斷：
+
+- **無 `roomId`** → 本機模式，`playersNum` 讀自 `GameContext`
+- **有 `roomId`** → 連線模式，`playersNum` 讀自 Firebase Room，顯示 initializing / waiting / playing / error 四個 phase
+
+棋盤邏輯：
+- 7×7 棋盤（`Player[][]`），`horizontalWalls[][]` 與 `verticalWalls[][]` 分開存
+- `getTerritories()` — BFS 洪水填充，計算每顆棋子可到達的格子
+- `calculateAllTerritories()` → 領地計算 → 勝負判定（`winingStatus`）
+- 三人模式破牆機制：`breakWallCountObj`，每位玩家最多 1 次
+- 開局階段（`openingStep[]`）：玩家逐一手動放置棋子
+
+`app/local/PlayClient.tsx` 為本機模式的獨立複本（歷史遺留，功能相同）。
+
+### 連線對戰（Firebase）
+
+**Firebase RTDB 路徑：`rooms/{roomId}/`**
+
+```
+id, playersNum, status, createdAt, currentPlayer, wgf
+players/{ A?, B?, C? }/{ uid, displayName, joinedAt }
+```
+
+`status` 生命週期：`waiting` → `opening` → `playing` → `finished`
+
+- `app/utils/firebase.ts` — Firebase 初始化（Auth + RTDB）
+- `app/utils/gameService.ts` — `createRoom`, `joinRoom`, `getRoom`, `subscribeRoom`, `updateGameState`, `setRoomStatus`
+- `app/types/room.ts` — `Room`, `RoomPlayer`, `RoomStatus` 型別
+- `HomeClient.tsx` — 建立房間（`createRoom`）並跳轉 `/match?roomId=…`
+- `MatchClient.tsx` — 薄層，只讀 `useSearchParams` 拿 `roomId` 後渲染 `<PlayClient roomId={roomId} />`
+
+### WGF（Wall Go Format）棋譜
+
+自定義棋譜格式，4 個區塊以 `|` 分隔：
+
+```
+{playersNum}|{init}|{opening}|{turns}
+```
+
+每回合結束後序列化為字串，存入 Firebase `rooms/{roomId}/wgf`。
+
+- `app/utils/wgf.ts` — 完整序列化 / 反序列化邏輯（`serializeWGF`, `parseWGF`, `serializeTurn`, `buildPieceIndex` 等）
+- `app/types/wgf.ts` — `GameAction`, `PieceIndex`, `PiecePlacement`, `WGFRecord` 型別
 
 ## 主要慣例
 
 - **狀態變更**：巢狀狀態一律使用 `cloneDeep()`（lodash-es），禁止直接修改。
+- **型別定義**：統一放 `app/types/`；`app/utils/` 只放邏輯函式。
 - **玩家顏色**：定義為 CSS 變數 `--player-A/B/C`，位於 `app/globals.css` 第 5–45 行；透過 Tailwind 自訂色彩 `player-A`、`player-B`、`player-C` 引用。
 - **響應式斷點**：`portrait`、`landscape`、`md`、`lg`（見 `tailwind.config.ts`）。
 - **數據分析**：使用者觸發的操作請以 `trackButtonClick()` 包裹，來源為 `app/utils/analytics.ts`。
