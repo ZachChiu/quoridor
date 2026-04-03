@@ -22,12 +22,8 @@ export default function HomeClient() {
     trackButtonClick(`start_local_game_${playersNum}p`);
   };
 
-  const handleStartConnectGame = () => {
-    // trackButtonClick('開始連線對戰');
-    alert('還在準備中啦哈哈哈');
-  };
-
   const [showLocalGameOptions, setShowLocalGameOptions] = useState(false);
+  const [showConnectGameOptions, setShowConnectGameOptions] = useState(false);
 
   const { ruleModalState, setRuleModalState } = useRuleModal();
   const handleRuleBtnOpen = () => {
@@ -37,6 +33,20 @@ export default function HomeClient() {
     })
   }
 
+  const generateRoomId = () => {
+    return Math.random().toString(36).substring(2, 10).toUpperCase();
+  };
+
+  const handleStartConnectGame = (playersNum: number) => {
+    const roomId = generateRoomId();
+    setGameState({
+      ...gameState,
+      playersNum,
+    });
+    router.push(`/play?roomId=${roomId}`);
+    trackButtonClick(`start_connect_game_${playersNum}p`);
+  };
+
   return (
     <div className="relative z-20">
       <div className={`group fixed right-5 top-5 cursor-pointer`}>
@@ -44,7 +54,7 @@ export default function HomeClient() {
           <MdOutlineQuestionMark />
         </IconButton>
       </div>
-      {!showLocalGameOptions &&
+      {!showLocalGameOptions && !showConnectGameOptions &&
         <div className="flex flex-col gap-4">
           <Button
             color="bg-primary-500 flex items-center justify-center gap-2"
@@ -54,7 +64,7 @@ export default function HomeClient() {
           </Button>
           <Button
             color="bg-primary-300 flex items-center gap-2"
-            handleClickEvent={() => handleStartConnectGame()}
+            handleClickEvent={() => setShowConnectGameOptions(true)}
           >
             <MdOutlinePublic className="text-2xl" /> 連線對戰
           </Button>
@@ -79,6 +89,28 @@ export default function HomeClient() {
             handleClickEvent={() => handleStartLocalGame(3)}
           >
             <LuSwords className="text-2xl"/> 三人對戰
+          </Button>
+        </div>
+      }
+      {showConnectGameOptions &&
+        <div className={`flex flex-col gap-4`}>
+          <Button
+            color="bg-primary-500 flex justify-center items-center gap-2"
+            handleClickEvent={() => setShowConnectGameOptions(false)}
+          >
+            <MdDoorBack className="text-2xl"/> 返回
+          </Button>
+          <Button
+            color="bg-primary-300 flex items-center gap-2"
+            handleClickEvent={() => handleStartConnectGame(2)}
+          >
+            <MdOutlinePublic className="text-2xl" /> 雙人對戰
+          </Button>
+          <Button
+            color="bg-primary-400 flex items-center gap-2"
+            handleClickEvent={() => handleStartConnectGame(3)}
+          >
+            <MdOutlinePublic className="text-2xl" /> 三人對戰
           </Button>
         </div>
       }

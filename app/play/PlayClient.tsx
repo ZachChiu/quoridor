@@ -23,7 +23,7 @@ import playerTemplates from "@/config/playerTemplates";
 import BreakWallConfirmModal from "@/components/BreakWallConfirmModal";
 import { useConfirm } from "@/hook/useConfirm";
 
-export default function PlayClient() {
+export default function PlayClient({ roomId }: { roomId?: string }) {
   const { gameState } = useGame();
   const [size, setSize] = useState(0);
   const [board, setBoard] = useState<Player[][]>(playerTemplates.templateBoardTwo);
