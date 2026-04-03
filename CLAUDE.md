@@ -1,48 +1,52 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+此檔案提供 Claude Code (claude.ai/code) 在此專案中工作時的指引。
 
-## Commands
+## 指令
 
 ```bash
-npm run dev     # Start dev server (http://localhost:3000)
-npm run build   # Generate static output to /out (also runs next-sitemap postbuild)
-npm run lint    # Run ESLint checks
-npm start       # Serve /out locally
+npm run dev     # 啟動開發伺服器 (http://localhost:3000)
+npm run build   # 產生靜態輸出至 /out（同時執行 next-sitemap postbuild）
+npm run lint    # 執行 ESLint 檢查
+npm start       # 在本地端提供 /out 靜態檔案
 ```
 
-No test suite is configured.
+尚未設定測試套件。
 
-## Architecture
+## 架構
 
-Static **Next.js 15** app (`output: "export"`) — all game logic runs client-side.
+靜態 **Next.js 15** 應用程式（`output: "export"`）— 所有遊戲邏輯皆在客戶端執行。
 
-**State management via React Context** (both providers wrapped in `app/layout.tsx`):
-- `GameContext` — player count (2 or 3), game flow state
-- `RuleModalContext` — rule modal visibility
+**透過 React Context 管理狀態**（兩個 Provider 都包裹在 `app/layout.tsx` 中）：
+- `GameContext` — 玩家人數（2 或 3）、遊戲流程狀態
+- `RuleModalContext` — 規則說明 Modal 的顯示狀態
 
-**Core game logic lives entirely in `app/play/PlayClient.tsx`**:
-- 7×7 board (`Player[][]`), separate horizontal/vertical wall arrays
-- `getAvailableMovesRecursive()` — recursive move validation with a visited set
-- Flood-fill territory calculation → win condition detection
-- 3-player wall destruction mechanic (tracked in `breakWallCountObj`, max 1 per player)
-- Opening phase: players auto-place one piece (`openingStep[]`)
+**核心遊戲邏輯完全位於 `app/play/PlayClient.tsx`**：
+- 7×7 棋盤（`Player[][]`），水平與垂直牆壁分開存陣列
+- `getAvailableMovesRecursive()` — 遞迴走法驗證，使用 visited set
+- 洪水填充領地計算 → 勝負判定
+- 三人模式破牆機制（記錄於 `breakWallCountObj`，每位玩家最多 1 次）
+- 開局階段：玩家逐一手動放置棋子（`openingStep[]`）
 
-**`app/components/Chessboard.tsx`** handles board rendering and click dispatch; wrapped in `React.memo()`.
+**`app/components/Chessboard.tsx`** 負責棋盤渲染與點擊事件派發；以 `React.memo()` 包裹。
 
-**`app/config/playerTemplates.tsx`** holds initial board state, turn order, and wall templates for 2- and 3-player modes.
+**`app/config/playerTemplates.tsx`** 存放 2 人與 3 人模式的初始棋盤狀態、回合順序與牆壁模板。
 
-**Types**: `Player` (`'A' | 'B' | 'C' | null`), `Direction`, `Move` — defined in `app/types/chessboard.ts`.
+**型別**：`Player`（`'A' | 'B' | 'C' | null`）、`Direction`、`Move` — 定義於 `app/types/chessboard.ts`。
 
-## Key Conventions
+## 主要慣例
 
-- **State mutation**: Always use `cloneDeep()` (lodash-es) for nested state; never mutate directly.
-- **Player colors**: Defined as CSS variables `--player-A/B/C` in `app/globals.css` lines 5–45; referenced via Tailwind custom colors `player-A`, `player-B`, `player-C`.
-- **Responsive breakpoints**: `portrait`, `landscape`, `md`, `lg` (see `tailwind.config.ts`).
-- **Analytics**: Wrap user-initiated actions with `trackButtonClick()` from `app/utils/analytics.ts`.
-- **Import alias**: Use `@/*` for `app/*` (e.g., `@/components/Button`).
-- **Context hooks**: Always throw if used outside their provider (see pattern in `GameContext.tsx`).
+- **狀態變更**：巢狀狀態一律使用 `cloneDeep()`（lodash-es），禁止直接修改。
+- **玩家顏色**：定義為 CSS 變數 `--player-A/B/C`，位於 `app/globals.css` 第 5–45 行；透過 Tailwind 自訂色彩 `player-A`、`player-B`、`player-C` 引用。
+- **響應式斷點**：`portrait`、`landscape`、`md`、`lg`（見 `tailwind.config.ts`）。
+- **數據分析**：使用者觸發的操作請以 `trackButtonClick()` 包裹，來源為 `app/utils/analytics.ts`。
+- **Import 別名**：使用 `@/*` 代表 `app/*`（例如 `@/components/Button`）。
+- **Context hooks**：在 Provider 外使用時必須拋出錯誤（參考 `GameContext.tsx` 中的模式）。
 
-## Deployment
+## 部署
 
-GitHub Actions (`.github/workflows/`) builds and syncs `/out` to AWS S3. Set `SITE_URL` env var to override the default `https://quoridorgame.com` for sitemap generation.
+GitHub Actions（`.github/workflows/`）負責建置並將 `/out` 同步至 AWS S3。設定 `SITE_URL` 環境變數可覆蓋預設的 `https://quoridorgame.com` 以產生 sitemap。
+
+## 其他規範
+
+每次對話結尾都要說：Zach + 隨機稱讚語
