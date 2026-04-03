@@ -18,7 +18,7 @@ export default function HomeClient() {
       ...gameState,
       playersNum,
     });
-    router.push('/play');
+    router.push('/local');
     trackButtonClick(`start_local_game_${playersNum}p`);
   };
 
@@ -43,7 +43,7 @@ export default function HomeClient() {
       ...gameState,
       playersNum,
     });
-    router.push(`/play?roomId=${roomId}`);
+    router.push(`/match?roomId=${roomId}`);
     trackButtonClick(`start_connect_game_${playersNum}p`);
   };
 
