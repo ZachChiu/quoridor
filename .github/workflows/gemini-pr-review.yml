@@ -5,78 +5,170 @@ on:
     branches:
       - main
       - dev
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: PR number to review
+        required: true
+        type: number
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.event.inputs.pr_number }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
 
 permissions:
   contents: read
+  id-token: write
+  issues: write
   pull-requests: write
+  statuses: write
 
 jobs:
   review:
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     runs-on: ubuntu-latest
+    timeout-minutes: 7
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
-      - name: Generate PR diff
-        id: diff
-        run: |
-          git fetch origin ${{ github.base_ref }}
-          git diff origin/${{ github.base_ref }}...HEAD > pr_diff.txt
-          echo "Diff generated."
-      - name: Call Gemini API
-        id: gemini
+      - name: Resolve PR context
+        id: pr
         env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          EVENT_NAME: ${{ github.event_name }}
+          WORKFLOW_PR_NUMBER: ${{ github.event.inputs.pr_number }}
+          PULL_REQUEST_NUMBER: ${{ github.event.pull_request.number }}
+          REPOSITORY: ${{ github.repository }}
         run: |
-          # 1. 讀取 diff 檔案 (限制 12000 字元，避免 PR 太大導致腳本崩潰)
-          DIFF_CONTENT=$(cat pr_diff.txt | head -c 12000)
-          
-          # 2. 構建 JSON
-          jq -n --arg msg "你是代碼審查助手。請檢查以下 PR 差異，提出具體改進建議、潛在風險：\n\n$DIFF_CONTENT" \
-            '{contents: [{parts: [{text: $msg}]}]}' > request.json
-          
-          # 3. 呼叫 API (斜線 \ 後面必須直接換行)
-          RESPONSE=$(curl -s -X POST "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}" \
-            -H "Content-Type: application/json" \
-            -d @request.json)
-          
-          # 4. 【除錯用】印出原始回應
-          echo "=== Gemini API 原始回應 ==="
-          echo "$RESPONSE"
-          echo "==========================="
-          
-          # 5. 解析回應內容
-          SUMMARY=$(echo "$RESPONSE" | jq -r '.candidates[0].content.parts[0].text // empty')
-          
-          # 6. 例外處理
-          if [ -z "$SUMMARY" ]; then
-            ERROR_MSG=$(echo "$RESPONSE" | jq -r '.error.message // "未知錯誤，請查看 Actions Log 裡的原始回應"')
-            SUMMARY="❌ AI 未能生成回應，API 錯誤訊息：$ERROR_MSG"
-          fi
-          
-          # 7. 存入環境檔案
-          echo "summary<<EOF" >> $GITHUB_OUTPUT
-          echo "$SUMMARY" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          set -euo pipefail
 
-      - name: Post review comment
+          if [[ "${EVENT_NAME}" == "workflow_dispatch" ]]; then
+            PR_NUMBER="${WORKFLOW_PR_NUMBER}"
+          else
+            PR_NUMBER="${PULL_REQUEST_NUMBER}"
+          fi
+
+          echo "pr_number=${PR_NUMBER}" >> "${GITHUB_OUTPUT}"
+          echo "repository=${REPOSITORY}" >> "${GITHUB_OUTPUT}"
+
+          PR_DATA="$(gh pr view "${PR_NUMBER}" --repo "${REPOSITORY}" --json title,body,additions,deletions,changedFiles,baseRefName,headRefName)"
+          {
+            echo "pr_data<<EOF"
+            echo "${PR_DATA}"
+            echo "EOF"
+          } >> "${GITHUB_OUTPUT}"
+
+          CHANGED_FILES="$(gh pr diff "${PR_NUMBER}" --repo "${REPOSITORY}" --name-only)"
+          {
+            echo "changed_files<<EOF"
+            echo "${CHANGED_FILES}"
+            echo "EOF"
+          } >> "${GITHUB_OUTPUT}"
+
+      - name: Run Gemini PR review
+        id: gemini
+        uses: google-github-actions/run-gemini-cli@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
+          gemini_cli_version: ${{ vars.GEMINI_CLI_VERSION || 'latest' }}
+          gemini_model: gemini-2.5-flash
+          settings: |-
+            {
+              "maxSessionTurns": 20,
+              "coreTools": [
+                "run_shell_command(echo)",
+                "run_shell_command(gh pr view)",
+                "run_shell_command(gh pr diff)",
+                "run_shell_command(cat)",
+                "run_shell_command(head)",
+                "run_shell_command(tail)",
+                "run_shell_command(grep)"
+              ],
+              "telemetry": {
+                "enabled": false,
+                "target": "gcp"
+              }
+            }
+          prompt: |-
+            ## PR Context
+            Repository: ${{ steps.pr.outputs.repository }}
+            PR Number: ${{ steps.pr.outputs.pr_number }}
+
+            PR Data:
+            ${{ steps.pr.outputs.pr_data }}
+
+            Changed Files:
+            ${{ steps.pr.outputs.changed_files }}
+
+            ## 角色
+            你是一位資深程式碼審查助手。請逐檔審查這個 PR，並產出可直接張貼到 GitHub PR 留言區的審查摘要。
+
+            ## 語言要求
+            - 所有輸出一律使用繁體中文（zh-TW）。
+            - 嚴禁使用英文作為主要回覆語言，除非是程式碼、指令、檔名、API 名稱或必要技術名詞。
+
+            ## 審查原則
+            1. 先閱讀上方的 PR metadata 與 changed files。
+            2. 執行 `gh pr diff "${{ steps.pr.outputs.pr_number }}" --repo "${{ steps.pr.outputs.repository }}"` 檢查 patch。
+            3. 若需要補充上下文，只能針對變更相關檔案使用 `cat`、`head`、`tail`、`grep`。
+            4. 只指出真實且可執行的問題：功能錯誤、回歸風險、正確性問題、安全性問題、型別/API 誤用，或明顯的維護性風險。
+            5. 如果沒有可執行的問題，不要硬湊評論；明確寫出「本次未發現需要修正的問題」即可。
+
+            ## 輸出格式
+            請輸出繁體中文 Markdown，格式如下：
+
+            ### Gemini PR Review
+            - 整體結論：一句話摘要
+            - 主要風險：
+              - [高|中|低] 檔案路徑：問題說明
+            - 建議：
+              - 簡短、可執行的建議
+
+            若沒有發現問題，請改成：
+
+            ### Gemini PR Review
+            - 整體結論：本次未發現需要修正的問題。
+            - 補充：可簡短提醒尚未驗證的風險或測試缺口。
+
+      - name: Post Gemini review comment
+        if: ${{ success() && steps.gemini.outputs.summary != '' }}
         uses: actions/github-script@v8
         env:
-          # 將上一步的輸出先存入環境變數，這是最安全的做法
-          GEMINI_RESULT: ${{ steps.gemini.outputs.summary }}
+          GEMINI_SUMMARY: ${{ steps.gemini.outputs.summary }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            // 從環境變數讀取內容，這樣就不會產生語法錯誤
-            const summary = process.env.GEMINI_RESULT;
-            
-            const commentBody = `### 🤖 Gemini AI Code Review 建議\n\n${summary}`;
-            
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: context.issue.number,
-              body: commentBody
+              issue_number: Number('${{ steps.pr.outputs.pr_number }}'),
+              body: process.env.GEMINI_SUMMARY
+            });
+
+      - name: Post fallback failure comment
+        if: ${{ failure() && steps.gemini.outcome == 'failure' }}
+        uses: actions/github-script@v8
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: Number('${{ steps.pr.outputs.pr_number }}'),
+              body: 'Gemini PR review 執行失敗，請檢查 workflow logs。'
             });
