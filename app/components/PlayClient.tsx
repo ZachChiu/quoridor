@@ -18,16 +18,16 @@ import min from 'lodash-es/min';
 
 import { signInAnonymously } from 'firebase/auth';
 import { auth } from '@/utils/firebase';
-import { joinRoom, getRoom, subscribeRoom } from '@/utils/gameService';
+import { joinRoom, getRoom, subscribeRoom, updateGameState, setRoomWinner } from '@/utils/gameService';
 import type { Room, RoomPlayer } from '@/types/room';
 
 import { trackButtonClick } from "@/utils/analytics";
-import { buildPieceIndex, getPieceNumber, updatePieceIndex, serializeWGF } from "@/utils/wgf";
+import { buildPieceIndex, getPieceNumber, updatePieceIndex, serializeWGF, parseWGF } from "@/utils/wgf";
 import type { GameAction, PieceIndex, PiecePlacement } from "@/types/wgf";
 import { MdHome, MdOutlineQuestionMark } from "react-icons/md";
 import { useRuleModal } from "@/contexts/RuleModalContext";
 import { useGame } from "@/contexts/GameContext";
-import playerTemplates from "@/config/playerTemplates";
+import playerTemplates, { openingStepTwo, openingStepThree, turnOrderTwo, turnOrderThree } from "@/config/playerTemplates";
 import BreakWallConfirmModal from "@/components/BreakWallConfirmModal";
 import { useConfirm } from "@/hook/useConfirm";
 
@@ -44,6 +44,7 @@ export default function PlayClient({ roomId }: PlayClientProps) {
   // ─── 連線狀態（只在 online 模式使用）────────────────────────────────────────
   const [phase, setPhase] = useState<OnlinePhase>('initializing');
   const [room, setRoom] = useState<Room | null>(null);
+  const [myPlayerKey, setMyPlayerKey] = useState<'A' | 'B' | 'C' | null>(null);
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [error, setError] = useState('');
   const initialized = useRef(false);
@@ -96,7 +97,7 @@ export default function PlayClient({ roomId }: PlayClientProps) {
           assignedKey = next;
         }
 
-        // TODO: setMyPlayerKey(assignedKey) — wire up during firebase integration
+        setMyPlayerKey(assignedKey);
 
         unsubscribe = subscribeRoom(roomId!, (updated) => {
           if (!updated) return;
@@ -153,26 +154,101 @@ export default function PlayClient({ roomId }: PlayClientProps) {
   const [gameTurns, setGameTurns] = useState<GameAction[][]>([]);
   const [currentTurnActions, setCurrentTurnActions] = useState<GameAction[]>([]);
 
+  // Refs for stale-closure access in callbacks（每次 render 同步）
+  const gameTurnsRef = useRef(gameTurns);
+  gameTurnsRef.current = gameTurns;
+  const openingPlacementsRef = useRef(openingPlacements);
+  openingPlacementsRef.current = openingPlacements;
+  const wgfInitPositionsRef = useRef(wgfInitPositions);
+  wgfInitPositionsRef.current = wgfInitPositions;
+  // 避免 Firebase subscription echo 觸發重播
+  const lastAppliedWgf = useRef<string>('');
+
+  // 只有輪到我的時候才能操作（遊戲結束後一律鎖定）
+  const isMyTurn = useMemo(() => {
+    if (isLock) return false;
+    if (!isOnline || !myPlayerKey) return true;
+    if (isPlacingChess) return openingStep[0] === myPlayerKey;
+    return currentPlayer === myPlayerKey;
+  }, [isLock, isOnline, myPlayerKey, isPlacingChess, openingStep, currentPlayer]);
+
+  // 從 WGF 重建完整棋盤狀態（空棋盤出發，套用 init → opening → turns）
+  const replayFromWgf = useCallback((incoming: ReturnType<typeof parseWGF>) => {
+    const newBoard: Player[][] = Array.from({ length: 7 }, () => Array(7).fill(null));
+    const newHWalls: (Player | null)[][] = Array.from({ length: 7 }, () => Array(7).fill(null));
+    const newVWalls: (Player | null)[][] = Array.from({ length: 7 }, () => Array(7).fill(null));
+    const newPieceIndex: PieceIndex = { A: [], B: [], C: [] };
+    const newBreakWallCount = { A: 1, B: 1, C: 1 };
+
+    for (const pos of incoming.initPositions) {
+      newBoard[pos.row][pos.col] = pos.player as Player;
+      newPieceIndex[pos.player][pos.piece - 1] = { row: pos.row, col: pos.col };
+    }
+    for (const pos of incoming.openingPlacements) {
+      newBoard[pos.row][pos.col] = pos.player as Player;
+      newPieceIndex[pos.player][pos.piece - 1] = { row: pos.row, col: pos.col };
+    }
+    for (const turn of incoming.turns) {
+      for (const action of turn) {
+        if (action.type === 'move') {
+          const old = newPieceIndex[action.player][action.piece - 1];
+          if (old) newBoard[old.row][old.col] = null;
+          newBoard[action.row][action.col] = action.player as Player;
+          newPieceIndex[action.player][action.piece - 1] = { row: action.row, col: action.col };
+        } else if (action.type === 'placeWall') {
+          if (action.dir === 'H') newHWalls[action.row][action.col] = action.player as Player;
+          else newVWalls[action.row][action.col] = action.player as Player;
+        } else if (action.type === 'breakWall') {
+          if (action.dir === 'H') newHWalls[action.row][action.col] = null;
+          else newVWalls[action.row][action.col] = null;
+          newBreakWallCount[action.player]--;
+        }
+      }
+    }
+
+    const openingStepFull = incoming.playersNum === 2 ? openingStepTwo : openingStepThree;
+    const newOpeningStep = openingStepFull.slice(incoming.openingPlacements.length);
+    const turnOrder = incoming.playersNum === 2 ? turnOrderTwo : turnOrderThree;
+    const newCurrentPlayer: Player = newOpeningStep.length > 0
+      ? newOpeningStep[0]
+      : (turnOrder[incoming.turns.length % turnOrder.length] as Player);
+
+    setBoard(newBoard);
+    setHorizontalWalls(newHWalls);
+    setVerticalWalls(newVWalls);
+    setPieceIndex(newPieceIndex);
+    setWgfInitPositions(incoming.initPositions);
+    setOpeningPlacements(incoming.openingPlacements);
+    setGameTurns(incoming.turns);
+    setCurrentTurnActions([]);
+    setOpeningStep(newOpeningStep);
+    setCurrentPlayer(newCurrentPlayer);
+    setRemainSteps(2);
+    setSelectedChess(null);
+    setBreakWallCountObj(newBreakWallCount);
+  }, [setBoard, setHorizontalWalls, setVerticalWalls, setPieceIndex, setWgfInitPositions,
+      setOpeningPlacements, setGameTurns, setCurrentTurnActions, setOpeningStep,
+      setCurrentPlayer, setRemainSteps, setSelectedChess, setBreakWallCountObj]);
+
+  // 讀路徑：監聽 Firebase WGF，非自己寫的就重播
   useEffect(() => {
-    if (gameTurns.length === 0) return;
-    console.log('[WGF]', serializeWGF({
-      playersNum: playersNum as 2 | 3,
-      initPositions: wgfInitPositions,
-      openingPlacements,
-      turns: gameTurns,
-    }));
-  }, [gameTurns, playersNum, wgfInitPositions, openingPlacements]);
+    if (!isOnline || !room?.wgf || room.wgf === lastAppliedWgf.current) return;
+    lastAppliedWgf.current = room.wgf;
+    replayFromWgf(parseWGF(room.wgf));
+  }, [room?.wgf, isOnline, replayFromWgf]);
 
   const selectChess = useCallback((row: number, col: number) => {
+    if (!isMyTurn) return;
     if (remainSteps < 2) return;
     if (row === selectedChess?.row && col === selectedChess?.col) {
       setSelectedChess(null);
       return;
     }
     setSelectedChess({ row, col });
-  }, [selectedChess, remainSteps]);
+  }, [isMyTurn, selectedChess, remainSteps]);
 
   const selectWall = useCallback((row: number, col: number, direction: Direction) => {
+    if (!isMyTurn) return;
     switch (direction) {
       case 'top':
       case 'bottom':
@@ -213,15 +289,27 @@ export default function PlayClient({ roomId }: PlayClientProps) {
       const completedTurn = [...currentTurnActions, wallAction];
       setGameTurns(prev => [...prev, completedTurn]);
       setCurrentTurnActions([]);
+
+      if (isOnline && roomId && newCurrentPlayer) {
+        const newTurns = [...gameTurnsRef.current, completedTurn];
+        const wgfStr = serializeWGF({
+          playersNum: playersNum as 2 | 3,
+          initPositions: wgfInitPositionsRef.current,
+          openingPlacements: openingPlacementsRef.current,
+          turns: newTurns,
+        });
+        lastAppliedWgf.current = wgfStr;
+        updateGameState(roomId, wgfStr, newCurrentPlayer as 'A' | 'B' | 'C');
+      }
     }
 
     setCurrentPlayer(newCurrentPlayer);
     setRemainSteps(2);
     setSelectedChess(null);
-  }, [currentPlayer, currentTurnActions, setHorizontalWalls, setVerticalWalls, playersNum]);
+  }, [isMyTurn, currentPlayer, currentTurnActions, setHorizontalWalls, setVerticalWalls, playersNum, isOnline, roomId]);
 
   const selectCell = useCallback((row: number, col: number) => {
-    if (!selectedChess) return;
+    if (!isMyTurn || !selectedChess) return;
     setSelectedChess({ row, col });
     const gap = remainSteps - (Math.abs((selectedChess.row) - row) + Math.abs((selectedChess.col) - col));
     setRemainSteps(gap);
@@ -238,9 +326,10 @@ export default function PlayClient({ roomId }: PlayClientProps) {
       setCurrentTurnActions(prev => [...prev, { type: 'move', player: currentPlayer, piece, row, col }]);
       setPieceIndex(prev => updatePieceIndex(prev, currentPlayer, selectedChess.row, selectedChess.col, row, col));
     }
-  }, [selectedChess, currentPlayer, remainSteps, pieceIndex, setSelectedChess, setBoard]);
+  }, [isMyTurn, selectedChess, currentPlayer, remainSteps, pieceIndex, setSelectedChess, setBoard]);
 
   const setChessPosition = useCallback((row: number, col: number) => {
+    if (!isMyTurn) return;
     setBoard((prev) => {
       const newBoard = [...prev];
       newBoard[row][col] = currentPlayer;
@@ -253,10 +342,24 @@ export default function PlayClient({ roomId }: PlayClientProps) {
 
     if (currentPlayer) {
       const piece = pieceIndex[currentPlayer].length + 1;
-      setOpeningPlacements(prev => [...prev, { player: currentPlayer, piece, row, col }]);
+      const newPlacement = { player: currentPlayer, piece, row, col };
+      setOpeningPlacements(prev => [...prev, newPlacement]);
       setPieceIndex(prev => ({ ...prev, [currentPlayer]: [...prev[currentPlayer], { row, col }] }));
+
+      if (isOnline && roomId) {
+        const newPlacements = [...openingPlacementsRef.current, newPlacement];
+        const nextPlayer = (newOpeningStep[0] || 'A') as 'A' | 'B' | 'C';
+        const wgfStr = serializeWGF({
+          playersNum: playersNum as 2 | 3,
+          initPositions: wgfInitPositionsRef.current,
+          openingPlacements: newPlacements,
+          turns: gameTurnsRef.current,
+        });
+        lastAppliedWgf.current = wgfStr;
+        updateGameState(roomId, wgfStr, nextPlayer);
+      }
     }
-  }, [currentPlayer, setBoard, openingStep, setCurrentPlayer, pieceIndex]);
+  }, [isMyTurn, currentPlayer, setBoard, openingStep, setCurrentPlayer, pieceIndex, isOnline, roomId, playersNum]);
 
   const {
     isOpen: isBreakWallModalOpen,
@@ -266,7 +369,7 @@ export default function PlayClient({ roomId }: PlayClientProps) {
   } = useConfirm();
 
   const onClickBreakWall = useCallback(async (row: number, col: number, direction: 'horizontal' | 'vertical') => {
-    if (!isBreakWallAvailable) return;
+    if (!isMyTurn || !isBreakWallAvailable) return;
 
     const ok = await confirmBreakWall();
     if (ok) {
@@ -299,7 +402,7 @@ export default function PlayClient({ roomId }: PlayClientProps) {
         setCurrentTurnActions(prev => [...prev, { type: 'breakWall', player: currentPlayer, piece: 0, dir: breakDir, row, col }]);
       }
     }
-  }, [confirmBreakWall, setBreakWallCountObj, setVerticalWalls, setHorizontalWalls, currentPlayer, isBreakWallAvailable]);
+  }, [isMyTurn, confirmBreakWall, setBreakWallCountObj, setVerticalWalls, setHorizontalWalls, currentPlayer, isBreakWallAvailable]);
 
   const getTerritories = useCallback((
     rowIndex: number,
@@ -458,6 +561,33 @@ export default function PlayClient({ roomId }: PlayClientProps) {
     setFlattenTerritoriesObj(newFlattenTerritoriesObj);
   }, [currentPlayer, calculateAllTerritories, playersNum, isPlacingChess]);
 
+  // 遊戲結束時，由房主（A）負責寫入勝者資訊
+  useEffect(() => {
+    if (!isOnline || !roomId || myPlayerKey !== 'A' || winingStatus.length === 0) return;
+    setRoomWinner(roomId, winingStatus as ('A' | 'B' | 'C' | 'draw')[]);
+  }, [isOnline, roomId, myPlayerKey, winingStatus]);
+
+  // 跳過「所有棋子占地已確定且無破牆機會」的玩家
+  useEffect(() => {
+    if (isPlacingChess || isLock || !currentPlayer) return;
+
+    // 仍有破牆機會，不跳過
+    if (isBreakWallAvailable && breakWallCountObj[currentPlayer as Exclude<Player, null>] > 0) return;
+
+    // 計算當前玩家每顆棋子的領地（利用最新棋盤狀態）
+    const territories = calculateAllTerritories();
+    const playerTerritories = territories[currentPlayer as Exclude<Player, null>];
+
+    // 玩家無棋子，或有任一棋子領地仍未確定（空陣列 = 遇到敵方），不跳過
+    if (!playerTerritories || playerTerritories.length === 0) return;
+    if (!playerTerritories.every(t => t.length > 0)) return;
+
+    // 所有棋子占地已確定 → 跳過此回合
+    const order: Player[] = playersNum === 2 ? [...turnOrderTwo] : [...turnOrderThree];
+    const idx = order.indexOf(currentPlayer);
+    setCurrentPlayer(order[(idx + 1) % order.length]);
+  }, [currentPlayer, isPlacingChess, isLock, isBreakWallAvailable, breakWallCountObj, calculateAllTerritories, playersNum]);
+
   const restartGame = useCallback(() => {
     switch (playersNum) {
       case 2:
@@ -554,7 +684,7 @@ export default function PlayClient({ roomId }: PlayClientProps) {
     <>
       {/* 首頁按鈕 */}
       <Link className="group fixed left-5 top-5 cursor-pointer" href="/">
-        <SectionShadow roundedFull className='size-auto'>
+        <SectionShadow roundedFull>
           <div className="relative z-50 block rounded-full border-4 border-gray-900 bg-white p-3 text-xl group-hover:-translate-x-0.5 group-hover:-translate-y-0.5 group-active:translate-x-1 group-active:translate-y-1">
             <MdHome />
           </div>
@@ -576,7 +706,7 @@ export default function PlayClient({ roomId }: PlayClientProps) {
           <p className="text-sm text-gray-500">
             {joinedCount} / {totalCount} 玩家已加入
           </p>
-          <SectionShadow>
+          <SectionShadow className='!size-auto'>
             <button
               onClick={() => setShareModalOpen(true)}
               className="relative z-10 flex items-center gap-2 rounded-xl border-4 border-gray-900 bg-white px-6 py-3 font-bold transition-transform hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-1 active:translate-y-1"
@@ -591,7 +721,7 @@ export default function PlayClient({ roomId }: PlayClientProps) {
       {(!isOnline || phase === 'playing') && (
         <>
           {/* 賽況面板 */}
-          <GameStatus isLock={isLock} currentPlayer={currentPlayer} uniqTerritories={uniqTerritories} />
+          <GameStatus isLock={isLock} currentPlayer={currentPlayer} uniqTerritories={uniqTerritories} playersNum={playersNum} />
 
           {/* 提示面板 */}
           <GameTips isPlacingChess={isPlacingChess} currentPlayer={currentPlayer} winingStatus={winingStatus} breakWallCountObj={breakWallCountObj} />
@@ -609,7 +739,7 @@ export default function PlayClient({ roomId }: PlayClientProps) {
               breakWallCountObj={breakWallCountObj}
               isBreakWallAvailable={isBreakWallAvailable}
               isLock={isLock}
-              isPlacingChess={isPlacingChess}
+              isPlacingChess={isPlacingChess && isMyTurn}
               selectChess={selectChess}
               selectWall={selectWall}
               selectCell={selectCell}

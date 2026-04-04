@@ -26,4 +26,5 @@ export type Room = {
   currentPlayer: 'A' | 'B' | 'C';
   players: Partial<Record<'A' | 'B' | 'C', RoomPlayer>>;
   wgf: string;
+  winners?: ('A' | 'B' | 'C' | 'draw')[];
 };

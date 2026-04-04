@@ -12,6 +12,9 @@ import { useRuleModal } from "@/contexts/RuleModalContext";
 import { auth } from "@/utils/firebase";
 import { createRoom } from "@/utils/gameService";
 import type { RoomPlayer } from "@/types/room";
+import { serializeWGF, buildPieceIndex } from "@/utils/wgf";
+import playerTemplates from "@/config/playerTemplates";
+import type { PiecePlacement } from "@/types/wgf";
 
 export default function HomeClient() {
   const router = useRouter();
@@ -48,7 +51,19 @@ export default function HomeClient() {
         displayName: `玩家 ${user.uid.slice(0, 4).toUpperCase()}`,
         joinedAt: Date.now(),
       };
-      const roomId = await createRoom(playersNum as 2 | 3, 'A', player);
+
+      let initialWgf: string;
+      if (playersNum === 2) {
+        const index = buildPieceIndex(playerTemplates.templateBoardTwo);
+        const initPositions: PiecePlacement[] = (['A', 'B', 'C'] as const).flatMap(p =>
+          index[p].map(({ row, col }, i) => ({ player: p, piece: i + 1, row, col }))
+        );
+        initialWgf = serializeWGF({ playersNum: 2, initPositions, openingPlacements: [], turns: [] });
+      } else {
+        initialWgf = serializeWGF({ playersNum: 3, initPositions: [], openingPlacements: [], turns: [] });
+      }
+
+      const roomId = await createRoom(playersNum as 2 | 3, 'A', player, initialWgf);
       setGameState({ ...gameState, playersNum });
       router.push(`/match?roomId=${roomId}`);
       trackButtonClick(`start_connect_game_${playersNum}p`);

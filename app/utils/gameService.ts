@@ -27,7 +27,8 @@ export type { Room, RoomStatus, RoomPlayer } from '@/types/room';
 export async function createRoom(
   playersNum: 2 | 3,
   playerKey: 'A' | 'B' | 'C',
-  player: RoomPlayer
+  player: RoomPlayer,
+  initialWgf: string = ''
 ): Promise<string> {
   const roomRef = push(ref(db, 'rooms'));
   const roomId = roomRef.key!;
@@ -38,7 +39,7 @@ export async function createRoom(
     createdAt: Date.now(),
     currentPlayer: 'A',
     players: { [playerKey]: player },
-    wgf: '',
+    wgf: initialWgf,
   };
   await set(roomRef, room);
   return roomId;
@@ -70,6 +71,14 @@ export async function setRoomStatus(
   status: RoomStatus
 ): Promise<void> {
   await update(ref(db, `rooms/${roomId}`), { status });
+}
+
+/** 遊戲結束，寫入勝者並將狀態設為 finished */
+export async function setRoomWinner(
+  roomId: string,
+  winners: ('A' | 'B' | 'C' | 'draw')[]
+): Promise<void> {
+  await update(ref(db, `rooms/${roomId}`), { status: 'finished', winners });
 }
 
 // ─── Read / Subscribe ─────────────────────────────────────────────────────────
