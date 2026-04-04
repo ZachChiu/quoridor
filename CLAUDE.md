@@ -45,23 +45,31 @@ npm start       # 在本地端提供 /out 靜態檔案
 - 三人模式破牆機制：`breakWallCountObj`，每位玩家最多 1 次
 - 開局階段（`openingStep[]`）：玩家逐一手動放置棋子
 
-`app/local/PlayClient.tsx` 為本機模式的獨立複本（歷史遺留，功能相同）。
+### 3D 棋盤：`app/components/Chessboard3D.tsx`
+
+`PlayClient` 目前使用 `Chessboard3D`（Three.js r183）渲染棋盤，`Chessboard.tsx` 保留為參考但已不 import。Props 介面與原 2D `Chessboard` 完全一致。
+
+**關鍵設計：**
+- **`latestPropsRef` 模式**：`useRef(props)` 每次 render 同步，event handler 內一律讀 `latestPropsRef.current` 取得最新 props，避免 stale closure 又不觸發 effect 重建。
+- **Pawn map**：`pawnMapRef` 以 `"row,col"` 為 key（非 player）。每位玩家可有多顆棋子，同一格一個 Group。
+- **Reactive effects**：`useEffect([board])` 重建棋子、`useEffect([horizontalWalls, verticalWalls])` 重建牆、`useEffect([selectedChess])` 棋子 lift + wall preview、`useEffect([availableMoves, flattenTerritoriesObj])` tile emissive。
+- **互動**：Raycaster 優先序 — 破牆指示球 → preview 牆 → 棋子 hitbox → tile。
 
 ### 連線對戰（Firebase）
 
 **Firebase RTDB 路徑：`rooms/{roomId}/`**
 
 ```
-id, playersNum, status, createdAt, currentPlayer, wgf
+id, playersNum, status, createdAt, currentPlayer, wgf, winners?
 players/{ A?, B?, C? }/{ uid, displayName, joinedAt }
 ```
 
 `status` 生命週期：`waiting` → `opening` → `playing` → `finished`
 
 - `app/utils/firebase.ts` — Firebase 初始化（Auth + RTDB）
-- `app/utils/gameService.ts` — `createRoom`, `joinRoom`, `getRoom`, `subscribeRoom`, `updateGameState`, `setRoomStatus`
+- `app/utils/gameService.ts` — `createRoom`, `joinRoom`, `getRoom`, `subscribeRoom`, `updateGameState`, `setRoomStatus`, `setRoomWinner`
 - `app/types/room.ts` — `Room`, `RoomPlayer`, `RoomStatus` 型別
-- `HomeClient.tsx` — 建立房間（`createRoom`）並跳轉 `/match?roomId=…`
+- `HomeClient.tsx` — 建立房間（`createRoom`，含初始 WGF）並跳轉 `/match?roomId=…`
 - `MatchClient.tsx` — 薄層，只讀 `useSearchParams` 拿 `roomId` 後渲染 `<PlayClient roomId={roomId} />`
 
 ### WGF（Wall Go Format）棋譜
@@ -76,6 +84,14 @@ players/{ A?, B?, C? }/{ uid, displayName, joinedAt }
 
 - `app/utils/wgf.ts` — 完整序列化 / 反序列化邏輯（`serializeWGF`, `parseWGF`, `serializeTurn`, `buildPieceIndex` 等）
 - `app/types/wgf.ts` — `GameAction`, `PieceIndex`, `PiecePlacement`, `WGFRecord` 型別
+
+**WGF 同步設計重點（連線模式）：**
+- **寫路徑**：`selectWall`（回合結束）、`setChessPosition`（開局放棋）呼叫 `updateGameState(roomId, wgfStr, nextPlayer)`
+- **讀路徑**：`useEffect` 監聽 `room?.wgf`，呼叫 `replayFromWgf` 從空棋盤完整重建（init → opening → turns）
+- **Echo 防止**：`lastAppliedWgf` ref 記錄自己最後寫入的 WGF，避免自己寫入觸發自己的重播
+- **Stale closure**：`gameTurnsRef` / `openingPlacementsRef` / `wgfInitPositionsRef` 每次 render 同步，供 `useCallback` 內使用
+- **`isMyTurn`**：`useMemo` 統一管控操作權限；遊戲結束（`isLock`）或非當前玩家一律回傳 `false`
+- **自動跳過**：若某玩家所有棋子領地已確定且無破牆機會，`useEffect` 自動推進 `currentPlayer`；各客戶端從相同 WGF 計算結果一致，無需寫 Firebase
 
 ## 主要慣例
 
