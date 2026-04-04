@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import Link from 'next/link';
-import Chessboard from "@/components/Chessboard";
+import Chessboard3D from "@/components/Chessboard3D";
 import SectionShadow from "@/components/SectionShadow";
 import ChampionModal from "@/components/ChampionModal";
 import GameStatus from "@/components/GameStatus";
@@ -727,19 +727,19 @@ export default function PlayClient({ roomId }: PlayClientProps) {
           <GameTips isPlacingChess={isPlacingChess} currentPlayer={currentPlayer} winingStatus={winingStatus} breakWallCountObj={breakWallCountObj} />
 
           <div className="chessboard-container size-[90dvw] md:size-[90dvh] md:portrait:size-[90dvw] md:landscape:size-[90dvh]">
-            <Chessboard
+            <Chessboard3D
               size={size}
               board={board}
+              currentPlayer={currentPlayer}
               verticalWalls={verticalWalls}
               horizontalWalls={horizontalWalls}
-              currentPlayer={currentPlayer}
               selectedChess={selectedChess}
               remainSteps={remainSteps}
               flattenTerritoriesObj={flattenTerritoriesObj}
-              breakWallCountObj={breakWallCountObj}
-              isBreakWallAvailable={isBreakWallAvailable}
               isLock={isLock}
               isPlacingChess={isPlacingChess && isMyTurn}
+              breakWallCountObj={breakWallCountObj}
+              isBreakWallAvailable={isBreakWallAvailable}
               selectChess={selectChess}
               selectWall={selectWall}
               selectCell={selectCell}
