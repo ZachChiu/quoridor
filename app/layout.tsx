@@ -6,6 +6,7 @@ import "./globals.css";
 import AnalyticsProvider from "./providers/analytics-provider";
 import { GameProvider } from "./contexts/GameContext";
 import { RuleModalProvider } from "./contexts/RuleModalContext";
+import { UserProvider } from "./contexts/UserContext";
 import RuleModal from "./components/RuleModal";
 
 const geistSans = Geist({
@@ -81,16 +82,18 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} select-none bg-gradient-to-br from-gray-200 via-white to-gray-300 antialiased`}
       >
-        <RuleModalProvider>
-          <GameProvider>
-            <Suspense fallback={null}>
-              <AnalyticsProvider>
-                {children}
-                <RuleModal />
-              </AnalyticsProvider>
-            </Suspense>
-          </GameProvider>
-        </RuleModalProvider>
+        <UserProvider>
+          <RuleModalProvider>
+            <GameProvider>
+              <Suspense fallback={null}>
+                <AnalyticsProvider>
+                  {children}
+                  <RuleModal />
+                </AnalyticsProvider>
+              </Suspense>
+            </GameProvider>
+          </RuleModalProvider>
+        </UserProvider>
       </body>
       {process.env.NEXT_PUBLIC_APP_ENV === "production" && (
         <GoogleAnalytics gaId="G-1CTRTGRPFF" />
