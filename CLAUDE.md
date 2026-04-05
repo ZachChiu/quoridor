@@ -22,8 +22,8 @@ npm start       # 在本地端提供 /out 靜態檔案
 | 路由 | 說明 |
 |---|---|
 | `/` | 首頁（`HomeClient.tsx`）— 選擇本機或連線對戰、建立房間 |
-| `/local` | 本機對戰（`local/PlayClient.tsx`） |
-| `/match?roomId=…` | 連線對戰（`MatchClient` → `components/PlayClient`） |
+| `/local` | 本機對戰（`local/page.tsx` → `components/PlayClient`，無 `roomId`） |
+| `/match?roomId=…` | 連線對戰（`MatchClient` → `components/PlayClient`，帶 `roomId`） |
 
 ### 狀態管理（React Context，全包在 `app/layout.tsx`）
 
@@ -31,29 +31,21 @@ npm start       # 在本地端提供 /out 靜態檔案
 - `RuleModalContext` — 規則說明 Modal 顯示狀態
 - `UserContext` — Firebase 匿名 UID，自動登入並持久化至 Cookie
 
-### 核心遊戲邏輯：`app/components/PlayClient.tsx`
+### 核心遊戲邏輯
 
-單一元件同時支援本機與連線模式，靠 `roomId?: string` prop 判斷：
+兩個 `PlayClient` 存在，職責不同：
 
-- **無 `roomId`** → 本機模式，`playersNum` 讀自 `GameContext`
-- **有 `roomId`** → 連線模式，`playersNum` 讀自 Firebase Room，顯示 initializing / waiting / playing / error 四個 phase
+- **`app/components/PlayClient.tsx`** — 同時支援本機與連線模式，靠 `roomId?: string` prop 判斷。連線模式顯示 `initializing / waiting / playing / error` 四個 phase，並整合 Firebase 與 WGF 同步邏輯。
+- **`app/play/PlayClient.tsx`** — 純本機模式，無 `roomId` 與 Firebase 相依，結構較簡單。
 
-棋盤邏輯：
+棋盤邏輯（兩者共用相同設計）：
 - 7×7 棋盤（`Player[][]`），`horizontalWalls[][]` 與 `verticalWalls[][]` 分開存
 - `getTerritories()` — BFS 洪水填充，計算每顆棋子可到達的格子
 - `calculateAllTerritories()` → 領地計算 → 勝負判定（`winingStatus`）
-- 三人模式破牆機制：`breakWallCountObj`，每位玩家最多 1 次
-- 開局階段（`openingStep[]`）：玩家逐一手動放置棋子
+- 三人模式破牆機制：`breakWallCountObj`，每位玩家最多 1 次；確認 UI 使用 `app/hook/useConfirm.tsx`
+- 開局階段（`openingStep[]`）：依 `config/playerTemplates.tsx` 中的 `openingStepTwo` / `openingStepThree` 順序放置棋子
 
-### 3D 棋盤：`app/components/Chessboard3D.tsx`
-
-`PlayClient` 目前使用 `Chessboard3D`（Three.js r183）渲染棋盤，`Chessboard.tsx` 保留為參考但已不 import。Props 介面與原 2D `Chessboard` 完全一致。
-
-**關鍵設計：**
-- **`latestPropsRef` 模式**：`useRef(props)` 每次 render 同步，event handler 內一律讀 `latestPropsRef.current` 取得最新 props，避免 stale closure 又不觸發 effect 重建。
-- **Pawn map**：`pawnMapRef` 以 `"row,col"` 為 key（非 player）。每位玩家可有多顆棋子，同一格一個 Group。
-- **Reactive effects**：`useEffect([board])` 重建棋子、`useEffect([horizontalWalls, verticalWalls])` 重建牆、`useEffect([selectedChess])` 棋子 lift + wall preview、`useEffect([availableMoves, flattenTerritoriesObj])` tile emissive。
-- **互動**：Raycaster 優先序 — 破牆指示球 → preview 牆 → 棋子 hitbox → tile。
+棋盤渲染：`app/components/Chessboard.tsx`（2D，目前使用中）。
 
 ### 連線對戰（Firebase）
 
