@@ -645,11 +645,11 @@ export default function PlayClient({ roomId }: PlayClientProps) {
     restartGame();
   }, [restartGame]);
 
+  // 當用戶嘗試離開頁面且遊戲尚未結束時顯示確認對話框
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (winingStatus === null) {
+      if (!winingStatus.length) {
         e.preventDefault();
-        return;
       }
     };
 
