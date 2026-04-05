@@ -1,12 +1,14 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { Suspense } from 'react'
-import { GoogleAnalytics } from '@next/third-parties/google'
+import { Suspense } from "react";
+import { GoogleAnalytics } from "@next/third-parties/google";
 import "./globals.css";
 import AnalyticsProvider from "./providers/analytics-provider";
 import { GameProvider } from "./contexts/GameContext";
 import { RuleModalProvider } from "./contexts/RuleModalContext";
 import RuleModal from "./components/RuleModal";
+import { RoomListModalProvider } from "./contexts/RoomListModalContext";
+import RoomListModal from "./components/RoomListModal";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -19,26 +21,40 @@ const geistMono = Geist_Mono({
 });
 
 export const viewport: Viewport = {
-  width: 'device-width',
+  width: "device-width",
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: '#ffffff'
+  themeColor: "#ffffff",
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.SITE_URL || 'https://quoridorgame.com'),
+  metadataBase: new URL(process.env.SITE_URL || "https://quoridorgame.com"),
   title: {
     default: "牆壁圍棋 Wall Go | QUORIDOR 類型的創意線上遊戲",
-    template: "%s | 牆壁圍棋 Wall Go"
+    template: "%s | 牆壁圍棋 Wall Go",
   },
-  description: "體驗如同 Netflix 熱門影集「魔鬼的計謀 2」中的牆壁圍棋 Wall Go。在遊戲中運用策略與心理戰，佈局如同魔鬼的計謀，贏得勝利！",
+  description:
+    "體驗如同 Netflix 熱門影集「魔鬼的計謀 2」中的牆壁圍棋 Wall Go。在遊戲中運用策略與心理戰，佈局如同魔鬼的計謀，贏得勝利！",
   icons: {
-    icon: '/favicon.ico',
-    shortcut: '/favicon.ico',
-    apple: '/favicon.ico',
+    icon: "/favicon.ico",
+    shortcut: "/favicon.ico",
+    apple: "/favicon.ico",
   },
-  keywords: ["牆壁圍棋", "Wall Go", "QUORIDOR", "魔鬼的計謀 2", "Netflix", "心理戰", "智力對決", "棋盤遊戲", "策略遊戲", "圍棋", "迷宮遊戲", "益智遊戲"],
+  keywords: [
+    "牆壁圍棋",
+    "Wall Go",
+    "QUORIDOR",
+    "魔鬼的計謀 2",
+    "Netflix",
+    "心理戰",
+    "智力對決",
+    "棋盤遊戲",
+    "策略遊戲",
+    "圍棋",
+    "迷宮遊戲",
+    "益智遊戲",
+  ],
   authors: [{ name: "Zach Chiu" }],
   creator: "Zach Chiu",
   publisher: "Zach Chiu",
@@ -52,7 +68,8 @@ export const metadata: Metadata = {
     locale: "zh_TW",
     url: process.env.SITE_URL,
     title: "牆壁圍棋 Wall Go - 如同「魔鬼的計謀 2」的智力對決",
-    description: "體驗如同 Netflix 熱門影集「魔鬼的計謀 2」中的牆壁圍棋 Wall Go。在遊戲中運用策略與心理戰，佈局如同魔鬼的計謀，贏得勝利！",
+    description:
+      "體驗如同 Netflix 熱門影集「魔鬼的計謀 2」中的牆壁圍棋 Wall Go。在遊戲中運用策略與心理戰，佈局如同魔鬼的計謀，贏得勝利！",
     siteName: "牆壁圍棋 Wall Go",
     images: [
       {
@@ -66,7 +83,8 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "牆壁圍棋 Wall Go - 如同「魔鬼的計謀 2」的智力對決",
-    description: "體驗如同 Netflix 熱門影集「魔鬼的計謀 2」中的牆壁圍棋 Wall Go。在遊戲中運用策略與心理戰，佈局如同魔鬼的計謀，贏得勝利！",
+    description:
+      "體驗如同 Netflix 熱門影集「魔鬼的計謀 2」中的牆壁圍棋 Wall Go。在遊戲中運用策略與心理戰，佈局如同魔鬼的計謀，贏得勝利！",
     images: [`/og-image.png`],
   },
 };

@@ -12,6 +12,7 @@
   "dependencies": {
     "@next/third-parties": "^15.3.3",
     "@types/lodash-es": "^4.17.12",
+    "firebase": "^11.9.1",
     "lodash-es": "^4.17.21",
     "next": "15.1.8",
     "next-sitemap": "^4.2.3",
