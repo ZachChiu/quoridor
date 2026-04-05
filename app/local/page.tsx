@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import PlayClient from "./PlayClient";
+import PlayClient from "../components/PlayClient";
 
 export const generateMetadata = async (): Promise<Metadata> => {
   return {
@@ -7,7 +7,7 @@ export const generateMetadata = async (): Promise<Metadata> => {
   };
 };
 
-export default function Play() {
+export default function Local() {
   return (
     <div className="flex min-h-screen items-center justify-center gap-16 overflow-hidden font-[family-name:var(--font-geist-sans)]">
       <main className="flex flex-1 items-center justify-center gap-8">
