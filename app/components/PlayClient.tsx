@@ -16,9 +16,8 @@ import cloneDeep from 'lodash-es/cloneDeep';
 import max from 'lodash-es/max';
 import min from 'lodash-es/min';
 
-import { signInAnonymously } from 'firebase/auth';
-import { auth } from '@/utils/firebase';
 import { joinRoom, getRoom, subscribeRoom, updateGameState, setRoomWinner } from '@/utils/gameService';
+import { useUser } from '@/contexts/UserContext';
 import type { Room, RoomPlayer } from '@/types/room';
 
 import { trackButtonClick } from "@/utils/analytics";
@@ -39,6 +38,7 @@ interface PlayClientProps {
 
 export default function PlayClient({ roomId }: PlayClientProps) {
   const { gameState } = useGame();
+  const { uid, ready: userReady } = useUser();
   const isOnline = !!roomId;
 
   // ─── 連線狀態（只在 online 模式使用）────────────────────────────────────────
@@ -58,15 +58,13 @@ export default function PlayClient({ roomId }: PlayClientProps) {
 
   // ─── Firebase 初始化（online only）──────────────────────────────────────────
   useEffect(() => {
-    if (!isOnline || initialized.current) return;
+    if (!isOnline || !userReady || !uid || initialized.current) return;
     initialized.current = true;
 
     let unsubscribe: (() => void) | undefined;
 
     (async () => {
       try {
-        const { user } = await signInAnonymously(auth);
-
         const existing = await getRoom(roomId!);
         if (!existing) {
           setError('不存在的對局');
@@ -75,7 +73,7 @@ export default function PlayClient({ roomId }: PlayClientProps) {
         }
 
         const slots = (['A', 'B', 'C'] as const).slice(0, existing.playersNum);
-        const myExistingKey = slots.find(s => existing.players[s]?.uid === user.uid);
+        const myExistingKey = slots.find(s => existing.players[s]?.uid === uid);
 
         let assignedKey: 'A' | 'B' | 'C';
 
@@ -89,8 +87,8 @@ export default function PlayClient({ roomId }: PlayClientProps) {
             return;
           }
           const player: RoomPlayer = {
-            uid: user.uid,
-            displayName: `玩家 ${user.uid.slice(0, 4).toUpperCase()}`,
+            uid,
+            displayName: `玩家 ${uid.slice(0, 4).toUpperCase()}`,
             joinedAt: Date.now(),
           };
           await joinRoom(roomId!, next, player);
@@ -124,7 +122,7 @@ export default function PlayClient({ roomId }: PlayClientProps) {
     return () => {
       unsubscribe?.();
     };
-  }, [isOnline, roomId]);
+  }, [isOnline, userReady, uid, roomId]);
 
   // ─── 棋盤狀態 ────────────────────────────────────────────────────────────────
   const [size, setSize] = useState(0);
@@ -161,6 +159,10 @@ export default function PlayClient({ roomId }: PlayClientProps) {
   openingPlacementsRef.current = openingPlacements;
   const wgfInitPositionsRef = useRef(wgfInitPositions);
   wgfInitPositionsRef.current = wgfInitPositions;
+  const selectedChessRef = useRef(selectedChess);
+  selectedChessRef.current = selectedChess;
+  const pieceIndexRef = useRef(pieceIndex);
+  pieceIndexRef.current = pieceIndex;
   // 避免 Firebase subscription echo 觸發重播
   const lastAppliedWgf = useRef<string>('');
 
@@ -285,7 +287,9 @@ export default function PlayClient({ roomId }: PlayClientProps) {
 
     if (currentPlayer) {
       const wallDir = (direction === 'top' || direction === 'bottom') ? 'H' : 'V';
-      const wallAction: GameAction = { type: 'placeWall', player: currentPlayer, piece: 0, dir: wallDir, row, col };
+      const sc = selectedChessRef.current;
+      const piece = sc ? getPieceNumber(pieceIndexRef.current, currentPlayer, sc.row, sc.col) : 1;
+      const wallAction: GameAction = { type: 'placeWall', player: currentPlayer, piece, dir: wallDir, row, col };
       const completedTurn = [...currentTurnActions, wallAction];
       setGameTurns(prev => [...prev, completedTurn]);
       setCurrentTurnActions([]);
@@ -399,7 +403,9 @@ export default function PlayClient({ roomId }: PlayClientProps) {
 
       if (currentPlayer) {
         const breakDir = direction === 'horizontal' ? 'H' : 'V';
-        setCurrentTurnActions(prev => [...prev, { type: 'breakWall', player: currentPlayer, piece: 0, dir: breakDir, row, col }]);
+        const sc = selectedChessRef.current;
+        const piece = sc ? getPieceNumber(pieceIndexRef.current, currentPlayer, sc.row, sc.col) : 1;
+        setCurrentTurnActions(prev => [...prev, { type: 'breakWall', player: currentPlayer, piece, dir: breakDir, row, col }]);
       }
     }
   }, [isMyTurn, confirmBreakWall, setBreakWallCountObj, setVerticalWalls, setHorizontalWalls, currentPlayer, isBreakWallAvailable]);

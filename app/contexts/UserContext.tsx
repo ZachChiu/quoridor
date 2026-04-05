@@ -26,7 +26,7 @@ function setUidCookie(uid: string) {
 export function UserProvider({ children }: { children: React.ReactNode }) {
   const [uid, setUid] = useState<string | null>(getUidFromCookie);
   const [ready, setReady] = useState(false);
-
+ 
   useEffect(() => {    
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {

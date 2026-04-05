@@ -1,7 +1,6 @@
 'use client'
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { signInAnonymously } from "firebase/auth";
 import { trackButtonClick } from "@/utils/analytics";
 import { MdDoorBack, MdOutlinePublic, MdOutlineQuestionMark } from "react-icons/md";
 import Button from "./components/Button";
@@ -9,7 +8,7 @@ import IconButton from "./components/IconButton";
 import { LuSwords } from "react-icons/lu";
 import { useGame } from "@/contexts/GameContext";
 import { useRuleModal } from "@/contexts/RuleModalContext";
-import { auth } from "@/utils/firebase";
+import { useUser } from "@/contexts/UserContext";
 import { createRoom } from "@/utils/gameService";
 import type { RoomPlayer } from "@/types/room";
 import { serializeWGF, buildPieceIndex } from "@/utils/wgf";
@@ -19,6 +18,7 @@ import type { PiecePlacement } from "@/types/wgf";
 export default function HomeClient() {
   const router = useRouter();
   const { gameState, setGameState } = useGame();
+  const { uid, ready } = useUser();
 
   const handleStartLocalGame = (playersNum: number) => {
     setGameState({
@@ -42,13 +42,12 @@ export default function HomeClient() {
   }
 
   const handleStartConnectGame = async (playersNum: number) => {
-    if (isCreating) return;
+    if (isCreating || !ready || !uid) return;
     setIsCreating(true);
     try {
-      const { user } = await signInAnonymously(auth);
       const player: RoomPlayer = {
-        uid: user.uid,
-        displayName: `玩家 ${user.uid.slice(0, 4).toUpperCase()}`,
+        uid,
+        displayName: `玩家 ${uid.slice(0, 4).toUpperCase()}`,
         joinedAt: Date.now(),
       };
 
@@ -128,12 +127,14 @@ export default function HomeClient() {
           <Button
             color="bg-primary-300 flex items-center gap-2"
             handleClickEvent={() => handleStartConnectGame(2)}
+            disabled={isCreating || !ready}
           >
             <MdOutlinePublic className="text-2xl" /> 雙人對戰
           </Button>
           <Button
             color="bg-primary-400 flex items-center gap-2"
             handleClickEvent={() => handleStartConnectGame(3)}
+            disabled={isCreating || !ready}
           >
             <MdOutlinePublic className="text-2xl" /> 三人對戰
           </Button>
