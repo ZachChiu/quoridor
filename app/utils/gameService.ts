@@ -65,14 +65,6 @@ export async function updateGameState(
   await update(ref(db, `rooms/${roomId}`), { wgf, currentPlayer });
 }
 
-/** 更新遊戲室生命週期狀態 */
-export async function setRoomStatus(
-  roomId: string,
-  status: RoomStatus
-): Promise<void> {
-  await update(ref(db, `rooms/${roomId}`), { status });
-}
-
 /** 遊戲結束，寫入勝者並將狀態設為 finished */
 export async function setRoomWinner(
   roomId: string,
