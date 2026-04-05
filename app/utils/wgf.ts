@@ -55,6 +55,9 @@ export type { PlayerKey, WallDir, MoveAction, PlaceWallAction, BreakWallAction, 
 /**
  * 獨立 action token（含 player 前綴），用於 opening 以外的單筆記錄。
  * 格式同 WGF 規格說明中的 Action Token。
+ *
+ * @param action - 要序列化的單一遊戲動作。
+ * @returns 單一 action 對應的 WGF token。
  */
 export function serializeAction(action: GameAction): string {
   const base = `${action.player}${action.piece}`;
@@ -68,6 +71,12 @@ export function serializeAction(action: GameAction): string {
   }
 }
 
+/**
+ * 將單一 action token 解析成遊戲動作。
+ *
+ * @param token - 單一 action 的 WGF token。
+ * @returns 解析後的遊戲動作物件。
+ */
 export function parseAction(token: string): GameAction {
   const player = token[0] as PlayerKey;
   const piece = parseInt(token[1]);
@@ -111,6 +120,9 @@ function parseActionCompact(token: string, player: PlayerKey): GameAction {
 /**
  * 一個回合內的所有動作：[P] 前綴一次 + 逗號分隔的 compact tokens。
  * e.g. A433,V33  /  AV22  /  AXHRC
+ *
+ * @param actions - 同一回合內、且屬於同一玩家的動作陣列。
+ * @returns 序列化後的單回合字串。
  */
 export function serializeTurn(actions: GameAction[]): string {
   if (actions.length === 0) return '';
@@ -118,6 +130,12 @@ export function serializeTurn(actions: GameAction[]): string {
   return player + actions.map(serializeActionCompact).join(',');
 }
 
+/**
+ * 解析單一回合字串。
+ *
+ * @param turnStr - 單回合的 WGF 字串。
+ * @returns 回合內的動作陣列。
+ */
 export function parseTurn(turnStr: string): GameAction[] {
   if (!turnStr) return [];
   const player = turnStr[0] as PlayerKey;
@@ -125,11 +143,22 @@ export function parseTurn(turnStr: string): GameAction[] {
   return rest.split(',').map(token => parseActionCompact(token, player));
 }
 
-/** 僅 turns 區塊，回合間用分號分隔 */
+/**
+ * 序列化完整 turns 區塊，回合之間以分號分隔。
+ *
+ * @param turns - 全部回合的動作資料。
+ * @returns `turns` 區塊對應的 WGF 字串。
+ */
 export function serializeGame(turns: GameAction[][]): string {
   return turns.map(serializeTurn).join(';');
 }
 
+/**
+ * 解析 turns 區塊字串。
+ *
+ * @param gameStr - `turns` 區塊字串。
+ * @returns 依回合分組的遊戲動作陣列。
+ */
 export function parseGame(gameStr: string): GameAction[][] {
   if (!gameStr) return [];
   return gameStr.split(';').map(parseTurn);
@@ -167,7 +196,12 @@ function parsePlacement(str: string): PiecePlacement {
 
 // ─── WGF Record Serialize / Parse ─────────────────────────────────────────────
 
-/** 序列化完整棋譜為字串 */
+/**
+ * 將完整棋譜資料序列化成 WGF 字串。
+ *
+ * @param record - 完整棋譜資料。
+ * @returns WGF 格式字串。
+ */
 export function serializeWGF(record: WGFRecord): string {
   const init = record.initPositions.map(serializeInitPosition).join(',');
   const opening = record.openingPlacements.map(serializePlacement).join(',');
@@ -175,7 +209,12 @@ export function serializeWGF(record: WGFRecord): string {
   return `${record.playersNum}|${init}|${opening}|${turns}`;
 }
 
-/** 解析完整棋譜字串 */
+/**
+ * 解析完整 WGF 字串。
+ *
+ * @param str - WGF 格式字串。
+ * @returns 解析後的完整棋譜資料。
+ */
 export function parseWGF(str: string): WGFRecord {
   const [playersNumStr, initStr, openingStr, turnsStr] = str.split('|');
   return {
@@ -191,6 +230,9 @@ export function parseWGF(str: string): WGFRecord {
 /**
  * 從棋盤掃描出每位玩家的棋子位置（由上至下、由左至右）。
  * 索引 0 = 棋子 1，索引 1 = 棋子 2。
+ *
+ * @param board - 目前棋盤狀態。
+ * @returns 依玩家分組的棋子索引。
  */
 export function buildPieceIndex(board: Player[][]): PieceIndex {
   const index: PieceIndex = { A: [], B: [], C: [] };
@@ -205,6 +247,9 @@ export function buildPieceIndex(board: Player[][]): PieceIndex {
 
 /**
  * 從 initPositions 建立 PieceIndex（不掃描棋盤，直接用記錄資料）。
+ *
+ * @param placements - 初始或開局放置的棋子資料。
+ * @returns 依玩家分組的棋子索引。
  */
 export function buildPieceIndexFromPlacements(
   placements: PiecePlacement[]
@@ -216,7 +261,15 @@ export function buildPieceIndexFromPlacements(
   return index;
 }
 
-/** 查找某位置屬於玩家的第幾顆棋子（1-based）。若找不到回傳 -1。 */
+/**
+ * 查找指定位置屬於玩家的第幾顆棋子。
+ *
+ * @param pieceIndex - 目前的棋子索引。
+ * @param player - 玩家鍵值。
+ * @param row - 目標列位置。
+ * @param col - 目標欄位置。
+ * @returns 1-based 棋子編號；若找不到則回傳 `-1`。
+ */
 export function getPieceNumber(
   pieceIndex: PieceIndex,
   player: PlayerKey,
@@ -227,7 +280,17 @@ export function getPieceNumber(
   return idx === -1 ? -1 : idx + 1;
 }
 
-/** 棋子移動後同步更新 pieceIndex（不修改原物件）。 */
+/**
+ * 在棋子移動後同步更新 `pieceIndex`，並回傳新的索引副本。
+ *
+ * @param pieceIndex - 原始棋子索引。
+ * @param player - 執行移動的玩家。
+ * @param fromRow - 起始列位置。
+ * @param fromCol - 起始欄位置。
+ * @param toRow - 目標列位置。
+ * @param toCol - 目標欄位置。
+ * @returns 更新後的棋子索引。
+ */
 export function updatePieceIndex(
   pieceIndex: PieceIndex,
   player: PlayerKey,
