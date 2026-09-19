@@ -3,63 +3,67 @@
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-  --player-A: #F28B82;
-  --player-A-50: #fef2f2;
-  --player-A-100: #fee2e2;
-  --player-A-200: #fecaca;
-  --player-A-300: #fca5a5;
-  --player-A-400: #f87171;
-  --player-A-500: #F28B82;
-  --player-A-600: #e05252;
-  --player-A-700: #c53030;
-  --player-A-800: #9b2c2c;
-  --player-A-900: #7f1d1d;
+  /* 色票取自參考稿的實際取樣值：厚描邊 + 飽和色塊 + 奶油底的平面風格。
+     所有顏色都走 CSS 變數，換色只需要改這一段。 */
+  --background: #e8e1d7;
+  --foreground: #1a1613;
 
-  --player-B: #4AADFE;
-  --player-B-50: #f0f9ff;
-  --player-B-100: #e0f2fe;
-  --player-B-200: #bae6fd;
-  --player-B-300: #7dd3fc;
-  --player-B-400: #4AADFE;
-  --player-B-500: #0ea5e9;
-  --player-B-600: #0284c7;
-  --player-B-700: #0369a1;
-  --player-B-800: #075985;
-  --player-B-900: #0c4a6e;
+  /* 紅方 */
+  --player-A: #cd4642;
+  --player-A-50: #f6dedd;
+  --player-A-100: #f0c8c6;
+  --player-A-200: #e8aaa8;
+  --player-A-300: #e08c8a;
+  --player-A-400: #d76b68;
+  --player-A-500: #cd4642;
+  --player-A-600: #b43f3b;
+  --player-A-700: #973733;
+  --player-A-800: #7c302c;
+  --player-A-900: #622824;
 
-  --player-C: #FFCA28;
-  --player-C-50: #FFFDE7;
-  --player-C-100: #FFF9C4;
-  --player-C-200: #FFF59D;
-  --player-C-300: #FFF176;
-  --player-C-400: #FFEE58;
-  --player-C-500: #FFEB3B;
-  --player-C-600: #FDD835;
-  --player-C-700: #FBC02D;
-  --player-C-800: #F9A825;
-  --player-C-900: #F57F17;
+  /* 藍方 */
+  --player-B: #3a78ab;
+  --player-B-50: #dce7f0;
+  --player-B-100: #c4d6e6;
+  --player-B-200: #a4c1d8;
+  --player-B-300: #85abcb;
+  --player-B-400: #6193bc;
+  --player-B-500: #3a78ab;
+  --player-B-600: #366a95;
+  --player-B-700: #305a7c;
+  --player-B-800: #2c4b65;
+  --player-B-900: #273c4e;
 
-  --primary: #fff4da;
-  --primary-50: #fffdf7;
-  --primary-100: #fff9e8;
-  --primary-200: #fff4da;
-  --primary-300: #ffe8b3;
-  --primary-400: #ffd580;
-  --primary-500: #ffc247;
-  --primary-600: #ffa620;
-  --primary-700: #f98c00;
-  --primary-800: #cc7000;
-  --primary-900: #a65900;
+  /* 黃方 */
+  --player-C: #e9af4c;
+  --player-C-50: #fbf1df;
+  --player-C-100: #f8e7c9;
+  --player-C-200: #f5daad;
+  --player-C-300: #f1cd90;
+  --player-C-400: #edbf70;
+  --player-C-500: #e9af4c;
+  --player-C-600: #cc9944;
+  --player-C-700: #ab803a;
+  --player-C-800: #8c6931;
+  --player-C-900: #6d5228;
+
+  /* 面板與按鈕。低階是紙色（面板用），高階是飽和的暖色塊（按鈕用）—— 
+     對應參考稿裡「奶油底 + 橘黃磁磚」的關係。 */
+  --primary: #f3ede1;
+  --primary-50: #faf7f0;
+  --primary-100: #f7f2e8;
+  --primary-200: #f3ede1;
+  --primary-300: #f2d9a4;
+  --primary-400: #eec86f;
+  --primary-500: #e9af4c;
+  --primary-600: #df8f3e;
+  --primary-700: #df6c3f;
+  --primary-800: #b8542f;
+  --primary-900: #8e3f24;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+/* 不提供深色模式：這是一套明確走淺色（奶油底 + 飽和色塊）的設計，
+   只翻轉背景會讓奶油色面板浮在黑底上，比不做更糟。 */
 
 body {
   color: var(--foreground);
