@@ -185,11 +185,6 @@ const RuleModal: React.FC = () => {
         ))}
       </div>
 
-      {/* CC BY 3.0 要求署名。放這裡而不是頁尾，是因為這個站沒有頁尾，
-          而遊玩方式是唯一每個玩家都會打開一次的地方。 */}
-      <p className="mt-5 text-center text-[11px] text-ink-soft">
-        圖示來自 game-icons.net 與 Lucide，依 CC BY 3.0 / ISC 授權使用
-      </p>
     </Modal>
   );
 };

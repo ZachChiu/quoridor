@@ -371,13 +371,17 @@ export default function PlayClient({ roomId }: PlayClientProps) {
       {/* 首頁按鈕 */}
       {/* 左上角的操作鈕。用 flex 直排而不是各自寫死 top 值 ——
           之前兩顆的尺寸不同，間距是按舊尺寸算出來的，改一顆就會對不齊。
-          彩色＝可點：回首頁琥珀、遊玩方式森綠（與首頁同名磁磚同色）。 */}
+
+          用中性的紙色（與棋盤格同一個值），不用琥珀／森綠：對局畫面上
+          已經有兩到三個玩家色在跑，操作鈕再各帶一個色相就是五個色相同時
+          在搶注意力。它們是「離開這一局」的出口，本來就不該比盤面搶眼。
+          也不用深墨 —— 那在奶油底上太重。 */}
       <div className="fixed left-5 top-5 z-50 flex flex-col gap-3">
         <button type="button" aria-label="回首頁" onClick={() => navigate('/')}
-          className="rounded-full bg-tile-amber p-3.5 text-2xl text-tile-ink transition hover:brightness-95 active:scale-95">
+          className="rounded-full bg-primary-50 p-3.5 text-2xl text-tile-ink transition hover:brightness-95 active:scale-95">
           <GiHouse />
         </button>
-        <IconButton color="bg-tile-forest text-tile-cream" handleClickEvent={handleRuleBtnOpen} label="遊玩方式">
+        <IconButton color="bg-primary-50 text-tile-ink" handleClickEvent={handleRuleBtnOpen} label="遊玩方式">
           <GiRuleBook />
         </IconButton>
       </div>
