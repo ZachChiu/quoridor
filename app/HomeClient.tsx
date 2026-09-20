@@ -1,11 +1,12 @@
 'use client'
 import { useState } from "react";
+import { GiMeshNetwork, GiRuleBook, GiTabletopPlayers, GiThreeFriends, GiWireframeGlobe } from "react-icons/gi";
 import { useRouter } from "next/navigation";
 import { trackButtonClick } from "@/utils/analytics";
-import { MdDoorBack, MdOutlinePublic, MdOutlineQuestionMark } from "react-icons/md";
-import Button from "./components/Button";
-import IconButton from "./components/IconButton";
-import { LuSwords } from "react-icons/lu";
+// Game Icons（game-icons.net，CC BY 3.0）—— react-icons 已內建，不需另外安裝。
+// 選它而不是線條圖示：參考稿的圖示是實心剪影壓在色塊上，
+// Lucide 的細線在大尺寸的彩色磁磚上會顯得單薄。
+import GameTile from "./components/GameTile";
 import { useGame } from "@/contexts/GameContext";
 import { useRuleModal } from "@/contexts/RuleModalContext";
 import { useUser } from "@/contexts/UserContext";
@@ -15,33 +16,27 @@ import { serializeWGF, buildPieceIndex } from "@/utils/wgf";
 import playerTemplates from "@/config/playerTemplates";
 import type { PiecePlacement } from "@/types/wgf";
 
+/**
+ * 首頁的遊戲選擇。
+ *
+ * 原本是「本機／連線」兩顆按鈕再展開人數的兩層選單。改成四塊撞色磁磚
+ * 一次攤開 —— 選項總共只有四個，藏在第二層只是多一次點擊，
+ * 而參考稿的版面本來就是「一眼看完所有選擇」。
+ */
 export default function HomeClient() {
   const router = useRouter();
   const { gameState, setGameState } = useGame();
   const { uid, ready } = useUser();
+  const [isCreating, setIsCreating] = useState(false);
+  const { ruleModalState, setRuleModalState } = useRuleModal();
 
-  const handleStartLocalGame = (playersNum: number) => {
-    setGameState({
-      ...gameState,
-      playersNum,
-    });
+  const startLocal = (playersNum: number) => {
+    setGameState({ ...gameState, playersNum });
     router.push('/local');
     trackButtonClick(`start_local_game_${playersNum}p`);
   };
 
-  const [showLocalGameOptions, setShowLocalGameOptions] = useState(false);
-  const [showConnectGameOptions, setShowConnectGameOptions] = useState(false);
-  const [isCreating, setIsCreating] = useState(false);
-
-  const { ruleModalState, setRuleModalState } = useRuleModal();
-  const handleRuleBtnOpen = () => {
-    setRuleModalState({
-      ...ruleModalState,
-      isOpen: true
-    })
-  }
-
-  const handleStartConnectGame = async (playersNum: number) => {
+  const startConnect = async (playersNum: number) => {
     if (isCreating || !ready || !uid) return;
     setIsCreating(true);
     try {
@@ -71,75 +66,26 @@ export default function HomeClient() {
     }
   };
 
+  const online = !ready || isCreating;
+
   return (
-    <div className="relative z-20">
-      <div className={`group fixed right-5 top-5 cursor-pointer`}>
-        <IconButton handleClickEvent={() => handleRuleBtnOpen()}>
-          <MdOutlineQuestionMark />
-        </IconButton>
-      </div>
-      {!showLocalGameOptions && !showConnectGameOptions &&
-        <div className="flex flex-col gap-4">
-          <Button
-            color="bg-primary-500 flex items-center justify-center gap-2"
-            handleClickEvent={() => setShowLocalGameOptions(true)}
-          >
-            <LuSwords className="text-2xl"/> 本機對戰
-          </Button>
-          <Button
-            color="bg-primary-300 flex items-center gap-2"
-            handleClickEvent={() => setShowConnectGameOptions(true)}
-          >
-            <MdOutlinePublic className="text-2xl" /> 連線對戰
-          </Button>
-        </div>
-      }
-      {showLocalGameOptions &&
-        <div className={`flex flex-col gap-4`}>
-          <Button
-            color="bg-primary-500 flex justify-center items-center gap-2"
-            handleClickEvent={() => setShowLocalGameOptions(false)}
-          >
-            <MdDoorBack className="text-2xl"/> 返回
-          </Button>
-          <Button
-            color="bg-primary-600 flex items-center gap-2"
-            handleClickEvent={() => handleStartLocalGame(2)}
-          >
-            <LuSwords className="text-2xl"/> 雙人對戰
-          </Button>
-          <Button
-            color="bg-primary-700 flex items-center gap-2"
-            handleClickEvent={() => handleStartLocalGame(3)}
-          >
-            <LuSwords className="text-2xl"/> 三人對戰
-          </Button>
-        </div>
-      }
-      {showConnectGameOptions &&
-        <div className={`flex flex-col gap-4`}>
-          <Button
-            color="bg-primary-500 flex justify-center items-center gap-2"
-            handleClickEvent={() => setShowConnectGameOptions(false)}
-          >
-            <MdDoorBack className="text-2xl"/> 返回
-          </Button>
-          <Button
-            color="bg-primary-300 flex items-center gap-2"
-            handleClickEvent={() => handleStartConnectGame(2)}
-            disabled={isCreating || !ready}
-          >
-            <MdOutlinePublic className="text-2xl" /> 雙人對戰
-          </Button>
-          <Button
-            color="bg-primary-400 flex items-center gap-2"
-            handleClickEvent={() => handleStartConnectGame(3)}
-            disabled={isCreating || !ready}
-          >
-            <MdOutlinePublic className="text-2xl" /> 三人對戰
-          </Button>
-        </div>
-      }
+    /*
+      配色刻意排成「相鄰必撞」：橫向 琥珀↔紫、藍↔紅，縱向 琥珀↔藍、紫↔紅，
+      四組相鄰全是大跨度的色相差。色彩不負責區分本機／連線 —— 那由上方的
+      小字與圖示承擔，色彩專心製造衝突感。
+    */
+    <div className="relative z-20 grid w-full grid-cols-2 gap-3 md:gap-4">
+      <GameTile icon={GiTabletopPlayers} tone="amber"  kicker="本機" label="雙人" onClick={() => startLocal(2)} />
+      <GameTile icon={GiThreeFriends}    tone="purple" kicker="本機" label="三人" onClick={() => startLocal(3)} />
+      <GameTile icon={GiWireframeGlobe}  tone="blue"   kicker="連線" label="雙人" onClick={() => startConnect(2)} disabled={online} />
+      <GameTile icon={GiMeshNetwork}     tone="red"    kicker="連線" label="三人" onClick={() => startConnect(3)} disabled={online} />
+      <GameTile
+        icon={GiRuleBook}
+        tone="forest"
+        label="遊戲規則"
+        wide
+        onClick={() => setRuleModalState({ ...ruleModalState, isOpen: true })}
+      />
     </div>
-  )
+  );
 }
