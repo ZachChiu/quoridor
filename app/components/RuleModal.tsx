@@ -1,8 +1,8 @@
 "use client"
-import React, { useEffect, useState } from 'react';
-import { GiCancel, GiPlayButton } from "react-icons/gi";
+import React, { useCallback, useEffect, useState } from 'react';
+import { GiPlayButton, GiRuleBook } from "react-icons/gi";
+import Modal from './Modal';
 import Button from './Button';
-import IconButton from './IconButton';
 import TutorialBoard, { type TutorialBoardProps } from './TutorialBoard';
 import { useRuleModal } from '@/contexts/RuleModalContext';
 
@@ -116,67 +116,25 @@ const RuleModal: React.FC = () => {
   // 而停在中間會讓人以為前面幾步已經看過了。
   useEffect(() => { if (isOpen) setStep(0); }, [isOpen]);
 
-  // 左右方向鍵翻頁
-  useEffect(() => {
-    if (!isOpen) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowRight') setStep((s) => Math.min(s + 1, STEPS.length - 1));
-      if (e.key === 'ArrowLeft') setStep((s) => Math.max(s - 1, 0));
-      if (e.key === 'Escape') close();
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  });
+  // 左右方向鍵翻頁。Escape 關閉由 Modal 統一處理。
+  const onKeyDown = useCallback((e: KeyboardEvent) => {
+    if (e.key === 'ArrowRight') setStep((s) => Math.min(s + 1, STEPS.length - 1));
+    if (e.key === 'ArrowLeft') setStep((s) => Math.max(s - 1, 0));
+  }, []);
 
   const current = STEPS[step];
 
   return (
-    <div
-      className={`fixed inset-0 z-50 flex w-full items-center justify-center px-4 ${
-        isOpen ? 'opacity-100' : 'pointer-events-none opacity-0'
-      } transition-opacity duration-300`}
-      role="dialog"
-      aria-modal="true"
-      aria-label="遊玩方式"
-    >
-      <div className="fixed inset-0 bg-black/50" onClick={close}></div>
-
-      <div className="relative w-full max-w-md rounded-2xl bg-primary p-6 font-[family-name:var(--font-app)]">
-        <div className="mb-4 flex items-start justify-between gap-4">
-          <div>
-            <p className="text-xs font-bold tracking-widest text-ink-soft">
-              遊玩方式 · {step + 1} / {STEPS.length}
-            </p>
-            <h2 className="mt-1 text-2xl font-black leading-tight">{current.title}</h2>
-          </div>
-          <IconButton color="text-ink-soft hover:bg-tile-ink/[0.07] bg-transparent" handleClickEvent={close} label="關閉">
-            <GiCancel />
-          </IconButton>
-        </div>
-
-        <div className="mx-auto mb-4 w-full max-w-[240px]">
-          <TutorialBoard {...current.board} />
-        </div>
-
-        <p className="min-h-[5.5rem] text-sm leading-relaxed">{current.body}</p>
-
-        {/* 進度點。也可以直接點某一步跳過去 —— 回頭查某一條規則時不必一路按 */}
-        <div className="my-4 flex justify-center gap-2">
-          {STEPS.map((s, i) => (
-            <button
-              key={s.title}
-              type="button"
-              aria-label={`第 ${i + 1} 步：${s.title}`}
-              aria-current={i === step ? 'step' : undefined}
-              onClick={() => setStep(i)}
-              className={`h-2 rounded-full transition-all ${
-                i === step ? 'w-6 bg-tile-ink' : 'w-2 bg-tile-ink/25 hover:bg-tile-ink/50'
-              }`}
-            />
-          ))}
-        </div>
-
-        <div className="flex gap-3">
+    <Modal
+      isOpen={isOpen}
+      onClose={close}
+      title={current.title}
+      kicker={`遊玩方式 · ${step + 1} / ${STEPS.length}`}
+      icon={GiRuleBook}
+      band={{ className: 'bg-tile-forest', fg: 'text-tile-cream' }}
+      onKeyDown={onKeyDown}
+      footer={
+        <>
           {step > 0 && (
             <Button
               color="text-ink-soft hover:bg-tile-ink/[0.06] bg-transparent"
@@ -190,16 +148,37 @@ const RuleModal: React.FC = () => {
               {last ? <><GiPlayButton /> 開始遊戲</> : '下一步'}
             </span>
           </Button>
-        </div>
+        </>
+      }
+    >
+      <div className="mx-auto w-full max-w-[240px]">
+        <TutorialBoard {...current.board} />
       </div>
 
-      {/* CC BY 3.0 要求署名。首頁的桌遊風格圖示取自 game-icons.net，
-          放在這裡而不是頁尾，是因為這個站沒有頁尾，而遊玩方式是
-          唯一每個玩家都會打開一次的地方。 */}
-      <p className="pointer-events-none absolute inset-x-0 bottom-3 text-center text-[11px] text-tile-cream/70">
+      <p className="mt-4 min-h-[5.5rem] text-sm leading-relaxed">{current.body}</p>
+
+      {/* 進度點。也可以直接點某一步跳過去 —— 回頭查某一條規則時不必一路按。 */}
+      <div className="mt-2 flex justify-center gap-2">
+        {STEPS.map((s, i) => (
+          <button
+            key={s.title}
+            type="button"
+            aria-label={`第 ${i + 1} 步：${s.title}`}
+            aria-current={i === step ? 'step' : undefined}
+            onClick={() => setStep(i)}
+            className={`h-2 rounded-full transition-all ${
+              i === step ? 'w-6 bg-tile-ink' : 'w-2 bg-tile-ink/25 hover:bg-tile-ink/50'
+            }`}
+          />
+        ))}
+      </div>
+
+      {/* CC BY 3.0 要求署名。放這裡而不是頁尾，是因為這個站沒有頁尾，
+          而遊玩方式是唯一每個玩家都會打開一次的地方。 */}
+      <p className="mt-5 text-center text-[11px] text-ink-soft">
         圖示來自 game-icons.net 與 Lucide，依 CC BY 3.0 / ISC 授權使用
       </p>
-    </div>
+    </Modal>
   );
 };
 
