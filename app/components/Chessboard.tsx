@@ -15,7 +15,7 @@ const PLAYER_VAR: Record<string, string> = {
 };
 import React, { useCallback, useMemo, useState } from "react";
 import SectionShadow from "./SectionShadow";
-import { boardSignature, diffBoard, territoryWave, newWall } from "./boardMotion";
+import { boardSignature, diffBoard, territoryWave, newWall, pathBetween } from "./boardMotion";
 
 type Props = {
   size: number;
@@ -408,20 +408,38 @@ export default React.memo(function Chessboard({
                     const mk = `${rowIndex},${colIndex}`;
                     const slide = motion.slide[mk];
                     const dropped = motion.drop.includes(mk);
+
+                    /*
+                      走兩步時要看得到轉角 —— 直線補間會斜著飛過去，
+                      那等於在教「可以走斜線」，但這個遊戲只能走上下左右。
+                      轉角位置用 BFS 從合法路徑取，慣用的那邊被牆擋住會自動改走另一邊。
+                      算不出路徑（例如遠端一次送來整回合、新牆剛好蓋在路上）就退回直線。
+                    */
+                    const offset = (r: number, c: number) => ({
+                      x: `calc(${c - colIndex} * (100% + var(--board-gap)))`,
+                      y: `calc(${r - rowIndex} * (100% + var(--board-gap)))`,
+                    });
+                    let anim = dropped ? 'animate-piece-drop' : '';
+                    let vars: React.CSSProperties | undefined;
+                    if (slide) {
+                      const from: [number, number] = [rowIndex + slide.dy, colIndex + slide.dx];
+                      const path = pathBetween(board, { h: horizontalWalls, v: verticalWalls }, from, [rowIndex, colIndex]);
+                      const start = offset(from[0], from[1]);
+                      if (path && path.length === 3) {
+                        const mid = offset(path[1][0], path[1][1]);
+                        anim = 'animate-piece-step';
+                        vars = { '--slide-x': start.x, '--slide-y': start.y, '--mid-x': mid.x, '--mid-y': mid.y } as React.CSSProperties;
+                      } else {
+                        anim = 'animate-piece-slide';
+                        vars = { '--slide-x': start.x, '--slide-y': start.y } as React.CSSProperties;
+                      }
+                    }
+
                     return (
                       <div
                         key={slide || dropped ? `m${motion.seq}` : 'p'}
-                        className={`pointer-events-none absolute inset-0 z-20 grid place-items-center ${
-                          slide ? 'animate-piece-slide' : dropped ? 'animate-piece-drop' : ''
-                        }`}
-                        style={
-                          slide
-                            ? ({
-                                '--slide-x': `calc(${slide.dx} * (100% + var(--board-gap)))`,
-                                '--slide-y': `calc(${slide.dy} * (100% + var(--board-gap)))`,
-                              } as React.CSSProperties)
-                            : undefined
-                        }
+                        className={`pointer-events-none absolute inset-0 z-20 grid place-items-center ${anim}`}
+                        style={vars}
                       >
                         <div
                           className={`size-3/5 rounded-full ${isPieceActive ? 'animate-pulse-shine' : ''}`}

@@ -134,3 +134,67 @@ export function newWall(
   }
   return found;
 }
+
+export type Walls = { h: Player[][]; v: Player[][] };
+
+/** 從 `(r,c)` 往某方向走有沒有被牆擋住。與 Chessboard 的可走點判定同一套。 */
+const blocked = (w: Walls, r: number, c: number, dr: number, dc: number): boolean => {
+  if (dr === 1) return !!w.h[r]?.[c];
+  if (dr === -1) return r > 0 && !!w.h[r - 1]?.[c];
+  if (dc === 1) return !!w.v[r]?.[c];
+  if (dc === -1) return c > 0 && !!w.v[r]?.[c - 1];
+  return false;
+};
+
+/**
+ * 棋子實際走的那條路 —— 回傳沿途每一格（含起點與終點）。
+ *
+ * 兩步的 L 形如果用直線補間，畫面上就是斜著飛過去，看起來像可以走斜線；
+ * 這個遊戲只能走上下左右，動畫不該教錯規則。所以照著格子走，
+ * 而且用 BFS 走合法路徑 —— 直覺的那個轉角要是被牆擋住，會自動改走另一邊。
+ *
+ * 盤面是移動**之後**的狀態：起點已空、終點站著自己那顆，
+ * 所以終點要特別放行，其他有棋子的格子一律不能穿過。
+ */
+export function pathBetween(
+  board: Player[][],
+  walls: Walls,
+  from: [number, number],
+  to: [number, number],
+  maxSteps = 2
+): [number, number][] | null {
+  const size = board.length;
+  const key = (r: number, c: number) => r * size + c;
+  const prev = new Map<number, number>();
+  const seen = new Set([key(...from)]);
+  let frontier: [number, number][] = [from];
+
+  for (let step = 0; step < maxSteps && frontier.length; step++) {
+    const next: [number, number][] = [];
+    for (const [r, c] of frontier) {
+      for (const [dr, dc] of [[-1, 0], [0, 1], [1, 0], [0, -1]] as const) {
+        const nr = r + dr;
+        const nc = c + dc;
+        if (nr < 0 || nr >= size || nc < 0 || nc >= size) continue;
+        if (blocked(walls, r, c, dr, dc)) continue;
+        // 終點現在站著剛移動過去的那顆自己，要放行
+        const isGoal = nr === to[0] && nc === to[1];
+        if (!isGoal && board[nr][nc]) continue;
+        const k = key(nr, nc);
+        if (seen.has(k)) continue;
+        seen.add(k);
+        prev.set(k, key(r, c));
+        if (isGoal) {
+          const out: [number, number][] = [];
+          for (let cur: number | undefined = k; cur !== undefined; cur = prev.get(cur)) {
+            out.unshift([Math.floor(cur / size), cur % size]);
+          }
+          return out;
+        }
+        next.push([nr, nc]);
+      }
+    }
+    frontier = next;
+  }
+  return null;
+}

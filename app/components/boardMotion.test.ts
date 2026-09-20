@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { boardSignature, diffBoard, territoryWave, newWall } from './boardMotion';
+import { boardSignature, diffBoard, territoryWave, newWall, pathBetween } from './boardMotion';
 import type { Player } from '@/types/chessboard';
 
 const grid = (rows: string[]): Player[][] =>
@@ -98,5 +98,51 @@ describe('newWall', () => {
 
   it('沒有變化時回傳 null', () => {
     expect(newWall({ h: '.A.', v: 'B..' }, { h: '.A.', v: 'B..' })).toBeNull();
+  });
+});
+
+describe('pathBetween（棋子沿格子走的路徑）', () => {
+  const noWalls = (n: number) => ({
+    h: Array.from({ length: n }, () => Array<Player>(n).fill(null)),
+    v: Array.from({ length: n }, () => Array<Player>(n).fill(null)),
+  });
+
+  it('一步就是兩格', () => {
+    const board = grid(['...', '.A.', '...']);
+    expect(pathBetween(board, noWalls(3), [1, 0], [1, 1])).toEqual([[1, 0], [1, 1]]);
+  });
+
+  it('直線兩步經過中間那格，不會抄近路', () => {
+    const board = grid(['...', '..A', '...']);
+    expect(pathBetween(board, noWalls(3), [1, 0], [1, 2])).toEqual([[1, 0], [1, 1], [1, 2]]);
+  });
+
+  it('L 形兩步一定有轉角 —— 不是斜線', () => {
+    const board = grid(['...', '...', '..A']);
+    const p = pathBetween(board, noWalls(3), [1, 1], [2, 2])!;
+    expect(p).toHaveLength(3);
+    expect(p[0]).toEqual([1, 1]);
+    expect(p[2]).toEqual([2, 2]);
+    // 轉角必須與起點共用一個座標軸（真的是沿著格子走）
+    expect(p[1][0] === 1 || p[1][1] === 1).toBe(true);
+  });
+
+  it('慣用的那個轉角被牆擋住時，改走另一邊', () => {
+    const board = grid(['...', '...', '..A']);
+    const w = noWalls(3);
+    w.v[1][1] = 'B';       // (1,1) 右邊有牆 → 不能先往右
+    const p = pathBetween(board, w, [1, 1], [2, 2])!;
+    expect(p).toEqual([[1, 1], [2, 1], [2, 2]]);
+  });
+
+  it('不穿過別人的棋子', () => {
+    const board = grid(['...', '.BA', '...']);
+    // (1,0) → (1,2) 的直線被 (1,1) 的 B 擋住，兩步內繞不過去
+    expect(pathBetween(board, noWalls(3), [1, 0], [1, 2])).toBeNull();
+  });
+
+  it('兩步到不了就回傳 null，由呼叫端退回直線', () => {
+    const board = grid(['...', '...', '..A']);
+    expect(pathBetween(board, noWalls(3), [0, 0], [2, 2])).toBeNull();
   });
 });

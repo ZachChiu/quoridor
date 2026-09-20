@@ -184,16 +184,37 @@ body {
   --mo-out: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* 棋子滑到新位置。
+/* 棋子走到新位置。
    位移量由元件以「格」為單位算好，換算成 CSS：外層包一個與格子等大的
    容器（inset-0），所以 100% 恰好是一格寬，再補一道格縫。
-   直線滑過 L 形的兩步路徑其實不精確，但 190ms 的尺度下讀起來是「彈過去」
-   而不是「走過去」，不會讓人誤以為可以斜走。 */
+
+   分成兩支而不是一支帶中繼點：走一步是一次乾淨的彈跳，
+   走兩步必須看得到轉角。用同一支 keyframe 硬兼兩者的話，
+   一步會在半路多出一個沒有意義的頓點。 */
 @keyframes piece-slide {
   from { transform: translate(var(--slide-x, 0), var(--slide-y, 0)); }
   to   { transform: none; }
 }
-.animate-piece-slide { animation: piece-slide 190ms var(--mo-snap) both; }
+.animate-piece-slide { animation: piece-slide 175ms var(--mo-snap) both; }
+
+/* 兩步：先走到轉角再走到終點，轉角的位置由 BFS 算出的合法路徑決定
+   （慣用的那個角被牆擋住時會自動改走另一邊）。
+   斜線補間會讓人以為可以走斜線 —— 這個遊戲只能走上下左右，
+   動畫不該教錯規則。
+   整體 linear，讓每一段各自的 timing-function 說話：前半段收在轉角、
+   後半段帶一點過衝收在終點，讀起來就是「一格、一格」。 */
+@keyframes piece-step {
+  0% {
+    transform: translate(var(--slide-x, 0), var(--slide-y, 0));
+    animation-timing-function: cubic-bezier(0.32, 0, 0.3, 1);
+  }
+  52% {
+    transform: translate(var(--mid-x, 0), var(--mid-y, 0));
+    animation-timing-function: cubic-bezier(0.3, 0, 0.35, 1.25);
+  }
+  100% { transform: none; }
+}
+.animate-piece-step { animation: piece-step 300ms linear both; }
 
 /* 開局落子：沒有來源，所以用縮放而不是位移。 */
 @keyframes piece-drop {
@@ -252,6 +273,7 @@ body {
    沒有一個是資訊的唯一載體（顏色與位置本來就說得完整），所以可以整組拿掉。 */
 @media (prefers-reduced-motion: reduce) {
   .animate-piece-slide,
+  .animate-piece-step,
   .animate-piece-drop,
   .animate-wall-h,
   .animate-wall-v,
