@@ -1,0 +1,78 @@
+{
+  /*
+    Firebase Realtime Database 安全規則。
+
+    在此之前這份規則不在版控裡，線上跑的是預設的「任何登入者都能寫任意
+    房間」—— 也就是知道 roomId 就能改別人對局的棋譜。這份檔案把它收斂成
+    「只有坐在這個房間裡的人能動這個房間」。
+
+    部署（需要你的 Firebase 帳號，我沒有憑證）：
+        npx firebase-tools login
+        npx firebase-tools deploy --only database --project <你的 project id>
+    或直接把內容貼進 Firebase Console → Realtime Database → 規則。
+
+    ── 為什麼不收得更緊 ─────────────────────────────────────────────
+    看起來「寫 wgf 的人必須是當前玩家」才對，也寫得出來：
+        root.child('rooms/'+$roomId+'/players/'
+                   + data.parent().child('currentPlayer').val() + '/uid')
+
+    但**不能這樣做**。自動跳過（某玩家所有棋子領地已定且無破牆機會）
+    是各客戶端從同一份 WGF 各自算出來、只推進本地 currentPlayer，
+    刻意不寫回 Firebase。因此 DB 裡的 currentPlayer 會落後一手，
+    被跳過的下一位玩家送出的合法回合會被這條規則擋掉 ——
+    畫面上只會看到「對手不動了」，而且很難查。
+
+    所以判斷停在「是不是這個房間的座上玩家」這一級。要再往上收，
+    得先讓自動跳過也寫回 Firebase，那是另一件事。
+  */
+  "rules": {
+    ".read": false,
+    ".write": false,
+
+    "rooms": {
+      "$roomId": {
+        // 房間 ID 是 20 字元的 push key，猜不到；登入者可讀是觀戰的前提。
+        ".read": "auth != null",
+
+        // 只允許「建立一個還不存在的房間」。已存在的房間落到下面各欄位的規則，
+        // 沒被列到的欄位就寫不了（規則不繼承拒絕，但也不會憑空授權）。
+        ".write": "auth != null && !data.exists()",
+
+        "id":         { ".validate": "newData.isString()" },
+        "playersNum": { ".validate": "newData.isNumber() && (newData.val() === 2 || newData.val() === 3)" },
+        "createdAt":  { ".validate": "newData.isNumber()" },
+
+        "wgf": {
+          ".write": "auth != null && (root.child('rooms/' + $roomId + '/players/A/uid').val() === auth.uid || root.child('rooms/' + $roomId + '/players/B/uid').val() === auth.uid || root.child('rooms/' + $roomId + '/players/C/uid').val() === auth.uid)",
+          // 實測 2 人局最長 561 字元、3 人局 477（見 app/game/wgfSize.test.ts，
+          // 各隨機打完 40 整局）。4096 留了七倍餘裕。
+          ".validate": "newData.isString() && newData.val().length < 4096"
+        },
+
+        "currentPlayer": {
+          ".write": "auth != null && (root.child('rooms/' + $roomId + '/players/A/uid').val() === auth.uid || root.child('rooms/' + $roomId + '/players/B/uid').val() === auth.uid || root.child('rooms/' + $roomId + '/players/C/uid').val() === auth.uid)",
+          ".validate": "newData.isString() && newData.val().matches(/^[ABC]$/)"
+        },
+
+        "status": {
+          ".write": "auth != null && (root.child('rooms/' + $roomId + '/players/A/uid').val() === auth.uid || root.child('rooms/' + $roomId + '/players/B/uid').val() === auth.uid || root.child('rooms/' + $roomId + '/players/C/uid').val() === auth.uid)",
+          ".validate": "newData.isString() && newData.val().matches(/^(waiting|opening|playing|finished)$/)"
+        },
+
+        // 勝負只由房主（A）寫入 —— PlayClient 也是這樣實作的，
+        // 三個客戶端同時寫同一個結果沒有意義，而且給了竄改的機會。
+        "winners": {
+          ".write": "auth != null && root.child('rooms/' + $roomId + '/players/A/uid').val() === auth.uid"
+        },
+
+        "players": {
+          "$slot": {
+            // 只能佔用空位，而且只能把自己放進去 —— 不能踢人，也不能冒名。
+            ".write": "auth != null && !data.exists() && newData.child('uid').val() === auth.uid",
+            ".validate": "newData.hasChildren(['uid', 'displayName', 'joinedAt']) && $slot.matches(/^[ABC]$/)"
+          }
+        }
+      }
+    }
+  }
+}
