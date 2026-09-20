@@ -16,13 +16,6 @@
   fill: var(--tile-icon-fill);
 }
 
-/* Lucide 的線條圖示預設 stroke-width 是 2，在這套厚描邊的版面裡顯得細。
-   CSS 的優先權高於 SVG 的表現屬性，所以這條會蓋過內建值。
-   只命中 stroke="currentColor"（Lucide），不會影響其他 SVG。 */
-svg[stroke="currentColor"] {
-  stroke-width: 2.4;
-}
-
 /* 思源黑體繁中，可變字重 400–900。
    用 Google Fonts 的 text= 參數做子集：只含這個 App 實際用到的 599 個字元，
    一支 174 KB 的檔涵蓋全部字重。完整的 Noto Sans TC 光一個字重就好幾 MB，
