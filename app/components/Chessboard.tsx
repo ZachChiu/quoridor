@@ -231,8 +231,15 @@ export default React.memo(function Chessboard({
             列舉 7/8/9 撐著 —— 盤面大小一旦改成別的值就會靜默壞掉。
             TutorialBoard 本來就是這樣寫的，兩邊統一。 */}
         <div
-          className="grid size-full gap-1 overflow-hidden rounded-xl bg-board-line"
-          style={{ gridTemplateColumns: `repeat(${size}, minmax(0, 1fr))` }}
+          className="grid size-full gap-[var(--board-gap)] overflow-hidden rounded-xl bg-board-line"
+          style={
+            {
+              gridTemplateColumns: `repeat(${size}, minmax(0, 1fr))`,
+              // 格縫寬度。牆的位移由它算出來（見下方 WALL_* 常數）——
+              // 兩個值必須連動，分開寫死遲早會漂掉。
+              '--board-gap': '4px',
+            } as React.CSSProperties
+          }
         >
           {Array.from({ length: size }, (_, rowIndex) =>
             Array.from({ length: size }, (_, colIndex) => {
@@ -361,7 +368,7 @@ export default React.memo(function Chessboard({
                   */}
                   {hasHorizontalWallPlayer && (
                     <div
-                      className="absolute inset-x-[-3px] bottom-0 z-20 h-[9px] translate-y-1/2 rounded-full"
+                      className="absolute inset-x-[-3px] bottom-[calc(var(--board-gap)*-0.5)] z-20 h-[9px] translate-y-1/2 rounded-full"
                       style={{ backgroundColor: PLAYER_VAR[hasHorizontalWallPlayer] }}
                     >
                       {isHorizontalWallBreakable && (
@@ -378,7 +385,7 @@ export default React.memo(function Chessboard({
                   )}
                   {hasVerticalWall && (
                     <div
-                      className="absolute inset-y-[-3px] right-0 z-20 w-[9px] translate-x-1/2 rounded-full"
+                      className="absolute inset-y-[-3px] right-[calc(var(--board-gap)*-0.5)] z-20 w-[9px] translate-x-1/2 rounded-full"
                       style={{ backgroundColor: PLAYER_VAR[hasVerticalWall] }}
                     >
                       {isVerticalWallBreakable && (
@@ -406,7 +413,7 @@ export default React.memo(function Chessboard({
                         <button
                           type="button"
                           aria-label="在上方築牆"
-                          className="absolute inset-x-[18%] top-0 z-20 h-[9px] -translate-y-1/2 rounded-full opacity-70 transition hover:inset-x-[-3px] hover:opacity-100"
+                          className="absolute inset-x-[18%] top-[calc(var(--board-gap)*-0.5)] z-20 h-[9px] -translate-y-1/2 rounded-full opacity-70 transition hover:inset-x-[-3px] hover:opacity-100"
                           style={{ backgroundColor: PLAYER_VAR[currentPlayer] }}
                           onClick={(e) => { e.stopPropagation(); selectWall(rowIndex - 1, colIndex, 'top'); }}
                         />
@@ -415,7 +422,7 @@ export default React.memo(function Chessboard({
                         <button
                           type="button"
                           aria-label="在下方築牆"
-                          className="absolute inset-x-[18%] bottom-0 z-20 h-[9px] translate-y-1/2 rounded-full opacity-70 transition hover:inset-x-[-3px] hover:opacity-100"
+                          className="absolute inset-x-[18%] bottom-[calc(var(--board-gap)*-0.5)] z-20 h-[9px] translate-y-1/2 rounded-full opacity-70 transition hover:inset-x-[-3px] hover:opacity-100"
                           style={{ backgroundColor: PLAYER_VAR[currentPlayer] }}
                           onClick={(e) => { e.stopPropagation(); selectWall(rowIndex, colIndex, 'bottom'); }}
                         />
@@ -424,7 +431,7 @@ export default React.memo(function Chessboard({
                         <button
                           type="button"
                           aria-label="在左方築牆"
-                          className="absolute inset-y-[18%] left-0 z-20 w-[9px] -translate-x-1/2 rounded-full opacity-70 transition hover:inset-y-[-3px] hover:opacity-100"
+                          className="absolute inset-y-[18%] left-[calc(var(--board-gap)*-0.5)] z-20 w-[9px] -translate-x-1/2 rounded-full opacity-70 transition hover:inset-y-[-3px] hover:opacity-100"
                           style={{ backgroundColor: PLAYER_VAR[currentPlayer] }}
                           onClick={(e) => { e.stopPropagation(); selectWall(rowIndex, colIndex - 1, 'left'); }}
                         />
@@ -433,7 +440,7 @@ export default React.memo(function Chessboard({
                         <button
                           type="button"
                           aria-label="在右方築牆"
-                          className="absolute inset-y-[18%] right-0 z-20 w-[9px] translate-x-1/2 rounded-full opacity-70 transition hover:inset-y-[-3px] hover:opacity-100"
+                          className="absolute inset-y-[18%] right-[calc(var(--board-gap)*-0.5)] z-20 w-[9px] translate-x-1/2 rounded-full opacity-70 transition hover:inset-y-[-3px] hover:opacity-100"
                           style={{ backgroundColor: PLAYER_VAR[currentPlayer] }}
                           onClick={(e) => { e.stopPropagation(); selectWall(rowIndex, colIndex, 'right'); }}
                         />

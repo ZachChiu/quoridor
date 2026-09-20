@@ -55,8 +55,8 @@ export default function TutorialBoard({
 
   return (
     <div
-      className="grid aspect-square w-full gap-[3px] overflow-hidden rounded-xl bg-board-line"
-      style={{ gridTemplateColumns: `repeat(${size}, minmax(0, 1fr))` }}
+      className="grid aspect-square w-full gap-[var(--board-gap)] overflow-hidden rounded-xl bg-board-line"
+      style={{ gridTemplateColumns: `repeat(${size}, minmax(0, 1fr))`, '--board-gap': '3px' } as React.CSSProperties}
       aria-hidden="true"
     >
       {Array.from({ length: size }, (_, r) =>
@@ -80,21 +80,21 @@ export default function TutorialBoard({
                 <div className="absolute z-10 size-1/4 rounded-full bg-tile-ink/30" />
               )}
               {h && (
-                <div className="absolute inset-x-[-2px] bottom-0 z-20 h-[7px] translate-y-1/2 rounded-full"
+                <div className="absolute inset-x-[-2px] bottom-[calc(var(--board-gap)*-0.5)] z-20 h-[7px] translate-y-1/2 rounded-full"
                      style={{ backgroundColor: PLAYER_VAR[h] }} />
               )}
               {v && (
-                <div className="absolute inset-y-[-2px] right-0 z-20 w-[7px] translate-x-1/2 rounded-full"
+                <div className="absolute inset-y-[-2px] right-[calc(var(--board-gap)*-0.5)] z-20 w-[7px] translate-x-1/2 rounded-full"
                      style={{ backgroundColor: PLAYER_VAR[v] }} />
               )}
               {sideGhosts.map((g) => (
                 <div
                   key={g.side}
                   className={`absolute z-20 rounded-full opacity-75 ${
-                    g.side === 'top' ? 'inset-x-[-2px] top-0 h-[7px] -translate-y-1/2'
-                    : g.side === 'bottom' ? 'inset-x-[-2px] bottom-0 h-[7px] translate-y-1/2'
-                    : g.side === 'left' ? 'inset-y-[-2px] left-0 w-[7px] -translate-x-1/2'
-                    : 'inset-y-[-2px] right-0 w-[7px] translate-x-1/2'
+                    g.side === 'top' ? 'inset-x-[-2px] top-[calc(var(--board-gap)*-0.5)] h-[7px] -translate-y-1/2'
+                    : g.side === 'bottom' ? 'inset-x-[-2px] bottom-[calc(var(--board-gap)*-0.5)] h-[7px] translate-y-1/2'
+                    : g.side === 'left' ? 'inset-y-[-2px] left-[calc(var(--board-gap)*-0.5)] w-[7px] -translate-x-1/2'
+                    : 'inset-y-[-2px] right-[calc(var(--board-gap)*-0.5)] w-[7px] translate-x-1/2'
                   }`}
                   style={{ backgroundColor: PLAYER_VAR[g.player] }}
                 />
