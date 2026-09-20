@@ -1,130 +1,204 @@
 "use client"
-import React from 'react';
-import SectionShadow from './SectionShadow';
+import React, { useEffect, useState } from 'react';
+import { GiCancel, GiPlayButton } from "react-icons/gi";
 import Button from './Button';
 import IconButton from './IconButton';
-import { MdClose, MdRule, MdEmojiEvents, MdGavel, MdTouchApp, MdMilitaryTech, MdArrowRight, MdPlayArrow, MdMovie, MdInfo, MdStarRate, MdPeople } from "react-icons/md";
+import TutorialBoard, { type TutorialBoardProps } from './TutorialBoard';
 import { useRuleModal } from '@/contexts/RuleModalContext';
+
+/**
+ * 逐步教學。
+ *
+ * 原本是一整面規則文字 —— 第一次玩的人得先讀完才敢下第一手，
+ * 而讀完通常也記不得。改成一步一頁，每頁只講一件事，並且配一張
+ * 用真實視覺語彙畫出來的小盤面：教學裡看到的形狀，進遊戲認得出來。
+ */
+interface Step {
+  title: string;
+  body: string;
+  board: TutorialBoardProps;
+}
+
+const STEPS: Step[] = [
+  {
+    title: '目標：圍出最大的地盤',
+    body: '用牆把區域封閉起來。封閉區域裡只有你的棋子，那塊地就是你的。最後地盤格數最多的人獲勝。',
+    board: {
+      size: 4,
+      pieces: [{ at: [0, 0], player: 'A' }, { at: [3, 3], player: 'B' }],
+      territory: [
+        { at: [0, 0], player: 'A' }, { at: [0, 1], player: 'A' }, { at: [1, 0], player: 'A' }, { at: [1, 1], player: 'A' },
+        { at: [3, 3], player: 'B' }, { at: [3, 2], player: 'B' },
+      ],
+      hWalls: [{ at: [1, 0], player: 'A' }, { at: [1, 1], player: 'A' }, { at: [2, 2], player: 'B' }, { at: [2, 3], player: 'B' }],
+      vWalls: [{ at: [0, 1], player: 'A' }, { at: [1, 1], player: 'A' }, { at: [3, 1], player: 'B' }],
+    },
+  },
+  {
+    title: '開局：輪流放棋子',
+    body: '兩人局各有 4 顆棋子，其中 2 顆已在盤上，其餘依「紅、藍、藍、紅」的蛇形順序擺放，先後手才公平。三人局則是每人 2 顆，全部自己擺。',
+    board: {
+      size: 4,
+      pieces: [{ at: [0, 0], player: 'A' }, { at: [3, 3], player: 'B' }, { at: [0, 3], player: 'B' }],
+      dots: [[1, 1], [2, 1], [1, 2], [2, 2], [3, 0]],
+    },
+  },
+  {
+    title: '移動：每回合走 0 到 2 格',
+    body: '選一顆自己的棋子，上下左右移動 0 到 2 格。兩格可以是直線，也可以轉彎走 L 形。灰點就是走得到的位置 —— 不想動也可以，直接築牆。',
+    board: {
+      size: 4,
+      selected: { at: [1, 1], player: 'A' },
+      pieces: [{ at: [1, 1], player: 'A' }],
+      dots: [[0, 1], [1, 0], [1, 2], [2, 1], [0, 0], [0, 2], [2, 0], [2, 2], [3, 1], [1, 3]],
+    },
+  },
+  {
+    title: '築牆：移動後一定要築一道',
+    body: '移動結束後，必須在那顆棋子的相鄰邊築一道牆。這是強制的，不能跳過。半透明的預覽就是可以築的位置，滑過去會變成實心。',
+    board: {
+      size: 4,
+      selected: { at: [1, 1], player: 'A' },
+      pieces: [{ at: [1, 1], player: 'A' }],
+      ghosts: [
+        { at: [1, 1], side: 'top', player: 'A' }, { at: [1, 1], side: 'bottom', player: 'A' },
+        { at: [1, 1], side: 'left', player: 'A' }, { at: [1, 1], side: 'right', player: 'A' },
+      ],
+    },
+  },
+  {
+    title: '牆不分敵我',
+    body: '任何人築的牆，所有人都擋。你用來圍自己地盤的牆，同時也可能封死自己的退路 —— 每一手都是算計與取捨。棋盤的外圍本身也算牆。',
+    board: {
+      size: 4,
+      pieces: [{ at: [1, 1], player: 'A' }, { at: [1, 2], player: 'B' }],
+      vWalls: [{ at: [1, 1], player: 'A' }],
+      dots: [[0, 1], [2, 1], [1, 0]],
+    },
+  },
+  {
+    title: '圍地：區域裡只能有你的棋子',
+    body: '被牆完全封閉的區域，如果裡面只有你的棋子，整塊都算你的。若裡面沒有棋子、或同時有別人的棋子，就是中立區，誰都不計分。',
+    board: {
+      size: 4,
+      pieces: [{ at: [0, 0], player: 'A' }, { at: [0, 3], player: 'A' }, { at: [3, 0], player: 'B' }],
+      territory: [{ at: [0, 0], player: 'A' }, { at: [1, 0], player: 'A' }],
+      hWalls: [{ at: [1, 0], player: 'A' }],
+      vWalls: [{ at: [0, 0], player: 'A' }, { at: [1, 0], player: 'A' }],
+    },
+  },
+  {
+    title: '結束與勝負',
+    body: '當所有棋子都被封閉在各自的區域裡，遊戲結束。地盤格數最多的人獲勝；同分則並列。三人局每人另有一次破牆機會，可以拆掉一道相鄰的牆再繼續移動。',
+    board: {
+      size: 4,
+      pieces: [{ at: [0, 0], player: 'A' }, { at: [3, 3], player: 'B' }],
+      territory: [
+        { at: [0, 0], player: 'A' }, { at: [0, 1], player: 'A' }, { at: [1, 0], player: 'A' },
+        { at: [1, 1], player: 'A' }, { at: [2, 0], player: 'A' },
+        { at: [3, 3], player: 'B' }, { at: [3, 2], player: 'B' }, { at: [2, 3], player: 'B' },
+      ],
+      hWalls: [{ at: [2, 0], player: 'A' }, { at: [1, 1], player: 'A' }, { at: [1, 3], player: 'B' }],
+      vWalls: [{ at: [0, 1], player: 'A' }, { at: [1, 1], player: 'A' }, { at: [2, 1], player: 'B' }, { at: [3, 1], player: 'B' }],
+    },
+  },
+];
 
 const RuleModal: React.FC = () => {
   const { ruleModalState, setRuleModalState } = useRuleModal();
+  const [step, setStep] = useState(0);
+  const isOpen = ruleModalState.isOpen;
+  const last = step === STEPS.length - 1;
 
-  const handleRuleBtnOpen = () => {
-    setRuleModalState({
-      ...ruleModalState,
-      isOpen: false
-    });
-  };
+  const close = () => setRuleModalState({ ...ruleModalState, isOpen: false });
+
+  // 每次重新打開都從第一步開始 —— 上次讀到哪裡對下一次沒有意義，
+  // 而停在中間會讓人以為前面幾步已經看過了。
+  useEffect(() => { if (isOpen) setStep(0); }, [isOpen]);
+
+  // 左右方向鍵翻頁
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowRight') setStep((s) => Math.min(s + 1, STEPS.length - 1));
+      if (e.key === 'ArrowLeft') setStep((s) => Math.max(s - 1, 0));
+      if (e.key === 'Escape') close();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  });
+
+  const current = STEPS[step];
 
   return (
-    <div className={`fixed inset-0 z-50 flex w-full  items-center justify-center px-4 ${ruleModalState.isOpen ? 'opacity-100' : 'pointer-events-none opacity-0'} transition-opacity duration-300`}>
-      <div className="fixed inset-0 bg-black/50" onClick={() => handleRuleBtnOpen()}></div>
-      <div className='max-w-md'>
-        <SectionShadow >
-          <div className={`relative w-full rounded-xl border-2 border-gray-900 bg-primary p-6 font-[family-name:var(--font-geist-sans)]`}>
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="flex items-center gap-2 text-2xl font-bold"><MdRule className="text-2xl" />遊玩方式</h2>
-              <div className="group cursor-pointer" onClick={() => handleRuleBtnOpen()}>
-                <IconButton>
-                  <MdClose />
-                </IconButton>
-              </div>
-            </div>
-            <div className='content scrollbar-hide mb-6 max-h-[45dvh] space-y-4 overflow-y-auto pr-2 lg:max-h-[60dvh]'>
-              <style jsx>{`
-                .content::-webkit-scrollbar {
-                  display: none;
-                }
-              `}</style>
-              <div>
-                <h3 className="mb-2 flex items-center gap-2 text-xl font-bold"><MdMovie className="text-xl text-red-500" />《魔鬼的計謀2》中的智力對決</h3>
-                <p className="text-sm leading-relaxed">
-                  牆壁圍棋 Wall Go 是一款領地佔領遊戲，在 Netflix 熱門影集《魔鬼的計謀2》中被巧妙地融入劇情。劇中主角們透過這種智力對決展現了精湛的戰略思維與計謀能力，正如他們在現實生活中的心理博弈般扣人心弦。
-                </p>
-              </div>
+    <div
+      className={`fixed inset-0 z-50 flex w-full items-center justify-center px-4 ${
+        isOpen ? 'opacity-100' : 'pointer-events-none opacity-0'
+      } transition-opacity duration-300`}
+      role="dialog"
+      aria-modal="true"
+      aria-label="遊玩方式"
+    >
+      <div className="fixed inset-0 bg-black/50" onClick={close}></div>
 
-              <div>
-                <h3 className="mb-2 flex items-center gap-2 text-xl font-bold"><MdInfo className="text-xl text-blue-500" /> 遊戲背景</h3>
-                <p className="text-sm leading-relaxed">
-                  在《魔鬼的計謀2》中，牆壁圍棋成為角色間智力較量的完美象徵，展現了如何透過策略性地設置障礙與路徑規劃來達成目標，這與劇中人物之間錯綜複雜的心理戰不謀而合。
-                </p>
-              </div>
-
-              <div>
-                <h3 className="mb-2 flex items-center gap-2 text-xl font-bold"><MdGavel className="text-xl text-amber-500" /> 基本規則</h3>
-                <ul className="space-y-2 text-sm">
-                  <li className="flex items-start gap-2"><MdArrowRight className="mt-0.5 shrink-0 text-lg text-amber-500" /> 遊戲在一個 7×7 的棋盤上進行</li>
-                </ul>
-                <div className="mt-4 pl-4">
-                  <h4 className="mb-1 flex items-center gap-1 text-base font-semibold text-player-A"><MdPeople className="text-base" /> 兩人玩法</h4>
-                  <ul className="ml-2 space-y-1 text-sm">
-                    <li className="flex items-start gap-2"><MdArrowRight className="mt-0.5 shrink-0 text-lg text-player-A" /> 遊戲開始時，紅方與藍方各有兩顆固定位置的棋子已放置在棋盤上。</li>
-                    <li className="flex items-start gap-2"><MdArrowRight className="mt-0.5 shrink-0 text-lg text-player-A" /> 接著依序進行佈局：紅方先放置一顆棋子，藍方放置兩顆，紅方再放置一顆。</li>
-                    <li className="flex items-start gap-2"><MdArrowRight className="mt-0.5 shrink-0 text-lg text-player-A" /> 然後紅方開始進攻，接著藍方進攻，依此輪流。</li>
-                    <li className="flex items-start gap-2"><MdArrowRight className="mt-0.5 shrink-0 text-lg text-player-A" /> 遊戲目標是圍住最多的領地區域。</li>
-                  </ul>
-                </div>
-                <div className="mt-4 pl-4">
-                  <h4 className="mb-1 flex items-center gap-1 text-base font-semibold text-player-B"><MdPeople className="text-base" /> 三人玩法</h4>
-                  <ul className="ml-2 space-y-1 text-sm">
-                    <li className="flex items-start gap-2"><MdArrowRight className="mt-0.5 shrink-0 text-lg text-player-B" /> 遊戲開始時，紅方、藍方、黃方將依照紅方、藍方、黃方、黃方、藍方、紅方的順序擺放棋子。</li>
-                    <li className="flex items-start gap-2"><MdArrowRight className="mt-0.5 shrink-0 text-lg text-player-B" /> 進攻階段按紅方、藍方、黃方順序輪流進行。</li>
-                    <li className="flex items-start gap-2"><MdArrowRight className="mt-0.5 shrink-0 text-lg text-player-B" /> 每一方有一次的破牆機會，破牆後可繼續移動。</li>
-                    <li className="flex items-start gap-2"><MdArrowRight className="mt-0.5 shrink-0 text-lg text-player-B" /> 遊戲結束時，領地最多者獲勝，若有兩人同分則並列冠軍，三人同分則為平手。</li>
-                  </ul>
-                </div>
-              </div>
-
-              <div>
-                <h3 className="mb-2 flex items-center gap-2 text-xl font-bold"><MdTouchApp className="text-xl text-green-500" />操作規則</h3>
-                <ul className="space-y-2 text-sm">
-                  <li className="flex items-start gap-2"><MdArrowRight className="mt-0.5 shrink-0 text-lg text-green-500" /> <div className="flex-1"><strong>棋子移動</strong>：每回合可將棋子向上、下、左、右任一方向移動最多兩格</div></li>
-                  <li className="flex items-start gap-2"><MdArrowRight className="mt-0.5 shrink-0 text-lg text-green-500" /> <div className="flex-1"><strong>圍牆設置</strong>：圍牆只能設置在尚未有圍牆的格子之間</div></li>
-                  <li className="flex items-start gap-2"><MdArrowRight className="mt-0.5 shrink-0 text-lg text-green-500" /> <div className="flex-1"><strong>破牆</strong>：在三人對戰中，當棋子被牆擋住時，每位玩家每局可使用一次「破牆」機會，直接穿越一個牆壁</div></li>
-                </ul>
-              </div>
-
-              <div>
-                <h3 className="mb-2 flex items-center gap-2 text-xl font-bold"><MdStarRate className="text-xl text-purple-500" /> 圍牆規則</h3>
-                <ul className="space-y-2 text-sm">
-                  <li className="flex items-start gap-2"><MdArrowRight className="mt-0.5 shrink-0 text-lg text-purple-500" /> 圍牆放置在格子之間，可阻擋棋子移動</li>
-                  <li className="flex items-start gap-2"><MdArrowRight className="mt-0.5 shrink-0 text-lg text-purple-500" /> 圍牆不分敵友，可用來圍住己方領地</li>
-                  <li className="flex items-start gap-2"><MdArrowRight className="mt-0.5 shrink-0 text-lg text-purple-500" /> 只有完全封閉的區域且區域內僅有一方陣營的棋子，才算作該方佔領的領地</li>
-                  <li className="flex items-start gap-2"><MdArrowRight className="mt-0.5 shrink-0 text-lg text-purple-500" /> 棋盤邊界也視為圍牆的一部分</li>
-                </ul>
-              </div>
-
-              <div>
-                <h3 className="mb-2 flex items-center gap-2 text-xl font-bold"><MdMilitaryTech className="text-xl text-yellow-500" /> 勝利條件</h3>
-                <ul className="space-y-2 text-sm">
-                  <li className="flex items-start gap-2"><MdArrowRight className="mt-0.5 shrink-0 text-lg text-yellow-500" /> 當所有可能的領地都已形成，且每個領地內只有單一陣營的棋子</li>
-                  <li className="flex items-start gap-2"><MdArrowRight className="mt-0.5 shrink-0 text-lg text-yellow-500" /> 佔領領地數量最多的一方獲勝</li>
-                </ul>
-              </div>
-
-              <div>
-                <h3 className="mb-2 flex items-center gap-2 text-xl font-bold"><MdEmojiEvents className="text-xl text-orange-500" /> 策略要點</h3>
-                <p className="mb-2 text-sm leading-relaxed">
-                  如同《魔鬼的計謀2》中角色們精心設計的計謀，牆壁圍棋要求玩家：
-                </p>
-                <ul className="space-y-2 text-sm">
-                  <li className="flex items-start gap-2"><MdArrowRight className="mt-0.5 shrink-0 text-lg text-orange-500" /> 巧妙平衡進攻與防守策略</li>
-                  <li className="flex items-start gap-2"><MdArrowRight className="mt-0.5 shrink-0 text-lg text-orange-500" /> 預測並應對對手的戰術動向</li>
-                  <li className="flex items-start gap-2"><MdArrowRight className="mt-0.5 shrink-0 text-lg text-orange-500" /> 策略性地放置圍牆以限制對手的活動範圍</li>
-                  <li className="flex items-start gap-2"><MdArrowRight className="mt-0.5 shrink-0 text-lg text-orange-500" /> 靈活佈局，最大化己方佔領的領地</li>
-                </ul>
-              </div>
-            </div>
-
-            <Button
-              color='bg-primary-400'
-              handleClickEvent={() => handleRuleBtnOpen()}
-            >
-              <span className="flex items-center gap-2"><MdPlayArrow className='text-2xl'/> 回到遊戲</span>
-            </Button>
+      <div className="relative w-full max-w-md rounded-2xl bg-primary p-6 font-[family-name:var(--font-app)]">
+        <div className="mb-4 flex items-start justify-between gap-4">
+          <div>
+            <p className="text-xs font-bold tracking-widest text-ink-soft">
+              遊玩方式 · {step + 1} / {STEPS.length}
+            </p>
+            <h2 className="mt-1 text-2xl font-black leading-tight">{current.title}</h2>
           </div>
-        </SectionShadow>
+          <IconButton color="text-ink-soft hover:bg-tile-ink/[0.07] bg-transparent" handleClickEvent={close} label="關閉">
+            <GiCancel />
+          </IconButton>
+        </div>
+
+        <div className="mx-auto mb-4 w-full max-w-[240px]">
+          <TutorialBoard {...current.board} />
+        </div>
+
+        <p className="min-h-[5.5rem] text-sm leading-relaxed">{current.body}</p>
+
+        {/* 進度點。也可以直接點某一步跳過去 —— 回頭查某一條規則時不必一路按 */}
+        <div className="my-4 flex justify-center gap-2">
+          {STEPS.map((s, i) => (
+            <button
+              key={s.title}
+              type="button"
+              aria-label={`第 ${i + 1} 步：${s.title}`}
+              aria-current={i === step ? 'step' : undefined}
+              onClick={() => setStep(i)}
+              className={`h-2 rounded-full transition-all ${
+                i === step ? 'w-6 bg-tile-ink' : 'w-2 bg-tile-ink/25 hover:bg-tile-ink/50'
+              }`}
+            />
+          ))}
+        </div>
+
+        <div className="flex gap-3">
+          {step > 0 && (
+            <Button
+              color="text-ink-soft hover:bg-tile-ink/[0.06] bg-transparent"
+              handleClickEvent={() => setStep(step - 1)}
+            >
+              上一步
+            </Button>
+          )}
+          <Button handleClickEvent={last ? close : () => setStep(step + 1)}>
+            <span className="flex items-center justify-center gap-2">
+              {last ? <><GiPlayButton /> 開始遊戲</> : '下一步'}
+            </span>
+          </Button>
+        </div>
       </div>
+
+      {/* CC BY 3.0 要求署名。首頁的桌遊風格圖示取自 game-icons.net，
+          放在這裡而不是頁尾，是因為這個站沒有頁尾，而遊玩方式是
+          唯一每個玩家都會打開一次的地方。 */}
+      <p className="pointer-events-none absolute inset-x-0 bottom-3 text-center text-[11px] text-tile-cream/70">
+        圖示來自 game-icons.net 與 Lucide，依 CC BY 3.0 / ISC 授權使用
+      </p>
     </div>
   );
 };
