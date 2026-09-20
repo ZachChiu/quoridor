@@ -77,11 +77,17 @@ export default function GameTile({
       disabled={disabled}
       style={{ '--tile-icon-fill': ICON_FILL[tone] } as React.CSSProperties}
       className={`${TONE[tone]} ${wide ? 'col-span-2 flex-row gap-3 py-4' : 'aspect-square flex-col gap-2'}
-        flex items-center justify-center rounded-2xl p-3
+        group flex items-center justify-center rounded-2xl p-3
         transition enabled:hover:brightness-95 enabled:active:scale-[0.97]
         disabled:cursor-not-allowed disabled:opacity-45`}
     >
-      <Icon className={`tile-icon ${wide ? 'shrink-0 text-4xl' : 'text-7xl md:text-8xl'}`} aria-hidden="true" />
+      {/* tile-icon 管填色，tile-icon-anim 管 hover 時那下輕晃。
+          晃動只在有 hover 的裝置上啟用（見 globals.css）—— 手機沒有 hover，
+          而這個效果不承擔任何說明責任，看不到也不會少懂什麼。 */}
+      <Icon
+        className={`tile-icon tile-icon-anim ${wide ? 'shrink-0 text-4xl' : 'text-7xl md:text-8xl'}`}
+        aria-hidden="true"
+      />
       <span className={wide ? 'text-lg font-black' : 'flex flex-col items-center'}>
         {!wide && kicker && (
           <span className="text-xs font-bold opacity-75 md:text-sm">{kicker}</span>

@@ -13,8 +13,9 @@ const PLAYER_VAR: Record<string, string> = {
   B: 'var(--player-B)',
   C: 'var(--player-C)',
 };
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import SectionShadow from "./SectionShadow";
+import { boardSignature, diffBoard, territoryWave, newWall } from "./boardMotion";
 
 type Props = {
   size: number;
@@ -178,6 +179,89 @@ export default React.memo(function Chessboard({
     return getAvailableMovesRecursive(selectedChess.row, selectedChess.col, remainSteps);
   }, [selectedChess, remainSteps, getAvailableMovesRecursive]);
 
+  /**
+   * 每個落點離棋子幾步。
+   *
+   * 只為了動畫：讓灰點由近而遠依序浮現，順手把「一次最多兩步」畫出來。
+   * 上面那支遞迴走的是所有簡單路徑、會重複命中同一格，所以另外用 BFS
+   * 取最短距離（可達集合兩者相同，這裡只多要一個層數）。
+   */
+  const moveDistance = useMemo<Record<string, number>>(() => {
+    if (!selectedChess || remainSteps === 0) return {};
+    const dist: Record<string, number> = {};
+    let frontier = [[selectedChess.row, selectedChess.col] as [number, number]];
+    const seen = new Set([`${selectedChess.row},${selectedChess.col}`]);
+    for (let step = 1; step <= remainSteps && frontier.length; step++) {
+      const next: [number, number][] = [];
+      for (const [r, c] of frontier) {
+        for (const [dr, dc] of [[-1, 0], [0, 1], [1, 0], [0, -1]] as const) {
+          const nr = r + dr;
+          const nc = c + dc;
+          if (nr < 0 || nr >= size || nc < 0 || nc >= size) continue;
+          if (dr === 1 && horizontalWalls[r][c]) continue;
+          if (dr === -1 && r > 0 && horizontalWalls[r - 1][c]) continue;
+          if (dc === 1 && verticalWalls[r][c]) continue;
+          if (dc === -1 && c > 0 && verticalWalls[r][c - 1]) continue;
+          if (board[nr][nc]) continue;
+          const k = `${nr},${nc}`;
+          if (seen.has(k)) continue;
+          seen.add(k);
+          dist[k] = step;
+          next.push([nr, nc]);
+        }
+      }
+      frontier = next;
+    }
+    return dist;
+  }, [selectedChess, remainSteps, size, board, horizontalWalls, verticalWalls]);
+
+  /*
+    動畫的觸發點：在 render 期間比對上一次的盤面／領地。
+
+    用 state 而不是 ref —— render 期間讀 ref 是 react-hooks/refs 在擋的事，
+    而 useEffect 會慢一幀（先畫出新盤面、下一幀才補上動畫，等於沒有動畫）。
+    「render 中比對前值並調整 state」是 React 官方對這個情境的建議寫法，
+    RuleModal 重置步驟也是同一個模式。
+  */
+  const boardSig = useMemo(() => boardSignature(board), [board]);
+  const [motion, setMotion] = useState(() => ({
+    sig: boardSig,
+    slide: {} as Record<string, { dx: number; dy: number }>,
+    drop: [] as string[],
+    seq: 0,
+  }));
+  if (motion.sig !== boardSig) {
+    setMotion((m) => ({ ...diffBoard(m.sig, boardSig, size), sig: boardSig, seq: m.seq + 1 }));
+  }
+
+  const [terr, setTerr] = useState(() => ({
+    map: flattenTerritoriesObj,
+    wave: {} as Record<string, number>,
+    seq: 0,
+  }));
+  const terrSig = useMemo(
+    () => Object.entries(flattenTerritoriesObj).map(([k, v]) => `${k}:${v ?? ""}`).sort().join("|"),
+    [flattenTerritoriesObj]
+  );
+  const wallSig = useMemo(
+    () => ({ h: boardSignature(horizontalWalls), v: boardSignature(verticalWalls) }),
+    [horizontalWalls, verticalWalls]
+  );
+  const [walls, setWalls] = useState(() => ({ sig: wallSig, fresh: null as string | null }));
+  if (walls.sig.h !== wallSig.h || walls.sig.v !== wallSig.v) {
+    setWalls((w) => ({ sig: wallSig, fresh: newWall(w.sig, wallSig) }));
+  }
+
+  const [lastTerrSig, setLastTerrSig] = useState(terrSig);
+  if (lastTerrSig !== terrSig) {
+    setLastTerrSig(terrSig);
+    setTerr((t) => ({
+      map: flattenTerritoriesObj,
+      wave: territoryWave(t.map, flattenTerritoriesObj, board),
+      seq: t.seq + 1,
+    }));
+  }
+
   return (
     <div className="relative size-full">
       {/* 列座標（A-H）*/}
@@ -245,14 +329,16 @@ export default React.memo(function Chessboard({
                 'C': 'bg-player-C-50',
               }
 
-              const cellClass = [];
-              if (isPlacingChess) {
-                cellClass.push('bg-primary-50');
-              } else if (territory) {
-                cellClass.push(cellBgMapping[territory]);
-              } else {
-                cellClass.push('bg-primary-50');
-              }
+              /*
+                領地色從「格子的 bg class」改成一層可縮放的疊層。
+
+                封閉成領地是這局的得分瞬間，但原本畫面上只是一片顏色突然換掉，
+                完全看不出是哪顆棋子圈到的。疊層可以從擁有者的棋子往外一圈圈填。
+                格子本體固定奶油色，疊層墊在最底（z-0），棋子與落點照舊在上面。
+              */
+              const cellClass = ['bg-primary-50'];
+              const territoryClass = !isPlacingChess && territory ? cellBgMapping[territory] : null;
+              const territoryDelay = terr.wave[`${rowIndex},${colIndex}`];
 
               if (!isLock && (isPlacingChess && !cellPlayer)) {
                 cellClass.push('cursor-pointer');
@@ -303,13 +389,47 @@ export default React.memo(function Chessboard({
                     />
                   )}
 
-                  {/* 棋子 */}
-                  {cellPlayer && (
+                  {/* 領地。key 帶上 seq，讓同一格再次易主時動畫會重播。 */}
+                  {territoryClass && (
                     <div
-                      className={`absolute z-20 size-3/5 rounded-full ${isPieceActive ? 'animate-pulse-shine' : ''}`}
-                      style={{ backgroundColor: PLAYER_VAR[cellPlayer] }}
+                      key={`t${terr.seq}-${territoryDelay !== undefined ? 'in' : 'on'}`}
+                      className={`pointer-events-none absolute inset-0 z-0 ${territoryClass} ${
+                        territoryDelay !== undefined ? 'animate-territory' : ''
+                      }`}
+                      style={territoryDelay !== undefined ? { animationDelay: `${territoryDelay}ms` } : undefined}
                     />
                   )}
+
+                  {/* 棋子。
+                      外層與格子等大（inset-0），所以位移可以用「格」為單位寫：
+                      100% 就是一格寬，再補一道格縫。內層才是那顆圓 ——
+                      滑動掛外層、呼吸掛內層，兩個 transform 不會互相蓋掉。 */}
+                  {cellPlayer && (() => {
+                    const mk = `${rowIndex},${colIndex}`;
+                    const slide = motion.slide[mk];
+                    const dropped = motion.drop.includes(mk);
+                    return (
+                      <div
+                        key={slide || dropped ? `m${motion.seq}` : 'p'}
+                        className={`pointer-events-none absolute inset-0 z-20 grid place-items-center ${
+                          slide ? 'animate-piece-slide' : dropped ? 'animate-piece-drop' : ''
+                        }`}
+                        style={
+                          slide
+                            ? ({
+                                '--slide-x': `calc(${slide.dx} * (100% + var(--board-gap)))`,
+                                '--slide-y': `calc(${slide.dy} * (100% + var(--board-gap)))`,
+                              } as React.CSSProperties)
+                            : undefined
+                        }
+                      >
+                        <div
+                          className={`size-3/5 rounded-full ${isPieceActive ? 'animate-pulse-shine' : ''}`}
+                          style={{ backgroundColor: PLAYER_VAR[cellPlayer] }}
+                        />
+                      </div>
+                    );
+                  })()}
 
                   {/* 放置時的預覽棋子 */}
                   {!cellPlayer && isPlacingChess && currentPlayer && (
@@ -324,7 +444,11 @@ export default React.memo(function Chessboard({
                       而且會跟領地底色打架。改成置中的圓點 —— 不吃底色，
                       也不會跟「這格屬於誰」的資訊互相干擾。 */}
                   {isAvailableMove && !cellPlayer && (
-                    <div className="absolute z-10 size-1/4 rounded-full bg-tile-ink/30 transition-colors group-hover:bg-tile-ink/55" />
+                    <div
+                      key={`d${selectedChess?.row},${selectedChess?.col},${remainSteps}`}
+                      className="animate-dot-pop absolute z-10 size-1/4 rounded-full bg-tile-ink/30 transition-colors group-hover:bg-tile-ink/55"
+                      style={{ animationDelay: `${(moveDistance[`${rowIndex},${colIndex}`] ?? 1) * 55 - 55}ms` }}
+                    />
                   )}
 
                   {/* 開局可放置的位置。
@@ -346,7 +470,9 @@ export default React.memo(function Chessboard({
                   */}
                   {hasHorizontalWallPlayer && (
                     <div
-                      className="absolute inset-x-[-3px] bottom-[calc(var(--board-gap)*-0.5)] z-20 h-[9px] translate-y-1/2 rounded-full"
+                      className={`absolute inset-x-[-3px] bottom-[calc(var(--board-gap)*-0.5)] z-20 h-[9px] translate-y-1/2 rounded-full ${
+                        walls.fresh === `h:${rowIndex * size + colIndex}` ? 'animate-wall-h' : ''
+                      }`}
                       style={{ backgroundColor: PLAYER_VAR[hasHorizontalWallPlayer] }}
                     >
                       {isHorizontalWallBreakable && (
@@ -363,7 +489,9 @@ export default React.memo(function Chessboard({
                   )}
                   {hasVerticalWall && (
                     <div
-                      className="absolute inset-y-[-3px] right-[calc(var(--board-gap)*-0.5)] z-20 w-[9px] translate-x-1/2 rounded-full"
+                      className={`absolute inset-y-[-3px] right-[calc(var(--board-gap)*-0.5)] z-20 w-[9px] translate-x-1/2 rounded-full ${
+                        walls.fresh === `v:${rowIndex * size + colIndex}` ? 'animate-wall-v' : ''
+                      }`}
                       style={{ backgroundColor: PLAYER_VAR[hasVerticalWall] }}
                     >
                       {isVerticalWallBreakable && (
