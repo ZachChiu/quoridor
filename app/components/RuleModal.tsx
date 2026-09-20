@@ -6,6 +6,7 @@ import Button from './Button';
 import TutorialBoard from './TutorialBoard';
 import { STEPS } from './tutorialSteps';
 import { useRuleModal } from '@/contexts/RuleModalContext';
+import { useSwipe } from '@/hook/useSwipe';
 
 /**
  * 逐步教學。
@@ -40,6 +41,12 @@ const RuleModal: React.FC = () => {
     if (e.key === 'ArrowLeft') setStep((s) => Math.max(s - 1, 0));
   }, []);
 
+
+  const next = useCallback(() => setStep((s) => Math.min(s + 1, STEPS.length - 1)), []);
+  const prev = useCallback(() => setStep((s) => Math.max(s - 1, 0)), []);
+  // 手機上翻頁不該只有底下那顆按鈕 —— 一步一頁的東西，手指預期可以滑。
+  const swipe = useSwipe(next, prev);
+
   const current = STEPS[step];
 
   return (
@@ -73,11 +80,15 @@ const RuleModal: React.FC = () => {
         </>
       }
     >
-      <div className="mx-auto w-full max-w-[240px]">
-        <TutorialBoard {...current.board} />
-      </div>
+      {/* 滑動範圍涵蓋圖與文字，不只棋盤 —— 手指會落在哪裡不該由我決定。
+          touch-pan-y 讓垂直捲動照常交給瀏覽器，只有水平方向歸我們處理。 */}
+      <div className="touch-pan-y" {...swipe}>
+        <div className="mx-auto w-full max-w-[240px]">
+          <TutorialBoard {...current.board} />
+        </div>
 
-      <p className="mt-4 min-h-[5.5rem] text-sm leading-relaxed">{current.body}</p>
+        <p className="mt-4 min-h-[5.5rem] text-sm leading-relaxed">{current.body}</p>
+      </div>
 
       {/* 進度點。也可以直接點某一步跳過去 —— 回頭查某一條規則時不必一路按。 */}
       <div className="mt-2 flex justify-center gap-2">

@@ -1,5 +1,6 @@
 'use client'
 import React, { useEffect, useRef } from 'react';
+import { useScrollLock } from '@/hook/useScrollLock';
 import { GiCancel } from 'react-icons/gi';
 import type { IconType } from 'react-icons';
 
@@ -37,6 +38,9 @@ const Modal: React.FC<Props> = ({
 }) => {
   const panelRef = useRef<HTMLDivElement>(null);
   const restoreRef = useRef<HTMLElement | null>(null);
+
+  // Modal 打開時鎖住背景捲動 —— 手機上不鎖的話，滑動會穿透到後面的頁面。
+  useScrollLock(isOpen);
 
   useEffect(() => {
     if (!isOpen) return;

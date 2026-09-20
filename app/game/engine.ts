@@ -514,8 +514,29 @@ export function replay(wgf: string, upToTurn?: number): GameState {
   const fullOpening = openingOrder(playersNum);
   const openingStep = fullOpening.slice(record.openingPlacements.length);
   const order = turnOrder(playersNum);
+
+  /*
+    輪到誰，要從「上一回合是誰下的」往後推，不能用 turns.length % 人數。
+
+    取模那種算法假設每個人都輪過每一輪。但 skipUnplayable 會跳過已經
+    無法影響結果的玩家，而跳過刻意不寫進棋譜 —— 於是只要中途發生過一次
+    跳過，回合索引就永久錯開一位，之後每一次重播都算錯人。
+    結尾的 skipUnplayable() 只救得了「結束時剛好還該被跳」的情形。
+
+    這在三人局特別容易發生（隨機對局 400 場撞到 178 場），而且症狀很惡劣：
+    連線時寫入方靠 lastAppliedWgf 擋掉自己的重播、保有正確的本地狀態，
+    其他人卻是從棋譜重建 —— 雙方對「現在輪到誰」的認知就此分岔。
+
+    每個 action 本來就帶 player，而一個回合必定至少有一次築牆，
+    所以 turn[0].player 一定取得到，不需要改棋譜格式。
+  */
+  const lastPlayer = turns.length > 0 ? turns[turns.length - 1][0]?.player : undefined;
   const currentPlayer: PlayerKey =
-    openingStep.length > 0 ? openingStep[0] : order[turns.length % order.length];
+    openingStep.length > 0
+      ? openingStep[0]
+      : lastPlayer
+        ? order[(order.indexOf(lastPlayer) + 1) % order.length]
+        : order[0];
 
   return skipUnplayable({
     playersNum,
