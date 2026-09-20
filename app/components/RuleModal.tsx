@@ -151,7 +151,11 @@ const RuleModal: React.FC = () => {
               上一步
             </Button>
           )}
-          <Button handleClickEvent={last ? close : () => setStep(step + 1)}>
+          {/* 主要按鈕用深墨而非琥珀。Modal 的標題色帶已經帶了一個色相，
+              按鈕再帶一個就是兩個不相干的顏色在同一塊小面板上打架
+              —— 綠色 header 配黃色按鈕看起來怪，原因就在這。
+              深墨不屬於任何色相，放在哪個色帶下面都成立。 */}
+          <Button color="bg-tile-ink text-tile-cream" handleClickEvent={last ? close : () => setStep(step + 1)}>
             <span className="flex items-center justify-center gap-2">
               {last ? <><GiPlayButton /> 開始遊戲</> : '下一步'}
             </span>

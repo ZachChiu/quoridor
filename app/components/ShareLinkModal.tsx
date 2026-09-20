@@ -51,7 +51,7 @@ const ShareLinkModal: React.FC<Props> = ({ isOpen, shareUrl, joinedCount, totalC
           onClick={handleCopy}
           aria-label={copied ? '已複製' : '複製連結'}
           className={`flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-black transition ${
-            copied ? 'bg-accent-green text-tile-cream' : 'bg-tile-amber text-tile-ink hover:brightness-95'
+            copied ? 'bg-tile-forest text-tile-cream' : 'bg-tile-amber text-tile-ink hover:brightness-95'
           }`}
         >
           {copied ? <GiCheckMark /> : <LuCopy />}

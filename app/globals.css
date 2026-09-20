@@ -45,17 +45,17 @@ svg[stroke="currentColor"] {
   --player-A-900: #622824;
 
   /* 藍方 */
-  --player-B: #3a78ab;
-  --player-B-50: #dce7f0;
-  --player-B-100: #c4d6e6;
-  --player-B-200: #a4c1d8;
-  --player-B-300: #85abcb;
-  --player-B-400: #6193bc;
-  --player-B-500: #3a78ab;
-  --player-B-600: #366a95;
-  --player-B-700: #305a7c;
-  --player-B-800: #2c4b65;
-  --player-B-900: #273c4e;
+  --player-B: #2478b7;
+  --player-B-50: #e5eff6;
+  --player-B-100: #cadfee;
+  --player-B-200: #a7c9e2;
+  --player-B-300: #84b3d7;
+  --player-B-400: #5998c8;
+  --player-B-500: #2478b7;
+  --player-B-600: #226ca3;
+  --player-B-700: #205d8c;
+  --player-B-800: #1e4e74;
+  --player-B-900: #1b405d;
 
   /* 黃方。
      基色比紅藍暗一階是刻意的 —— 黃本質上亮，用與紅藍相同的明度時，
@@ -79,10 +79,6 @@ svg[stroke="currentColor"] {
   /* 輔色：只用在 Modal 的分節圖示與提示狀態。同樣取自參考圖，
      不用 Tailwind 預設的 red-500 / purple-500 —— 那些彩度比這套色票高一截，
      混在一起會讓畫面看起來像兩套設計。 */
-  --accent-green: #58904f;
-  --accent-green-100: #dceada;
-  --accent-green-700: #3f6a38;
-  --accent-purple: #7e5891;
 
   /* 撞色磁磚。每一塊的文字色都量過對比度（見下方註記），全部通過 AA。
      暖色（琥珀／橘）配黑墨、冷色（藍／紫／深綠）配米白 —— 這是對比度算出來的
@@ -93,10 +89,10 @@ svg[stroke="currentColor"] {
      而且不會報錯，只是安靜地變透明。 */
   --tile-amber: 233 175 76;   /* #e9af4c 黑墨 9.6:1 */
   --tile-orange: 223 108 63;  /* #df6c3f 黑墨 5.7:1 */
-  --tile-blue: 58 120 171;    /* #3a78ab 米白 4.4:1 */
-  --tile-purple: 126 88 145;  /* #7e5891 米白 5.3:1 */
+  --tile-blue: 36 120 183;    /* #2478b7 米白 4.4:1 */
+  --tile-purple: 131 81 156;  /* #83519c 米白 5.4:1 */
   --tile-red: 205 70 66;     /* #cd4642 米白 4.3:1 */
-  --tile-forest: 46 100 74;  /* #2e644a 米白 6.5:1 */
+  --tile-forest: 0 105 68;    /* #006944 米白 6.3:1 */
   --tile-ink: 20 16 16;
   --tile-cream: 250 247 240;
 

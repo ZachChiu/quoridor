@@ -17,12 +17,6 @@ export default {
         // 描邊與硬陰影全站都吃這一階，換成暖黑就整體對齊了。
         gray: { 900: "#141010" },
         "ink-soft": "var(--ink-soft)",
-        "accent-green": {
-          DEFAULT: "var(--accent-green)",
-          100: "var(--accent-green-100)",
-          700: "var(--accent-green-700)",
-        },
-        "accent-purple": "var(--accent-purple)",
         tile: {
           amber: "rgb(var(--tile-amber) / <alpha-value>)",
           orange: "rgb(var(--tile-orange) / <alpha-value>)",
