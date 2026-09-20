@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { useState, useEffect, useMemo, useCallback, useReducer, useRef } from "react";
 import { GiHouse, GiRuleBook } from "react-icons/gi";
 import Link from 'next/link';
 import Chessboard from "@/components/Chessboard";
@@ -7,33 +7,80 @@ import ChampionModal from "@/components/ChampionModal";
 import GameStatus from "@/components/GameStatus";
 import GameTips from "@/components/GameTips";
 import IconButton from "@/components/IconButton";
-import ShareLinkModal from "@/components/ShareLinkModal";
 import WaitingRoom from "@/components/WaitingRoom";
+import ShareLinkModal from "@/components/ShareLinkModal";
+import BreakWallConfirmModal from "@/components/BreakWallConfirmModal";
 
-import type { Player, Direction } from "@/types/chessboard.ts";
-import flatten from 'lodash-es/flatten';
-import uniq from 'lodash-es/uniq';
-import cloneDeep from 'lodash-es/cloneDeep';
-import max from 'lodash-es/max';
-import min from 'lodash-es/min';
+import type { Direction } from "@/types/chessboard";
 
 import { joinRoom, getRoom, subscribeRoom, updateGameState, setRoomWinner } from '@/utils/gameService';
 import { useUser } from '@/contexts/UserContext';
 import type { Room, RoomPlayer } from '@/types/room';
 
 import { trackButtonClick } from "@/utils/analytics";
-import { buildPieceIndex, getPieceNumber, updatePieceIndex, serializeWGF, parseWGF } from "@/utils/wgf";
-import type { GameAction, PieceIndex, PiecePlacement } from "@/types/wgf";
 import { useRuleModal } from "@/contexts/RuleModalContext";
 import { useGame } from "@/contexts/GameContext";
-import playerTemplates, { openingStepTwo, openingStepThree, turnOrderTwo, turnOrderThree } from "@/config/playerTemplates";
-import BreakWallConfirmModal from "@/components/BreakWallConfirmModal";
 import { useConfirm } from "@/hook/useConfirm";
+
+import {
+  BOARD_SIZE,
+  createGame,
+  isBreakWallAvailable as engineHasBreakWall,
+  isPlacingPhase,
+  movePiece,
+  placeOpeningPiece,
+  placeWall,
+  breakWall,
+  replay,
+  selectPiece,
+  toWgf,
+} from "@/game/engine";
+import { evaluate } from "@/game/score";
+import type { GameState, PlayerKey, WallDir } from "@/game/types";
 
 type OnlinePhase = 'initializing' | 'waiting' | 'playing' | 'error';
 
 interface PlayClientProps {
   roomId?: string;
+}
+
+/** Chessboard 的方向語彙 → engine 的牆方向。 */
+const toWallDir = (direction: Direction): WallDir =>
+  direction === 'top' || direction === 'bottom' ? 'H' : 'V';
+
+type GameEvent =
+  | { type: 'reset'; playersNum: 2 | 3 }
+  | { type: 'replay'; wgf: string }
+  | { type: 'select'; row: number; col: number }
+  | { type: 'move'; row: number; col: number }
+  | { type: 'placeOpening'; row: number; col: number }
+  | { type: 'placeWall'; row: number; col: number; dir: WallDir }
+  | { type: 'breakWall'; row: number; col: number; dir: WallDir };
+
+/**
+ * 以 reducer 串接 engine 的純函式。
+ *
+ * 用 reducer 而非 useState + closure 的理由：每次轉換都保證作用在最新狀態上。
+ * 若從 render closure 讀取 state，同一幀內連續觸發的事件會互相覆蓋
+ * （例如點擊事件冒泡導致同一次點擊觸發兩個處理器）。
+ */
+function gameReducer(state: GameState, event: GameEvent): GameState {
+  switch (event.type) {
+    case 'reset':
+      return createGame(event.playersNum);
+    case 'replay':
+      return replay(event.wgf);
+    case 'select':
+      return selectPiece(state, event.row, event.col);
+    case 'move':
+      return movePiece(state, event.row, event.col);
+    case 'placeOpening':
+      return placeOpeningPiece(state, event.row, event.col);
+    case 'placeWall':
+      return placeWall(state, event.row, event.col, event.dir);
+    case 'breakWall':
+      return breakWall(state, event.row, event.col, event.dir);
+  }
 }
 
 export default function PlayClient({ roomId }: PlayClientProps) {
@@ -44,7 +91,7 @@ export default function PlayClient({ roomId }: PlayClientProps) {
   // ─── 連線狀態（只在 online 模式使用）────────────────────────────────────────
   const [phase, setPhase] = useState<OnlinePhase>('initializing');
   const [room, setRoom] = useState<Room | null>(null);
-  const [myPlayerKey, setMyPlayerKey] = useState<'A' | 'B' | 'C' | null>(null);
+  const [myPlayerKey, setMyPlayerKey] = useState<PlayerKey | null>(null);
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [error, setError] = useState('');
   const initialized = useRef(false);
@@ -54,7 +101,35 @@ export default function PlayClient({ roomId }: PlayClientProps) {
       ? `${window.location.origin}/match#roomId=${roomId}`
       : '';
 
-  const playersNum = isOnline ? (room?.playersNum ?? 2) : gameState.playersNum;
+  // ─── 遊戲狀態 ────────────────────────────────────────────────────────────────
+  //
+  // 全部規則邏輯都在 app/game/ 的純函式裡，這裡只持有一個不可變的 GameState。
+  // 本機模式在掛載時就能從 GameContext 取得正確人數；連線模式的初值會立刻被
+  // 來自 Firebase 的 WGF 重播覆蓋，因此初始人數用 2 即可。
+  const [state, dispatch] = useReducer(
+    gameReducer,
+    isOnline ? 2 : ((gameState.playersNum === 3 ? 3 : 2) as 2 | 3),
+    createGame
+  );
+  // 冠軍 Modal 的開啟與否完全由「是否已分出勝負」推導，只額外記錄使用者
+  // 是否手動關閉過，避免用 effect 去同步一個本來就能算出來的狀態。
+  const [championDismissed, setChampionDismissed] = useState(false);
+
+  const playersNum = state.playersNum;
+  const { territories, outcome } = useMemo(() => evaluate(state), [state]);
+  const isLock = outcome.length > 0;
+  const isPlacing = isPlacingPhase(state);
+  const canBreakWall = engineHasBreakWall(state);
+
+  // 避免自己寫入 Firebase 的內容又觸發自己重播
+  const lastAppliedWgf = useRef<string>('');
+
+  // 只有輪到我的時候才能操作（遊戲結束後一律鎖定）
+  const isMyTurn = useMemo(() => {
+    if (isLock) return false;
+    if (!isOnline || !myPlayerKey) return true;
+    return state.currentPlayer === myPlayerKey;
+  }, [isLock, isOnline, myPlayerKey, state.currentPlayer]);
 
   // ─── Firebase 初始化（online only）──────────────────────────────────────────
   useEffect(() => {
@@ -67,9 +142,7 @@ export default function PlayClient({ roomId }: PlayClientProps) {
     (async () => {
       try {
         // Firebase 的載入與匿名登入延後到這裡才觸發，
-        // 所以本機對戰（沒有 roomId）完全不會下載 Firebase SDK。
-        // 這裡不能只依賴首頁預熱過 —— 直接點開 /match#roomId=… 連結的人
-        // 根本沒經過首頁。
+        // 因此本機對戰（無 roomId）完全不會下載 Firebase SDK。
         const uid = await ensureUser();
         if (cancelled) return;
 
@@ -84,7 +157,7 @@ export default function PlayClient({ roomId }: PlayClientProps) {
         const slots = (['A', 'B', 'C'] as const).slice(0, existing.playersNum);
         const myExistingKey = slots.find(s => existing.players[s]?.uid === uid);
 
-        let assignedKey: 'A' | 'B' | 'C';
+        let assignedKey: PlayerKey;
 
         if (myExistingKey) {
           assignedKey = myExistingKey;
@@ -118,9 +191,7 @@ export default function PlayClient({ roomId }: PlayClientProps) {
           }
         });
 
-        if (assignedKey === 'A') {
-          setShareModalOpen(true);
-        }
+        if (assignedKey === 'A') setShareModalOpen(true);
       } catch (e) {
         console.error(e);
         setError('連線失敗，請重新整理後再試');
@@ -134,254 +205,53 @@ export default function PlayClient({ roomId }: PlayClientProps) {
     };
   }, [isOnline, roomId, ensureUser]);
 
-  // ─── 棋盤狀態 ────────────────────────────────────────────────────────────────
-  const [size, setSize] = useState(0);
-  const [board, setBoard] = useState<Player[][]>(playerTemplates.templateBoardTwo);
-  const [currentPlayer, setCurrentPlayer] = useState<Player>('A');
-  const [verticalWalls, setVerticalWalls] = useState<Player[][]>(playerTemplates.templateVerticalWalls);
-  const [horizontalWalls, setHorizontalWalls] = useState<Player[][]>(playerTemplates.templateHorizontalWalls);
-  const [selectedChess, setSelectedChess] = useState<{ row: number; col: number } | null>(null);
-  const [remainSteps, setRemainSteps] = useState(2);
-  const [uniqTerritories, setUniqTerritories] = useState<{ A: string[]; B: string[]; C?: string[] }>({
-    A: [],
-    B: []
-  });
-  const [flattenTerritoriesObj, setFlattenTerritoriesObj] = useState<Record<string, Player>>({});
-  const [winingStatus, setWiningStatus] = useState<(Player | 'draw')[]>([]);
-  const [openingStep, setOpeningStep] = useState<Player[]>([]);
-  const [isChampionModalOpen, setIsChampionModalOpen] = useState(false);
-  const isPlacingChess = useMemo(() => !!openingStep.length, [openingStep])
-  const isLock = useMemo(() => !!winingStatus.length, [winingStatus]);
-  const [breakWallCountObj, setBreakWallCountObj] = useState({ A: 1, B: 1, C: 1 });
-  const isBreakWallAvailable = useMemo(() => playersNum > 2, [playersNum]);
-
-  // WGF 棋譜記錄
-  const [pieceIndex, setPieceIndex] = useState<PieceIndex>({ A: [], B: [], C: [] });
-  const [wgfInitPositions, setWgfInitPositions] = useState<PiecePlacement[]>([]);
-  const [openingPlacements, setOpeningPlacements] = useState<PiecePlacement[]>([]);
-  const [gameTurns, setGameTurns] = useState<GameAction[][]>([]);
-  const [currentTurnActions, setCurrentTurnActions] = useState<GameAction[]>([]);
-
-  /*
-    在 render 期間同步一份 ref，給 useCallback 內讀最新值用。
-    react-hooks/refs 擋的就是這種寫法，而它擋得有道理 —— 只是這裡的成因是
-    「規則邏輯與 React 狀態綁在一起」，而不是 ref 用錯。移植 app/game/ 的
-    純函式 engine 之後，這整組 ref 會一起消失（engine 每次回傳全新 state，
-    callback 不需要偷看最新值）。在那之前定點關閉，不要整檔關。
-  */
-  /* eslint-disable react-hooks/refs -- 移植 game engine 後整組移除 */
-  const gameTurnsRef = useRef(gameTurns);
-  gameTurnsRef.current = gameTurns;
-  const openingPlacementsRef = useRef(openingPlacements);
-  openingPlacementsRef.current = openingPlacements;
-  const wgfInitPositionsRef = useRef(wgfInitPositions);
-  wgfInitPositionsRef.current = wgfInitPositions;
-  const selectedChessRef = useRef(selectedChess);
-  selectedChessRef.current = selectedChess;
-  const pieceIndexRef = useRef(pieceIndex);
-  pieceIndexRef.current = pieceIndex;
-  /* eslint-enable react-hooks/refs */
-  // 避免 Firebase subscription echo 觸發重播
-  const lastAppliedWgf = useRef<string>('');
-
-  // 只有輪到我的時候才能操作（遊戲結束後一律鎖定）
-  const isMyTurn = useMemo(() => {
-    if (isLock) return false;
-    if (!isOnline || !myPlayerKey) return true;
-    if (isPlacingChess) return openingStep[0] === myPlayerKey;
-    return currentPlayer === myPlayerKey;
-  }, [isLock, isOnline, myPlayerKey, isPlacingChess, openingStep, currentPlayer]);
-
-  // 從 WGF 重建完整棋盤狀態（空棋盤出發，套用 init → opening → turns）
-  const replayFromWgf = useCallback((incoming: ReturnType<typeof parseWGF>) => {
-    const newBoard: Player[][] = Array.from({ length: 7 }, () => Array(7).fill(null));
-    const newHWalls: (Player | null)[][] = Array.from({ length: 7 }, () => Array(7).fill(null));
-    const newVWalls: (Player | null)[][] = Array.from({ length: 7 }, () => Array(7).fill(null));
-    const newPieceIndex: PieceIndex = { A: [], B: [], C: [] };
-    const newBreakWallCount = { A: 1, B: 1, C: 1 };
-
-    for (const pos of incoming.initPositions) {
-      newBoard[pos.row][pos.col] = pos.player as Player;
-      newPieceIndex[pos.player][pos.piece - 1] = { row: pos.row, col: pos.col };
-    }
-    for (const pos of incoming.openingPlacements) {
-      newBoard[pos.row][pos.col] = pos.player as Player;
-      newPieceIndex[pos.player][pos.piece - 1] = { row: pos.row, col: pos.col };
-    }
-    for (const turn of incoming.turns) {
-      for (const action of turn) {
-        if (action.type === 'move') {
-          const old = newPieceIndex[action.player][action.piece - 1];
-          if (old) newBoard[old.row][old.col] = null;
-          newBoard[action.row][action.col] = action.player as Player;
-          newPieceIndex[action.player][action.piece - 1] = { row: action.row, col: action.col };
-        } else if (action.type === 'placeWall') {
-          if (action.dir === 'H') newHWalls[action.row][action.col] = action.player as Player;
-          else newVWalls[action.row][action.col] = action.player as Player;
-        } else if (action.type === 'breakWall') {
-          if (action.dir === 'H') newHWalls[action.row][action.col] = null;
-          else newVWalls[action.row][action.col] = null;
-          newBreakWallCount[action.player]--;
-        }
-      }
-    }
-
-    const openingStepFull = incoming.playersNum === 2 ? openingStepTwo : openingStepThree;
-    const newOpeningStep = openingStepFull.slice(incoming.openingPlacements.length);
-    const turnOrder = incoming.playersNum === 2 ? turnOrderTwo : turnOrderThree;
-    const newCurrentPlayer: Player = newOpeningStep.length > 0
-      ? newOpeningStep[0]
-      : (turnOrder[incoming.turns.length % turnOrder.length] as Player);
-
-    setBoard(newBoard);
-    setHorizontalWalls(newHWalls);
-    setVerticalWalls(newVWalls);
-    setPieceIndex(newPieceIndex);
-    setWgfInitPositions(incoming.initPositions);
-    setOpeningPlacements(incoming.openingPlacements);
-    setGameTurns(incoming.turns);
-    setCurrentTurnActions([]);
-    setOpeningStep(newOpeningStep);
-    setCurrentPlayer(newCurrentPlayer);
-    setRemainSteps(2);
-    setSelectedChess(null);
-    setBreakWallCountObj(newBreakWallCount);
-  }, [setBoard, setHorizontalWalls, setVerticalWalls, setPieceIndex, setWgfInitPositions,
-      setOpeningPlacements, setGameTurns, setCurrentTurnActions, setOpeningStep,
-      setCurrentPlayer, setRemainSteps, setSelectedChess, setBreakWallCountObj]);
-
-  // 讀路徑：監聽 Firebase WGF，非自己寫的就重播
+  // 讀路徑：Firebase 上的 WGF 有變且非自己寫入的，就從空棋盤完整重建
   useEffect(() => {
     if (!isOnline || !room?.wgf || room.wgf === lastAppliedWgf.current) return;
     lastAppliedWgf.current = room.wgf;
-    replayFromWgf(parseWGF(room.wgf));
-  }, [room?.wgf, isOnline, replayFromWgf]);
+    dispatch({ type: 'replay', wgf: room.wgf });
+  }, [room?.wgf, isOnline]);
+
+  // 寫路徑：棋譜有變就同步。
+  //
+  // 由狀態推導而非在每個操作裡手動標記 —— 只有「開局放棋」與「結束回合」
+  // 會改變 WGF，選取與移動不會，因此不必逐一判斷哪些操作需要同步。
+  // lastAppliedWgf 同時擋掉自己寫入所觸發的重播（echo）。
+  useEffect(() => {
+    if (!isOnline || !roomId) return;
+    const wgf = toWgf(state);
+    if (wgf === lastAppliedWgf.current) return;
+    lastAppliedWgf.current = wgf;
+    updateGameState(roomId, wgf, state.currentPlayer);
+  }, [state, isOnline, roomId]);
+
+  // 遊戲結束時，由房主（A）負責寫入勝者資訊
+  useEffect(() => {
+    if (!isOnline || !roomId || myPlayerKey !== 'A' || outcome.length === 0) return;
+    setRoomWinner(roomId, outcome);
+  }, [isOnline, roomId, myPlayerKey, outcome]);
+
+  // ─── 操作 ────────────────────────────────────────────────────────────────────
 
   const selectChess = useCallback((row: number, col: number) => {
     if (!isMyTurn) return;
-    if (remainSteps < 2) return;
-    if (row === selectedChess?.row && col === selectedChess?.col) {
-      setSelectedChess(null);
-      return;
-    }
-    setSelectedChess({ row, col });
-  }, [isMyTurn, selectedChess, remainSteps]);
+    dispatch({ type: 'select', row, col });
+  }, [isMyTurn]);
+
+  const selectCell = useCallback((row: number, col: number) => {
+    if (!isMyTurn) return;
+    dispatch({ type: 'move', row, col });
+  }, [isMyTurn]);
 
   const selectWall = useCallback((row: number, col: number, direction: Direction) => {
     if (!isMyTurn) return;
-    switch (direction) {
-      case 'top':
-      case 'bottom':
-        setHorizontalWalls((prev) => {
-          const newWalls = [...prev];
-          newWalls[row][col] = currentPlayer;
-          return newWalls;
-        });
-        break;
-      case 'left':
-      case 'right':
-        setVerticalWalls((prev) => {
-          const newWalls = [...prev];
-          newWalls[row][col] = currentPlayer;
-          return newWalls;
-        });
-        break;
-    }
-
-    let newCurrentPlayer: Player = null;
-    const turnOrder: Player[] = []
-    switch (playersNum) {
-      case 2:
-        turnOrder.push(...playerTemplates.turnOrderTwo);
-        newCurrentPlayer = turnOrder[turnOrder.indexOf(currentPlayer) + 1] || turnOrder[0];
-        break;
-      case 3:
-        turnOrder.push(...playerTemplates.turnOrderThree);
-        newCurrentPlayer = turnOrder[turnOrder.indexOf(currentPlayer) + 1] || turnOrder[0];
-        break;
-      default:
-        break;
-    }
-
-    if (currentPlayer) {
-      const wallDir = (direction === 'top' || direction === 'bottom') ? 'H' : 'V';
-      const sc = selectedChessRef.current;
-      const piece = sc ? getPieceNumber(pieceIndexRef.current, currentPlayer, sc.row, sc.col) : 1;
-      const wallAction: GameAction = { type: 'placeWall', player: currentPlayer, piece, dir: wallDir, row, col };
-      const completedTurn = [...currentTurnActions, wallAction];
-      setGameTurns(prev => [...prev, completedTurn]);
-      setCurrentTurnActions([]);
-
-      if (isOnline && roomId && newCurrentPlayer) {
-        const newTurns = [...gameTurnsRef.current, completedTurn];
-        const wgfStr = serializeWGF({
-          playersNum: playersNum as 2 | 3,
-          initPositions: wgfInitPositionsRef.current,
-          openingPlacements: openingPlacementsRef.current,
-          turns: newTurns,
-        });
-        lastAppliedWgf.current = wgfStr;
-        updateGameState(roomId, wgfStr, newCurrentPlayer as 'A' | 'B' | 'C');
-      }
-    }
-
-    setCurrentPlayer(newCurrentPlayer);
-    setRemainSteps(2);
-    setSelectedChess(null);
-  }, [isMyTurn, currentPlayer, currentTurnActions, setHorizontalWalls, setVerticalWalls, playersNum, isOnline, roomId]);
-
-  const selectCell = useCallback((row: number, col: number) => {
-    if (!isMyTurn || !selectedChess) return;
-    setSelectedChess({ row, col });
-    const gap = remainSteps - (Math.abs((selectedChess.row) - row) + Math.abs((selectedChess.col) - col));
-    setRemainSteps(gap);
-
-    setBoard((prev) => {
-      const newBoard = [...prev];
-      newBoard[selectedChess.row][selectedChess.col] = null;
-      newBoard[row][col] = currentPlayer;
-      return newBoard;
-    });
-
-    if (currentPlayer) {
-      const piece = getPieceNumber(pieceIndex, currentPlayer, selectedChess.row, selectedChess.col);
-      setCurrentTurnActions(prev => [...prev, { type: 'move', player: currentPlayer, piece, row, col }]);
-      setPieceIndex(prev => updatePieceIndex(prev, currentPlayer, selectedChess.row, selectedChess.col, row, col));
-    }
-  }, [isMyTurn, selectedChess, currentPlayer, remainSteps, pieceIndex, setSelectedChess, setBoard]);
+    dispatch({ type: 'placeWall', row, col, dir: toWallDir(direction) });
+  }, [isMyTurn]);
 
   const setChessPosition = useCallback((row: number, col: number) => {
     if (!isMyTurn) return;
-    setBoard((prev) => {
-      const newBoard = [...prev];
-      newBoard[row][col] = currentPlayer;
-      return newBoard;
-    });
-    const newOpeningStep = [...openingStep];
-    newOpeningStep.shift()
-    setOpeningStep(newOpeningStep);
-    setCurrentPlayer(newOpeningStep[0] || 'A');
-
-    if (currentPlayer) {
-      const piece = pieceIndex[currentPlayer].length + 1;
-      const newPlacement = { player: currentPlayer, piece, row, col };
-      setOpeningPlacements(prev => [...prev, newPlacement]);
-      setPieceIndex(prev => ({ ...prev, [currentPlayer]: [...prev[currentPlayer], { row, col }] }));
-
-      if (isOnline && roomId) {
-        const newPlacements = [...openingPlacementsRef.current, newPlacement];
-        const nextPlayer = (newOpeningStep[0] || 'A') as 'A' | 'B' | 'C';
-        const wgfStr = serializeWGF({
-          playersNum: playersNum as 2 | 3,
-          initPositions: wgfInitPositionsRef.current,
-          openingPlacements: newPlacements,
-          turns: gameTurnsRef.current,
-        });
-        lastAppliedWgf.current = wgfStr;
-        updateGameState(roomId, wgfStr, nextPlayer);
-      }
-    }
-  }, [isMyTurn, currentPlayer, setBoard, openingStep, setCurrentPlayer, pieceIndex, isOnline, roomId, playersNum]);
+    dispatch({ type: 'placeOpening', row, col });
+  }, [isMyTurn]);
 
   const {
     isOpen: isBreakWallModalOpen,
@@ -390,328 +260,41 @@ export default function PlayClient({ roomId }: PlayClientProps) {
     handleCancel: handleBreakWallCancel,
   } = useConfirm();
 
-  const onClickBreakWall = useCallback(async (row: number, col: number, direction: 'horizontal' | 'vertical') => {
-    if (!isMyTurn || !isBreakWallAvailable) return;
-
+  const onClickBreakWall = useCallback(async (
+    row: number,
+    col: number,
+    direction: 'horizontal' | 'vertical'
+  ) => {
+    if (!isMyTurn || !canBreakWall) return;
     const ok = await confirmBreakWall();
-    if (ok) {
-      setBreakWallCountObj((prev) => ({
-        ...prev,
-        [currentPlayer as Exclude<Player, null>]: prev[currentPlayer as Exclude<Player, null>] - 1
-      }));
+    if (!ok) return;
+    // 破牆不結束回合，故不改變 WGF；會併入本回合、於蓋牆時一併送出
+    dispatch({ type: 'breakWall', row, col, dir: direction === 'horizontal' ? 'H' : 'V' });
+  }, [isMyTurn, canBreakWall, confirmBreakWall]);
 
-      switch (direction) {
-        case 'horizontal':
-          setHorizontalWalls((prev) => {
-            const newWalls = [...prev];
-            newWalls[row][col] = null;
-            return newWalls;
-          });
-          break;
-        case 'vertical':
-          setVerticalWalls((prev) => {
-            const newWalls = [...prev];
-            newWalls[row][col] = null;
-            return newWalls;
-          });
-          break;
-        default:
-          break;
-      }
-
-      if (currentPlayer) {
-        const breakDir = direction === 'horizontal' ? 'H' : 'V';
-        const sc = selectedChessRef.current;
-        const piece = sc ? getPieceNumber(pieceIndexRef.current, currentPlayer, sc.row, sc.col) : 1;
-        setCurrentTurnActions(prev => [...prev, { type: 'breakWall', player: currentPlayer, piece, dir: breakDir, row, col }]);
-      }
-    }
-  }, [isMyTurn, confirmBreakWall, setBreakWallCountObj, setVerticalWalls, setHorizontalWalls, currentPlayer, isBreakWallAvailable]);
-
-  const getTerritories = useCallback((
-    rowIndex: number,
-    colIndex: number,
-    player: Player,
-    maxSteps: number = 50
-  ): { moves: string[], hasEnemy: boolean } => {
-    const queue: { row: number, col: number, steps: number }[] = [{ row: rowIndex, col: colIndex, steps: 0 }];
-    const visited = new Set<string>();
-    const moves: string[] = [];
-    let hasEnemy = false;
-
-    const startPosKey = `${rowIndex},${colIndex}`;
-    moves.push(startPosKey);
-    visited.add(startPosKey);
-
-    while (queue.length > 0) {
-      const { row, col, steps } = queue.shift()!;
-
-      if (steps >= maxSteps) continue;
-
-      const directions = [
-        { dr: -1, dc: 0 },
-        { dr: 0, dc: 1 },
-        { dr: 1, dc: 0 },
-        { dr: 0, dc: -1 }
-      ];
-
-      for (const { dr, dc } of directions) {
-        const r1 = row + dr;
-        const c1 = col + dc;
-
-        if (r1 >= 0 && r1 < size && c1 >= 0 && c1 < size) {
-          let hasWall = false;
-
-          if (dr === 1 && horizontalWalls[row][col]) {
-            hasWall = true;
-          } else if (dr === -1 && row > 0 && horizontalWalls[row - 1][col]) {
-            hasWall = true;
-          }
-
-          if (dc === 1 && verticalWalls[row][col]) {
-            hasWall = true;
-          } else if (dc === -1 && col > 0 && verticalWalls[row][col - 1]) {
-            hasWall = true;
-          }
-
-          if (!hasWall) {
-            const posKey = `${r1},${c1}`;
-
-            if (!visited.has(posKey)) {
-              visited.add(posKey);
-
-              const cellPlayer = board[r1][c1];
-
-              if (cellPlayer === null) {
-                moves.push(posKey);
-                queue.push({ row: r1, col: c1, steps: steps + 1 });
-              } else if (cellPlayer === player) {
-                moves.push(posKey);
-                queue.push({ row: r1, col: c1, steps: steps + 1 });
-              } else {
-                hasEnemy = true;
-                break;
-              }
-            }
-          }
-        }
-      }
-
-      if (hasEnemy) break;
-    }
-
-    return { moves, hasEnemy };
-  }, [size, horizontalWalls, verticalWalls, board]);
-
-  const calculateChessTerritory = useCallback((
-    chessRow: number,
-    chessCol: number,
-    player: Player
-  ): string[] => {
-    if (player === null || !board.length) return [];
-
-    const { moves, hasEnemy } = getTerritories(chessRow, chessCol, player);
-
-    if (hasEnemy) return [];
-
-    return moves;
-  }, [board, getTerritories]);
-
-  const calculateAllTerritories = useCallback((): { A: string[][], B: string[][], C?: string[][] } => {
-    const territories: { A: string[][]; B: string[][]; C?: string[][] } = {
-      A: [] as string[][],
-      B: [] as string[][],
-    };
-
-    if (playersNum === 3) {
-      territories.C = [] as string[][];
-    }
-
-    for (let row = 0; row < size; row++) {
-      for (let col = 0; col < size; col++) {
-        const player = board[row][col];
-        if (player) {
-          const territory = calculateChessTerritory(row, col, player);
-          territories[player]?.push(territory);
-        }
-      }
-    }
-
-    return territories;
-  }, [board, size, calculateChessTerritory, playersNum]);
-
-  useEffect(() => {
-    if (isPlacingChess) return;
-
-    const calculatedTerritories = calculateAllTerritories();
-
-    const newFlattenTerritoriesObj: Record<string, Player> = {};
-    const newUniqTerritories: { A: string[]; B: string[]; C?: string[] } = {
-      A: [],
-      B: [],
-      ...(playersNum >= 3 ? { C: [] } : {})
-    };
-
-    const keys = Object.keys(calculatedTerritories);
-    keys.forEach(key => {
-      const flattenTerritories = flatten(calculatedTerritories[key as Exclude<Player, null>]);
-      newUniqTerritories[key as Exclude<Player, null>] = uniq(flattenTerritories);
-      flattenTerritories.forEach(posKey => {
-        newFlattenTerritoriesObj[posKey] = key as Exclude<Player, null>;
-      });
-    });
-
-    const isGameOver = keys.every(key => calculatedTerritories[key as Exclude<Player, null>]!.length !== 0 && calculatedTerritories[key as Exclude<Player, null>]!.every(arr => arr.length !== 0));
-    if (isGameOver) {
-      const numberOfA = newUniqTerritories['A']?.length || 0;
-      const numberOfB = newUniqTerritories['B'].length || 0;
-      const numberOfC = newUniqTerritories['C']?.length || 0;
-      const calcArr = [numberOfA, numberOfB, ...(playersNum >= 3 ? [numberOfC] : [])];
-      const maxNumber = max(calcArr);
-      const minNumber = min(calcArr);
-      // 勝負是從盤面推導出來的值，本來就該用 useMemo 在 render 期間算，
-      // 而不是用 effect 算完再 setState —— 這正是規則在擋的事。
-      // 移植 app/game/score.ts 之後這整段會變成純函式呼叫。
-      if (maxNumber === minNumber) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect -- 移植 game engine 後改為 useMemo 推導
-        setWiningStatus(['draw']);
-      } else {
-        const winners: Player[] = [];
-        if (numberOfA === maxNumber) winners.push('A');
-        if (numberOfB === maxNumber) winners.push('B');
-        if (playersNum >= 3 && numberOfC === maxNumber) winners.push('C');
-        setWiningStatus(winners);
-      }
-      setIsChampionModalOpen(true);
-    }
-
-    setUniqTerritories(newUniqTerritories);
-    setFlattenTerritoriesObj(newFlattenTerritoriesObj);
-  }, [currentPlayer, calculateAllTerritories, playersNum, isPlacingChess]);
-
-  // 遊戲結束時，由房主（A）負責寫入勝者資訊
-  useEffect(() => {
-    if (!isOnline || !roomId || myPlayerKey !== 'A' || winingStatus.length === 0) return;
-    setRoomWinner(roomId, winingStatus as ('A' | 'B' | 'C' | 'draw')[]);
-  }, [isOnline, roomId, myPlayerKey, winingStatus]);
-
-  // 跳過「所有棋子占地已確定且無破牆機會」的玩家
-  useEffect(() => {
-    if (isPlacingChess || isLock || !currentPlayer) return;
-
-    // 仍有破牆機會，不跳過
-    if (isBreakWallAvailable && breakWallCountObj[currentPlayer as Exclude<Player, null>] > 0) return;
-
-    // 計算當前玩家每顆棋子的領地（利用最新棋盤狀態）
-    const territories = calculateAllTerritories();
-    const playerTerritories = territories[currentPlayer as Exclude<Player, null>];
-
-    // 玩家無棋子，或有任一棋子領地仍未確定（空陣列 = 遇到敵方），不跳過
-    if (!playerTerritories || playerTerritories.length === 0) return;
-    if (!playerTerritories.every(t => t.length > 0)) return;
-
-    // 所有棋子占地已確定 → 跳過此回合
-    const order: Player[] = playersNum === 2 ? [...turnOrderTwo] : [...turnOrderThree];
-    const idx = order.indexOf(currentPlayer);
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- 推進回合正是這個 effect 的目的
-    setCurrentPlayer(order[(idx + 1) % order.length]);
-  }, [currentPlayer, isPlacingChess, isLock, isBreakWallAvailable, breakWallCountObj, calculateAllTerritories, playersNum]);
-
-  /**
-   * 把盤面重置成該人數的開局狀態。
-   *
-   * playersNum 走參數而不是 closure：原本是 useCallback(..., []) 配 eslint-disable，
-   * 永遠鎖著首次 render 的值。連線模式下 room 還沒載入時 playersNum 是 2，
-   * 所以三人房重置會變成兩人盤。
-   */
-  const resetBoard = useCallback((num: number) => {
-    switch (num) {
-      case 2:
-        setBoard(cloneDeep(playerTemplates.templateBoardTwo));
-        setVerticalWalls(cloneDeep(playerTemplates.templateVerticalWalls));
-        setHorizontalWalls(cloneDeep(playerTemplates.templateHorizontalWalls));
-        setOpeningStep(cloneDeep(playerTemplates.openingStepTwo));
-        break;
-      case 3:
-        setBoard(cloneDeep(playerTemplates.templateBoardThree));
-        setVerticalWalls(cloneDeep(playerTemplates.templateVerticalWalls));
-        setHorizontalWalls(cloneDeep(playerTemplates.templateHorizontalWalls));
-        setOpeningStep(cloneDeep(playerTemplates.openingStepThree));
-        break;
-      default:
-        break;
-    }
-
-    // 用當次要設定的順序表，不要讀 openingStep —— 那是 state，
-    // 在同一個 closure 裡拿到的是上一局的值。目前兩種模式的首位剛好都是 A，
-    // 所以一直沒出錯，但那是巧合不是設計。
-    const steps = num === 3 ? playerTemplates.openingStepThree : playerTemplates.openingStepTwo;
-    setSize(7);
-    setCurrentPlayer(steps[0] ?? 'A');
-    setSelectedChess(null);
-    setRemainSteps(2);
-    setWiningStatus([]);
-    setIsChampionModalOpen(false);
-    setFlattenTerritoriesObj({});
-    setBreakWallCountObj({ A: 1, B: 1, C: 1 });
-    setUniqTerritories({ A: [], B: [], ...(num >= 3 ? { C: [] } : {}) });
-    setFlattenTerritoriesObj({});
-
-    if (num === 3) {
-      setPieceIndex({ A: [], B: [], C: [] });
-      setWgfInitPositions([]);
-    } else {
-      const index = buildPieceIndex(playerTemplates.templateBoardTwo);
-      setPieceIndex(index);
-      const initPos: PiecePlacement[] = (['A', 'B', 'C'] as const).flatMap(p =>
-        index[p].map(({ row, col }, i) => ({ player: p, piece: i + 1, row, col }))
-      );
-      setWgfInitPositions(initPos);
-    }
-    setOpeningPlacements([]);
-    setGameTurns([]);
-    setCurrentTurnActions([]);
-  }, []);
-
-  /** 使用者主動按下「再來一局」。只有本機模式會用到。 */
   const restartGame = useCallback(() => {
-    resetBoard(playersNum);
+    dispatch({ type: 'reset', playersNum });
+    setChampionDismissed(false);
     trackButtonClick(`restart_local_game_${playersNum}p`);
-  }, [resetBoard, playersNum]);
-
-  // 建立初始盤面。
-  // 連線模式直接略過 —— 那邊的盤面完全由 Firebase 上的 WGF 重播決定，
-  // 在這裡先鋪一份本地初始狀態只會跟重播打架。
-  useEffect(() => {
-    if (isOnline) return;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- 建立初始盤面，engine 移植後改由 reducer 的初始值承擔
-    resetBoard(playersNum);
-  }, [isOnline, playersNum, resetBoard]);
+  }, [playersNum]);
 
   // 當用戶嘗試離開頁面且遊戲尚未結束時顯示確認對話框
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (!winingStatus.length) {
-        e.preventDefault();
-      }
+      if (!isLock) e.preventDefault();
     };
-
     window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
-  }, [winingStatus]);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isLock]);
 
   const { ruleModalState, setRuleModalState } = useRuleModal();
-  const handleRuleBtnOpen = () => {
-    setRuleModalState({ ...ruleModalState, isOpen: true });
-  }
+  const handleRuleBtnOpen = () => setRuleModalState({ ...ruleModalState, isOpen: true });
 
   // ─── 連線模式：初始化中 / 錯誤 ─────────────────────────────────────────────
   if (isOnline && phase === 'initializing') {
     return (
       <div className="flex items-center gap-3 text-lg">
-        <div className="size-4 animate-spin rounded-full border-2 border-tile-ink border-t-transparent"></div>
+        <div className="size-4 animate-spin rounded-full border-2 border-gray-900 border-t-transparent"></div>
         正在連線…
       </div>
     );
@@ -720,7 +303,7 @@ export default function PlayClient({ roomId }: PlayClientProps) {
   if (isOnline && phase === 'error') {
     return (
       <div className="flex flex-col items-center gap-6">
-        <p className="text-lg text-player-A">{error}</p>
+        <p className="text-lg text-red-500">{error}</p>
         <Link href="/" className="underline hover:opacity-70">返回首頁</Link>
       </div>
     );
@@ -731,9 +314,10 @@ export default function PlayClient({ roomId }: PlayClientProps) {
 
   return (
     <>
+      {/* 首頁按鈕 */}
       {/* 左上角的操作鈕。用 flex 直排而不是各自寫死 top 值 ——
-          之前兩顆的尺寸不同（p-3/text-xl 對 p-3.5/text-2xl），
-          間距是按舊尺寸算出來的，改一顆就會對不齊。 */}
+          之前兩顆的尺寸不同，間距是按舊尺寸算出來的，改一顆就會對不齊。
+          彩色＝可點：回首頁琥珀、遊玩方式森綠（與首頁同名磁磚同色）。 */}
       <div className="fixed left-5 top-5 z-50 flex flex-col gap-3">
         <Link href="/" aria-label="回首頁"
           className="rounded-full bg-tile-amber p-3.5 text-2xl text-tile-ink transition hover:brightness-95 active:scale-95">
@@ -756,26 +340,34 @@ export default function PlayClient({ roomId }: PlayClientProps) {
       {/* 棋盤（本地模式 or 連線模式已開始）*/}
       {(!isOnline || phase === 'playing') && (
         <>
-          {/* 賽況面板 */}
-          <GameStatus isLock={isLock} currentPlayer={currentPlayer} uniqTerritories={uniqTerritories} playersNum={playersNum} />
+          <GameStatus
+            isLock={isLock}
+            currentPlayer={state.currentPlayer}
+            uniqTerritories={territories.owned}
+            playersNum={playersNum}
+          />
 
-          {/* 提示面板 */}
-          <GameTips isPlacingChess={isPlacingChess} currentPlayer={currentPlayer} winingStatus={winingStatus} breakWallCountObj={breakWallCountObj} />
+          <GameTips
+            isPlacingChess={isPlacing}
+            currentPlayer={state.currentPlayer}
+            winingStatus={outcome}
+            breakWallCountObj={state.breakWallCount}
+          />
 
           <div className="chessboard-container size-[90dvw] md:size-[90dvh] md:portrait:size-[90dvw] md:landscape:size-[90dvh]">
             <Chessboard
-              size={size}
-              board={board}
-              verticalWalls={verticalWalls}
-              horizontalWalls={horizontalWalls}
-              currentPlayer={currentPlayer}
-              selectedChess={selectedChess}
-              remainSteps={remainSteps}
-              flattenTerritoriesObj={flattenTerritoriesObj}
-              breakWallCountObj={breakWallCountObj}
-              isBreakWallAvailable={isBreakWallAvailable}
+              size={BOARD_SIZE}
+              board={state.board}
+              verticalWalls={state.verticalWalls}
+              horizontalWalls={state.horizontalWalls}
+              currentPlayer={state.currentPlayer}
+              selectedChess={state.selected}
+              remainSteps={state.remainSteps}
+              flattenTerritoriesObj={territories.ownerByCell}
+              breakWallCountObj={state.breakWallCount}
+              isBreakWallAvailable={canBreakWall}
               isLock={isLock}
-              isPlacingChess={isPlacingChess && isMyTurn}
+              isPlacingChess={isPlacing && isMyTurn}
               selectChess={selectChess}
               selectWall={selectWall}
               selectCell={selectCell}
@@ -784,16 +376,14 @@ export default function PlayClient({ roomId }: PlayClientProps) {
             />
           </div>
 
-          {/* 冠軍訊息 Modal */}
           <ChampionModal
-            winners={winingStatus}
-            uniqTerritories={uniqTerritories}
-            isOpen={isChampionModalOpen}
-            onClose={() => setIsChampionModalOpen(false)}
+            winners={outcome}
+            uniqTerritories={territories.owned}
+            isOpen={isLock && !championDismissed}
+            onClose={() => setChampionDismissed(true)}
             onRestart={isOnline ? undefined : restartGame}
           />
 
-          {/* 破牆確認 Modal */}
           <BreakWallConfirmModal
             isOpen={isBreakWallModalOpen}
             onClose={handleBreakWallCancel}
