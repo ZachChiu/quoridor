@@ -82,11 +82,13 @@ export default function RootLayout({
         <UserProvider>
           <RuleModalProvider>
             <GameProvider>
+              {children}
+              <RuleModal />
+              {/* Suspense 只包住 analytics 本身。它用了 useSearchParams()，
+                  若連同內容一起包住，整棵子樹在靜態產生時會退回 client 渲染，
+                  靜態 HTML 只剩 fallback（null）—— 爬蟲拿到空殼。 */}
               <Suspense fallback={null}>
-                <AnalyticsProvider>
-                  {children}
-                  <RuleModal />
-                </AnalyticsProvider>
+                <AnalyticsProvider />
               </Suspense>
             </GameProvider>
           </RuleModalProvider>
