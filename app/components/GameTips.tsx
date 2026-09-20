@@ -8,6 +8,8 @@ interface Props {
   currentPlayer: Player;
   winingStatus: (Player | 'draw')[];
   breakWallCountObj: Record<Exclude<Player, null>, number>;
+  /** AI 正在想。困難難度每手要一秒多，沒有提示會讓人以為當掉了。 */
+  aiThinking?: boolean;
 }
 
 
@@ -19,7 +21,7 @@ interface Props {
  * 比原本「深墨底 + 一顆彩色小圓點」直接得多，而且每回合都會換色，
  * 畫面不會從頭到尾都是同一塊黑。遊戲結束沒有當前玩家，才回到深墨。
  */
-export default React.memo(function GameTips({ isPlacingChess, currentPlayer, winingStatus, breakWallCountObj }: Props) {
+export default React.memo(function GameTips({ isPlacingChess, currentPlayer, winingStatus, breakWallCountObj, aiThinking }: Props) {
   const { gameState } = useGame();
   const over = winingStatus.length > 0;
   const p = currentPlayer as PlayerKey | null;
@@ -30,8 +32,9 @@ export default React.memo(function GameTips({ isPlacingChess, currentPlayer, win
       return winingStatus[0] === 'draw' ? '遊戲結束！' : `遊戲結束！${names.join('、')}勝利！`;
     }
     const who = p ? PLAYER_NAME[p] : '';
+    if (aiThinking) return `${who} 思考中…`;
     return isPlacingChess ? `${who} · 放置棋子` : `${who} · 移動棋子`;
-  }, [isPlacingChess, over, winingStatus, p]);
+  }, [isPlacingChess, over, winingStatus, p, aiThinking]);
 
   const breakWallText = useMemo(() => {
     if (over || isPlacingChess || gameState.playersNum !== 3 || !p) return null;

@@ -8,6 +8,9 @@ import GameStatus from "@/components/GameStatus";
 import GameTips from "@/components/GameTips";
 import IconButton from "@/components/IconButton";
 import WaitingRoom from "@/components/WaitingRoom";
+import { useAiOpponent } from "@/hook/useAiOpponent";
+import { applyTurn, type AiTurn } from "@/game/ai";
+import { playerKeys } from "@/game/territory";
 import ShareLinkModal from "@/components/ShareLinkModal";
 import BreakWallConfirmModal from "@/components/BreakWallConfirmModal";
 
@@ -55,7 +58,8 @@ type GameEvent =
   | { type: 'move'; row: number; col: number }
   | { type: 'placeOpening'; row: number; col: number }
   | { type: 'placeWall'; row: number; col: number; dir: WallDir }
-  | { type: 'breakWall'; row: number; col: number; dir: WallDir };
+  | { type: 'breakWall'; row: number; col: number; dir: WallDir }
+  | { type: 'aiTurn'; turn: AiTurn };
 
 /**
  * 以 reducer 串接 engine 的純函式。
@@ -80,6 +84,12 @@ function gameReducer(state: GameState, event: GameEvent): GameState {
       return placeWall(state, event.row, event.col, event.dir);
     case 'breakWall':
       return breakWall(state, event.row, event.col, event.dir);
+    case 'aiTurn':
+      // 一次轉換完成「選子 → 移動 → 築牆」。
+      // 分三次 dispatch 會讓中間兩個狀態真的存在於 React 裡，而 AI 的 effect
+      // 依賴 state —— 它會在同一個回合內被重新觸發、再問 Worker 一次，
+      // 最後那次的回覆可能在回合已經交出去之後才套用，等於幫對手下了一手。
+      return applyTurn(state, event.turn);
   }
 }
 
@@ -124,12 +134,54 @@ export default function PlayClient({ roomId }: PlayClientProps) {
   // 避免自己寫入 Firebase 的內容又觸發自己重播
   const lastAppliedWgf = useRef<string>('');
 
-  // 只有輪到我的時候才能操作（遊戲結束後一律鎖定）
+  // ─── 單人對戰 ────────────────────────────────────────────────────────────────
+  //
+  // 難度由 GameContext 帶進來（首頁選的）。設定後，除了 A 以外都交給 AI。
+  // 連線模式沒有 AI —— 那邊的對手是真人。
+  const aiDifficulty = isOnline ? null : gameState.aiDifficulty;
+  const aiPlayers = useMemo(
+    () => (aiDifficulty ? playerKeys(playersNum).slice(1) : []),
+    [aiDifficulty, playersNum]
+  );
+  const isAiTurn = aiPlayers.includes(state.currentPlayer);
+  const { requestTurn, requestOpening, thinking } = useAiOpponent();
+
+  // 只有輪到我的時候才能操作（遊戲結束、或輪到 AI 時一律鎖定）
   const isMyTurn = useMemo(() => {
-    if (isLock) return false;
+    if (isLock || isAiTurn) return false;
     if (!isOnline || !myPlayerKey) return true;
     return state.currentPlayer === myPlayerKey;
-  }, [isLock, isOnline, myPlayerKey, state.currentPlayer]);
+  }, [isLock, isAiTurn, isOnline, myPlayerKey, state.currentPlayer]);
+
+  /*
+    輪到 AI 就去問 Worker，拿到就照「選子 → 移動 → 築牆」依序 dispatch。
+
+    用 stale ref 擋重入：Worker 是非同步的，回覆期間 state 會變（例如使用者
+    按了重新開始），這時要把結果丟掉而不是硬套上去。
+  */
+  const aiRunId = useRef(0);
+  useEffect(() => {
+    if (!isAiTurn || isLock || !aiDifficulty) return;
+    // 只在「乾淨的回合起點」出手。effect 依賴 state，若不設這道閘，
+    // 回合中途的每次狀態變化都會再問一次 Worker。
+    if (state.selected || state.currentTurnActions.length > 0) return;
+
+    const runId = ++aiRunId.current;
+    const snapshot = state;
+
+    (async () => {
+      if (isPlacingPhase(snapshot)) {
+        const cell = await requestOpening(snapshot, snapshot.currentPlayer);
+        if (runId !== aiRunId.current || !cell) return;
+        dispatch({ type: 'placeOpening', row: cell.row, col: cell.col });
+        return;
+      }
+      const turn = await requestTurn(snapshot, snapshot.currentPlayer, aiDifficulty);
+      // Worker 是非同步的，這段期間使用者可能按了重新開始 —— 過期的結果要丟掉
+      if (runId !== aiRunId.current || !turn) return;
+      dispatch({ type: 'aiTurn', turn });
+    })();
+  }, [isAiTurn, isLock, aiDifficulty, state, requestTurn, requestOpening]);
 
   // ─── Firebase 初始化（online only）──────────────────────────────────────────
   useEffect(() => {
@@ -352,6 +404,7 @@ export default function PlayClient({ roomId }: PlayClientProps) {
             currentPlayer={state.currentPlayer}
             winingStatus={outcome}
             breakWallCountObj={state.breakWallCount}
+            aiThinking={thinking}
           />
 
           <div className="chessboard-container size-[90dvw] md:size-[90dvh] md:portrait:size-[90dvw] md:landscape:size-[90dvh]">

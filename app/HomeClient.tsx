@@ -1,12 +1,14 @@
 'use client'
 import { useState } from "react";
-import { GiMeshNetwork, GiRuleBook, GiTabletopPlayers, GiThreeFriends, GiWireframeGlobe } from "react-icons/gi";
+import { GiBrain, GiMeshNetwork, GiRuleBook, GiTabletopPlayers, GiThreeFriends, GiWireframeGlobe } from "react-icons/gi";
 import { useRouter } from "next/navigation";
 import { trackButtonClick } from "@/utils/analytics";
 // Game Icons（game-icons.net，CC BY 3.0）—— react-icons 已內建，不需另外安裝。
 // 選它而不是線條圖示：參考稿的圖示是實心剪影壓在色塊上，
 // Lucide 的細線在大尺寸的彩色磁磚上會顯得單薄。
 import GameTile from "./components/GameTile";
+import DifficultyModal from "./components/DifficultyModal";
+import type { Difficulty } from "@/game/ai";
 import { useGame } from "@/contexts/GameContext";
 import { useRuleModal } from "@/contexts/RuleModalContext";
 import { useUser } from "@/contexts/UserContext";
@@ -28,12 +30,20 @@ export default function HomeClient() {
   const { gameState, setGameState } = useGame();
   const { ensureUser } = useUser();
   const [isCreating, setIsCreating] = useState(false);
+  const [soloOpen, setSoloOpen] = useState(false);
   const { ruleModalState, setRuleModalState } = useRuleModal();
 
   const startLocal = (playersNum: number) => {
-    setGameState({ ...gameState, playersNum });
+    setGameState({ ...gameState, playersNum, aiDifficulty: null });
     router.push('/local');
     trackButtonClick(`start_local_game_${playersNum}p`);
+  };
+
+  const startSolo = (aiDifficulty: Difficulty) => {
+    setSoloOpen(false);
+    setGameState({ ...gameState, playersNum: 2, aiDifficulty });
+    router.push('/local');
+    trackButtonClick(`start_solo_game_${aiDifficulty}`);
   };
 
   // 滑過或 focus 到連線磁磚就先把 Firebase 載起來並匿名登入。
@@ -63,7 +73,7 @@ export default function HomeClient() {
       }
 
       const roomId = await createRoom(playersNum as 2 | 3, 'A', player, initialWgf);
-      setGameState({ ...gameState, playersNum });
+      setGameState({ ...gameState, playersNum, aiDifficulty: null });
       router.push(`/match#roomId=${roomId}`);
       trackButtonClick(`start_connect_game_${playersNum}p`);
     } finally {
@@ -85,6 +95,7 @@ export default function HomeClient() {
       <GameTile icon={GiThreeFriends}    tone="purple" kicker="本機" label="三人" onClick={() => startLocal(3)} />
       <GameTile icon={GiWireframeGlobe}  tone="blue"   kicker="連線" label="雙人" onClick={() => startConnect(2)} onPrefetch={prewarm} disabled={online} />
       <GameTile icon={GiMeshNetwork}     tone="red"    kicker="連線" label="三人" onClick={() => startConnect(3)} onPrefetch={prewarm} disabled={online} />
+      <GameTile icon={GiBrain} tone="orange" label="單人對戰" wide onClick={() => setSoloOpen(true)} />
       <GameTile
         icon={GiRuleBook}
         tone="forest"
@@ -92,6 +103,7 @@ export default function HomeClient() {
         wide
         onClick={() => setRuleModalState({ ...ruleModalState, isOpen: true })}
       />
+      <DifficultyModal isOpen={soloOpen} onClose={() => setSoloOpen(false)} onPick={startSolo} />
     </div>
   );
 }
