@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import PlayClient from '../components/PlayClient';
+import PlayClient from '@/components/PlayClient';
 
 export default function MatchClient() {
   const searchParams = useSearchParams();

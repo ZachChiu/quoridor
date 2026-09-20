@@ -1,4 +1,4 @@
-import type { Metadata, Viewport } from "next";
+import type { Metadata } from "next";
 import { Suspense } from 'react'
 import { GoogleAnalytics } from '@next/third-parties/google'
 import "./globals.css";
@@ -11,36 +11,48 @@ import RuleModal from "./components/RuleModal";
 
 
 
-export const viewport: Viewport = {
-  width: 'device-width',
-  initialScale: 1,
 
-  /*
-    themeColor 必須與 globals.css 的 --background 同一個值。
+/**
+ * 站台外殼：<html> 與所有 provider。
+ *
+ * 抽出來是因為有**兩個 root layout** —— zh-TW 走 app/(default)，
+ * en/ja/ko 走 app/(intl)/[locale]。Next 只允許一個 <html>，
+ * 所以要讓 <html lang> 隨語系改變，就必須拆成兩個 root layout；
+ * 而兩份 layout 各自維護一份 provider 樹遲早會漂掉。
+ *
+ * 之前 lang 一律寫死 zh-TW，連 /en /ja /ko 也是 —— 讀屏會用中文發音去念
+ * 英文與韓文，而那是不會有人回報的那種壞掉。
+ */
+export function Shell({ lang, children }: { lang: string; children: React.ReactNode }) {
+  return (
+    <html lang={lang}>
+      <body className="select-none antialiased">
+        <UserProvider>
+          <RuleModalProvider>
+            <TransitionProvider>
+              <GameProvider>
+                {children}
+                <RuleModal />
+                {/* Suspense 只包住 analytics 本身。它用了 useSearchParams()，
+                    若連同內容一起包住，整棵子樹在靜態產生時會退回 client 渲染，
+                    靜態 HTML 只剩 fallback（null）—— 爬蟲拿到空殼。 */}
+                <Suspense fallback={null}>
+                  <AnalyticsProvider />
+                </Suspense>
+              </GameProvider>
+            </TransitionProvider>
+          </RuleModalProvider>
+        </UserProvider>
+      </body>
+      {process.env.NEXT_PUBLIC_APP_ENV === "production" && (
+        <GoogleAnalytics gaId="G-1CTRTGRPFF" />
+      )}
+    </html>
+  );
+}
 
-    Safari 會拿它染 iOS 的狀態列與網址列。原本寫死 #ffffff 而頁面底色是
-    #e8e1d7，於是畫面最上面永遠掛著一條白邊，捲動時特別明顯。
-
-    改這個值時 globals.css 的 --background 要一起改 —— 兩邊分開寫死
-    遲早會漂掉，而症狀只是「有點怪」，不會有人回報。
-  */
-  themeColor: '#e8e1d7',
-
-  // 明確宣告是淺色配色。不宣告的話，部分瀏覽器在系統深色模式下會自行
-  // 反轉表單控制項與捲軸，跟這套刻意平塗的配色對不起來。
-  colorScheme: 'light',
-
-  /*
-    原本有 maximumScale: 1 與 userScalable: false。拿掉了 ——
-    iOS Safari 從 iOS 10 起就直接忽略這兩個值，所以它們實際上只在
-    Android 生效，效果是把縮放整個關掉，低視力使用者放不大
-    （WCAG 1.4.4 要求能放大到 200%）。
-
-    也就是說：想擋的平台擋不到，擋到的平台是不該擋的那個。
-  */
-};
-
-export const metadata: Metadata = {
+/** 與語系無關的 metadata（圖示、作者、metadataBase…），兩個 root layout 共用。 */
+export const baseMetadata: Metadata = {
   metadataBase: new URL(process.env.SITE_URL || 'https://quoridorgame.com'),
   /*
     標題與描述的三個修正：
@@ -106,37 +118,3 @@ export const metadata: Metadata = {
     images: [`/og-image.png`],
   },
 };
-
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
-  return (
-    <html lang="zh-TW">
-      <body
-        className="select-none antialiased"
-      >
-        <UserProvider>
-          <RuleModalProvider>
-            <TransitionProvider>
-            <GameProvider>
-              {children}
-              <RuleModal />
-              {/* Suspense 只包住 analytics 本身。它用了 useSearchParams()，
-                  若連同內容一起包住，整棵子樹在靜態產生時會退回 client 渲染，
-                  靜態 HTML 只剩 fallback（null）—— 爬蟲拿到空殼。 */}
-              <Suspense fallback={null}>
-                <AnalyticsProvider />
-              </Suspense>
-            </GameProvider>
-            </TransitionProvider>
-          </RuleModalProvider>
-        </UserProvider>
-      </body>
-      {process.env.NEXT_PUBLIC_APP_ENV === "production" && (
-        <GoogleAnalytics gaId="G-1CTRTGRPFF" />
-      )}
-    </html>
-  );
-}

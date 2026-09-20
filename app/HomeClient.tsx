@@ -24,6 +24,7 @@ const wipeFrom = ({ rect, color, icon, iconSize, label, kicker, row, iconColor, 
   from: { width: rect.width, height: rect.height, radius: 16 },
   icon, iconSize, label, kicker, row, iconColor, fg,
 });
+import { useMessages } from "@/i18n/LocaleProvider";
 import { useGame } from "@/contexts/GameContext";
 import { useRuleModal } from "@/contexts/RuleModalContext";
 import { useUser } from "@/contexts/UserContext";
@@ -42,6 +43,7 @@ import type { PiecePlacement } from "@/types/wgf";
  */
 export default function HomeClient() {
   const { navigate } = useTransition();
+  const t = useMessages();
   const { gameState, setGameState } = useGame();
   const { ensureUser } = useUser();
   const [isCreating, setIsCreating] = useState(false);
@@ -121,15 +123,15 @@ export default function HomeClient() {
       小字與圖示承擔，色彩專心製造衝突感。
     */
     <div className="relative z-20 grid w-full grid-cols-2 gap-3 md:gap-4">
-      <GameTile icon={GiTabletopPlayers} tone="amber"  kicker="本機" label="雙人" onClick={(o) => startLocal(2, o)} />
-      <GameTile icon={GiThreeFriends}    tone="purple" kicker="本機" label="三人" onClick={(o) => startLocal(3, o)} />
-      <GameTile icon={GiWireframeGlobe}  tone="blue"   kicker="連線" label="雙人" onClick={(o) => startConnect(2, o)} onPrefetch={prewarm} />
-      <GameTile icon={GiMeshNetwork}     tone="red"    kicker="連線" label="三人" onClick={(o) => startConnect(3, o)} onPrefetch={prewarm} />
-      <GameTile icon={GiBrain} tone="orange" label="單人對戰" wide onClick={() => setSoloOpen(true)} />
+      <GameTile icon={GiTabletopPlayers} tone="amber"  kicker={t.home.localKicker} label={t.home.twoPlayers} onClick={(o) => startLocal(2, o)} />
+      <GameTile icon={GiThreeFriends}    tone="purple" kicker={t.home.localKicker} label={t.home.threePlayers} onClick={(o) => startLocal(3, o)} />
+      <GameTile icon={GiWireframeGlobe}  tone="blue"   kicker={t.home.onlineKicker} label={t.home.twoPlayers} onClick={(o) => startConnect(2, o)} onPrefetch={prewarm} />
+      <GameTile icon={GiMeshNetwork}     tone="red"    kicker={t.home.onlineKicker} label={t.home.threePlayers} onClick={(o) => startConnect(3, o)} onPrefetch={prewarm} />
+      <GameTile icon={GiBrain} tone="orange" label={t.home.solo} wide onClick={() => setSoloOpen(true)} />
       <GameTile
         icon={GiRuleBook}
         tone="forest"
-        label="遊戲規則"
+        label={t.home.rules}
         wide
         onClick={() => setRuleModalState({ ...ruleModalState, isOpen: true })}
       />
