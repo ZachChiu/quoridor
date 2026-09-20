@@ -91,13 +91,9 @@ export default {
       },
     },
   },
+  // 動態拼接的 class 一律改走 inline style 或 CSS 變數，
+  // 所以這裡不再需要列舉 grid-cols-* / grid-rows-*。
   safelist: [
-    'grid-cols-7',
-    'grid-cols-8',
-    'grid-cols-9',
-    'grid-rows-7',
-    'grid-rows-8',
-    'grid-rows-9',
   ],
   plugins: [],
 } satisfies Config;

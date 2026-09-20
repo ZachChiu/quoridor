@@ -25,7 +25,7 @@ const PLAYER_VAR: Record<string, string> = {
   B: 'var(--player-B)',
   C: 'var(--player-C)',
 };
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useMemo } from "react";
 import SectionShadow from "./SectionShadow";
 
 type Props = {
@@ -69,7 +69,6 @@ export default React.memo(function Chessboard({
 }: Props) {
   // const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 
-  const [availableMoves, setAvailableMoves] = useState<Move[]>([]);
   const breakWallCount = breakWallCountObj?.[currentPlayer as Exclude<Player, null>];
 
   const onClickSelectChess = (selectedPlayer: Player, row: number, col: number, isAvailableMove: boolean) => {
@@ -179,19 +178,17 @@ export default React.memo(function Chessboard({
   * 計算可移動的位置
   * @returns {Move[]} 可移動的位置
   */
-  const getAvailableMoves = useCallback((): Move[] => {
-    if (!selectedChess) return [];
-    const { row: selectedRow, col: selectedCol } = selectedChess;
-
-    if (remainSteps === 0) return [];
-
-    // 使用遞迴函式計算所有可能的移動位置
-    return getAvailableMovesRecursive(selectedRow, selectedCol, remainSteps);
+  /**
+   * 目前選中棋子的所有可移動位置。
+   *
+   * 原本是 useState + useEffect：除了每次多跑一輪 render，還會讓高亮慢一幀 ——
+   * 點下棋子的那一幀會先畫出沒有落點的盤面，下一幀才補上。改成 useMemo 之後
+   * 與選取同一幀完成。
+   */
+  const availableMoves = useMemo<Move[]>(() => {
+    if (!selectedChess || remainSteps === 0) return [];
+    return getAvailableMovesRecursive(selectedChess.row, selectedChess.col, remainSteps);
   }, [selectedChess, remainSteps, getAvailableMovesRecursive]);
-
-  useEffect(() => {
-    setAvailableMoves(getAvailableMoves());
-  }, [selectedChess, getAvailableMoves]);
 
   return (
     <div className="relative size-full">
@@ -229,7 +226,14 @@ export default React.memo(function Chessboard({
             厚度用百分比不用 px —— 棋盤是 90dvw / 90dvh，尺寸會跟著視窗變，
             寫死 9px 在手機上比例會變成桌機的兩倍粗。1.25% 在 720px 時正好是 9px。 */}
         <div className="relative size-full rounded-[1.4rem] bg-board-line p-[1.25%]">
-        <div className={`grid-cols-${size} grid size-full gap-1 overflow-hidden rounded-xl bg-board-line`}>
+        {/* 欄數走 inline style 而不是 `grid-cols-${size}`：
+            動態拼出來的 class 名稱 Tailwind 的靜態掃描看不到，之前是靠 safelist
+            列舉 7/8/9 撐著 —— 盤面大小一旦改成別的值就會靜默壞掉。
+            TutorialBoard 本來就是這樣寫的，兩邊統一。 */}
+        <div
+          className="grid size-full gap-1 overflow-hidden rounded-xl bg-board-line"
+          style={{ gridTemplateColumns: `repeat(${size}, minmax(0, 1fr))` }}
+        >
           {Array.from({ length: size }, (_, rowIndex) =>
             Array.from({ length: size }, (_, colIndex) => {
               const cellPlayer: Player = board?.[rowIndex]?.[colIndex];
