@@ -1,5 +1,5 @@
 "use client"
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { GiPlayButton, GiRuleBook } from "react-icons/gi";
 import Modal from './Modal';
 import Button from './Button';
@@ -114,7 +114,15 @@ const RuleModal: React.FC = () => {
 
   // 每次重新打開都從第一步開始 —— 上次讀到哪裡對下一次沒有意義，
   // 而停在中間會讓人以為前面幾步已經看過了。
-  useEffect(() => { if (isOpen) setStep(0); }, [isOpen]);
+  //
+  // 在 render 期間比對前值，而不是用 useEffect：後者會多跑一次 render
+  // （先畫出舊的步驟再跳回第一步），也是 react-hooks/set-state-in-effect 在擋的事。
+  // 這是 React 官方對「prop 改變時調整 state」的建議寫法。
+  const [wasOpen, setWasOpen] = useState(isOpen);
+  if (isOpen !== wasOpen) {
+    setWasOpen(isOpen);
+    if (isOpen) setStep(0);
+  }
 
   // 左右方向鍵翻頁。Escape 關閉由 Modal 統一處理。
   const onKeyDown = useCallback((e: KeyboardEvent) => {

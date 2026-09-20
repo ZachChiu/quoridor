@@ -162,7 +162,14 @@ export default function PlayClient({ roomId }: PlayClientProps) {
   const [gameTurns, setGameTurns] = useState<GameAction[][]>([]);
   const [currentTurnActions, setCurrentTurnActions] = useState<GameAction[]>([]);
 
-  // Refs for stale-closure access in callbacks（每次 render 同步）
+  /*
+    在 render 期間同步一份 ref，給 useCallback 內讀最新值用。
+    react-hooks/refs 擋的就是這種寫法，而它擋得有道理 —— 只是這裡的成因是
+    「規則邏輯與 React 狀態綁在一起」，而不是 ref 用錯。移植 app/game/ 的
+    純函式 engine 之後，這整組 ref 會一起消失（engine 每次回傳全新 state，
+    callback 不需要偷看最新值）。在那之前定點關閉，不要整檔關。
+  */
+  /* eslint-disable react-hooks/refs -- 移植 game engine 後整組移除 */
   const gameTurnsRef = useRef(gameTurns);
   gameTurnsRef.current = gameTurns;
   const openingPlacementsRef = useRef(openingPlacements);
@@ -173,6 +180,7 @@ export default function PlayClient({ roomId }: PlayClientProps) {
   selectedChessRef.current = selectedChess;
   const pieceIndexRef = useRef(pieceIndex);
   pieceIndexRef.current = pieceIndex;
+  /* eslint-enable react-hooks/refs */
   // 避免 Firebase subscription echo 觸發重播
   const lastAppliedWgf = useRef<string>('');
 
@@ -561,7 +569,11 @@ export default function PlayClient({ roomId }: PlayClientProps) {
       const calcArr = [numberOfA, numberOfB, ...(playersNum >= 3 ? [numberOfC] : [])];
       const maxNumber = max(calcArr);
       const minNumber = min(calcArr);
+      // 勝負是從盤面推導出來的值，本來就該用 useMemo 在 render 期間算，
+      // 而不是用 effect 算完再 setState —— 這正是規則在擋的事。
+      // 移植 app/game/score.ts 之後這整段會變成純函式呼叫。
       if (maxNumber === minNumber) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- 移植 game engine 後改為 useMemo 推導
         setWiningStatus(['draw']);
       } else {
         const winners: Player[] = [];
@@ -601,6 +613,7 @@ export default function PlayClient({ roomId }: PlayClientProps) {
     // 所有棋子占地已確定 → 跳過此回合
     const order: Player[] = playersNum === 2 ? [...turnOrderTwo] : [...turnOrderThree];
     const idx = order.indexOf(currentPlayer);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- 推進回合正是這個 effect 的目的
     setCurrentPlayer(order[(idx + 1) % order.length]);
   }, [currentPlayer, isPlacingChess, isLock, isBreakWallAvailable, breakWallCountObj, calculateAllTerritories, playersNum]);
 
@@ -671,6 +684,7 @@ export default function PlayClient({ roomId }: PlayClientProps) {
   // 在這裡先鋪一份本地初始狀態只會跟重播打架。
   useEffect(() => {
     if (isOnline) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- 建立初始盤面，engine 移植後改由 reducer 的初始值承擔
     resetBoard(playersNum);
   }, [isOnline, playersNum, resetBoard]);
 
