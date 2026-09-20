@@ -13,10 +13,11 @@ const PLAYER_VAR: Record<string, string> = {
   B: 'var(--player-B)',
   C: 'var(--player-C)',
 };
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import SectionShadow from "./SectionShadow";
 import WallDirectionPad, { wallPadVisible } from "./WallDirectionPad";
 import { useCoarsePointer } from "@/hook/useCoarsePointer";
+import { PLAYER_NAME } from "@/config/players";
 import { boardSignature, diffBoard, territoryWave, newWall, pathBetween } from "./boardMotion";
 
 type Props = {
@@ -71,6 +72,54 @@ export default React.memo(function Chessboard({
 
     滑鼠維持原本的直接點擊，不多一步。
   */
+  /*
+    鍵盤操作棋盤。
+
+    在此之前格子是純 div —— 不能 focus、不能按、讀屏也唸不出上面有什麼，
+    等於沒有滑鼠就玩不了。牆的預覽本來就是 button（tab 得到），
+    缺的一直是「移動到某一格」。
+
+    用 roving tabindex：整個棋盤只佔一個 tab 停留點，進去之後用方向鍵
+    在格子間移動、Enter/Space 啟動。這是複合元件的標準做法 ——
+    49 個格子各佔一個 tab 停留點的話，光是穿過棋盤就要按 49 次。
+  */
+  const gridRef = useRef<HTMLDivElement>(null);
+  const [cursor, setCursor] = useState({ row: Math.floor(size / 2), col: Math.floor(size / 2) });
+  // 只有使用者真的開始用鍵盤之後才搶 focus，否則一進頁面焦點就被棋盤吃掉。
+  const [kbActive, setKbActive] = useState(false);
+
+  useEffect(() => {
+    if (!kbActive) return;
+    gridRef.current
+      ?.querySelector<HTMLElement>(`[data-cell="${cursor.row},${cursor.col}"]`)
+      ?.focus();
+  }, [cursor, kbActive]);
+
+  const onGridKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
+    // 焦點在格子裡的牆按鈕上時，交給按鈕自己處理 —— 不然 Enter 會被按兩次。
+    if (!(e.target instanceof HTMLElement) || !e.target.dataset.cell) return;
+
+    const step: Record<string, [number, number]> = {
+      ArrowUp: [-1, 0], ArrowDown: [1, 0], ArrowLeft: [0, -1], ArrowRight: [0, 1],
+    };
+    const d = step[e.key];
+    if (d) {
+      e.preventDefault();
+      setKbActive(true);
+      setCursor((c) => ({
+        row: Math.min(size - 1, Math.max(0, c.row + d[0])),
+        col: Math.min(size - 1, Math.max(0, c.col + d[1])),
+      }));
+      return;
+    }
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      // 直接觸發那一格的 click，與滑鼠走完全同一條路徑 ——
+      // 另外寫一份鍵盤專用的處理遲早會跟滑鼠的行為分岔。
+      e.target.click();
+    }
+  }, [size]);
+
   const isCoarse = useCoarsePointer();
   const [pendingWall, setPendingWall] = useState<Direction | null>(null);
 
@@ -339,6 +388,10 @@ export default React.memo(function Chessboard({
             列舉 7/8/9 撐著 —— 盤面大小一旦改成別的值就會靜默壞掉。
             TutorialBoard 本來就是這樣寫的，兩邊統一。 */}
         <div
+          ref={gridRef}
+          role="grid"
+          aria-label="棋盤"
+          onKeyDown={onGridKeyDown}
           className="grid size-full gap-[var(--board-gap)] overflow-hidden rounded-xl bg-board-line"
           style={
             {
@@ -349,8 +402,11 @@ export default React.memo(function Chessboard({
             } as React.CSSProperties
           }
         >
-          {Array.from({ length: size }, (_, rowIndex) =>
-            Array.from({ length: size }, (_, colIndex) => {
+          {Array.from({ length: size }, (_, rowIndex) => (
+            // role="grid" 要求子層是 row。display:contents 讓這層不產生
+            // box，CSS grid 照樣直接排 49 個格子 —— 語意補上了，版面不動。
+            <div key={`row-${rowIndex}`} role="row" style={{ display: 'contents' }}>
+            {Array.from({ length: size }, (_, colIndex) => {
               const cellPlayer: Player = board?.[rowIndex]?.[colIndex];
               const hasHorizontalWallPlayer = horizontalWalls?.[rowIndex]?.[colIndex];
               const hasVerticalWall = verticalWalls?.[rowIndex]?.[colIndex];
@@ -408,10 +464,24 @@ export default React.memo(function Chessboard({
 
               return (
                 <div
-                  className={`group relative flex items-center justify-center ${
+                  className={`group relative flex items-center justify-center outline-offset-[-3px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-tile-ink ${
                     isSelecting ? 'z-10 ring ring-inset ring-tile-ink' : ''
                   } ${cellClass.join(' ')}`}
                   key={`${rowIndex}-${colIndex}`}
+                  role="gridcell"
+                  data-cell={`${rowIndex},${colIndex}`}
+                  // roving tabindex：整個棋盤只佔一個 tab 停留點。
+                  // 49 格各佔一個的話，光是穿過棋盤就要按 49 次 tab。
+                  tabIndex={cursor.row === rowIndex && cursor.col === colIndex ? 0 : -1}
+                  aria-label={[
+                    `第 ${rowIndex + 1} 列第 ${colIndex + 1} 行`,
+                    cellPlayer ? `${PLAYER_NAME[cellPlayer]}棋子`
+                      : territory ? `${PLAYER_NAME[territory]}領地` : '空格',
+                    isAvailableMove ? '可移動到這裡' : null,
+                    !isLock && isPlacingChess && !cellPlayer ? '可放置棋子' : null,
+                    hasHorizontalWallPlayer ? '下方有牆' : null,
+                    hasVerticalWall ? '右方有牆' : null,
+                  ].filter(Boolean).join('，')}
                   onClick={() => onClickSelectChess(cellPlayer, rowIndex, colIndex, isAvailableMove)}
                 >
                   {/* 選取中的格子。
@@ -609,8 +679,9 @@ export default React.memo(function Chessboard({
                   )}
                 </div>
               )
-            })
-          )}
+            })}
+            </div>
+          ))}
         </div>
         </div>
       </SectionShadow>

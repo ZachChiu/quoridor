@@ -88,10 +88,16 @@ const RuleModal: React.FC = () => {
             aria-label={`第 ${i + 1} 步：${s.title}`}
             aria-current={i === step ? 'step' : undefined}
             onClick={() => setStep(i)}
-            className={`h-2 rounded-full transition-all ${
-              i === step ? 'w-6 bg-tile-ink' : 'w-2 bg-tile-ink/25 hover:bg-tile-ink/50'
-            }`}
-          />
+            // 圓點本身是 8px，當觸控目標太小（WCAG 2.5.8 最低 24px）。
+            // 按鈕撐到 24px 但保持透明，看到的仍然只有那顆點。
+            className="group grid h-6 min-w-6 place-items-center"
+          >
+            <span
+              className={`block h-2 rounded-full transition-all ${
+                i === step ? 'w-6 bg-tile-ink' : 'w-2 bg-tile-ink/25 group-hover:bg-tile-ink/50'
+              }`}
+            />
+          </button>
         ))}
       </div>
 

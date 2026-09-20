@@ -115,7 +115,8 @@ const Modal: React.FC<Props> = ({
             type="button"
             aria-label="關閉"
             onClick={onClose}
-            className="-mr-2 -mt-1 shrink-0 rounded-full p-2 text-2xl opacity-70 transition hover:opacity-100"
+            // p-2 只有 40px，差一點到觸控目標的 44px。
+            className="-mr-2 -mt-1 shrink-0 rounded-full p-2.5 text-2xl opacity-70 transition hover:opacity-100"
           >
             <GiCancel />
           </button>
