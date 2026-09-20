@@ -377,7 +377,24 @@ export default function PlayClient({ roomId }: PlayClientProps) {
           在搶注意力。它們是「離開這一局」的出口，本來就不該比盤面搶眼。
           也不用深墨 —— 那在奶油底上太重。 */}
       <div className="fixed left-5 top-5 z-50 flex flex-col gap-3">
-        <button type="button" aria-label="回首頁" onClick={() => navigate('/')}
+        <button
+          type="button"
+          aria-label="回首頁"
+          onClick={(e) => {
+            // 圓從這顆鈕的中心擴散出去 —— 它本身就是圓的，起點天生吻合。
+            //
+            // 顏色就用這顆鈕自己的紙色：等於整顆鈕直接擴張成畫面，
+            // 而且終點是首頁的奶油底，色調連得上。試過深墨，整片黑太重 ——
+            // 進場的顏色代表「你選了什麼」，離場不該比進場還搶戲。
+            const r = e.currentTarget.getBoundingClientRect();
+            navigate('/', {
+              wipe: {
+                x: r.left + r.width / 2,
+                y: r.top + r.height / 2,
+                color: 'rgb(var(--tile-cream))',
+              },
+            });
+          }}
           className="rounded-full bg-primary-50 p-3.5 text-2xl text-tile-ink transition hover:brightness-95 active:scale-95">
           <GiHouse />
         </button>

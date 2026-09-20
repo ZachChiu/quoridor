@@ -62,7 +62,13 @@ export const TransitionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       }
       setState({
         phase: 'cover', pushed: false, target: href,
-        title: options?.title, wipe: options?.wipe ?? { kind: 'bars' },
+        title: options?.title,
+        // 沒指定起點就從畫面中心擴散 —— 任何未來的呼叫端都不會壞
+        wipe: options?.wipe ?? {
+          x: window.innerWidth / 2,
+          y: window.innerHeight / 2,
+          color: 'rgb(var(--tile-ink))',
+        },
       });
     },
     [router]
