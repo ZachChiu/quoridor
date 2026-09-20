@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { Shell, baseMetadata } from '@/shell';
 import { siteViewport } from '@/viewport';
 import { getMessages } from '@/i18n';
-import { HTML_LANG } from '@/i18n/locales';
+
 
 /**
  * zh-TW 的 root layout。網址不加語系前綴，所以這一組涵蓋

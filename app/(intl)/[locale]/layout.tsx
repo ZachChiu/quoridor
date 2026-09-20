@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { Shell, baseMetadata } from '@/shell';
 import { siteViewport } from '@/viewport';
 import { getMessages } from '@/i18n';
-import { HTML_LANG, PREFIXED, toLocale } from '@/i18n/locales';
+import { PREFIXED, toLocale } from '@/i18n/locales';
 
 /**
  * en / ja / ko 的 root layout。
