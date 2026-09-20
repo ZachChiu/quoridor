@@ -12,7 +12,8 @@ interface ChampionModalProps {
   isOpen: boolean;
   uniqTerritories: { A: string[]; B: string[]; C?: string[] };
   onClose: () => void;
-  onRestart: () => void;
+  /** 省略時不顯示「再來一局」。連線模式沒有本地重開 —— 重開要雙方同意。 */
+  onRestart?: () => void;
 }
 
 /**
@@ -70,7 +71,9 @@ const ChampionModal: React.FC<ChampionModalProps> = ({
           </Button>
           {/* 深墨而非琥珀：三人局的黃方比分條就是琥珀，緊鄰著放會被讀成同一件事。
               深墨不屬於任何玩家，在這面彩色的板子上永遠不會撞色。 */}
-          <Button color="bg-tile-ink text-tile-cream" handleClickEvent={onRestart}>再來一局</Button>
+          {onRestart && (
+            <Button color="bg-tile-ink text-tile-cream" handleClickEvent={onRestart}>再來一局</Button>
+          )}
         </>
       }
     >

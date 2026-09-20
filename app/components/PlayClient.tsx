@@ -38,7 +38,7 @@ interface PlayClientProps {
 
 export default function PlayClient({ roomId }: PlayClientProps) {
   const { gameState } = useGame();
-  const { uid, ready: userReady } = useUser();
+  const { ensureUser } = useUser();
   const isOnline = !!roomId;
 
   // ─── 連線狀態（只在 online 模式使用）────────────────────────────────────────
@@ -58,14 +58,23 @@ export default function PlayClient({ roomId }: PlayClientProps) {
 
   // ─── Firebase 初始化（online only）──────────────────────────────────────────
   useEffect(() => {
-    if (!isOnline || !userReady || !uid || initialized.current) return;
+    if (!isOnline || initialized.current) return;
     initialized.current = true;
 
     let unsubscribe: (() => void) | undefined;
+    let cancelled = false;
 
     (async () => {
       try {
+        // Firebase 的載入與匿名登入延後到這裡才觸發，
+        // 所以本機對戰（沒有 roomId）完全不會下載 Firebase SDK。
+        // 這裡不能只依賴首頁預熱過 —— 直接點開 /match#roomId=… 連結的人
+        // 根本沒經過首頁。
+        const uid = await ensureUser();
+        if (cancelled) return;
+
         const existing = await getRoom(roomId!);
+        if (cancelled) return;
         if (!existing) {
           setError('不存在的對局');
           setPhase('error');
@@ -120,9 +129,10 @@ export default function PlayClient({ roomId }: PlayClientProps) {
     })();
 
     return () => {
+      cancelled = true;
       unsubscribe?.();
     };
-  }, [isOnline, userReady, uid, roomId]);
+  }, [isOnline, roomId, ensureUser]);
 
   // ─── 棋盤狀態 ────────────────────────────────────────────────────────────────
   const [size, setSize] = useState(0);
@@ -594,8 +604,15 @@ export default function PlayClient({ roomId }: PlayClientProps) {
     setCurrentPlayer(order[(idx + 1) % order.length]);
   }, [currentPlayer, isPlacingChess, isLock, isBreakWallAvailable, breakWallCountObj, calculateAllTerritories, playersNum]);
 
-  const restartGame = useCallback(() => {
-    switch (playersNum) {
+  /**
+   * 把盤面重置成該人數的開局狀態。
+   *
+   * playersNum 走參數而不是 closure：原本是 useCallback(..., []) 配 eslint-disable，
+   * 永遠鎖著首次 render 的值。連線模式下 room 還沒載入時 playersNum 是 2，
+   * 所以三人房重置會變成兩人盤。
+   */
+  const resetBoard = useCallback((num: number) => {
+    switch (num) {
       case 2:
         setBoard(cloneDeep(playerTemplates.templateBoardTwo));
         setVerticalWalls(cloneDeep(playerTemplates.templateVerticalWalls));
@@ -612,19 +629,22 @@ export default function PlayClient({ roomId }: PlayClientProps) {
         break;
     }
 
+    // 用當次要設定的順序表，不要讀 openingStep —— 那是 state，
+    // 在同一個 closure 裡拿到的是上一局的值。目前兩種模式的首位剛好都是 A，
+    // 所以一直沒出錯，但那是巧合不是設計。
+    const steps = num === 3 ? playerTemplates.openingStepThree : playerTemplates.openingStepTwo;
     setSize(7);
-    setCurrentPlayer(openingStep[0] || 'A' as Player);
+    setCurrentPlayer(steps[0] ?? 'A');
     setSelectedChess(null);
     setRemainSteps(2);
     setWiningStatus([]);
     setIsChampionModalOpen(false);
-    trackButtonClick(`restart_local_game_${playersNum}p`);
     setFlattenTerritoriesObj({});
     setBreakWallCountObj({ A: 1, B: 1, C: 1 });
-    setUniqTerritories({ A: [], B: [], ...(playersNum >= 3 ? { C: [] } : {}) });
+    setUniqTerritories({ A: [], B: [], ...(num >= 3 ? { C: [] } : {}) });
     setFlattenTerritoriesObj({});
 
-    if (playersNum === 3) {
+    if (num === 3) {
       setPieceIndex({ A: [], B: [], C: [] });
       setWgfInitPositions([]);
     } else {
@@ -638,12 +658,21 @@ export default function PlayClient({ roomId }: PlayClientProps) {
     setOpeningPlacements([]);
     setGameTurns([]);
     setCurrentTurnActions([]);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  /** 使用者主動按下「再來一局」。只有本機模式會用到。 */
+  const restartGame = useCallback(() => {
+    resetBoard(playersNum);
+    trackButtonClick(`restart_local_game_${playersNum}p`);
+  }, [resetBoard, playersNum]);
+
+  // 建立初始盤面。
+  // 連線模式直接略過 —— 那邊的盤面完全由 Firebase 上的 WGF 重播決定，
+  // 在這裡先鋪一份本地初始狀態只會跟重播打架。
   useEffect(() => {
-    restartGame();
-  }, [restartGame]);
+    if (isOnline) return;
+    resetBoard(playersNum);
+  }, [isOnline, playersNum, resetBoard]);
 
   // 當用戶嘗試離開頁面且遊戲尚未結束時顯示確認對話框
   useEffect(() => {
@@ -747,7 +776,7 @@ export default function PlayClient({ roomId }: PlayClientProps) {
             uniqTerritories={uniqTerritories}
             isOpen={isChampionModalOpen}
             onClose={() => setIsChampionModalOpen(false)}
-            onRestart={restartGame}
+            onRestart={isOnline ? undefined : restartGame}
           />
 
           {/* 破牆確認 Modal */}
