@@ -20,16 +20,16 @@ interface Props {
  * 靛藍與磚紅＝連線、森綠＝規則、紫＝三人）。
  */
 /*
-  標籤用「級」而不是簡單／普通／困難：這是圍棋衍生的遊戲，數字級距比
-  形容詞中性，也不必替每一級想一個聽起來不尷尬的名字。
+  用「級」而不是簡單／普通／困難：這是圍棋衍生的遊戲，數字級距比形容詞中性，
+  也不必替每一級想一個聽起來不尷尬的名字。
 
-  描述改為陳述搜尋行為而非擬人化的口氣（原本是「會犯明顯的錯」這類），
-  一來比較準確，二來玩家看得出級距之間差在哪。
+  不附說明文字 —— 級距本身已經表達了順序，再寫「僅評估當前一手」這類描述
+  只是要玩家在選之前先讀三行字。真正的差別打一局就知道。
 */
-const LEVELS: { key: Difficulty; label: string; hint: string }[] = [
-  { key: 'easy', label: '一級', hint: '僅評估當前一手' },
-  { key: 'normal', label: '二級', hint: '推算對手的回應後再決定' },
-  { key: 'hard', label: '三級', hint: '每手推算約一秒，搜尋較深的變化' },
+const LEVELS: { key: Difficulty; label: string }[] = [
+  { key: 'easy', label: '一級' },
+  { key: 'normal', label: '二級' },
+  { key: 'hard', label: '三級' },
 ];
 
 const DifficultyModal: React.FC<Props> = ({ isOpen, onClose, onPick }) => (
@@ -42,15 +42,14 @@ const DifficultyModal: React.FC<Props> = ({ isOpen, onClose, onPick }) => (
     band={{ className: 'bg-tile-orange', fg: 'text-tile-ink' }}
   >
     <div className="flex flex-col gap-3">
-      {LEVELS.map(({ key, label, hint }) => (
+      {LEVELS.map(({ key, label }) => (
         <button
           key={key}
           type="button"
           onClick={() => onPick(key)}
-          className="flex flex-col items-start gap-1 rounded-xl bg-primary-50 px-5 py-4 text-left transition hover:brightness-95 active:scale-[0.99]"
+          className="rounded-xl bg-primary-50 px-5 py-4 text-lg font-black transition hover:brightness-95 active:scale-[0.99]"
         >
-          <span className="text-lg font-black">{label}</span>
-          <span className="text-xs text-ink-soft">{hint}</span>
+          {label}
         </button>
       ))}
     </div>
