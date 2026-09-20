@@ -1,5 +1,7 @@
 import HomeClient from "./HomeClient";
 
+const SITE = process.env.SITE_URL || "https://quoridorgame.com";
+
 export default function Home() {
   return (
     /*
@@ -45,6 +47,41 @@ export default function Home() {
         </div>
 
       </main>
+
+      {/*
+        VideoGame 結構化資料。讓搜尋結果知道這是「一個可以直接玩的遊戲」
+        而不是一篇介紹文章 —— 兩者在結果頁的呈現方式不同。
+
+        playMode 三個值對應站上真的做得到的三種玩法；寫了做不到的東西
+        比不寫更糟，那是結構化資料被降權最常見的原因。
+      */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'VideoGame',
+            name: '牆壁圍棋 Wall Go',
+            alternateName: 'Wall Go',
+            url: SITE,
+            description:
+              'Netflix《魔鬼的計謀：死亡密室》裡的牆壁圍棋。移動棋子、築牆圈地，地盤大的人獲勝。',
+            genre: ['Strategy', 'Board Game'],
+            gamePlatform: 'Web browser',
+            applicationCategory: 'Game',
+            operatingSystem: 'Any',
+            inLanguage: 'zh-TW',
+            numberOfPlayers: { '@type': 'QuantitativeValue', minValue: 1, maxValue: 3 },
+            playMode: ['SinglePlayer', 'CoOp', 'MultiPlayer'],
+            offers: { '@type': 'Offer', price: '0', priceCurrency: 'TWD' },
+            isBasedOn: {
+              '@type': 'TVSeries',
+              name: '魔鬼的計謀：死亡密室',
+              alternateName: "The Devil's Plan: Death Room",
+            },
+          }),
+        }}
+      />
     </div>
   );
 }

@@ -62,7 +62,7 @@ export default function HomeClient() {
   const startSolo = (aiDifficulty: Difficulty, at: { x: number; y: number }) => {
     setSoloOpen(false);
     setGameState({ ...gameState, playersNum: 2, aiDifficulty });
-    navigate('/local', { wipe: { ...at, color: TONE_COLOR.orange } });
+    navigate('/solo', { wipe: { ...at, color: TONE_COLOR.orange } });
     trackButtonClick(`start_solo_game_${aiDifficulty}`);
   };
 
