@@ -10,11 +10,16 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "font:subset": "node scripts/build-font-subset.mjs",
-    "font:check": "node scripts/build-font-subset.mjs --check"
+    "font:check": "node scripts/build-font-subset.mjs --check",
+    "release": "node scripts/release.mjs",
+    "release:preview": "node scripts/release.mjs --dry-run",
+    "release:local": "node scripts/release.mjs --no-push",
+    "release:wrap": "node scripts/release.mjs --wrap"
   },
   "dependencies": {
     "@next/third-parties": "^16.3.5",
     "@types/lodash-es": "^4.17.12",
+    "animejs": "^4.5.0",
     "firebase": "^12.11.0",
     "lodash-es": "^4.17.21",
     "next": "^16.3.5",
