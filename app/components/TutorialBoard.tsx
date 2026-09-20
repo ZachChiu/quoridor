@@ -1,4 +1,6 @@
-import React from 'react';
+import React, { useMemo } from 'react';
+import { ownerByCellFor } from '@/game/territory';
+import type { Player } from '@/game/types';
 
 /**
  * 教學用的小棋盤。
@@ -27,8 +29,6 @@ export interface TutorialBoardProps {
   hWalls?: { at: Cell; player: TPlayer }[];
   /** 直牆：畫在該格的右緣 */
   vWalls?: { at: Cell; player: TPlayer }[];
-  /** 已成立的領地（淺色底） */
-  territory?: { at: Cell; player: TPlayer }[];
   /** 可移動的落點（灰色圓點） */
   dots?: Cell[];
   /** 可築牆的預覽 */
@@ -40,13 +40,32 @@ export interface TutorialBoardProps {
 const key = ([r, c]: Cell) => `${r},${c}`;
 
 export default function TutorialBoard({
-  size = 4, pieces = [], hWalls = [], vWalls = [], territory = [], dots = [], ghosts = [], selected,
+  size = 4, pieces = [], hWalls = [], vWalls = [], dots = [], ghosts = [], selected,
 }: TutorialBoardProps) {
   const pieceMap = new Map(pieces.map((p) => [key(p.at), p.player]));
   const hMap = new Map(hWalls.map((w) => [key(w.at), w.player]));
   const vMap = new Map(vWalls.map((w) => [key(w.at), w.player]));
-  const terrMap = new Map(territory.map((t) => [key(t.at), t.player]));
   const dotSet = new Set(dots.map(key));
+
+  /*
+    領地**由規則算出來**，不是手寫座標。
+
+    原本是在每一步的資料裡手填 territory，結果第 7 步畫成紅 5 : 藍 3，
+    但依規則實際是 8:8 的平局 —— 手寫的圖跟它想教的規則對不上，
+    那比沒有圖更糟。改成用 engine 的同一份掃描函式推導。
+  */
+  const terrMap = useMemo(() => {
+    const board: Player[][] = Array.from({ length: size }, (_, r) =>
+      Array.from({ length: size }, (_, c) => pieceMap.get(`${r},${c}`) ?? null)
+    );
+    const blank = () => Array.from({ length: size }, () => Array<Player>(size).fill(null));
+    const horizontalWalls = blank();
+    const verticalWalls = blank();
+    for (const w of hWalls) horizontalWalls[w.at[0]][w.at[1]] = w.player;
+    for (const w of vWalls) verticalWalls[w.at[0]][w.at[1]] = w.player;
+    return new Map(Object.entries(ownerByCellFor(board, { horizontalWalls, verticalWalls })));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [size, pieces, hWalls, vWalls]);
   const selKey = selected ? key(selected.at) : null;
 
   const TERR: Record<TPlayer, string> = {

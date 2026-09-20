@@ -2,6 +2,7 @@ import { cellKey, DIRECTIONS, inBounds, isBlocked } from './board';
 import {
   BOARD_SIZE,
   type GameState,
+  type Player,
   type PlayerKey,
   type TerritoryResult,
 } from './types';
@@ -21,6 +22,66 @@ export const playerKeys = (playersNum: number): PlayerKey[] =>
  * - 區塊內只有單一玩家的棋子 → 該玩家佔領，每格計 1 分
  * - 區塊內沒有棋子，或同時有多方棋子 → 中立區，不計入任何人
  */
+/**
+ * 任意尺寸的連通區塊掃描。
+ *
+ * 尺寸從 board 推導而不是用 BOARD_SIZE 常數 —— 教學插圖用的是 4×4 小盤面，
+ * 但它示範的必須是**同一套規則**。手寫領地座標的結果是圖跟規則對不上：
+ * 曾經有一張「結束與勝負」畫成 5:3，實際依規則算是 8:8 的平局。
+ */
+export function scanRegions(
+  board: Player[][],
+  walls: Pick<GameState, 'horizontalWalls' | 'verticalWalls'>
+): { cells: string[]; occupants: Set<PlayerKey> }[] {
+  const size = board.length;
+  const visited = Array.from({ length: size }, () => Array<boolean>(size).fill(false));
+  const regions: { cells: string[]; occupants: Set<PlayerKey> }[] = [];
+
+  for (let row = 0; row < size; row++) {
+    for (let col = 0; col < size; col++) {
+      if (visited[row][col]) continue;
+
+      const cells: string[] = [];
+      const occupants = new Set<PlayerKey>();
+      const queue: [number, number][] = [[row, col]];
+      visited[row][col] = true;
+
+      while (queue.length > 0) {
+        const [r, c] = queue.shift()!;
+        cells.push(cellKey(r, c));
+        const occupant = board[r][c];
+        if (occupant) occupants.add(occupant);
+
+        for (const { dr, dc } of DIRECTIONS) {
+          const nr = r + dr;
+          const nc = c + dc;
+          if (nr < 0 || nr >= size || nc < 0 || nc >= size) continue;
+          if (visited[nr][nc]) continue;
+          if (isBlocked(walls, r, c, dr, dc)) continue;
+          visited[nr][nc] = true;
+          queue.push([nr, nc]);
+        }
+      }
+      regions.push({ cells, occupants });
+    }
+  }
+  return regions;
+}
+
+/** 任意尺寸的領地歸屬：格子座標 → 擁有者。只有區塊內單一玩家時才算。 */
+export function ownerByCellFor(
+  board: Player[][],
+  walls: Pick<GameState, 'horizontalWalls' | 'verticalWalls'>
+): Record<string, PlayerKey> {
+  const out: Record<string, PlayerKey> = {};
+  for (const { cells, occupants } of scanRegions(board, walls)) {
+    if (occupants.size !== 1) continue;
+    const [owner] = [...occupants];
+    for (const cell of cells) out[cell] = owner;
+  }
+  return out;
+}
+
 export function computeTerritories(state: GameState): TerritoryResult {
   const { board, playersNum } = state;
   const keys = playerKeys(playersNum);
