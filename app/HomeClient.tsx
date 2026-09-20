@@ -26,7 +26,7 @@ import type { PiecePlacement } from "@/types/wgf";
 export default function HomeClient() {
   const router = useRouter();
   const { gameState, setGameState } = useGame();
-  const { uid, ready } = useUser();
+  const { ensureUser } = useUser();
   const [isCreating, setIsCreating] = useState(false);
   const { ruleModalState, setRuleModalState } = useRuleModal();
 
@@ -36,10 +36,15 @@ export default function HomeClient() {
     trackButtonClick(`start_local_game_${playersNum}p`);
   };
 
+  // 滑過或 focus 到連線磁磚就先把 Firebase 載起來並匿名登入。
+  // 失敗不處理 —— 這只是預熱，真的按下去時 startConnect 會再試一次並回報。
+  const prewarm = () => { void ensureUser().catch(() => {}); };
+
   const startConnect = async (playersNum: number) => {
-    if (isCreating || !ready || !uid) return;
+    if (isCreating) return;
     setIsCreating(true);
     try {
+      const uid = await ensureUser();
       const player: RoomPlayer = {
         uid,
         displayName: `玩家 ${uid.slice(0, 4).toUpperCase()}`,
@@ -66,7 +71,8 @@ export default function HomeClient() {
     }
   };
 
-  const online = !ready || isCreating;
+  // 不再以「已登入」當作可否點擊的條件 —— 現在是按下去才登入。
+  const online = isCreating;
 
   return (
     /*
@@ -77,8 +83,8 @@ export default function HomeClient() {
     <div className="relative z-20 grid w-full grid-cols-2 gap-3 md:gap-4">
       <GameTile icon={GiTabletopPlayers} tone="amber"  kicker="本機" label="雙人" onClick={() => startLocal(2)} />
       <GameTile icon={GiThreeFriends}    tone="purple" kicker="本機" label="三人" onClick={() => startLocal(3)} />
-      <GameTile icon={GiWireframeGlobe}  tone="blue"   kicker="連線" label="雙人" onClick={() => startConnect(2)} disabled={online} />
-      <GameTile icon={GiMeshNetwork}     tone="red"    kicker="連線" label="三人" onClick={() => startConnect(3)} disabled={online} />
+      <GameTile icon={GiWireframeGlobe}  tone="blue"   kicker="連線" label="雙人" onClick={() => startConnect(2)} onPrefetch={prewarm} disabled={online} />
+      <GameTile icon={GiMeshNetwork}     tone="red"    kicker="連線" label="三人" onClick={() => startConnect(3)} onPrefetch={prewarm} disabled={online} />
       <GameTile
         icon={GiRuleBook}
         tone="forest"

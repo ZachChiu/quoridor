@@ -32,15 +32,23 @@ interface Props {
   disabled?: boolean;
   /** 橫跨整列的寬磁磚（不強制正方形）。 */
   wide?: boolean;
+  /**
+   * 滑鼠移入或取得焦點時觸發，用來預熱。
+   * 連線那兩塊會在這裡先把 Firebase SDK 載起來並匿名登入 ——
+   * 等按下去才開始載，使用者會乾等一到兩秒。
+   */
+  onPrefetch?: () => void;
 }
 
 export default function GameTile({
-  icon: Icon, kicker, label, tone, onClick, disabled, wide,
+  icon: Icon, kicker, label, tone, onClick, disabled, wide, onPrefetch,
 }: Props) {
   return (
     <button
       type="button"
       onClick={disabled ? undefined : onClick}
+      onPointerEnter={onPrefetch}
+      onFocus={onPrefetch}
       disabled={disabled}
       className={`${TONE[tone]} ${wide ? 'col-span-2 flex-row gap-3 py-4' : 'aspect-square flex-col gap-2'}
         flex items-center justify-center rounded-2xl p-3
