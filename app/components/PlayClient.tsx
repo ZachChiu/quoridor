@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { GiHouse, GiRuleBook } from "react-icons/gi";
 import Link from 'next/link';
 import Chessboard from "@/components/Chessboard";
 import SectionShadow from "@/components/SectionShadow";
@@ -23,7 +24,6 @@ import type { Room, RoomPlayer } from '@/types/room';
 import { trackButtonClick } from "@/utils/analytics";
 import { buildPieceIndex, getPieceNumber, updatePieceIndex, serializeWGF, parseWGF } from "@/utils/wgf";
 import type { GameAction, PieceIndex, PiecePlacement } from "@/types/wgf";
-import { MdHome, MdOutlineQuestionMark } from "react-icons/md";
 import { useRuleModal } from "@/contexts/RuleModalContext";
 import { useGame } from "@/contexts/GameContext";
 import playerTemplates, { openingStepTwo, openingStepThree, turnOrderTwo, turnOrderThree } from "@/config/playerTemplates";
@@ -668,7 +668,7 @@ export default function PlayClient({ roomId }: PlayClientProps) {
   if (isOnline && phase === 'initializing') {
     return (
       <div className="flex items-center gap-3 text-lg">
-        <div className="size-4 animate-spin rounded-full border-2 border-gray-900 border-t-transparent"></div>
+        <div className="size-4 animate-spin rounded-full border-2 border-tile-ink border-t-transparent"></div>
         正在連線…
       </div>
     );
@@ -677,7 +677,7 @@ export default function PlayClient({ roomId }: PlayClientProps) {
   if (isOnline && phase === 'error') {
     return (
       <div className="flex flex-col items-center gap-6">
-        <p className="text-lg text-red-500">{error}</p>
+        <p className="text-lg text-player-A">{error}</p>
         <Link href="/" className="underline hover:opacity-70">返回首頁</Link>
       </div>
     );
@@ -688,17 +688,16 @@ export default function PlayClient({ roomId }: PlayClientProps) {
 
   return (
     <>
-      {/* 首頁按鈕 */}
-      <Link className="group fixed left-5 top-5 cursor-pointer" href="/">
-        <SectionShadow roundedFull>
-          <div className="relative z-50 block rounded-full border-4 border-gray-900 bg-white p-3 text-xl group-hover:-translate-x-0.5 group-hover:-translate-y-0.5 group-active:translate-x-1 group-active:translate-y-1">
-            <MdHome />
-          </div>
-        </SectionShadow>
-      </Link>
-      <div className="group fixed left-5 top-[calc(2.25rem+52px)] cursor-pointer">
-        <IconButton handleClickEvent={() => handleRuleBtnOpen()}>
-          <MdOutlineQuestionMark />
+      {/* 左上角的操作鈕。用 flex 直排而不是各自寫死 top 值 ——
+          之前兩顆的尺寸不同（p-3/text-xl 對 p-3.5/text-2xl），
+          間距是按舊尺寸算出來的，改一顆就會對不齊。 */}
+      <div className="fixed left-5 top-5 z-50 flex flex-col gap-3">
+        <Link href="/" aria-label="回首頁"
+          className="rounded-full bg-tile-amber p-3.5 text-2xl text-tile-ink transition hover:brightness-95 active:scale-95">
+          <GiHouse />
+        </Link>
+        <IconButton color="bg-tile-forest text-tile-cream" handleClickEvent={handleRuleBtnOpen} label="遊玩方式">
+          <GiRuleBook />
         </IconButton>
       </div>
 
@@ -706,7 +705,7 @@ export default function PlayClient({ roomId }: PlayClientProps) {
       {isOnline && phase === 'waiting' && (
         <div className="flex flex-col items-center gap-6">
           <div className="flex items-center gap-3 text-lg">
-            <div className="size-4 animate-spin rounded-full border-2 border-gray-900 border-t-transparent"></div>
+            <div className="size-4 animate-spin rounded-full border-2 border-tile-ink border-t-transparent"></div>
             等待其他玩家加入…
           </div>
           <p className="text-sm text-gray-500">
@@ -715,7 +714,7 @@ export default function PlayClient({ roomId }: PlayClientProps) {
           <SectionShadow className='!size-auto'>
             <button
               onClick={() => setShareModalOpen(true)}
-              className="relative z-10 flex items-center gap-2 rounded-xl border-4 border-gray-900 bg-white px-6 py-3 font-bold transition-transform hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-1 active:translate-y-1"
+              className="relative z-10 flex items-center gap-2 rounded-xl bg-tile-amber px-6 py-3 font-black transition hover:brightness-95 active:scale-[0.98]"
             >
               分享邀請連結
             </button>
