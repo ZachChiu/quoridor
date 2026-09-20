@@ -37,5 +37,5 @@ export default async function IntlLayout({
   children, params,
 }: { children: React.ReactNode; params: Promise<{ locale: string }> }) {
   const locale = toLocale((await params).locale);
-  return <Shell lang={HTML_LANG[locale]}>{children}</Shell>;
+  return <Shell locale={locale}>{children}</Shell>;
 }

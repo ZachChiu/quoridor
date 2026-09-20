@@ -21,5 +21,5 @@ export const metadata: Metadata = {
 };
 
 export default function DefaultLayout({ children }: { children: React.ReactNode }) {
-  return <Shell lang={HTML_LANG['zh-TW']}>{children}</Shell>;
+  return <Shell locale="zh-TW">{children}</Shell>;
 }

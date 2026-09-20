@@ -1,6 +1,7 @@
 'use client'
 import React, { useEffect, useRef } from 'react';
 import { useScrollLock } from '@/hook/useScrollLock';
+import { useMessages } from '@/i18n/LocaleProvider';
 import { GiCancel } from 'react-icons/gi';
 import type { IconType } from 'react-icons';
 
@@ -41,6 +42,7 @@ const Modal: React.FC<Props> = ({
 
   // Modal 打開時鎖住背景捲動 —— 手機上不鎖的話，滑動會穿透到後面的頁面。
   useScrollLock(isOpen);
+  const t = useMessages();
 
   useEffect(() => {
     if (!isOpen) return;
@@ -117,7 +119,7 @@ const Modal: React.FC<Props> = ({
           </div>
           <button
             type="button"
-            aria-label="關閉"
+            aria-label={t.ui.close}
             onClick={onClose}
             // p-2 只有 40px，差一點到觸控目標的 44px。
             className="-mr-2 -mt-1 shrink-0 rounded-full p-2.5 text-2xl opacity-70 transition hover:opacity-100"

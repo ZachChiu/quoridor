@@ -53,6 +53,7 @@ const ja: Messages = {
   },
   local: { metaTitle: 'ローカル対戦', srHeading: 'ローカル対戦 | ウォールゴー Wall Go' },
   match: { metaTitle: 'オンライン対戦', srHeading: 'オンライン対戦 | ウォールゴー Wall Go' },
+  ui: { next: '次へ', prev: '戻る', startGame: 'ゲームを始める', close: '閉じる', pickLevel: 'レベルを選ぶ' },
   nav: { language: '言語', backHome: 'ホームに戻る' },
   credits: { prefix: 'アイコン提供：', middle: '（CC BY 3.0）と', suffix: '（ISC）' },
 };

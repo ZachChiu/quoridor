@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { STEPS } from '@/components/tutorialSteps';
+import { STEP_TEXT } from '@/i18n/content/steps';
 import { ownerByCellFor } from '@/game/territory';
 import type { Player, PlayerKey } from '@/game/types';
 import type { TutorialBoardProps } from '@/components/TutorialBoard';
@@ -29,7 +30,7 @@ function ownership(board: TutorialBoardProps) {
 }
 
 describe('教學插圖', () => {
-  it.each(STEPS.map((s, i) => [i + 1, s.title, s.board] as const))(
+  it.each(STEPS.map((s, i) => [i + 1, STEP_TEXT['zh-TW'][i].title, s.board] as const))(
     '第 %i 步「%s」的盤面不會整張變成單一玩家的領地',
     (_i, _title, board) => {
       const { counts, total } = ownership(board);
@@ -40,10 +41,10 @@ describe('教學插圖', () => {
   );
 
   it('每一步至少有兩位玩家的棋子 —— 只有一方時整盤都會算成他的', () => {
-    for (const step of STEPS) {
+    STEPS.forEach((step, i) => {
       const players = new Set((step.board.pieces ?? []).map((p) => p.player));
-      expect(players.size, `「${step.title}」只有 ${[...players].join('')} 一方`).toBeGreaterThan(1);
-    }
+      expect(players.size, `「${STEP_TEXT['zh-TW'][i].title}」只有 ${[...players].join('')} 一方`).toBeGreaterThan(1);
+    });
   });
 
   it('最後一步要示範「格數最多的人獲勝」，所以兩方的地不能一樣多', () => {

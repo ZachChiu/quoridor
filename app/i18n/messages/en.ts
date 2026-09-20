@@ -53,6 +53,7 @@ const en: Messages = {
   },
   local: { metaTitle: 'Local play', srHeading: 'Local play | Wall Go' },
   match: { metaTitle: 'Online play', srHeading: 'Online play | Wall Go' },
+  ui: { next: 'Next', prev: 'Back', startGame: 'Start playing', close: 'Close', pickLevel: 'Pick a level' },
   nav: { language: 'Language', backHome: 'Back to home' },
   credits: { prefix: 'Icons from', middle: '(CC BY 3.0) and', suffix: '(ISC)' },
 };

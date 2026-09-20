@@ -59,6 +59,7 @@ const zhTW = {
   },
   local: { metaTitle: '本機對戰', srHeading: '本機對戰 | 牆壁圍棋 Wall Go' },
   match: { metaTitle: '連線對戰', srHeading: '連線對戰 | 牆壁圍棋 Wall Go' },
+  ui: { next: '下一步', prev: '上一步', startGame: '開始遊戲', close: '關閉', pickLevel: '選擇難度' },
   nav: { language: '語言', backHome: '回首頁' },
   credits: { prefix: '圖示來自', middle: '（CC BY 3.0）與', suffix: '（ISC）' },
 } as const;

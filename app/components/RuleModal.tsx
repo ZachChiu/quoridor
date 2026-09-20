@@ -7,6 +7,8 @@ import TutorialBoard from './TutorialBoard';
 import { STEPS } from './tutorialSteps';
 import { useRuleModal } from '@/contexts/RuleModalContext';
 import { useSwipe } from '@/hook/useSwipe';
+import { useLocale, useMessages } from '@/i18n/LocaleProvider';
+import { STEP_TEXT } from '@/i18n/content/steps';
 
 /**
  * 逐步教學。
@@ -17,6 +19,10 @@ import { useSwipe } from '@/hook/useSwipe';
  */
 const RuleModal: React.FC = () => {
   const { ruleModalState, setRuleModalState } = useRuleModal();
+  const locale = useLocale();
+  const t = useMessages();
+  // 圖不分語言、文字分 —— 兩邊靠索引對齊，長度由測試鎖住
+  const text = STEP_TEXT[locale];
   const [step, setStep] = useState(0);
   const isOpen = ruleModalState.isOpen;
   const last = step === STEPS.length - 1;
@@ -48,13 +54,14 @@ const RuleModal: React.FC = () => {
   const swipe = useSwipe(next, prev);
 
   const current = STEPS[step];
+  const currentText = text[step];
 
   return (
     <Modal
       isOpen={isOpen}
       onClose={close}
-      title={current.title}
-      kicker={`遊玩方式 · ${step + 1} / ${STEPS.length}`}
+      title={currentText.title}
+      kicker={`${t.rules.kicker} · ${step + 1} / ${STEPS.length}`}
       icon={GiRuleBook}
       band={{ className: 'bg-tile-forest', fg: 'text-tile-cream' }}
       onKeyDown={onKeyDown}
@@ -65,7 +72,7 @@ const RuleModal: React.FC = () => {
               color="text-ink-soft hover:bg-tile-ink/[0.06] bg-transparent"
               handleClickEvent={() => setStep(step - 1)}
             >
-              上一步
+              {t.ui.prev}
             </Button>
           )}
           {/* 主要按鈕用深墨而非琥珀。Modal 的標題色帶已經帶了一個色相，
@@ -74,7 +81,7 @@ const RuleModal: React.FC = () => {
               深墨不屬於任何色相，放在哪個色帶下面都成立。 */}
           <Button color="bg-tile-ink text-tile-cream" handleClickEvent={last ? close : () => setStep(step + 1)}>
             <span className="flex items-center justify-center gap-2">
-              {last ? <><GiPlayButton /> 開始遊戲</> : '下一步'}
+              {last ? <><GiPlayButton /> {t.ui.startGame}</> : t.ui.next}
             </span>
           </Button>
         </>
@@ -87,31 +94,31 @@ const RuleModal: React.FC = () => {
           <TutorialBoard {...current.board} />
         </div>
 
-        <p className="mt-4 min-h-[5.5rem] text-sm leading-relaxed">{current.body}</p>
+        <p className="mt-4 min-h-[5.5rem] text-sm leading-relaxed">{currentText.body}</p>
       </div>
 
       {/* CC BY 3.0 的署名是使用條件不是禮貌，不能拿掉 —— 但它也不必
           擋在首頁。放這裡：想知道圖從哪來的人會打開規則，不想知道的人
           從頭到尾不會被它佔掉首屏的高度。 */}
       <p className="mt-3 text-center text-[11px] leading-relaxed text-ink-soft">
-        圖示來自{' '}
+        {t.credits.prefix}{' '}
         <a className="underline" href="https://game-icons.net" target="_blank" rel="noopener noreferrer">
           game-icons.net
         </a>
-        （CC BY 3.0）與{' '}
+        {t.credits.middle}{' '}
         <a className="underline" href="https://lucide.dev" target="_blank" rel="noopener noreferrer">
           Lucide
         </a>
-        （ISC）
+        {t.credits.suffix}
       </p>
 
       {/* 進度點。也可以直接點某一步跳過去 —— 回頭查某一條規則時不必一路按。 */}
       <div className="mt-2 flex justify-center gap-2">
-        {STEPS.map((s, i) => (
+        {STEPS.map((_, i) => (
           <button
-            key={s.title}
+            key={i}
             type="button"
-            aria-label={`第 ${i + 1} 步：${s.title}`}
+            aria-label={`${i + 1}. ${text[i].title}`}
             aria-current={i === step ? 'step' : undefined}
             onClick={() => setStep(i)}
             // 圓點本身是 8px，當觸控目標太小（WCAG 2.5.8 最低 24px）。

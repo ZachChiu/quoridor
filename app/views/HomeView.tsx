@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import HomeClient from '@/HomeClient';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
-import { LocaleProvider } from '@/i18n/LocaleProvider';
 import { getMessages } from '@/i18n';
 import { localePath, type Locale } from '@/i18n/locales';
 
@@ -17,7 +16,6 @@ const SITE = process.env.SITE_URL || 'https://quoridorgame.com';
 export default function HomeView({ locale }: { locale: Locale }) {
   const t = getMessages(locale);
   return (
-    <LocaleProvider locale={locale}>
       <div className="flex min-h-dvh items-center justify-center px-5 py-[max(1rem,3dvh)] font-[family-name:var(--font-app)]">
         <main className="flex w-full max-w-[420px] flex-col items-center">
           <header className="text-center">
@@ -75,6 +73,5 @@ export default function HomeView({ locale }: { locale: Locale }) {
           }}
         />
       </div>
-    </LocaleProvider>
   );
 }

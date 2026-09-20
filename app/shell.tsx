@@ -8,6 +8,8 @@ import { RuleModalProvider } from "./contexts/RuleModalContext";
 import { TransitionProvider } from "./contexts/TransitionContext";
 import { UserProvider } from "./contexts/UserContext";
 import RuleModal from "./components/RuleModal";
+import { LocaleProvider } from "./i18n/LocaleProvider";
+import { HTML_LANG, type Locale } from "./i18n/locales";
 
 
 
@@ -23,10 +25,19 @@ import RuleModal from "./components/RuleModal";
  * 之前 lang 一律寫死 zh-TW，連 /en /ja /ko 也是 —— 讀屏會用中文發音去念
  * 英文與韓文，而那是不會有人回報的那種壞掉。
  */
-export function Shell({ lang, children }: { lang: string; children: React.ReactNode }) {
+export function Shell({ locale, children }: { locale: Locale; children: React.ReactNode }) {
   return (
-    <html lang={lang}>
+    <html lang={HTML_LANG[locale]}>
       <body className="select-none antialiased">
+        {/*
+          LocaleProvider 必須包在**最外層**。
+
+          原本它在各個 view 裡面，但 RuleModal 是掛在這個 shell 上的
+          （它從任何頁面都能打開），於是它落在 provider 外面、永遠讀到
+          預設語系 —— /ja 的首頁裡混著「遊玩方式」「下一步」就是這麼來的。
+          放這裡之後，所有 client component 不論掛在哪一層都拿得到語系。
+        */}
+        <LocaleProvider locale={locale}>
         <UserProvider>
           <RuleModalProvider>
             <TransitionProvider>
@@ -43,6 +54,7 @@ export function Shell({ lang, children }: { lang: string; children: React.ReactN
             </TransitionProvider>
           </RuleModalProvider>
         </UserProvider>
+        </LocaleProvider>
       </body>
       {process.env.NEXT_PUBLIC_APP_ENV === "production" && (
         <GoogleAnalytics gaId="G-1CTRTGRPFF" />

@@ -53,6 +53,7 @@ const ko: Messages = {
   },
   local: { metaTitle: '로컬 대전', srHeading: '로컬 대전 | 월 고 Wall Go' },
   match: { metaTitle: '온라인 대전', srHeading: '온라인 대전 | 월 고 Wall Go' },
+  ui: { next: '다음', prev: '이전', startGame: '게임 시작', close: '닫기', pickLevel: '난이도 선택' },
   nav: { language: '언어', backHome: '홈으로' },
   credits: { prefix: '아이콘 출처:', middle: '(CC BY 3.0) 및', suffix: '(ISC)' },
 };
