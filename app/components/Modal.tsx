@@ -1,5 +1,5 @@
 'use client'
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { GiCancel } from 'react-icons/gi';
 import type { IconType } from 'react-icons';
 
@@ -30,18 +30,50 @@ interface Props {
   onKeyDown?: (e: KeyboardEvent) => void;
 }
 
+const FOCUSABLE = 'a[href],button:not([disabled]),input,select,textarea,[tabindex]:not([tabindex="-1"])';
+
 const Modal: React.FC<Props> = ({
   isOpen, onClose, title, icon: Icon, kicker, band, children, footer, onKeyDown,
 }) => {
+  const panelRef = useRef<HTMLDivElement>(null);
+  const restoreRef = useRef<HTMLElement | null>(null);
+
   useEffect(() => {
     if (!isOpen) return;
     const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') { onClose(); return; }
+      // 焦點鎖在對話框內。沒有這段的話 Tab 會跑到背後的棋盤上，
+      // 使用者會在一個看不見的畫面裡操作。
+      if (e.key === 'Tab' && panelRef.current) {
+        const items = [...panelRef.current.querySelectorAll<HTMLElement>(FOCUSABLE)]
+          .filter((el) => el.offsetParent !== null);
+        if (!items.length) return;
+        const first = items[0];
+        const last = items[items.length - 1];
+        const active = document.activeElement;
+        if (e.shiftKey && (active === first || !panelRef.current.contains(active))) {
+          e.preventDefault(); last.focus();
+        } else if (!e.shiftKey && active === last) {
+          e.preventDefault(); first.focus();
+        }
+        return;
+      }
       onKeyDown?.(e);
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   });
+
+  // 開啟時把焦點移進來，關閉時還給原本那顆按鈕。
+  useEffect(() => {
+    if (isOpen) {
+      restoreRef.current = document.activeElement as HTMLElement | null;
+      panelRef.current?.focus();
+    } else {
+      restoreRef.current?.focus?.();
+      restoreRef.current = null;
+    }
+  }, [isOpen]);
 
   return (
     <div
@@ -51,10 +83,21 @@ const Modal: React.FC<Props> = ({
       role="dialog"
       aria-modal="true"
       aria-label={title}
+      /*
+        關閉時要真的「不存在」。原本只有 opacity-0 + pointer-events-none ——
+        那兩個都**不會**把內容從無障礙樹移除，所以螢幕閱讀器使用者一進遊戲頁
+        就會聽到七步教學、破牆警告、結算文字全部混在一起（四個 Modal 都常駐 DOM）。
+        inert 會一併擋掉焦點與讀屏；aria-hidden 是給還不支援 inert 的瀏覽器的保險。
+      */
+      {...(isOpen ? {} : { inert: true, 'aria-hidden': true })}
     >
       <div className="fixed inset-0 bg-black/50" onClick={onClose}></div>
 
-      <div className="relative w-full max-w-md overflow-hidden rounded-2xl bg-primary font-[family-name:var(--font-app)]">
+      <div
+        ref={panelRef}
+        tabIndex={-1}
+        className="relative w-full max-w-md overflow-hidden rounded-2xl bg-primary font-[family-name:var(--font-app)] outline-none"
+      >
         {/* 色帶做成滿版（面板 overflow-hidden 負責切圓角），
             留白會讓它退化成一條「有底色的標題」，力道差很多。 */}
         <div
