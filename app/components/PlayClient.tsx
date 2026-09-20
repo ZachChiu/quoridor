@@ -11,13 +11,14 @@ import WaitingRoom from "@/components/WaitingRoom";
 import { useAiOpponent } from "@/hook/useAiOpponent";
 import { playerKeys } from "@/game/territory";
 import ShareLinkModal from "@/components/ShareLinkModal";
+import FeedbackModal from "@/components/FeedbackModal";
 import BreakWallConfirmModal from "@/components/BreakWallConfirmModal";
 import { wallPadVisible } from "@/components/WallDirectionPad";
 import { useCoarsePointer } from "@/hook/useCoarsePointer";
 
 import type { Direction } from "@/types/chessboard";
 
-import { joinRoom, getRoom, subscribeRoom, updateGameState, setRoomWinner } from '@/utils/gameService';
+import { joinRoom, getRoom, subscribeRoom, updateGameState, setRoomWinner, sendFeedback } from '@/utils/gameService';
 import { useUser } from '@/contexts/UserContext';
 import type { Room, RoomPlayer } from '@/types/room';
 
@@ -129,6 +130,7 @@ export default function PlayClient({ roomId }: PlayClientProps) {
   // 冠軍 Modal 的開啟與否完全由「是否已分出勝負」推導，只額外記錄使用者
   // 是否手動關閉過，避免用 effect 去同步一個本來就能算出來的狀態。
   const [championDismissed, setChampionDismissed] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
 
   const playersNum = state.playersNum;
   const { territories, outcome } = useMemo(() => evaluate(state), [state]);
@@ -485,6 +487,31 @@ export default function PlayClient({ roomId }: PlayClientProps) {
             isOpen={isLock && !championDismissed}
             onClose={() => setChampionDismissed(true)}
             onRestart={isOnline ? undefined : restartGame}
+            onFeedback={() => { setChampionDismissed(true); setFeedbackOpen(true); }}
+          />
+
+          {/*
+            回饋自帶這一局的完整棋譜。
+
+            「我遇到一個很怪的狀況」平常要請對方描述半天還常常對不上，
+            附上 WGF 就能在 replay 裡重現他當下的盤面 —— 等於每一則
+            回饋都自帶重現步驟。這是 WGF 的又一次回收。
+          */}
+          <FeedbackModal
+            isOpen={feedbackOpen}
+            onClose={() => setFeedbackOpen(false)}
+            onSubmit={(rating, message, contact) =>
+              sendFeedback({
+                rating, message, contact: contact || undefined,
+                wgf: toWgf(state),
+                mode: isOnline ? 'online' : aiDifficulty ? 'ai' : 'local',
+                playersNum,
+                result: outcome.join('/') || '未結束',
+                ua: typeof navigator !== 'undefined' ? navigator.userAgent : '',
+                viewport: typeof window !== 'undefined'
+                  ? `${window.innerWidth}x${window.innerHeight}@${window.devicePixelRatio}` : '',
+              })
+            }
           />
 
           <BreakWallConfirmModal

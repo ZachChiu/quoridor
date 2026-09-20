@@ -73,6 +73,26 @@
           }
         }
       }
+    },
+
+    /*
+      玩家回饋。**唯寫**：任何人都送得出來，但沒有人讀得到 ——
+      裡面會有選填的聯絡方式，那是個人資料，不能讓別的玩家撈走。
+      （我自己從 Firebase Console 讀，Console 不受規則限制。）
+
+      只允許新增不允許覆寫：$entryId 是 push key，永遠是新的；
+      加上 !data.exists() 之後，即使有人猜到既有的 key 也改不了內容。
+    */
+    "feedback": {
+      ".read": false,
+      "$entryId": {
+        ".write": "auth != null && !data.exists()",
+        ".validate": "newData.hasChildren(['createdAt', 'rating', 'mode']) && newData.child('rating').isNumber() && newData.child('rating').val() >= 1 && newData.child('rating').val() <= 3",
+        "message": { ".validate": "newData.isString() && newData.val().length <= 800" },
+        "contact": { ".validate": "newData.isString() && newData.val().length <= 120" },
+        "wgf":     { ".validate": "newData.isString() && newData.val().length < 4096" },
+        "ua":      { ".validate": "newData.isString() && newData.val().length <= 400" }
+      }
     }
   }
 }

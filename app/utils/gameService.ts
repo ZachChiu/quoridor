@@ -161,3 +161,45 @@ export function subscribeRoom(
     detach?.();
   };
 }
+
+// ─── 意見回饋 ─────────────────────────────────────────────────────────────────
+
+/**
+ * 一則玩家回饋。
+ *
+ * `wgf` 是關鍵：每一則回饋都自帶那一局的完整棋譜，可以直接重播出送出時
+ * 的盤面。「我遇到一個很怪的狀況」不必再請對方描述，重播就看得到。
+ */
+export type Feedback = {
+  rating: 1 | 2 | 3;
+  message: string;
+  /** 選填。想被回覆的人才留。 */
+  contact?: string;
+  wgf: string;
+  mode: 'local' | 'online' | 'ai';
+  playersNum: number;
+  result: string;
+  ua: string;
+  viewport: string;
+};
+
+/**
+ * 送出回饋。
+ *
+ * **走 Firebase 而不是 Sentry**：靜態匯出無法使用 Sentry 的 tunnelRoute，
+ * 裝了廣告阻擋器的使用者送出後會靜默失敗 —— 他以為送出了、實際上消失。
+ * 那對「主動回饋」的傷害比對「錯誤回報」大得多，因為前者是使用者
+ * 特地花時間寫的。Firebase 走自己的網域，不受影響。
+ *
+ * 規則上只能新增、不能讀取（見 database.rules.json）。
+ */
+export async function sendFeedback(data: Feedback): Promise<void> {
+  const { ref, push, set, db } = await rtdb();
+  const uid = (await (await import('./firebase')).getFirebaseAuth()).currentUser?.uid ?? null;
+  await set(push(ref(db, 'feedback')), {
+    ...data,
+    uid,
+    createdAt: Date.now(),
+    locale: typeof navigator !== 'undefined' ? navigator.language : 'unknown',
+  });
+}

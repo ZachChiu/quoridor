@@ -14,6 +14,8 @@ interface ChampionModalProps {
   onClose: () => void;
   /** 省略時不顯示「再來一局」。連線模式沒有本地重開 —— 重開要雙方同意。 */
   onRestart?: () => void;
+  /** 打開回饋表單。剛玩完是唯一還記得剛剛發生什麼的時刻。 */
+  onFeedback?: () => void;
 }
 
 /**
@@ -24,7 +26,7 @@ interface ChampionModalProps {
  * 不必再用文字解釋誰是誰。並列冠軍或平局沒有單一勝方，色帶回到深墨。
  */
 const ChampionModal: React.FC<ChampionModalProps> = ({
-  winners, isOpen, uniqTerritories, onClose, onRestart,
+  winners, isOpen, uniqTerritories, onClose, onRestart, onFeedback,
 }) => {
   const isDraw = !winners?.length || winners[0] === 'draw';
   const winnerKeys = useMemo(
@@ -66,6 +68,13 @@ const ChampionModal: React.FC<ChampionModalProps> = ({
         : { className: 'bg-tile-ink', fg: 'text-tile-cream' }}
       footer={
         <>
+          {/* 回饋放在最左邊、樣式最輕 —— 它不該和「再來一局」搶主要動作，
+              但也不能藏到別的頁面去：離開這個畫面就沒人會回頭找它了。 */}
+          {onFeedback && (
+            <Button color="text-ink-soft hover:bg-tile-ink/[0.06] bg-transparent" handleClickEvent={onFeedback}>
+              給點意見
+            </Button>
+          )}
           <Button color="text-ink-soft hover:bg-tile-ink/[0.06] bg-transparent" handleClickEvent={onClose}>
             看看棋盤
           </Button>
