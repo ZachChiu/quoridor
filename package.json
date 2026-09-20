@@ -8,7 +8,8 @@
     "postbuild": "next-sitemap",
     "start": "next start",
     "lint": "next lint",
-    "font:subset": "node scripts/build-font-subset.mjs"
+    "font:subset": "node scripts/build-font-subset.mjs",
+    "font:check": "node scripts/build-font-subset.mjs --check"
   },
   "dependencies": {
     "@next/third-parties": "^15.3.3",

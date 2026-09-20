@@ -10,13 +10,20 @@
  * 所以清單改由原始碼推導。註解會先剝掉：這個 repo 的註解是中文的，
  * 而註解不會渲染，算進去等於白白多載幾百個字。
  *
- * 文案改動後執行：npm run font:subset
+ *   npm run font:subset          重建子集並更新 public/fonts/
+ *   npm run font:check           只比對字表，不連網（CI 用，落後就 exit 1）
+ *
+ * CI 比對的是**字表**（subset-chars.txt）而不是 woff2 的位元組 ——
+ * Google Fonts 對同一個請求不保證回傳位元組相同的檔案，比位元組會假性失敗。
  */
 import { readFileSync, writeFileSync, readdirSync, statSync } from 'node:fs';
 import { join, extname } from 'node:path';
 
 const SRC_DIR = 'app';
 const OUT = 'public/fonts/noto-sans-tc-var.woff2';
+// 上次產生子集時用的字表。CI 拿它跟原始碼重算的結果比對，
+// 就能抓到「改了文案卻忘記重建字型」—— 那種錯不會報錯，只會安靜地掉字。
+const MANIFEST = 'public/fonts/subset-chars.txt';
 const FAMILY = 'Noto+Sans+TC:wght@400..900';
 // Chrome 的 UA，Google Fonts 才會回 woff2；舊 UA 會拿到 ttf
 const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 '
@@ -72,6 +79,25 @@ for (let c = 0x20; c < 0x7f; c++) chars.add(String.fromCharCode(c));
 const text = [...chars].sort().join('');
 console.log(`  原始碼用到 ${chars.size} 個字元`);
 
+if (process.argv.includes('--check')) {
+  let recorded = '';
+  // 只剝結尾的換行，不能用 trim() —— 排序後的第一個字元正好是半形空白（0x20），
+  // trim() 會把它吃掉，於是每次都誤判成「缺一個字」。
+  try { recorded = readFileSync(MANIFEST, 'utf8').replace(/\n$/, ''); } catch { /* 還沒產生過 */ }
+  if (recorded === text) {
+    console.log('  ✓ 字型子集是最新的');
+    process.exit(0);
+  }
+  const rec = new Set(recorded);
+  const missing = [...chars].filter((c) => !rec.has(c));
+  const stale = [...rec].filter((c) => !chars.has(c));
+  console.error('  ✗ 字型子集已落後於原始碼');
+  if (missing.length) console.error(`    缺 ${missing.length} 字（會掉到系統備援字體）：${missing.join('')}`);
+  if (stale.length) console.error(`    多 ${stale.length} 字（白白增加體積）：${stale.join('')}`);
+  console.error('    執行 npm run font:subset 重建後一併提交。');
+  process.exit(1);
+}
+
 const cssUrl = `https://fonts.googleapis.com/css2?family=${FAMILY}&text=${encodeURIComponent(text)}&display=swap`;
 const css = await (await fetch(cssUrl, { headers: { 'User-Agent': UA } })).text();
 // Google Fonts 的子集 URL 是 /l/font?kit=… 形式，不以 .woff2 結尾，
@@ -83,4 +109,6 @@ if (!m) {
 }
 const buf = Buffer.from(await (await fetch(m[1])).arrayBuffer());
 writeFileSync(OUT, buf);
+writeFileSync(MANIFEST, text + '\n');
 console.log(`  ✓ ${OUT}  ${(buf.length / 1024).toFixed(1)} KB`);
+console.log(`  ✓ ${MANIFEST}`);

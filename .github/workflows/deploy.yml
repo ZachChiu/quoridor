@@ -22,6 +22,12 @@ jobs:
       - name: 安裝依賴
         run: npm ci
 
+      # 字型子集是照原始碼實際用字切的。文案改了卻忘記重建，
+      # 新字會安靜地掉到系統備援字體（不會報錯，只是長得不一樣），
+      # 所以在建置前先擋下來。
+      - name: 檢查字型子集
+        run: npm run font:check
+
       - name: 構建專案
         run: npm run build
         env:
