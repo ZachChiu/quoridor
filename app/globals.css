@@ -284,3 +284,20 @@ body {
     transition: none !important;
   }
 }
+
+/* 手指裝置：把牆的觸控熱區加厚，視覺仍維持 9px。
+   實測原本是 29x9 / 9x29 —— WCAG 2.5.8 的最低觸控目標是 24px，
+   差得很遠。用 ::after 撐開熱區而不是改按鈕本身的尺寸，
+   牆的粗細與位置就完全不受影響。
+
+   四個方向在 45px 的格子裡仍會在角落重疊，所以熱區只是「讓它點得到」，
+   真正解決誤觸的是 WallDirectionPad 的先預覽再確認。 */
+@media (pointer: coarse) {
+  .wall-hit-h::after,
+  .wall-hit-v::after {
+    content: '';
+    position: absolute;
+  }
+  .wall-hit-h::after { inset: -8px -10px; }
+  .wall-hit-v::after { inset: -10px -8px; }
+}

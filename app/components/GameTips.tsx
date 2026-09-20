@@ -10,6 +10,8 @@ interface Props {
   breakWallCountObj: Record<Exclude<Player, null>, number>;
   /** AI 正在想。困難難度每手要一秒多，沒有提示會讓人以為當掉了。 */
   aiThinking?: boolean;
+  /** 手機的築牆控制盤正在畫面底部，膠囊要往上讓位 */
+  shiftUp?: boolean;
 }
 
 
@@ -21,7 +23,7 @@ interface Props {
  * 比原本「深墨底 + 一顆彩色小圓點」直接得多，而且每回合都會換色，
  * 畫面不會從頭到尾都是同一塊黑。遊戲結束沒有當前玩家，才回到深墨。
  */
-export default React.memo(function GameTips({ isPlacingChess, currentPlayer, winingStatus, breakWallCountObj, aiThinking }: Props) {
+export default React.memo(function GameTips({ isPlacingChess, currentPlayer, winingStatus, breakWallCountObj, aiThinking, shiftUp }: Props) {
   const { gameState } = useGame();
   const over = winingStatus.length > 0;
   const p = currentPlayer as PlayerKey | null;
@@ -43,9 +45,10 @@ export default React.memo(function GameTips({ isPlacingChess, currentPlayer, win
 
   return (
     <div
-      className={`fixed bottom-5 right-5 flex flex-col gap-1 rounded-2xl px-4 py-3 text-sm font-black lg:bottom-[5dvh] ${
-        over || !p ? 'bg-tile-ink text-tile-cream' : PLAYER_ON[p]
-      }`}
+      className={`fixed right-5 flex flex-col gap-1 rounded-2xl px-4 py-3 text-sm font-black ${
+        // 手機築牆時，底部會升起方向控制盤。膠囊得讓位，不然會被壓在後面。
+        shiftUp ? 'bottom-[calc(11.5rem+env(safe-area-inset-bottom))]' : 'bottom-5 lg:bottom-[5dvh]'
+      } ${over || !p ? 'bg-tile-ink text-tile-cream' : PLAYER_ON[p]}`}
       style={over || !p ? undefined : { backgroundColor: playerVar(p) }}
     >
       <span className="text-md">{tipText}</span>

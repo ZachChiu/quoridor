@@ -15,6 +15,8 @@ const PLAYER_VAR: Record<string, string> = {
 };
 import React, { useCallback, useMemo, useState } from "react";
 import SectionShadow from "./SectionShadow";
+import WallDirectionPad, { wallPadVisible } from "./WallDirectionPad";
+import { useCoarsePointer } from "@/hook/useCoarsePointer";
 import { boardSignature, diffBoard, territoryWave, newWall, pathBetween } from "./boardMotion";
 
 type Props = {
@@ -59,6 +61,40 @@ export default React.memo(function Chessboard({
   // const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 
   const breakWallCount = breakWallCountObj?.[currentPlayer as Exclude<Player, null>];
+
+  /*
+    手指裝置上，築牆改成「先選方向、再確認」。
+
+    盤面上的預覽只有 9px 厚，滑鼠點得到、手指點不到（實測 29x9 / 9x29，
+    WCAG 2.5.8 的最低觸控目標是 24px）。但四個方向各要 44px 而格子只有 45px，
+    放大熱區只會讓四邊互相蓋住 —— 所以改成大按鈕選方向、點錯不會直接送出。
+
+    滑鼠維持原本的直接點擊，不多一步。
+  */
+  const isCoarse = useCoarsePointer();
+  const [pendingWall, setPendingWall] = useState<Direction | null>(null);
+
+  // 換一格、或換人下之後，還沒確認的方向就不再成立。
+  const wallCtx = selectedChess ? `${selectedChess.row},${selectedChess.col},${currentPlayer}` : '';
+  const [lastWallCtx, setLastWallCtx] = useState(wallCtx);
+  if (lastWallCtx !== wallCtx) {
+    setLastWallCtx(wallCtx);
+    setPendingWall(null);
+  }
+
+  /** 四個方向各自送出時的座標換算（牆存在「某一格的下緣／右緣」）。 */
+  const commitWall = useCallback((row: number, col: number, dir: Direction) => {
+    if (dir === 'top') selectWall(row - 1, col, 'top');
+    else if (dir === 'bottom') selectWall(row, col, 'bottom');
+    else if (dir === 'left') selectWall(row, col - 1, 'left');
+    else selectWall(row, col, 'right');
+  }, [selectWall]);
+
+  /** 盤面上按下某一邊：手指先預覽，滑鼠直接送出。 */
+  const onWallEdge = useCallback((row: number, col: number, dir: Direction) => {
+    if (isCoarse) setPendingWall(dir);
+    else commitWall(row, col, dir);
+  }, [isCoarse, commitWall]);
 
   const onClickSelectChess = (selectedPlayer: Player, row: number, col: number, isAvailableMove: boolean) => {
     if (!selectedPlayer && isPlacingChess) {
@@ -537,36 +573,36 @@ export default React.memo(function Chessboard({
                         <button
                           type="button"
                           aria-label="在上方築牆"
-                          className="absolute inset-x-[18%] top-[calc(var(--board-gap)*-0.5)] z-20 h-[9px] -translate-y-1/2 rounded-full opacity-70 transition hover:inset-x-[-3px] hover:opacity-100"
+                          className={`wall-hit-h absolute inset-x-[18%] top-[calc(var(--board-gap)*-0.5)] z-20 h-[9px] -translate-y-1/2 rounded-full transition hover:inset-x-[-3px] hover:opacity-100 ${pendingWall === 'top' ? 'inset-x-[-3px] opacity-100' : 'opacity-70'}`}
                           style={{ backgroundColor: PLAYER_VAR[currentPlayer] }}
-                          onClick={(e) => { e.stopPropagation(); selectWall(rowIndex - 1, colIndex, 'top'); }}
+                          onClick={(e) => { e.stopPropagation(); onWallEdge(rowIndex, colIndex, 'top'); }}
                         />
                       )}
                       {checkWallBuildable(rowIndex, colIndex, 'bottom') && (
                         <button
                           type="button"
                           aria-label="在下方築牆"
-                          className="absolute inset-x-[18%] bottom-[calc(var(--board-gap)*-0.5)] z-20 h-[9px] translate-y-1/2 rounded-full opacity-70 transition hover:inset-x-[-3px] hover:opacity-100"
+                          className={`wall-hit-h absolute inset-x-[18%] bottom-[calc(var(--board-gap)*-0.5)] z-20 h-[9px] translate-y-1/2 rounded-full transition hover:inset-x-[-3px] hover:opacity-100 ${pendingWall === 'bottom' ? 'inset-x-[-3px] opacity-100' : 'opacity-70'}`}
                           style={{ backgroundColor: PLAYER_VAR[currentPlayer] }}
-                          onClick={(e) => { e.stopPropagation(); selectWall(rowIndex, colIndex, 'bottom'); }}
+                          onClick={(e) => { e.stopPropagation(); onWallEdge(rowIndex, colIndex, 'bottom'); }}
                         />
                       )}
                       {checkWallBuildable(rowIndex, colIndex, 'left') && (
                         <button
                           type="button"
                           aria-label="在左方築牆"
-                          className="absolute inset-y-[18%] left-[calc(var(--board-gap)*-0.5)] z-20 w-[9px] -translate-x-1/2 rounded-full opacity-70 transition hover:inset-y-[-3px] hover:opacity-100"
+                          className={`wall-hit-v absolute inset-y-[18%] left-[calc(var(--board-gap)*-0.5)] z-20 w-[9px] -translate-x-1/2 rounded-full transition hover:inset-y-[-3px] hover:opacity-100 ${pendingWall === 'left' ? 'inset-y-[-3px] opacity-100' : 'opacity-70'}`}
                           style={{ backgroundColor: PLAYER_VAR[currentPlayer] }}
-                          onClick={(e) => { e.stopPropagation(); selectWall(rowIndex, colIndex - 1, 'left'); }}
+                          onClick={(e) => { e.stopPropagation(); onWallEdge(rowIndex, colIndex, 'left'); }}
                         />
                       )}
                       {checkWallBuildable(rowIndex, colIndex, 'right') && (
                         <button
                           type="button"
                           aria-label="在右方築牆"
-                          className="absolute inset-y-[18%] right-[calc(var(--board-gap)*-0.5)] z-20 w-[9px] translate-x-1/2 rounded-full opacity-70 transition hover:inset-y-[-3px] hover:opacity-100"
+                          className={`wall-hit-v absolute inset-y-[18%] right-[calc(var(--board-gap)*-0.5)] z-20 w-[9px] translate-x-1/2 rounded-full transition hover:inset-y-[-3px] hover:opacity-100 ${pendingWall === 'right' ? 'inset-y-[-3px] opacity-100' : 'opacity-70'}`}
                           style={{ backgroundColor: PLAYER_VAR[currentPlayer] }}
-                          onClick={(e) => { e.stopPropagation(); selectWall(rowIndex, colIndex, 'right'); }}
+                          onClick={(e) => { e.stopPropagation(); onWallEdge(rowIndex, colIndex, 'right'); }}
                         />
                       )}
                     </>
@@ -578,6 +614,24 @@ export default React.memo(function Chessboard({
         </div>
         </div>
       </SectionShadow>
+
+      {/* 手機的築牆控制盤。固定在畫面底部（拇指區），不佔棋盤的位置。 */}
+      {wallPadVisible({ coarse: isCoarse, locked: isLock, placing: isPlacingChess, hasSelection: !!selectedChess }) && selectedChess && currentPlayer && (
+        <WallDirectionPad
+          legal={{
+            top: checkWallBuildable(selectedChess.row, selectedChess.col, 'top'),
+            bottom: checkWallBuildable(selectedChess.row, selectedChess.col, 'bottom'),
+            left: checkWallBuildable(selectedChess.row, selectedChess.col, 'left'),
+            right: checkWallBuildable(selectedChess.row, selectedChess.col, 'right'),
+          }}
+          pending={pendingWall}
+          onPick={setPendingWall}
+          onConfirm={() => {
+            if (pendingWall) commitWall(selectedChess.row, selectedChess.col, pendingWall);
+          }}
+          color={PLAYER_VAR[currentPlayer]}
+        />
+      )}
     </div>
   );
 });

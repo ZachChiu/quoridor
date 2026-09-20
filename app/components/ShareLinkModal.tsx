@@ -1,9 +1,11 @@
 "use client"
 import React, { useState } from 'react';
 import { GiCheckMark, GiShare } from "react-icons/gi";
-import { LuCopy } from "react-icons/lu";
+import { LuCopy, LuShare2 } from "react-icons/lu";
 import Modal from './Modal';
 import { PLAYER_NAME, playerVar, type PlayerKey } from '@/config/players';
+import { useWebShare, share } from '@/hook/useWebShare';
+import { trackButtonClick } from '@/utils/analytics';
 
 interface Props {
   isOpen: boolean;
@@ -26,9 +28,34 @@ const SEATS: PlayerKey[] = ['A', 'B', 'C'];
  */
 const ShareLinkModal: React.FC<Props> = ({ isOpen, shareUrl, joinedCount, totalCount, onClose }) => {
   const [copied, setCopied] = useState(false);
+  const canShare = useWebShare();
+
+  /*
+    手機上的主要動作是「分享」而不是「複製」—— 複製完還得自己切到
+    訊息 App 再貼上，而系統分享面板可以直接選對話送出去。
+    桌機沒有 navigator.share，就只留複製。
+  */
+  const handleShare = async () => {
+    trackButtonClick('share_room_link_native');
+    // 網址只放 url，不要在 text 裡再寫一次 —— 有些平台會把兩者串起來，
+    // 於是同一個連結出現兩次。
+    await share({
+      title: '牆壁圍棋 Wall Go',
+      text: '我開了一間房，點連結直接加入對局！',
+      url: shareUrl,
+    });
+  };
 
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(shareUrl);
+    trackButtonClick('share_room_link_copy');
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+    } catch {
+      // 非安全內容或使用者拒絕權限時 clipboard 會被擋。
+      // 連結本身是 select-all 的，使用者仍然可以自己長按複製，
+      // 所以這裡不跳錯誤，只是不顯示「已複製」。
+      return;
+    }
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -44,7 +71,19 @@ const ShareLinkModal: React.FC<Props> = ({ isOpen, shareUrl, joinedCount, totalC
     >
       <p className="text-sm leading-relaxed">把連結傳給朋友，他們點開就會直接坐進這間房。</p>
 
-      <div className="mt-4 flex items-center gap-2 rounded-xl bg-primary-50 p-2 pl-4">
+      {/* 有系統分享面板就讓它當主要動作，整排寬、拇指按得到。 */}
+      {canShare && (
+        <button
+          type="button"
+          onClick={handleShare}
+          className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-tile-blue px-4 py-3 text-base font-black text-tile-cream transition active:scale-[0.98]"
+        >
+          <LuShare2 className="text-lg" aria-hidden="true" />
+          分享連結
+        </button>
+      )}
+
+      <div className={`${canShare ? 'mt-3' : 'mt-4'} flex items-center gap-2 rounded-xl bg-primary-50 p-2 pl-4`}>
         <span className="flex-1 select-all truncate font-mono text-sm">{shareUrl}</span>
         <button
           type="button"

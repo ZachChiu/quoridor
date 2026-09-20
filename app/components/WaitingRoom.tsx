@@ -49,7 +49,7 @@ const WaitingRoom: React.FC<Props> = ({ joinedCount, totalCount, onShare }) => (
       onClick={onShare}
       className="flex items-center gap-2 rounded-2xl bg-tile-amber px-6 py-4 text-lg font-black text-tile-ink transition hover:brightness-95 active:scale-[0.98]"
     >
-      <GiShare />分享邀請連結
+      <GiShare />邀請朋友加入
     </button>
   </div>
 );

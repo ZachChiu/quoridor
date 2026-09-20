@@ -12,6 +12,8 @@ import { useAiOpponent } from "@/hook/useAiOpponent";
 import { playerKeys } from "@/game/territory";
 import ShareLinkModal from "@/components/ShareLinkModal";
 import BreakWallConfirmModal from "@/components/BreakWallConfirmModal";
+import { wallPadVisible } from "@/components/WallDirectionPad";
+import { useCoarsePointer } from "@/hook/useCoarsePointer";
 
 import type { Direction } from "@/types/chessboard";
 
@@ -132,6 +134,13 @@ export default function PlayClient({ roomId }: PlayClientProps) {
   const { territories, outcome } = useMemo(() => evaluate(state), [state]);
   const isLock = outcome.length > 0;
   const isPlacing = isPlacingPhase(state);
+
+  // 手機築牆時底部會升起方向控制盤，底部的狀態膠囊要讓位。
+  // 條件與 Chessboard 共用同一個判斷，不各寫一份。
+  const isCoarse = useCoarsePointer();
+  const wallPadOpen = wallPadVisible({
+    coarse: isCoarse, locked: isLock, placing: isPlacing, hasSelection: !!state.selected,
+  });
   const canBreakWall = engineHasBreakWall(state);
 
   // 避免自己寫入 Firebase 的內容又觸發自己重播
@@ -436,6 +445,7 @@ export default function PlayClient({ roomId }: PlayClientProps) {
             winingStatus={outcome}
             breakWallCountObj={state.breakWallCount}
             aiThinking={isAiTurn}
+            shiftUp={wallPadOpen}
           />
 
           <div className="chessboard-container size-[90dvw] md:size-[90dvh] md:portrait:size-[90dvw] md:landscape:size-[90dvh]">
