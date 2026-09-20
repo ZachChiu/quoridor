@@ -1,8 +1,8 @@
 'use client'
 import React, { useMemo } from 'react';
+import { GiCancel } from "react-icons/gi";
 import SectionShadow from './SectionShadow';
 import { Player } from '@/types/chessboard';
-import { MdClose } from 'react-icons/md';
 import Button from './Button';
 import IconButton from './IconButton';
 
@@ -47,14 +47,14 @@ const ChampionModal: React.FC<ChampionModalProps> = ({ winners, isOpen, uniqTerr
     <div className={`fixed z-50 flex w-full max-w-md items-center justify-center p-4 ${isOpen ? 'opacity-100' : 'pointer-events-none opacity-0'} transition-opacity duration-300`}>
       <div className="fixed inset-0 bg-black/50" onClick={onClose}></div>
       <SectionShadow>
-        <div className={`relative w-full rounded-xl border-2 border-gray-900 bg-primary p-6 font-[family-name:var(--font-geist-sans)]`}>
+        <div className={`relative w-full rounded-xl bg-primary p-6 font-[family-name:var(--font-app)]`}>
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-2xl font-bold">{title}</h2>
             <div className='group cursor-pointer'>
               <IconButton
                 handleClickEvent={onClose}
               >
-                <MdClose />
+                <GiCancel />
               </IconButton>
             </div>
           </div>
@@ -65,7 +65,7 @@ const ChampionModal: React.FC<ChampionModalProps> = ({ winners, isOpen, uniqTerr
 
           {winners[0] !== 'draw' &&
             <div className="mb-6 flex justify-center gap-4">{
-              winners.map(w => <div className={`bg-player-${w} animate-pulse-shine size-14 rounded-full`} key={w}></div>)
+              winners.map(w => <div className={` animate-pulse-shine size-14 rounded-full`} style={{ backgroundColor: `var(--player-${w})` }} key={w}></div>)
             }
           </div>
 
@@ -73,13 +73,13 @@ const ChampionModal: React.FC<ChampionModalProps> = ({ winners, isOpen, uniqTerr
 
           <div className="flex justify-center gap-4">
             <Button
-              color='bg-primary-500'
+              color='bg-tile-amber text-tile-ink'
               handleClickEvent={onRestart}
             >
               重新開始
             </Button>
             <Button
-              color='bg-primary-400'
+              color='text-ink-soft hover:bg-tile-ink/[0.06] bg-transparent'
               handleClickEvent={onClose}
             >
               關閉

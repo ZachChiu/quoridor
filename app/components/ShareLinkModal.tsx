@@ -1,8 +1,9 @@
 "use client"
 import React, { useState } from 'react';
+import { GiCancel, GiCheckMark, GiShare } from "react-icons/gi";
+import { LuCopy } from "react-icons/lu";
 import SectionShadow from './SectionShadow';
 import IconButton from './IconButton';
-import { MdClose, MdShare, MdContentCopy, MdCheck } from "react-icons/md";
 
 interface Props {
   isOpen: boolean;
@@ -26,38 +27,36 @@ const ShareLinkModal: React.FC<Props> = ({ isOpen, shareUrl, joinedCount, totalC
       <div className="fixed inset-0 bg-black/50"></div>
       <div className="min-w-80 max-w-md">
         <SectionShadow>
-          <div className="relative w-full rounded-xl border-2 border-gray-900 bg-primary p-6 font-[family-name:var(--font-geist-sans)]">
+          <div className="relative w-full rounded-xl bg-primary p-6 font-[family-name:var(--font-app)]">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="flex items-center gap-2 text-2xl font-bold">
-                <MdShare className="text-2xl" />等待玩家加入
+                <GiShare className="text-2xl" />等待玩家加入
               </h2>
-              <div className="group cursor-pointer" onClick={onClose}>
-                <IconButton>
-                  <MdClose />
-                </IconButton>
-              </div>
+              <IconButton handleClickEvent={onClose} label="關閉">
+                <GiCancel />
+              </IconButton>
             </div>
 
             <div className="mb-6 space-y-4">
               <p className="text-lg leading-relaxed">
                 將連結分享給朋友，邀請他們加入對戰
               </p>
-              <div className="flex items-center gap-2 rounded-lg border-2 border-gray-900 bg-white p-3">
+              <div className="flex items-center gap-2 rounded-lg bg-white p-3">
                 <span className="flex-1 select-all truncate font-mono text-sm">{shareUrl}</span>
                 <button
                   onClick={handleCopy}
                   className="shrink-0 rounded p-1 transition-colors hover:bg-gray-100"
                 >
                   {copied
-                    ? <MdCheck className="text-lg text-green-600" />
-                    : <MdContentCopy className="text-lg" />
+                    ? <GiCheckMark className="text-lg text-accent-green-700" />
+                    : <LuCopy className="text-lg" />
                   }
                 </button>
               </div>
             </div>
 
             <div className="flex items-center gap-2 text-sm text-gray-600">
-              <div className="size-2 animate-pulse rounded-full bg-yellow-400"></div>
+              <div className="size-2 animate-pulse rounded-full bg-player-C"></div>
               <span>{joinedCount} / {totalCount} 玩家已加入，等待中…</span>
             </div>
           </div>
