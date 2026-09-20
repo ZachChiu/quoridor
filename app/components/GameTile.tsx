@@ -26,6 +26,16 @@ const TONE: Record<TileTone, string> = {
  * 圖示的填色。每一格都挑一個與底色色相離得遠的 —— 圖示本身也要撞色，
  * 而不只是被動地用底色的對比色。文字仍照 TONE 走，不跟著圖示變。
  */
+/** 磁磚底色的實際色值。轉場要用它把畫面染成「你按的那一塊」的顏色。 */
+export const TONE_COLOR: Record<TileTone, string> = {
+  amber: 'rgb(var(--tile-amber))',
+  orange: 'rgb(var(--tile-orange))',
+  red: 'rgb(var(--tile-red))',
+  blue: 'rgb(var(--tile-blue))',
+  purple: 'rgb(var(--tile-purple))',
+  forest: 'rgb(var(--tile-forest))',
+};
+
 const ICON_FILL: Record<TileTone, string> = {
   amber: 'rgb(var(--tile-blue))',
   orange: 'rgb(var(--tile-blue))',
@@ -41,7 +51,8 @@ interface Props {
   kicker?: string;
   label: string;
   tone: TileTone;
-  onClick: () => void;
+  /** 收到這塊磁磚在視窗中的位置與底色 —— 轉場用它當起點。 */
+  onClick: (origin: { rect: DOMRect; color: string }) => void;
   disabled?: boolean;
   /** 橫跨整列的寬磁磚（不強制正方形）。 */
   wide?: boolean;
@@ -59,7 +70,8 @@ export default function GameTile({
   return (
     <button
       type="button"
-      onClick={disabled ? undefined : onClick}
+      onClick={disabled ? undefined : (e) =>
+        onClick({ rect: e.currentTarget.getBoundingClientRect(), color: TONE_COLOR[tone] })}
       onPointerEnter={onPrefetch}
       onFocus={onPrefetch}
       disabled={disabled}

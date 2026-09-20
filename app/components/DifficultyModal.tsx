@@ -7,7 +7,8 @@ import type { Difficulty } from '@/game/ai';
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  onPick: (difficulty: Difficulty) => void;
+  /** 第二個參數是按下的位置 —— 單人模式的轉場要從那裡擴散出去。 */
+  onPick: (difficulty: Difficulty, at: { x: number; y: number }) => void;
 }
 
 /**
@@ -46,7 +47,10 @@ const DifficultyModal: React.FC<Props> = ({ isOpen, onClose, onPick }) => (
         <button
           key={key}
           type="button"
-          onClick={() => onPick(key)}
+          onClick={(e) => {
+            const r = e.currentTarget.getBoundingClientRect();
+            onPick(key, { x: r.left + r.width / 2, y: r.top + r.height / 2 });
+          }}
           className="rounded-xl bg-primary-50 px-5 py-4 text-lg font-black transition hover:brightness-95 active:scale-[0.99]"
         >
           {label}

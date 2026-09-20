@@ -6,9 +6,13 @@ import { trackButtonClick } from "@/utils/analytics";
 // Game Icons（game-icons.net，CC BY 3.0）—— react-icons 已內建，不需另外安裝。
 // 選它而不是線條圖示：參考稿的圖示是實心剪影壓在色塊上，
 // Lucide 的細線在大尺寸的彩色磁磚上會顯得單薄。
-import GameTile from "./components/GameTile";
+import GameTile, { TONE_COLOR } from "./components/GameTile";
 import DifficultyModal from "./components/DifficultyModal";
 import type { Difficulty } from "@/game/ai";
+
+type Origin = { rect: DOMRect; color: string };
+/** DOMRect 不能直接進 state（它不是純資料），取出需要的四個數字。 */
+const toRect = (r: DOMRect) => ({ x: r.left, y: r.top, w: r.width, h: r.height });
 import { useGame } from "@/contexts/GameContext";
 import { useRuleModal } from "@/contexts/RuleModalContext";
 import { useUser } from "@/contexts/UserContext";
@@ -33,16 +37,28 @@ export default function HomeClient() {
   const [soloOpen, setSoloOpen] = useState(false);
   const { ruleModalState, setRuleModalState } = useRuleModal();
 
-  const startLocal = (playersNum: number) => {
+  /*
+    三種模式各一種轉場 —— 轉場本身就是「你進了哪個模式」的訊號：
+      本機  你按的那塊磁磚放大鋪滿畫面（顏色跟著你的選擇走）
+      單人  從你按下的難度按鈕擴散出一個圓
+      連線  色帶掃入（預設）
+  */
+  const startLocal = (playersNum: number, origin: Origin) => {
     setGameState({ ...gameState, playersNum, aiDifficulty: null });
-    navigate('/local', { title: '遊戲開始' });
+    navigate('/local', {
+      title: '遊戲開始',
+      wipe: { kind: 'grow', rect: toRect(origin.rect), color: origin.color },
+    });
     trackButtonClick(`start_local_game_${playersNum}p`);
   };
 
-  const startSolo = (aiDifficulty: Difficulty) => {
+  const startSolo = (aiDifficulty: Difficulty, at: { x: number; y: number }) => {
     setSoloOpen(false);
     setGameState({ ...gameState, playersNum: 2, aiDifficulty });
-    navigate('/local', { title: '遊戲開始' });
+    navigate('/local', {
+      title: '遊戲開始',
+      wipe: { kind: 'circle', x: at.x, y: at.y, color: TONE_COLOR.orange },
+    });
     trackButtonClick(`start_solo_game_${aiDifficulty}`);
   };
 
@@ -91,8 +107,8 @@ export default function HomeClient() {
       小字與圖示承擔，色彩專心製造衝突感。
     */
     <div className="relative z-20 grid w-full grid-cols-2 gap-3 md:gap-4">
-      <GameTile icon={GiTabletopPlayers} tone="amber"  kicker="本機" label="雙人" onClick={() => startLocal(2)} />
-      <GameTile icon={GiThreeFriends}    tone="purple" kicker="本機" label="三人" onClick={() => startLocal(3)} />
+      <GameTile icon={GiTabletopPlayers} tone="amber"  kicker="本機" label="雙人" onClick={(o) => startLocal(2, o)} />
+      <GameTile icon={GiThreeFriends}    tone="purple" kicker="本機" label="三人" onClick={(o) => startLocal(3, o)} />
       <GameTile icon={GiWireframeGlobe}  tone="blue"   kicker="連線" label="雙人" onClick={() => startConnect(2)} onPrefetch={prewarm} disabled={online} />
       <GameTile icon={GiMeshNetwork}     tone="red"    kicker="連線" label="三人" onClick={() => startConnect(3)} onPrefetch={prewarm} disabled={online} />
       <GameTile icon={GiBrain} tone="orange" label="單人對戰" wide onClick={() => setSoloOpen(true)} />

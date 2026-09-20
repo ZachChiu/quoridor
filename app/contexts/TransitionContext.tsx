@@ -2,14 +2,19 @@
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { usePathname, useRouter } from 'next/navigation';
+import type { Wipe } from '@/components/WipeOverlay';
 
 // 動態載入，anime.js 才不會進首屏。實測只在元件內部 await import 不夠 ——
 // Turbopack 仍會把約 11.7 KB gzip 提到首屏。
 const WipeOverlay = dynamic(() => import('@/components/WipeOverlay'), { ssr: false });
 
+export type { Wipe } from '@/components/WipeOverlay';
+
 interface NavOptions {
   /** 蓋滿時顯示的字，例如進入對局時的「遊戲開始」。省略則只掃場不停留。 */
   title?: string;
+  /** 轉場形式。省略時用色帶。 */
+  wipe?: Wipe;
 }
 
 interface TransitionContextValue {
@@ -24,8 +29,8 @@ type State =
   | { phase: 'idle' }
   // pushed 放在 state 而不是 ref：ref 沒辦法在 render 期間讀（react-hooks/refs），
   // 而「路由生效就掃走」用 render 期間比對比用 effect 乾淨。
-  | { phase: 'cover'; pushed: boolean; title?: string; target: string }
-  | { phase: 'uncover'; title?: string; target: string };
+  | { phase: 'cover'; pushed: boolean; title?: string; target: string; wipe: Wipe }
+  | { phase: 'uncover'; title?: string; target: string; wipe: Wipe };
 
 /** 取出 href 的路徑部分 —— /match#roomId=… 的 pathname 是 /match。 */
 const pathOf = (href: string) => href.split('#')[0].split('?')[0].replace(/\/$/, '') || '/';
@@ -55,7 +60,10 @@ export const TransitionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         router.push(href);
         return;
       }
-      setState({ phase: 'cover', pushed: false, title: options?.title, target: href });
+      setState({
+        phase: 'cover', pushed: false, target: href,
+        title: options?.title, wipe: options?.wipe ?? { kind: 'bars' },
+      });
     },
     [router]
   );
@@ -72,7 +80,7 @@ export const TransitionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   // 新頁面的 pathname 生效 → 掃走。在 render 期間比對而不是用 effect：
   // 後者會多一次 render，中間那一幀是「已經到新頁面但色帶還沒開始掃」。
   if (state.phase === 'cover' && state.pushed && pathOf(pathname) === pathOf(state.target)) {
-    setState({ phase: 'uncover', title: state.title, target: state.target });
+    setState({ phase: 'uncover', title: state.title, target: state.target, wipe: state.wipe });
   }
 
   // 保險：路由若因任何原因沒生效，2 秒後仍要把畫面還給使用者 ——
@@ -80,7 +88,9 @@ export const TransitionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   useEffect(() => {
     if (state.phase !== 'cover') return;
     const timer = setTimeout(() => {
-      setState((s) => (s.phase === 'cover' ? { phase: 'uncover', title: s.title, target: s.target } : s));
+      setState((s) =>
+        s.phase === 'cover' ? { phase: 'uncover', title: s.title, target: s.target, wipe: s.wipe } : s
+      );
     }, 2000);
     return () => clearTimeout(timer);
   }, [state.phase]);
@@ -93,6 +103,7 @@ export const TransitionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       {state.phase !== 'idle' && (
         <WipeOverlay
           phase={state.phase}
+          wipe={state.wipe}
           title={state.title}
           onDone={state.phase === 'cover' ? handleCovered : handleUncovered}
         />
