@@ -22,6 +22,19 @@ const TONE: Record<TileTone, string> = {
   forest: 'bg-tile-forest text-tile-cream',
 };
 
+/**
+ * 圖示的填色。每一格都挑一個與底色色相離得遠的 —— 圖示本身也要撞色，
+ * 而不只是被動地用底色的對比色。文字仍照 TONE 走，不跟著圖示變。
+ */
+const ICON_FILL: Record<TileTone, string> = {
+  amber: 'rgb(var(--tile-blue))',
+  orange: 'rgb(var(--tile-blue))',
+  red: 'rgb(var(--tile-cream))',
+  blue: 'rgb(var(--tile-amber))',
+  purple: 'rgb(var(--tile-amber))',
+  forest: 'rgb(var(--tile-amber))',
+};
+
 interface Props {
   icon: IconType;
   /** 上方的小字，例如「本機」。省略時只顯示主標。 */
@@ -50,12 +63,13 @@ export default function GameTile({
       onPointerEnter={onPrefetch}
       onFocus={onPrefetch}
       disabled={disabled}
+      style={{ '--tile-icon-fill': ICON_FILL[tone] } as React.CSSProperties}
       className={`${TONE[tone]} ${wide ? 'col-span-2 flex-row gap-3 py-4' : 'aspect-square flex-col gap-2'}
         flex items-center justify-center rounded-2xl p-3
         transition enabled:hover:brightness-95 enabled:active:scale-[0.97]
         disabled:cursor-not-allowed disabled:opacity-45`}
     >
-      <Icon className={wide ? 'shrink-0 text-4xl' : 'text-7xl md:text-8xl'} aria-hidden="true" />
+      <Icon className={`tile-icon ${wide ? 'shrink-0 text-4xl' : 'text-7xl md:text-8xl'}`} aria-hidden="true" />
       <span className={wide ? 'text-lg font-black' : 'flex flex-col items-center'}>
         {!wide && kicker && (
           <span className="text-xs font-bold opacity-75 md:text-sm">{kicker}</span>
