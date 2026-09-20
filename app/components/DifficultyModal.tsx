@@ -19,17 +19,24 @@ interface Props {
  * 色帶用陶橘 —— 它是唯一還沒被指派意義的磁磚色（琥珀＝本機、
  * 靛藍與磚紅＝連線、森綠＝規則、紫＝三人）。
  */
+/*
+  標籤用「級」而不是簡單／普通／困難：這是圍棋衍生的遊戲，數字級距比
+  形容詞中性，也不必替每一級想一個聽起來不尷尬的名字。
+
+  描述改為陳述搜尋行為而非擬人化的口氣（原本是「會犯明顯的錯」這類），
+  一來比較準確，二來玩家看得出級距之間差在哪。
+*/
 const LEVELS: { key: Difficulty; label: string; hint: string }[] = [
-  { key: 'easy', label: '簡單', hint: '只看眼前一步，會犯明顯的錯' },
-  { key: 'normal', label: '普通', hint: '會預判你的下一手' },
-  { key: 'hard', label: '困難', hint: '每手思考一秒，會為了圍地放棄眼前的便宜' },
+  { key: 'easy', label: '一級', hint: '僅評估當前一手' },
+  { key: 'normal', label: '二級', hint: '推算對手的回應後再決定' },
+  { key: 'hard', label: '三級', hint: '每手推算約一秒，搜尋較深的變化' },
 ];
 
 const DifficultyModal: React.FC<Props> = ({ isOpen, onClose, onPick }) => (
   <Modal
     isOpen={isOpen}
     onClose={onClose}
-    title="要多難？"
+    title="選擇難度"
     kicker="單人對戰"
     icon={GiBrain}
     band={{ className: 'bg-tile-orange', fg: 'text-tile-ink' }}
