@@ -1,4 +1,5 @@
 import React, { useMemo } from "react";
+import { PLAYER_NAME, PLAYER_ON, playerVar, type PlayerKey } from "@/config/players";
 import type { Player } from "@/types/chessboard";
 import { useGame } from "@/contexts/GameContext";
 
@@ -9,16 +10,7 @@ interface Props {
   breakWallCountObj: Record<Exclude<Player, null>, number>;
 }
 
-const PLAYER_MAP: Record<Exclude<Player, null>, string> = {
-  A: '紅方',
-  B: '藍方',
-  C: '黃方',
-};
 
-/** 玩家色上該用什麼文字色。紅／藍偏暗用米白，黃偏亮用墨。 */
-const ON: Record<'A' | 'B' | 'C', string> = {
-  A: 'text-tile-cream', B: 'text-tile-cream', C: 'text-tile-ink',
-};
 
 /**
  * 操作提示。
@@ -30,14 +22,14 @@ const ON: Record<'A' | 'B' | 'C', string> = {
 export default React.memo(function GameTips({ isPlacingChess, currentPlayer, winingStatus, breakWallCountObj }: Props) {
   const { gameState } = useGame();
   const over = winingStatus.length > 0;
-  const p = currentPlayer as 'A' | 'B' | 'C' | null;
+  const p = currentPlayer as PlayerKey | null;
 
   const tipText = useMemo(() => {
     if (over) {
-      const names = winingStatus.map(w => PLAYER_MAP[w as Exclude<Player, null>]).filter(Boolean);
+      const names = winingStatus.map(w => PLAYER_NAME[w as PlayerKey]).filter(Boolean);
       return winingStatus[0] === 'draw' ? '遊戲結束！' : `遊戲結束！${names.join('、')}勝利！`;
     }
-    const who = p ? PLAYER_MAP[p] : '';
+    const who = p ? PLAYER_NAME[p] : '';
     return isPlacingChess ? `${who} · 放置棋子` : `${who} · 移動棋子`;
   }, [isPlacingChess, over, winingStatus, p]);
 
@@ -49,9 +41,9 @@ export default React.memo(function GameTips({ isPlacingChess, currentPlayer, win
   return (
     <div
       className={`fixed bottom-5 right-5 flex flex-col gap-1 rounded-2xl px-4 py-3 text-sm font-black lg:bottom-[5dvh] ${
-        over || !p ? 'bg-tile-ink text-tile-cream' : ON[p]
+        over || !p ? 'bg-tile-ink text-tile-cream' : PLAYER_ON[p]
       }`}
-      style={over || !p ? undefined : { backgroundColor: `var(--player-${p})` }}
+      style={over || !p ? undefined : { backgroundColor: playerVar(p) }}
     >
       <span className="text-md">{tipText}</span>
       {breakWallText && <span className="text-xs opacity-80">{breakWallText}</span>}

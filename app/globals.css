@@ -57,18 +57,24 @@ svg[stroke="currentColor"] {
   --player-B-800: #2c4b65;
   --player-B-900: #273c4e;
 
-  /* 黃方 */
-  --player-C: #e9af4c;
-  --player-C-50: #fbf1df;
-  --player-C-100: #f8e7c9;
-  --player-C-200: #f5daad;
-  --player-C-300: #f1cd90;
-  --player-C-400: #edbf70;
-  --player-C-500: #e9af4c;
-  --player-C-600: #cc9944;
-  --player-C-700: #ab803a;
-  --player-C-800: #8c6931;
-  --player-C-900: #6d5228;
+  /* 黃方。
+     基色比紅藍暗一階是刻意的 —— 黃本質上亮，用與紅藍相同的明度時，
+     棋子與牆疊在奶油格（#faf7f0）上只有 1.83:1，遠低於紅 4.31、藍 4.41，
+     實測三人局時黃方的棋子明顯比另外兩方難找。壓到 #c0821d 後是 3.04:1，
+     過 WCAG 圖形元件的 3:1，配墨字 5.81:1 也過小字的 4.5:1。
+     介面用的 --tile-amber 維持原本的亮琥珀，不跟著改：那是大面積色塊配墨字，
+     不受這個限制，而且首頁磁磚的調子要留著。 */
+  --player-C: #c0821d;
+  --player-C-50: #f7f0e4;
+  --player-C-100: #f0e1c9;
+  --player-C-200: #e6cda5;
+  --player-C-300: #dcb980;
+  --player-C-400: #cfa053;
+  --player-C-500: #c0821d;
+  --player-C-600: #ab741b;
+  --player-C-700: #93641a;
+  --player-C-800: #7b5418;
+  --player-C-900: #634416;
 
   /* 輔色：只用在 Modal 的分節圖示與提示狀態。同樣取自參考圖，
      不用 Tailwind 預設的 red-500 / purple-500 —— 那些彩度比這套色票高一截，
