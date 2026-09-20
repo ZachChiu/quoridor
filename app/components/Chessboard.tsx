@@ -1,9 +1,20 @@
 "use client";
 
 import type { Player, Move, Direction } from "@/types/chessboard.ts";
+import { GiHammerBreak } from "react-icons/gi";
+
+/**
+ * 玩家色以 CSS 變數取用，而不是 `bg-player-${player}` 這種動態拼接的 class。
+ * Tailwind 的靜態掃描看不到拼接出來的字串，safelist 又容易漏 ——
+ * 走變數就完全沒有這個問題。
+ */
+const PLAYER_VAR: Record<string, string> = {
+  A: 'var(--player-A)',
+  B: 'var(--player-B)',
+  C: 'var(--player-C)',
+};
 import React, { useCallback, useEffect, useState } from "react";
 import SectionShadow from "./SectionShadow";
-import { MdRemoveModerator } from "react-icons/md";
 
 type Props = {
   size: number;
@@ -199,7 +210,7 @@ export default React.memo(function Chessboard({
 
       <SectionShadow>
         {/* 棋盤 */}
-        <div className={`grid-cols-${size} relative grid size-full gap-1 overflow-hidden rounded-xl border-4 border-gray-900 bg-gray-200`}>
+        <div className={`grid-cols-${size} relative grid size-full gap-1 overflow-hidden rounded-2xl bg-board-line`}>
           {Array.from({ length: size }, (_, rowIndex) =>
             Array.from({ length: size }, (_, colIndex) => {
               const cellPlayer: Player = board?.[rowIndex]?.[colIndex];
@@ -218,13 +229,11 @@ export default React.memo(function Chessboard({
 
               const cellClass = [];
               if (isPlacingChess) {
-                cellClass.push('bg-white');
-              } else if (isAvailableMove) {
-                cellClass.push('bg-green-100');
+                cellClass.push('bg-primary-50');
               } else if (territory) {
                 cellClass.push(cellBgMapping[territory]);
               } else {
-                cellClass.push('bg-white');
+                cellClass.push('bg-primary-50');
               }
 
               if (!isLock && (isPlacingChess && !cellPlayer)) {
@@ -233,26 +242,8 @@ export default React.memo(function Chessboard({
                 cellClass.push('cursor-pointer');
               }
 
-              const chessClass = [];
-              if (isSelecting) {
-                chessClass.push('infinite animate-pulse-shine transition-transform duration-1000');
-              } else if (!selectedChess && isTurn && !isLock && !isPlacingChess) {
-                chessClass.push('infinite animate-pulse-shine transition-transform duration-1000');
-              }
-
-              switch (cellPlayer) {
-                case 'A':
-                  chessClass.push('bg-player-A');
-                  break;
-                case 'B':
-                  chessClass.push('bg-player-B');
-                  break;
-                case 'C':
-                  chessClass.push('bg-player-C');
-                  break;
-                default:
-                  break;
-              }
+              const isPieceActive =
+                isSelecting || (!selectedChess && isTurn && !isLock && !isPlacingChess);
 
               // 在每一格內
               let isHorizontalWallBreakable = false;
@@ -277,65 +268,144 @@ export default React.memo(function Chessboard({
 
               return (
                 <div
-                  className={`group relative flex items-center justify-center ${cellClass.join(' ')}`}
+                  className={`group relative flex items-center justify-center ${
+                    isSelecting ? 'z-10 ring ring-inset ring-tile-ink' : ''
+                  } ${cellClass.join(' ')}`}
                   key={`${rowIndex}-${colIndex}`}
                   onClick={() => onClickSelectChess(cellPlayer, rowIndex, colIndex, isAvailableMove)}
                 >
+                  {/* 選取中的格子。
+                      原本是深墨外框，但框線和築牆預覽佔在同一條邊上互相搶 ——
+                      框一重，45% 的預覽就被壓掉了。改成整格微染玩家色：
+                      標示得出「選的是這格」，邊線則完全讓給預覽。 */}
+                  {isSelecting && currentPlayer && (
+                    <div
+                      className="pointer-events-none absolute inset-0 opacity-[0.16]"
+                      style={{ backgroundColor: PLAYER_VAR[currentPlayer] }}
+                    />
+                  )}
+
                   {/* 棋子 */}
                   {cellPlayer && (
-                    <div className={`${chessClass.join(' ')} absolute z-20 size-3/5 rounded-full`} />
+                    <div
+                      className={`absolute z-20 size-3/5 rounded-full ${isPieceActive ? 'animate-pulse-shine' : ''}`}
+                      style={{ backgroundColor: PLAYER_VAR[cellPlayer] }}
+                    />
                   )}
 
-                  {/* 放置時的隱藏棋子 */}
-                  {!cellPlayer && isPlacingChess && (
-                    <div className={`bg-player-${currentPlayer} animate-pulse-shine absolute z-20 hidden size-3/5 rounded-full group-hover:block`} />
+                  {/* 放置時的預覽棋子 */}
+                  {!cellPlayer && isPlacingChess && currentPlayer && (
+                    <div
+                      className="absolute z-20 hidden size-3/5 rounded-full opacity-55 group-hover:block"
+                      style={{ backgroundColor: PLAYER_VAR[currentPlayer] }}
+                    />
                   )}
 
-                  {/* 橫牆 */}
+                  {/* 可移動的落點。
+                      原本是整格染成淡綠，但淡色疊在奶油格上很弱，
+                      而且會跟領地底色打架。改成置中的圓點 —— 不吃底色，
+                      也不會跟「這格屬於誰」的資訊互相干擾。 */}
+                  {isAvailableMove && !cellPlayer && (
+                    <div className="absolute z-10 size-1/4 rounded-full bg-tile-ink/30 transition-colors group-hover:bg-tile-ink/55" />
+                  )}
+
+                  {/* 開局可放置的位置。
+                      原本開局是一整面空棋盤，只有把游標移到某格才會冒出半透明棋子 ——
+                      等於要先猜對地方才知道那裡能放。改成所有可放的格子一開始就點上灰點，
+                      與對局中的「可移動落點」用同一個記號，學一次就通用。
+                      條件刻意與上面 cursor-pointer 那條一字不差：能點的就有點，
+                      兩者分開寫遲早會不一致。游標移上去時讓位給預覽棋子。 */}
+                  {!isLock && isPlacingChess && !cellPlayer && (
+                    <div className="absolute z-10 size-1/4 rounded-full bg-tile-ink/20 transition-opacity group-hover:opacity-0" />
+                  )}
+
+                  {/*
+                    牆。
+                    格縫是 4px 的深墨線，牆原本也是 4px 且畫在同一個位置 ——
+                    一道牆和一條空格線的差別只有顏色，盤面一複雜就難掃視。
+                    改成 9px、兩端圓角、並向左右各突出 3px：牆因此比格線厚、
+                    也蓋過交叉點，讀起來是「放上去的東西」而不是「被上色的格線」。
+                  */}
                   {hasHorizontalWallPlayer && (
-                    <div className={`bg-player-${hasHorizontalWallPlayer} absolute inset-x-0 bottom-0 z-10 h-1 translate-y-full`}>
+                    <div
+                      className="absolute inset-x-[-3px] bottom-0 z-20 h-[9px] translate-y-1/2 rounded-full"
+                      style={{ backgroundColor: PLAYER_VAR[hasHorizontalWallPlayer] }}
+                    >
                       {isHorizontalWallBreakable && (
-                        <MdRemoveModerator
-                          className="animate-shine infinite absolute bottom-0 left-1/2 z-10 -translate-x-1/2 translate-y-1/3 cursor-pointer text-xl text-gray-700" 
-                          onClick={() => onClickBreakWall(rowIndex, colIndex, 'horizontal')}
-                        />
+                        <button
+                          type="button"
+                          aria-label="破壞下方的牆"
+                          className="animate-shine absolute left-1/2 top-1/2 z-30 grid size-7 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-tile-ink text-sm text-tile-cream ring-2 ring-primary-50"
+                          onClick={(e) => { e.stopPropagation(); onClickBreakWall(rowIndex, colIndex, 'horizontal'); }}
+                        >
+                          <GiHammerBreak />
+                        </button>
                       )}
                     </div>
                   )}
-                  {/* 直牆 */}
                   {hasVerticalWall && (
-                    <div className={`bg-player-${hasVerticalWall} absolute inset-y-0 right-0 z-10 w-1 translate-x-full`}>
+                    <div
+                      className="absolute inset-y-[-3px] right-0 z-20 w-[9px] translate-x-1/2 rounded-full"
+                      style={{ backgroundColor: PLAYER_VAR[hasVerticalWall] }}
+                    >
                       {isVerticalWallBreakable && (
-                        <MdRemoveModerator
-                          className="animate-shine infinite absolute right-0 top-1/2 z-10 -translate-y-1/2 translate-x-1/3 cursor-pointer text-xl text-gray-700" 
-                          onClick={() => onClickBreakWall(rowIndex, colIndex, 'vertical')}
-                        />
+                        <button
+                          type="button"
+                          aria-label="破壞右方的牆"
+                          className="animate-shine absolute left-1/2 top-1/2 z-30 grid size-7 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-tile-ink text-sm text-tile-cream ring-2 ring-primary-50"
+                          onClick={(e) => { e.stopPropagation(); onClickBreakWall(rowIndex, colIndex, 'vertical'); }}
+                        >
+                          <GiHammerBreak />
+                        </button>
                       )}
                     </div>
                   )}
 
-                  {/* 可選擇的牆 */}
-                  {isSelecting && (
-                  <>
-                    {checkWallBuildable(rowIndex, colIndex, 'top') && (
-                      <div className={`absolute top-0 z-10 h-3 w-3/4 translate-y-[-65%] cursor-pointer rounded bg-gray-700 opacity-50 hover:opacity-100`}
-                          onClick={() => selectWall(rowIndex - 1, colIndex , 'top')}></div>
-                    )}
-                    {checkWallBuildable(rowIndex, colIndex, 'bottom') && (
-                      <div className={`absolute bottom-0 z-10 h-3 w-3/4 translate-y-[65%] cursor-pointer rounded bg-gray-700 opacity-50 hover:opacity-100`}
-                          onClick={() => selectWall(rowIndex, colIndex, 'bottom')}></div>
-                    )}
-                    {checkWallBuildable(rowIndex, colIndex, 'left') && (
-                      <div className={`absolute left-0 z-10 h-3/4 w-3 translate-x-[-65%] cursor-pointer rounded bg-gray-700 opacity-50 hover:opacity-100`}
-                          onClick={() => selectWall(rowIndex , colIndex - 1, 'left')}></div>
-                    )}
-                    {checkWallBuildable(rowIndex, colIndex, 'right') && (
-                      <div
-                        className={`absolute right-0 z-10 h-3/4 w-3 translate-x-[65%] cursor-pointer rounded bg-gray-700 opacity-50 hover:opacity-100`}
-                        onClick={() => selectWall(rowIndex, colIndex, 'right')}
-                      ></div>
-                    )}
-                  </>
+                  {/*
+                    可築牆的位置。
+                    原本是灰色半透明的方條 —— 灰色在奶油底上發濁，而且跟「真的牆」
+                    是同一種形狀，差別只有深淺。改成當前玩家色的半透明預覽，
+                    形狀與尺寸都跟築好之後一模一樣：看到的就是會得到的。
+                  */}
+                  {isSelecting && currentPlayer && (
+                    <>
+                      {checkWallBuildable(rowIndex, colIndex, 'top') && (
+                        <button
+                          type="button"
+                          aria-label="在上方築牆"
+                          className="absolute inset-x-[18%] top-0 z-20 h-[9px] -translate-y-1/2 rounded-full opacity-70 transition hover:inset-x-[-3px] hover:opacity-100"
+                          style={{ backgroundColor: PLAYER_VAR[currentPlayer] }}
+                          onClick={(e) => { e.stopPropagation(); selectWall(rowIndex - 1, colIndex, 'top'); }}
+                        />
+                      )}
+                      {checkWallBuildable(rowIndex, colIndex, 'bottom') && (
+                        <button
+                          type="button"
+                          aria-label="在下方築牆"
+                          className="absolute inset-x-[18%] bottom-0 z-20 h-[9px] translate-y-1/2 rounded-full opacity-70 transition hover:inset-x-[-3px] hover:opacity-100"
+                          style={{ backgroundColor: PLAYER_VAR[currentPlayer] }}
+                          onClick={(e) => { e.stopPropagation(); selectWall(rowIndex, colIndex, 'bottom'); }}
+                        />
+                      )}
+                      {checkWallBuildable(rowIndex, colIndex, 'left') && (
+                        <button
+                          type="button"
+                          aria-label="在左方築牆"
+                          className="absolute inset-y-[18%] left-0 z-20 w-[9px] -translate-x-1/2 rounded-full opacity-70 transition hover:inset-y-[-3px] hover:opacity-100"
+                          style={{ backgroundColor: PLAYER_VAR[currentPlayer] }}
+                          onClick={(e) => { e.stopPropagation(); selectWall(rowIndex, colIndex - 1, 'left'); }}
+                        />
+                      )}
+                      {checkWallBuildable(rowIndex, colIndex, 'right') && (
+                        <button
+                          type="button"
+                          aria-label="在右方築牆"
+                          className="absolute inset-y-[18%] right-0 z-20 w-[9px] translate-x-1/2 rounded-full opacity-70 transition hover:inset-y-[-3px] hover:opacity-100"
+                          style={{ backgroundColor: PLAYER_VAR[currentPlayer] }}
+                          onClick={(e) => { e.stopPropagation(); selectWall(rowIndex, colIndex, 'right'); }}
+                        />
+                      )}
+                    </>
                   )}
                 </div>
               )
