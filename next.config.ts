@@ -35,8 +35,13 @@ export default withSentryConfig(nextConfig, {
   // org / project 必須跟 auth token 綁定的組織一致 —— `sntrys_` token 的組織是
   // 寫死在 token 裡的，CLI 會拿它覆蓋掉設定值，不一致就是 `error: Project not found`，
   // 而且上傳失敗不會讓 build 失敗，所以會安靜地壞掉。
-  org: process.env.SENTRY_ORG,
-  project: process.env.SENTRY_PROJECT,
+  // org 與 project 寫死。它們是 Sentry 網址上就看得到的 slug，不是機密，
+  // 而放進環境變數反而多一個會安靜出錯的地方 —— org 只要跟 auth token 綁定的
+  // 組織不一致就是 `Project not found`，而上傳失敗不會讓 build 失敗。
+  // 少一個要設的值，就少一個忘記設的機會。
+  org: 'zach-chiu',
+  project: 'quoridor',
+  // token 才是機密，留在環境變數
   authToken: process.env.SENTRY_AUTH_TOKEN,
 
   // 只在 CI 輸出 source map 上傳日誌，本機 build 不要被它洗版。

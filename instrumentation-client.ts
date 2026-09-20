@@ -12,6 +12,18 @@
  * SDK 就緒後再補送，因此載入期間發生的錯誤一樣會回報。
  */
 
+/**
+ * Sentry DSN。
+ *
+ * 寫死而不是走環境變數：NEXT_PUBLIC_ 前綴代表它一定會被編進 client bundle，
+ * 任何人打開 devtools 都看得到 —— 它設計上就是公開的，Sentry 官方文件也這麼說。
+ * 放進環境變數不會讓它更安全，只會多一個「忘了設就安靜不回報」的地方。
+ *
+ * 要防的是別人拿它灌假事件消耗配額，那靠 Sentry 專案設定裡的 Allowed Domains，
+ * 不是靠把 DSN 藏起來。
+ */
+const DSN = 'https://1f39a71b488240ae2416c557057af19f@o4512074543529984.ingest.us.sentry.io/4512074824155136';
+
 type BufferedError = { error: unknown; type: 'error' | 'unhandledrejection' };
 
 const buffered: BufferedError[] = [];
@@ -32,7 +44,7 @@ async function initSentry() {
   const Sentry = await import('@sentry/nextjs');
 
   Sentry.init({
-    dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
+    dsn: DSN,
 
     // release 必須與建置時上傳 source map 所用的值一致，否則堆疊無法還原，
     // 且 crash-free 率（按 release 分組統計）會失去意義。
@@ -98,7 +110,7 @@ async function initSentry() {
     });
 }
 
-if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_SENTRY_DSN) {
+if (typeof window !== 'undefined') {
   window.addEventListener('error', onError);
   window.addEventListener('unhandledrejection', onRejection);
 

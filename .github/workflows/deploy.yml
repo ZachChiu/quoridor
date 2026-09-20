@@ -43,16 +43,14 @@ jobs:
           NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ${{ secrets.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN }}
           NEXT_PUBLIC_FIREBASE_DATABASE_URL: ${{ secrets.NEXT_PUBLIC_FIREBASE_DATABASE_URL }}
 
-          # Sentry —— 執行時（進 client bundle）
-          NEXT_PUBLIC_SENTRY_DSN: ${{ secrets.NEXT_PUBLIC_SENTRY_DSN }}
+          # Sentry —— 執行時。DSN 已寫死在 instrumentation-client.ts。
           NEXT_PUBLIC_SENTRY_ENVIRONMENT: ${{ github.ref == 'refs/heads/main' && 'production' || 'development' }}
           # release 不在這裡設：next.config.ts 從 package.json 的 version 算出
           # （由 npm run release 維護），同時餵給建置期與 runtime。
           # 只有一個來源，就不會有「兩邊對不上」這種問題。
 
-          # Sentry —— 建置時（source map 上傳，不進 client bundle）
-          SENTRY_ORG: ${{ vars.SENTRY_ORG }}
-          SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT }}
+          # Sentry —— 建置時（source map 上傳，不進 client bundle）。
+          # org 與 project 已寫死在 next.config.ts，這裡只剩 token。
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           NEXT_PUBLIC_FIREBASE_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_PROJECT_ID }}
           NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: ${{ secrets.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET }}
