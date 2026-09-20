@@ -12,6 +12,10 @@ jobs:
     steps:
       - name: 檢出代碼
         uses: actions/checkout@v4
+        with:
+          # Sentry 的 setCommits: auto 要從 git 歷史關聯 commit，
+          # 預設的淺層 clone（depth 1）沒有歷史可關聯，suspect commits 就出不來
+          fetch-depth: 0
 
       - name: 設置 Node.js
         uses: actions/setup-node@v4
@@ -38,6 +42,18 @@ jobs:
           NEXT_PUBLIC_FIREBASE_API_KEY: ${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }}
           NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ${{ secrets.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN }}
           NEXT_PUBLIC_FIREBASE_DATABASE_URL: ${{ secrets.NEXT_PUBLIC_FIREBASE_DATABASE_URL }}
+
+          # Sentry —— 執行時（進 client bundle）
+          NEXT_PUBLIC_SENTRY_DSN: ${{ secrets.NEXT_PUBLIC_SENTRY_DSN }}
+          NEXT_PUBLIC_SENTRY_ENVIRONMENT: ${{ github.ref == 'refs/heads/main' && 'production' || 'development' }}
+          # release 不在這裡設：next.config.ts 從 package.json 的 version 算出
+          # （由 npm run release 維護），同時餵給建置期與 runtime。
+          # 只有一個來源，就不會有「兩邊對不上」這種問題。
+
+          # Sentry —— 建置時（source map 上傳，不進 client bundle）
+          SENTRY_ORG: ${{ vars.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           NEXT_PUBLIC_FIREBASE_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_PROJECT_ID }}
           NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: ${{ secrets.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET }}
           NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID }}
