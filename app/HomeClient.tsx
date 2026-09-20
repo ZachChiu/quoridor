@@ -1,11 +1,22 @@
 'use client'
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { GiBrain, GiMeshNetwork, GiRuleBook, GiTabletopPlayers, GiThreeFriends, GiWireframeGlobe } from "react-icons/gi";
+import { useTransition } from "@/contexts/TransitionContext";
 import { trackButtonClick } from "@/utils/analytics";
-import { MdDoorBack, MdOutlinePublic, MdOutlineQuestionMark } from "react-icons/md";
-import Button from "./components/Button";
-import IconButton from "./components/IconButton";
-import { LuSwords } from "react-icons/lu";
+// Game Icons（game-icons.net，CC BY 3.0）—— react-icons 已內建，不需另外安裝。
+// 選它而不是線條圖示：參考稿的圖示是實心剪影壓在色塊上，
+// Lucide 的細線在大尺寸的彩色磁磚上會顯得單薄。
+import GameTile, { TONE_COLOR } from "./components/GameTile";
+import DifficultyModal from "./components/DifficultyModal";
+import type { Difficulty } from "@/game/ai";
+
+type Origin = { rect: DOMRect; color: string };
+/** 轉場的圓從你按的那個東西的中心長出來。DOMRect 不是純資料，取出兩個數字就好。 */
+const wipeFrom = ({ rect, color }: Origin) => ({
+  x: rect.left + rect.width / 2,
+  y: rect.top + rect.height / 2,
+  color,
+});
 import { useGame } from "@/contexts/GameContext";
 import { useRuleModal } from "@/contexts/RuleModalContext";
 import { useUser } from "@/contexts/UserContext";
@@ -15,36 +26,48 @@ import { serializeWGF, buildPieceIndex } from "@/utils/wgf";
 import playerTemplates from "@/config/playerTemplates";
 import type { PiecePlacement } from "@/types/wgf";
 
+/**
+ * 首頁的遊戲選擇。
+ *
+ * 原本是「本機／連線」兩顆按鈕再展開人數的兩層選單。改成四塊撞色磁磚
+ * 一次攤開 —— 選項總共只有四個，藏在第二層只是多一次點擊，
+ * 而參考稿的版面本來就是「一眼看完所有選擇」。
+ */
 export default function HomeClient() {
-  const router = useRouter();
+  const { navigate, busy } = useTransition();
   const { gameState, setGameState } = useGame();
-  const { uid, ready } = useUser();
+  const { ensureUser } = useUser();
+  const [isCreating, setIsCreating] = useState(false);
+  const [soloOpen, setSoloOpen] = useState(false);
+  const { ruleModalState, setRuleModalState } = useRuleModal();
 
-  const handleStartLocalGame = (playersNum: number) => {
-    setGameState({
-      ...gameState,
-      playersNum,
-    });
-    router.push('/local');
+  /*
+    轉場一律是「從你按的那個東西擴散出一個圓」，顏色就是它的顏色 ——
+    按本機雙人是琥珀、連線三人是磚紅、單人是陶橘。同一套動作，
+    但每次的起點與顏色都由你的選擇決定。
+  */
+  const startLocal = (playersNum: number, origin: Origin) => {
+    setGameState({ ...gameState, playersNum, aiDifficulty: null });
+    navigate('/local', { title: '遊戲開始', wipe: wipeFrom(origin) });
     trackButtonClick(`start_local_game_${playersNum}p`);
   };
 
-  const [showLocalGameOptions, setShowLocalGameOptions] = useState(false);
-  const [showConnectGameOptions, setShowConnectGameOptions] = useState(false);
-  const [isCreating, setIsCreating] = useState(false);
+  const startSolo = (aiDifficulty: Difficulty, at: { x: number; y: number }) => {
+    setSoloOpen(false);
+    setGameState({ ...gameState, playersNum: 2, aiDifficulty });
+    navigate('/local', { title: '遊戲開始', wipe: { ...at, color: TONE_COLOR.orange } });
+    trackButtonClick(`start_solo_game_${aiDifficulty}`);
+  };
 
-  const { ruleModalState, setRuleModalState } = useRuleModal();
-  const handleRuleBtnOpen = () => {
-    setRuleModalState({
-      ...ruleModalState,
-      isOpen: true
-    })
-  }
+  // 滑過或 focus 到連線磁磚就先把 Firebase 載起來並匿名登入。
+  // 失敗不處理 —— 這只是預熱，真的按下去時 startConnect 會再試一次並回報。
+  const prewarm = () => { void ensureUser().catch(() => {}); };
 
-  const handleStartConnectGame = async (playersNum: number) => {
-    if (isCreating || !ready || !uid) return;
+  const startConnect = async (playersNum: number, origin: Origin) => {
+    if (isCreating) return;
     setIsCreating(true);
     try {
+      const uid = await ensureUser();
       const player: RoomPlayer = {
         uid,
         displayName: `玩家 ${uid.slice(0, 4).toUpperCase()}`,
@@ -63,83 +86,37 @@ export default function HomeClient() {
       }
 
       const roomId = await createRoom(playersNum as 2 | 3, 'A', player, initialWgf);
-      setGameState({ ...gameState, playersNum });
-      router.push(`/match#roomId=${roomId}`);
+      setGameState({ ...gameState, playersNum, aiDifficulty: null });
+      navigate(`/match#roomId=${roomId}`, { title: '遊戲開始', wipe: wipeFrom(origin) });
       trackButtonClick(`start_connect_game_${playersNum}p`);
     } finally {
       setIsCreating(false);
     }
   };
 
+  // 不再以「已登入」當作可否點擊的條件 —— 現在是按下去才登入。
+  const online = isCreating || busy;
+
   return (
-    <div className="relative z-20">
-      <div className={`group fixed right-5 top-5 cursor-pointer`}>
-        <IconButton handleClickEvent={() => handleRuleBtnOpen()}>
-          <MdOutlineQuestionMark />
-        </IconButton>
-      </div>
-      {!showLocalGameOptions && !showConnectGameOptions &&
-        <div className="flex flex-col gap-4">
-          <Button
-            color="bg-primary-500 flex items-center justify-center gap-2"
-            handleClickEvent={() => setShowLocalGameOptions(true)}
-          >
-            <LuSwords className="text-2xl"/> 本機對戰
-          </Button>
-          <Button
-            color="bg-primary-300 flex items-center gap-2"
-            handleClickEvent={() => setShowConnectGameOptions(true)}
-          >
-            <MdOutlinePublic className="text-2xl" /> 連線對戰
-          </Button>
-        </div>
-      }
-      {showLocalGameOptions &&
-        <div className={`flex flex-col gap-4`}>
-          <Button
-            color="bg-primary-500 flex justify-center items-center gap-2"
-            handleClickEvent={() => setShowLocalGameOptions(false)}
-          >
-            <MdDoorBack className="text-2xl"/> 返回
-          </Button>
-          <Button
-            color="bg-primary-600 flex items-center gap-2"
-            handleClickEvent={() => handleStartLocalGame(2)}
-          >
-            <LuSwords className="text-2xl"/> 雙人對戰
-          </Button>
-          <Button
-            color="bg-primary-700 flex items-center gap-2"
-            handleClickEvent={() => handleStartLocalGame(3)}
-          >
-            <LuSwords className="text-2xl"/> 三人對戰
-          </Button>
-        </div>
-      }
-      {showConnectGameOptions &&
-        <div className={`flex flex-col gap-4`}>
-          <Button
-            color="bg-primary-500 flex justify-center items-center gap-2"
-            handleClickEvent={() => setShowConnectGameOptions(false)}
-          >
-            <MdDoorBack className="text-2xl"/> 返回
-          </Button>
-          <Button
-            color="bg-primary-300 flex items-center gap-2"
-            handleClickEvent={() => handleStartConnectGame(2)}
-            disabled={isCreating || !ready}
-          >
-            <MdOutlinePublic className="text-2xl" /> 雙人對戰
-          </Button>
-          <Button
-            color="bg-primary-400 flex items-center gap-2"
-            handleClickEvent={() => handleStartConnectGame(3)}
-            disabled={isCreating || !ready}
-          >
-            <MdOutlinePublic className="text-2xl" /> 三人對戰
-          </Button>
-        </div>
-      }
+    /*
+      配色刻意排成「相鄰必撞」：橫向 琥珀↔紫、藍↔紅，縱向 琥珀↔藍、紫↔紅，
+      四組相鄰全是大跨度的色相差。色彩不負責區分本機／連線 —— 那由上方的
+      小字與圖示承擔，色彩專心製造衝突感。
+    */
+    <div className="relative z-20 grid w-full grid-cols-2 gap-3 md:gap-4">
+      <GameTile icon={GiTabletopPlayers} tone="amber"  kicker="本機" label="雙人" onClick={(o) => startLocal(2, o)} />
+      <GameTile icon={GiThreeFriends}    tone="purple" kicker="本機" label="三人" onClick={(o) => startLocal(3, o)} />
+      <GameTile icon={GiWireframeGlobe}  tone="blue"   kicker="連線" label="雙人" onClick={(o) => startConnect(2, o)} onPrefetch={prewarm} disabled={online} />
+      <GameTile icon={GiMeshNetwork}     tone="red"    kicker="連線" label="三人" onClick={(o) => startConnect(3, o)} onPrefetch={prewarm} disabled={online} />
+      <GameTile icon={GiBrain} tone="orange" label="單人對戰" wide onClick={() => setSoloOpen(true)} />
+      <GameTile
+        icon={GiRuleBook}
+        tone="forest"
+        label="遊戲規則"
+        wide
+        onClick={() => setRuleModalState({ ...ruleModalState, isOpen: true })}
+      />
+      <DifficultyModal isOpen={soloOpen} onClose={() => setSoloOpen(false)} onPick={startSolo} />
     </div>
-  )
+  );
 }

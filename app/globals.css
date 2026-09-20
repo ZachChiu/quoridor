@@ -2,69 +2,134 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+  首頁磁磚的圖示：撞色填充。
+
+  Game Icons 是單一路徑的實心剪影，沒有可以分開上色的部件，所以參考稿那種
+  「一個圖示多個顏色」做不到 —— 能做的是讓整個剪影換成一個與底色撞的顏色。
+
+  試過加黑描邊（參考稿每個圖示都有），但那是為了在它那種細線條圖示上
+  撐出份量；我們的剪影本來就是實心大塊，再加描邊只是讓形狀變鈍。
+  同理也沒加硬陰影。
+*/
+.tile-icon path {
+  fill: var(--tile-icon-fill);
+}
+
+/* 思源黑體繁中，可變字重 400–900。
+   用 Google Fonts 的 text= 參數做子集：只含這個 App 實際用到的 599 個字元，
+   一支 174 KB 的檔涵蓋全部字重。完整的 Noto Sans TC 光一個字重就好幾 MB，
+   而這套視覺的力道有一半來自極粗的中文標題，沒有 900 就不成立。 */
+@font-face {
+  font-family: 'Noto Sans TC Subset';
+  src: url('/fonts/noto-sans-tc-var.woff2') format('woff2');
+  font-weight: 400 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-  --player-A: #F28B82;
-  --player-A-50: #fef2f2;
-  --player-A-100: #fee2e2;
-  --player-A-200: #fecaca;
-  --player-A-300: #fca5a5;
-  --player-A-400: #f87171;
-  --player-A-500: #F28B82;
-  --player-A-600: #e05252;
-  --player-A-700: #c53030;
-  --player-A-800: #9b2c2c;
-  --player-A-900: #7f1d1d;
+  /* 色票取自參考稿的實際取樣值：厚描邊 + 飽和色塊 + 奶油底的平面風格。
+     所有顏色都走 CSS 變數，換色只需要改這一段。 */
+  --font-app: 'Noto Sans TC Subset', system-ui, -apple-system, 'PingFang TC',
+    'Microsoft JhengHei', sans-serif;
 
-  --player-B: #4AADFE;
-  --player-B-50: #f0f9ff;
-  --player-B-100: #e0f2fe;
-  --player-B-200: #bae6fd;
-  --player-B-300: #7dd3fc;
-  --player-B-400: #4AADFE;
-  --player-B-500: #0ea5e9;
-  --player-B-600: #0284c7;
-  --player-B-700: #0369a1;
-  --player-B-800: #075985;
-  --player-B-900: #0c4a6e;
+  --background: #e8e1d7;
+  --foreground: #1a1613;
 
-  --player-C: #FFCA28;
-  --player-C-50: #FFFDE7;
-  --player-C-100: #FFF9C4;
-  --player-C-200: #FFF59D;
-  --player-C-300: #FFF176;
-  --player-C-400: #FFEE58;
-  --player-C-500: #FFEB3B;
-  --player-C-600: #FDD835;
-  --player-C-700: #FBC02D;
-  --player-C-800: #F9A825;
-  --player-C-900: #F57F17;
+  /* 紅方 */
+  --player-A: #cd4642;
+  --player-A-50: #f6dedd;
+  --player-A-100: #f0c8c6;
+  --player-A-200: #e8aaa8;
+  --player-A-300: #e08c8a;
+  --player-A-400: #d76b68;
+  --player-A-500: #cd4642;
+  --player-A-600: #b43f3b;
+  --player-A-700: #973733;
+  --player-A-800: #7c302c;
+  --player-A-900: #622824;
 
-  --primary: #fff4da;
-  --primary-50: #fffdf7;
-  --primary-100: #fff9e8;
-  --primary-200: #fff4da;
-  --primary-300: #ffe8b3;
-  --primary-400: #ffd580;
-  --primary-500: #ffc247;
-  --primary-600: #ffa620;
-  --primary-700: #f98c00;
-  --primary-800: #cc7000;
-  --primary-900: #a65900;
+  /* 藍方 */
+  --player-B: #2478b7;
+  --player-B-50: #e5eff6;
+  --player-B-100: #cadfee;
+  --player-B-200: #a7c9e2;
+  --player-B-300: #84b3d7;
+  --player-B-400: #5998c8;
+  --player-B-500: #2478b7;
+  --player-B-600: #226ca3;
+  --player-B-700: #205d8c;
+  --player-B-800: #1e4e74;
+  --player-B-900: #1b405d;
+
+  /* 黃方。
+     基色比紅藍暗一階是刻意的 —— 黃本質上亮，用與紅藍相同的明度時，
+     棋子與牆疊在奶油格（#faf7f0）上只有 1.83:1，遠低於紅 4.31、藍 4.41，
+     實測三人局時黃方的棋子明顯比另外兩方難找。壓到 #c0821d 後是 3.04:1，
+     過 WCAG 圖形元件的 3:1，配墨字 5.81:1 也過小字的 4.5:1。
+     介面用的 --tile-amber 維持原本的亮琥珀，不跟著改：那是大面積色塊配墨字，
+     不受這個限制，而且首頁磁磚的調子要留著。 */
+  --player-C: #c0821d;
+  --player-C-50: #f7f0e4;
+  --player-C-100: #f0e1c9;
+  --player-C-200: #e6cda5;
+  --player-C-300: #dcb980;
+  --player-C-400: #cfa053;
+  --player-C-500: #c0821d;
+  --player-C-600: #ab741b;
+  --player-C-700: #93641a;
+  --player-C-800: #7b5418;
+  --player-C-900: #634416;
+
+  /* 輔色：只用在 Modal 的分節圖示與提示狀態。同樣取自參考圖，
+     不用 Tailwind 預設的 red-500 / purple-500 —— 那些彩度比這套色票高一截，
+     混在一起會讓畫面看起來像兩套設計。 */
+
+  /* 撞色磁磚。每一塊的文字色都量過對比度（見下方註記），全部通過 AA。
+     暖色（琥珀／橘）配黑墨、冷色（藍／紫／深綠）配米白 —— 這是對比度算出來的
+     結果，不是憑感覺挑的。 */
+  /* 以 RGB 通道儲存，而不是 hex。
+     Tailwind 的透明度修飾詞會展開成 rgb(var(--x) / <alpha-value>)，
+     變數若是 hex 就組不出合法的 CSS —— bg-tile-ink/30 會整條不產生，
+     而且不會報錯，只是安靜地變透明。 */
+  --tile-amber: 233 175 76;   /* #e9af4c 黑墨 9.6:1 */
+  --tile-orange: 223 108 63;  /* #df6c3f 黑墨 5.7:1 */
+  --tile-blue: 36 120 183;    /* #2478b7 米白 4.4:1 */
+  --tile-purple: 131 81 156;  /* #83519c 米白 5.4:1 */
+  --tile-red: 205 70 66;     /* #cd4642 米白 4.3:1 */
+  --tile-forest: 0 105 68;    /* #006944 米白 6.3:1 */
+  --tile-ink: 20 16 16;
+  --tile-cream: 250 247 240;
+
+  /* 棋盤格線。刻意比 --tile-ink 淺一階（#3a322c）：
+     格線是背景、牆才是主角，格線若跟牆一樣重，盤面會讀不出層次。 */
+  --board-line: 58 50 44;
+  --ink-soft: #6b5c4d;   /* 副標用；奶油底上 5.4:1 */
+
+  /* 面板與按鈕。低階是紙色（面板用），高階是飽和的暖色塊（按鈕用）—— 
+     對應參考稿裡「奶油底 + 橘黃磁磚」的關係。 */
+  --primary: #f3ede1;
+  --primary-50: #faf7f0;
+  --primary-100: #f7f2e8;
+  --primary-200: #f3ede1;
+  --primary-300: #f2d9a4;
+  --primary-400: #eec86f;
+  --primary-500: #e9af4c;
+  --primary-600: #df8f3e;
+  --primary-700: #df6c3f;
+  --primary-800: #b8542f;
+  --primary-900: #8e3f24;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+/* 不提供深色模式：這是一套明確走淺色（奶油底 + 飽和色塊）的設計，
+   只翻轉背景會讓奶油色面板浮在黑底上，比不做更糟。 */
 
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-app);
 }
 
 @keyframes breathe {
@@ -80,6 +145,14 @@ body {
 .animate-shine {
   animation: shine 1s ease-in-out infinite;
 }
+
+/* 輪到誰，那條比分條就呼吸。刻意只動亮度不動大小 ——
+   breathe 帶 scale(0.8)，套在長方形上會讓兩條寬度對不齊。 */
+@keyframes bar-breathe {
+  0%, 100% { filter: brightness(1); }
+  50%      { filter: brightness(1.16); }
+}
+.animate-active-bar { animation: bar-breathe 1.6s ease-in-out infinite; }
 
 .animate-pulse-shine {
   animation: breathe 1.5s ease-in-out infinite, shine 1s ease-in-out infinite;

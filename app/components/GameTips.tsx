@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import SectionShadow from "./SectionShadow";
+import { PLAYER_NAME, PLAYER_ON, playerVar, type PlayerKey } from "@/config/players";
 import type { Player } from "@/types/chessboard";
 import { useGame } from "@/contexts/GameContext";
 
@@ -8,60 +8,48 @@ interface Props {
   currentPlayer: Player;
   winingStatus: (Player | 'draw')[];
   breakWallCountObj: Record<Exclude<Player, null>, number>;
+  /** AI 正在想。困難難度每手要一秒多，沒有提示會讓人以為當掉了。 */
+  aiThinking?: boolean;
 }
 
-const PLAYER_MAP: Record<Exclude<Player, null>, string> = {
-  A: '紅方',
-  B: '藍方',
-  C: '黃方',
-};
 
-export default React.memo(function GameStatus({ isPlacingChess, currentPlayer, winingStatus, breakWallCountObj }: Props) {
-   const { gameState } = useGame();
-    const tipText = useMemo(() => {
-      if (isPlacingChess) {
-        return (
-          <>請{<div className={`bg-player-${currentPlayer} animate-pulse-shine inline-block size-6 rounded-full `}></div>}放置棋子</>
-        );
-      } else if (winingStatus.length) {
-        const names = winingStatus.map(w => PLAYER_MAP[w as Exclude<Player, null>]).filter(Boolean);
-        return (
-          <>{winingStatus[0] === 'draw' ? '遊戲結束！' : `遊戲結束！${names.join('、')}勝利！`}</>
-        );
-      } else {
-        return (
-          <>請{<div className={`bg-player-${currentPlayer} animate-pulse-shine inline-block size-6 rounded-full`}></div>}移動棋子</>
-        );
-      }
-    }, [isPlacingChess, currentPlayer, winingStatus]);
 
-    const breakWallText = useMemo(() => {
-      if (winingStatus.length || isPlacingChess || gameState.playersNum !== 3) {
-        return null;
-      }
-      return (
-        breakWallCountObj?.[currentPlayer as Exclude<Player, null>] > 0 ?
-        <>還有一次破牆機會</> :
-        <>沒有破牆機會</>
-      );
-    }, [isPlacingChess, currentPlayer, winingStatus, gameState.playersNum, breakWallCountObj]);
+/**
+ * 操作提示。
+ *
+ * 這塊唯一在講的事情是「現在輪到誰、他該做什麼」，所以整塊就染成那位玩家的顏色 ——
+ * 比原本「深墨底 + 一顆彩色小圓點」直接得多，而且每回合都會換色，
+ * 畫面不會從頭到尾都是同一塊黑。遊戲結束沒有當前玩家，才回到深墨。
+ */
+export default React.memo(function GameTips({ isPlacingChess, currentPlayer, winingStatus, breakWallCountObj, aiThinking }: Props) {
+  const { gameState } = useGame();
+  const over = winingStatus.length > 0;
+  const p = currentPlayer as PlayerKey | null;
+
+  const tipText = useMemo(() => {
+    if (over) {
+      const names = winingStatus.map(w => PLAYER_NAME[w as PlayerKey]).filter(Boolean);
+      return winingStatus[0] === 'draw' ? '遊戲結束！' : `遊戲結束！${names.join('、')}勝利！`;
+    }
+    const who = p ? PLAYER_NAME[p] : '';
+    if (aiThinking) return `${who} 思考中…`;
+    return isPlacingChess ? `${who} · 放置棋子` : `${who} · 移動棋子`;
+  }, [isPlacingChess, over, winingStatus, p, aiThinking]);
+
+  const breakWallText = useMemo(() => {
+    if (over || isPlacingChess || gameState.playersNum !== 3 || !p) return null;
+    return breakWallCountObj?.[p] > 0 ? '還有一次破牆機會' : '沒有破牆機會';
+  }, [isPlacingChess, over, gameState.playersNum, breakWallCountObj, p]);
 
   return (
-    <div className="fixed bottom-5 right-5 lg:bottom-[5dvh]">
-      <SectionShadow>
-        <div className="relative flex size-full flex-col gap-3 rounded-xl border-2 border-gray-900 bg-white p-3">
-          <div className="flex items-center gap-3">
-            <span className="text-md flex items-center gap-1">
-              { tipText }
-            </span>
-          </div>
-          {breakWallText && <div className="flex items-center gap-3">
-            <span className="text-md flex items-center gap-1">
-              { breakWallText }
-            </span>
-          </div>}
-        </div>
-      </SectionShadow>
+    <div
+      className={`fixed bottom-5 right-5 flex flex-col gap-1 rounded-2xl px-4 py-3 text-sm font-black lg:bottom-[5dvh] ${
+        over || !p ? 'bg-tile-ink text-tile-cream' : PLAYER_ON[p]
+      }`}
+      style={over || !p ? undefined : { backgroundColor: playerVar(p) }}
+    >
+      <span className="text-md">{tipText}</span>
+      {breakWallText && <span className="text-xs opacity-80">{breakWallText}</span>}
     </div>
   )
 })
