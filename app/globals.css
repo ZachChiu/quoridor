@@ -2,9 +2,32 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Lucide 的線條圖示預設 stroke-width 是 2，在這套厚描邊的版面裡顯得細。
+   CSS 的優先權高於 SVG 的表現屬性，所以這條會蓋過內建值。
+   只命中 stroke="currentColor"（Lucide），不會影響其他 SVG。 */
+svg[stroke="currentColor"] {
+  stroke-width: 2.4;
+}
+
+/* 思源黑體繁中，可變字重 400–900。
+   用 Google Fonts 的 text= 參數做子集：只含這個 App 實際用到的 599 個字元，
+   一支 174 KB 的檔涵蓋全部字重。完整的 Noto Sans TC 光一個字重就好幾 MB，
+   而這套視覺的力道有一半來自極粗的中文標題，沒有 900 就不成立。 */
+@font-face {
+  font-family: 'Noto Sans TC Subset';
+  src: url('/fonts/noto-sans-tc-var.woff2') format('woff2');
+  font-weight: 400 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+
 :root {
   /* 色票取自參考稿的實際取樣值：厚描邊 + 飽和色塊 + 奶油底的平面風格。
      所有顏色都走 CSS 變數，換色只需要改這一段。 */
+  --font-app: 'Noto Sans TC Subset', system-ui, -apple-system, 'PingFang TC',
+    'Microsoft JhengHei', sans-serif;
+
   --background: #e8e1d7;
   --foreground: #1a1613;
 
@@ -47,6 +70,35 @@
   --player-C-800: #8c6931;
   --player-C-900: #6d5228;
 
+  /* 輔色：只用在 Modal 的分節圖示與提示狀態。同樣取自參考圖，
+     不用 Tailwind 預設的 red-500 / purple-500 —— 那些彩度比這套色票高一截，
+     混在一起會讓畫面看起來像兩套設計。 */
+  --accent-green: #58904f;
+  --accent-green-100: #dceada;
+  --accent-green-700: #3f6a38;
+  --accent-purple: #7e5891;
+
+  /* 撞色磁磚。每一塊的文字色都量過對比度（見下方註記），全部通過 AA。
+     暖色（琥珀／橘）配黑墨、冷色（藍／紫／深綠）配米白 —— 這是對比度算出來的
+     結果，不是憑感覺挑的。 */
+  /* 以 RGB 通道儲存，而不是 hex。
+     Tailwind 的透明度修飾詞會展開成 rgb(var(--x) / <alpha-value>)，
+     變數若是 hex 就組不出合法的 CSS —— bg-tile-ink/30 會整條不產生，
+     而且不會報錯，只是安靜地變透明。 */
+  --tile-amber: 233 175 76;   /* #e9af4c 黑墨 9.6:1 */
+  --tile-orange: 223 108 63;  /* #df6c3f 黑墨 5.7:1 */
+  --tile-blue: 58 120 171;    /* #3a78ab 米白 4.4:1 */
+  --tile-purple: 126 88 145;  /* #7e5891 米白 5.3:1 */
+  --tile-red: 205 70 66;     /* #cd4642 米白 4.3:1 */
+  --tile-forest: 46 100 74;  /* #2e644a 米白 6.5:1 */
+  --tile-ink: 20 16 16;
+  --tile-cream: 250 247 240;
+
+  /* 棋盤格線。刻意比 --tile-ink 淺一階（#3a322c）：
+     格線是背景、牆才是主角，格線若跟牆一樣重，盤面會讀不出層次。 */
+  --board-line: 58 50 44;
+  --ink-soft: #6b5c4d;   /* 副標用；奶油底上 5.4:1 */
+
   /* 面板與按鈕。低階是紙色（面板用），高階是飽和的暖色塊（按鈕用）—— 
      對應參考稿裡「奶油底 + 橘黃磁磚」的關係。 */
   --primary: #f3ede1;
@@ -68,7 +120,7 @@
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-app);
 }
 
 @keyframes breathe {
@@ -84,6 +136,14 @@ body {
 .animate-shine {
   animation: shine 1s ease-in-out infinite;
 }
+
+/* 輪到誰，那條比分條就呼吸。刻意只動亮度不動大小 ——
+   breathe 帶 scale(0.8)，套在長方形上會讓兩條寬度對不齊。 */
+@keyframes bar-breathe {
+  0%, 100% { filter: brightness(1); }
+  50%      { filter: brightness(1.16); }
+}
+.animate-active-bar { animation: bar-breathe 1.6s ease-in-out infinite; }
 
 .animate-pulse-shine {
   animation: breathe 1.5s ease-in-out infinite, shine 1s ease-in-out infinite;

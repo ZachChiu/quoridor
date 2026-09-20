@@ -13,6 +13,27 @@ export default {
         'landscape': {'raw': '(orientation: landscape)'},
       },
       colors: {
+        // Tailwind 預設的 gray-900 是帶藍的 #111827，壓在奶油底上偏冷。
+        // 描邊與硬陰影全站都吃這一階，換成暖黑就整體對齊了。
+        gray: { 900: "#141010" },
+        "ink-soft": "var(--ink-soft)",
+        "accent-green": {
+          DEFAULT: "var(--accent-green)",
+          100: "var(--accent-green-100)",
+          700: "var(--accent-green-700)",
+        },
+        "accent-purple": "var(--accent-purple)",
+        tile: {
+          amber: "rgb(var(--tile-amber) / <alpha-value>)",
+          orange: "rgb(var(--tile-orange) / <alpha-value>)",
+          blue: "rgb(var(--tile-blue) / <alpha-value>)",
+          purple: "rgb(var(--tile-purple) / <alpha-value>)",
+          red: "rgb(var(--tile-red) / <alpha-value>)",
+          forest: "rgb(var(--tile-forest) / <alpha-value>)",
+          ink: "rgb(var(--tile-ink) / <alpha-value>)",
+          cream: "rgb(var(--tile-cream) / <alpha-value>)",
+        },
+        "board-line": "rgb(var(--board-line) / <alpha-value>)",
         background: "var(--background)",
         foreground: "var(--foreground)",
         "player-A": {
