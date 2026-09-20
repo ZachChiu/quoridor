@@ -5,6 +5,7 @@ import "./globals.css";
 import AnalyticsProvider from "./providers/analytics-provider";
 import { GameProvider } from "./contexts/GameContext";
 import { RuleModalProvider } from "./contexts/RuleModalContext";
+import { TransitionProvider } from "./contexts/TransitionContext";
 import { UserProvider } from "./contexts/UserContext";
 import RuleModal from "./components/RuleModal";
 
@@ -81,6 +82,7 @@ export default function RootLayout({
       >
         <UserProvider>
           <RuleModalProvider>
+            <TransitionProvider>
             <GameProvider>
               {children}
               <RuleModal />
@@ -91,6 +93,7 @@ export default function RootLayout({
                 <AnalyticsProvider />
               </Suspense>
             </GameProvider>
+            </TransitionProvider>
           </RuleModalProvider>
         </UserProvider>
       </body>

@@ -1,7 +1,7 @@
 'use client'
 import { useState } from "react";
 import { GiBrain, GiMeshNetwork, GiRuleBook, GiTabletopPlayers, GiThreeFriends, GiWireframeGlobe } from "react-icons/gi";
-import { useRouter } from "next/navigation";
+import { useTransition } from "@/contexts/TransitionContext";
 import { trackButtonClick } from "@/utils/analytics";
 // Game Icons（game-icons.net，CC BY 3.0）—— react-icons 已內建，不需另外安裝。
 // 選它而不是線條圖示：參考稿的圖示是實心剪影壓在色塊上，
@@ -26,7 +26,7 @@ import type { PiecePlacement } from "@/types/wgf";
  * 而參考稿的版面本來就是「一眼看完所有選擇」。
  */
 export default function HomeClient() {
-  const router = useRouter();
+  const { navigate, busy } = useTransition();
   const { gameState, setGameState } = useGame();
   const { ensureUser } = useUser();
   const [isCreating, setIsCreating] = useState(false);
@@ -35,14 +35,14 @@ export default function HomeClient() {
 
   const startLocal = (playersNum: number) => {
     setGameState({ ...gameState, playersNum, aiDifficulty: null });
-    router.push('/local');
+    navigate('/local', { title: '遊戲開始' });
     trackButtonClick(`start_local_game_${playersNum}p`);
   };
 
   const startSolo = (aiDifficulty: Difficulty) => {
     setSoloOpen(false);
     setGameState({ ...gameState, playersNum: 2, aiDifficulty });
-    router.push('/local');
+    navigate('/local', { title: '遊戲開始' });
     trackButtonClick(`start_solo_game_${aiDifficulty}`);
   };
 
@@ -74,7 +74,7 @@ export default function HomeClient() {
 
       const roomId = await createRoom(playersNum as 2 | 3, 'A', player, initialWgf);
       setGameState({ ...gameState, playersNum, aiDifficulty: null });
-      router.push(`/match#roomId=${roomId}`);
+      navigate(`/match#roomId=${roomId}`, { title: '遊戲開始' });
       trackButtonClick(`start_connect_game_${playersNum}p`);
     } finally {
       setIsCreating(false);
@@ -82,7 +82,7 @@ export default function HomeClient() {
   };
 
   // 不再以「已登入」當作可否點擊的條件 —— 現在是按下去才登入。
-  const online = isCreating;
+  const online = isCreating || busy;
 
   return (
     /*
