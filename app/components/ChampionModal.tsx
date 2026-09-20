@@ -3,16 +3,18 @@ import React, { useMemo } from 'react';
 import { GiLaurelCrown, GiScales } from "react-icons/gi";
 import Modal from './Modal';
 import Button from './Button';
-import { PLAYER_NAME, PLAYER_ON, playerVar, type PlayerKey } from '@/config/players';
+import { PLAYER_ON, playerVar, type PlayerKey } from '@/config/players';
 
 import { Player } from '@/types/chessboard';
+import { useGameText } from '@/i18n/LocaleProvider';
+import { fmt } from '@/i18n/content/game';
 
 interface ChampionModalProps {
   winners: (Player | 'draw')[];
   isOpen: boolean;
   uniqTerritories: { A: string[]; B: string[]; C?: string[] };
   onClose: () => void;
-  /** 省略時不顯示「再來一局」。連線模式沒有本地重開 —— 重開要雙方同意。 */
+  /** 省略時不顯示「{g.champion.playAgain}」。連線模式沒有本地重開 —— 重開要雙方同意。 */
   onRestart?: () => void;
   /** 打開回饋表單。剛玩完是唯一還記得剛剛發生什麼的時刻。 */
   onFeedback?: () => void;
@@ -28,6 +30,7 @@ interface ChampionModalProps {
 const ChampionModal: React.FC<ChampionModalProps> = ({
   winners, isOpen, uniqTerritories, onClose, onRestart, onFeedback,
 }) => {
+  const g = useGameText();
   const isDraw = !winners?.length || winners[0] === 'draw';
   const winnerKeys = useMemo(
     () => (isDraw ? [] : (winners as PlayerKey[])),
@@ -44,14 +47,15 @@ const ChampionModal: React.FC<ChampionModalProps> = ({
   }, [uniqTerritories]);
 
   const title = isDraw
-    ? '平局'
-    : `${winnerKeys.map((w) => PLAYER_NAME[w]).join('、')}勝利`;
+    ? g.champion.draw
+    : fmt(g.champion.win, { names: winnerKeys.map((w) => g.players[w]).join('、') });
 
   const message = isDraw
-    ? '大家佔領的地盤一樣多，這局不分高下。'
-    : `恭喜${winnerKeys.map((w) => PLAYER_NAME[w]).join('、')}${
-        winnerKeys.length > 1 ? '並列第一' : '拿下這局'
-      }。`;
+    ? g.champion.drawBody
+    : fmt(g.champion.congrats, {
+        names: winnerKeys.map((w) => g.players[w]).join('、'),
+        suffix: winnerKeys.length > 1 ? g.champion.tied : g.champion.took,
+      });
 
   // 單一勝方才用他的顏色；並列或平局沒有代表色，回到深墨。
   const solo = !isDraw && winnerKeys.length === 1 ? winnerKeys[0] : null;
@@ -62,7 +66,7 @@ const ChampionModal: React.FC<ChampionModalProps> = ({
       onClose={onClose}
       title={title}
       icon={isDraw ? GiScales : GiLaurelCrown}
-      kicker="對局結束"
+      kicker={g.champion.matchOver}
       band={solo
         ? { style: { backgroundColor: playerVar(solo) }, fg: PLAYER_ON[solo] }
         : { className: 'bg-tile-ink', fg: 'text-tile-cream' }}
@@ -72,16 +76,16 @@ const ChampionModal: React.FC<ChampionModalProps> = ({
               但也不能藏到別的頁面去：離開這個畫面就沒人會回頭找它了。 */}
           {onFeedback && (
             <Button color="text-ink-soft hover:bg-tile-ink/[0.06] bg-transparent" handleClickEvent={onFeedback}>
-              給點意見
+              {g.champion.feedback}
             </Button>
           )}
           <Button color="text-ink-soft hover:bg-tile-ink/[0.06] bg-transparent" handleClickEvent={onClose}>
-            看看棋盤
+            {g.champion.seeBoard}
           </Button>
           {/* 深墨而非琥珀：三人局的黃方比分條就是琥珀，緊鄰著放會被讀成同一件事。
               深墨不屬於任何玩家，在這面彩色的板子上永遠不會撞色。 */}
           {onRestart && (
-            <Button color="bg-tile-ink text-tile-cream" handleClickEvent={onRestart}>再來一局</Button>
+            <Button color="bg-tile-ink text-tile-cream" handleClickEvent={onRestart}>{g.champion.playAgain}</Button>
           )}
         </>
       }
@@ -101,10 +105,10 @@ const ChampionModal: React.FC<ChampionModalProps> = ({
               } ${won ? 'py-4 text-base' : 'py-2.5 text-sm'}`}
               style={{ backgroundColor: playerVar(player) }}
             >
-              {won && !isDraw && <GiLaurelCrown className="shrink-0 text-2xl" aria-label="勝方" />}
-              <span className="flex-1">{PLAYER_NAME[player]}</span>
+              {won && !isDraw && <GiLaurelCrown className="shrink-0 text-2xl" aria-label={g.champion.winner} />}
+              <span className="flex-1">{g.players[player]}</span>
               <span className={`leading-none ${won ? 'text-2xl' : 'text-lg'}`}>{count}</span>
-              <span className="text-xs font-bold opacity-80">格</span>
+              <span className="text-xs font-bold opacity-80">{g.champion.squares}</span>
             </div>
           );
         })}

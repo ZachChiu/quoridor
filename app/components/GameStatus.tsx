@@ -1,6 +1,7 @@
 import React from "react";
 import { PLAYER_ON, playerVar, type PlayerKey } from "@/config/players";
 import type { Player } from "@/types/chessboard";
+import { useGameText } from '@/i18n/LocaleProvider';
 
 interface Props {
   isLock: boolean;
@@ -22,6 +23,7 @@ interface Props {
  * 對開了 prefers-reduced-motion 的人也等於沒有。
  */
 export default React.memo(function GameStatus({ isLock, currentPlayer, uniqTerritories, playersNum }: Props) {
+  const g = useGameText();
   const players: PlayerKey[] = playersNum === 3 ? ['A', 'B', 'C'] : ['A', 'B'];
 
   return (
@@ -36,7 +38,7 @@ export default React.memo(function GameStatus({ isLock, currentPlayer, uniqTerri
             } ${active ? 'animate-active-bar w-[8.75rem]' : 'w-[7.5rem]'}`}
             style={{ backgroundColor: playerVar(p) }}
           >
-            <span>已佔領</span>
+            <span>{g.status.claimed}</span>
             <span className="text-lg leading-none">{uniqTerritories[p]?.length || 0}</span>
           </div>
         );

@@ -3,6 +3,7 @@ import React, { createContext, useContext } from 'react';
 import type { Locale } from './locales';
 import { DEFAULT_LOCALE } from './locales';
 import { getMessages, type Messages } from './index';
+import { GAME_TEXT, type GameText } from './content/game';
 
 /**
  * 讓 client component 拿得到字典。
@@ -13,12 +14,12 @@ import { getMessages, type Messages } from './index';
  *
  * 值由 server 端決定後傳進來，所以不會有「client 先畫錯語言再修正」的閃動。
  */
-type Ctx = { locale: Locale; t: Messages };
+type Ctx = { locale: Locale; t: Messages; g: GameText };
 const LocaleContext = createContext<Ctx | null>(null);
 
 export function LocaleProvider({ locale, children }: { locale: Locale; children: React.ReactNode }) {
   return (
-    <LocaleContext.Provider value={{ locale, t: getMessages(locale) }}>
+    <LocaleContext.Provider value={{ locale, t: getMessages(locale), g: GAME_TEXT[locale] }}>
       {children}
     </LocaleContext.Provider>
   );
@@ -29,8 +30,10 @@ function useCtx(): Ctx {
   // 沒有 provider 時退回預設語系而不是拋錯。i18n 不該是「忘了包就整頁白掉」
   // 的那種相依 —— 退回中文至少畫面還在，而漏包這件事在 build 的頁面上
   // 一眼就看得出來。
-  return ctx ?? { locale: DEFAULT_LOCALE, t: getMessages(DEFAULT_LOCALE) };
+  return ctx ?? { locale: DEFAULT_LOCALE, t: getMessages(DEFAULT_LOCALE), g: GAME_TEXT[DEFAULT_LOCALE] };
 }
 
 export const useLocale = (): Locale => useCtx().locale;
 export const useMessages = (): Messages => useCtx().t;
+/** 遊戲內 UI 的字串。與 useMessages 分開，因為兩者的改動頻率不一樣。 */
+export const useGameText = (): GameText => useCtx().g;

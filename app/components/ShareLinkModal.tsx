@@ -3,9 +3,10 @@ import React, { useState } from 'react';
 import { GiCheckMark, GiShare } from "react-icons/gi";
 import { LuCopy, LuShare2 } from "react-icons/lu";
 import Modal from './Modal';
-import { PLAYER_NAME, playerVar, type PlayerKey } from '@/config/players';
+import { playerVar, type PlayerKey } from '@/config/players';
 import { useWebShare, share } from '@/hook/useWebShare';
 import { trackButtonClick } from '@/utils/analytics';
+import { useGameText } from '@/i18n/LocaleProvider';
 
 interface Props {
   isOpen: boolean;
@@ -27,6 +28,7 @@ const SEATS: PlayerKey[] = ['A', 'B', 'C'];
  * 盤面上的棋子對得起來。
  */
 const ShareLinkModal: React.FC<Props> = ({ isOpen, shareUrl, joinedCount, totalCount, onClose }) => {
+  const g = useGameText();
   const [copied, setCopied] = useState(false);
   const canShare = useWebShare();
 
@@ -40,8 +42,8 @@ const ShareLinkModal: React.FC<Props> = ({ isOpen, shareUrl, joinedCount, totalC
     // 網址只放 url，不要在 text 裡再寫一次 —— 有些平台會把兩者串起來，
     // 於是同一個連結出現兩次。
     await share({
-      title: '牆壁圍棋 Wall Go',
-      text: '我開了一間房，點連結直接加入對局！',
+      title: g.share.shareTitle,
+      text: g.share.shareText,
       url: shareUrl,
     });
   };
@@ -64,12 +66,12 @@ const ShareLinkModal: React.FC<Props> = ({ isOpen, shareUrl, joinedCount, totalC
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="邀請朋友加入"
-      kicker="連線對戰"
+      title={g.share.heading}
+      kicker={g.share.kicker}
       icon={GiShare}
       band={{ className: 'bg-tile-blue', fg: 'text-tile-cream' }}
     >
-      <p className="text-sm leading-relaxed">把連結傳給朋友，他們點開就會直接坐進這間房。</p>
+      <p className="text-sm leading-relaxed">{g.share.body}</p>
 
 
       <div className="mt-4 flex items-center gap-2 rounded-xl bg-primary-50 p-2 pl-4">
@@ -77,13 +79,13 @@ const ShareLinkModal: React.FC<Props> = ({ isOpen, shareUrl, joinedCount, totalC
         <button
           type="button"
           onClick={handleCopy}
-          aria-label={copied ? '已複製' : '複製連結'}
+          aria-label={copied ? g.share.copied : g.share.copyAria}
           className={`flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-black transition ${
             copied ? 'bg-tile-forest text-tile-cream' : 'bg-tile-amber text-tile-ink hover:brightness-95'
           }`}
         >
           {copied ? <GiCheckMark /> : <LuCopy />}
-          {copied ? '已複製' : '複製'}
+          {copied ? g.share.copied : g.share.copy}
         </button>
       </div>
 
@@ -96,7 +98,7 @@ const ShareLinkModal: React.FC<Props> = ({ isOpen, shareUrl, joinedCount, totalC
           className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-tile-blue px-4 py-3 text-base font-black text-tile-cream transition active:scale-[0.98]"
         >
           <LuShare2 className="text-lg" aria-hidden="true" />
-          分享連結
+          {g.share.share}
         </button>
       )}
 
@@ -110,7 +112,7 @@ const ShareLinkModal: React.FC<Props> = ({ isOpen, shareUrl, joinedCount, totalC
                 style={joined ? { backgroundColor: playerVar(p) } : undefined}
               />
               <span className={`text-xs font-bold ${joined ? '' : 'text-ink-soft'}`}>
-                {joined ? PLAYER_NAME[p] : '等待中'}
+                {joined ? g.players[p] : g.share.waiting}
               </span>
             </div>
           );

@@ -1,19 +1,9 @@
-import type { Metadata } from "next";
-import PlayClient from '@/components/PlayClient';
+import type { Metadata } from 'next';
+import LocalView from '@/views/LocalView';
+import { getMessages } from '@/i18n';
 
-export const generateMetadata = async (): Promise<Metadata> => {
-  return {
-    title: "遊戲對戰",
-  };
-};
+export const metadata: Metadata = { title: getMessages('zh-TW').local.metaTitle };
 
-export default function Local() {
-  return (
-    <div className="flex min-h-screen items-center justify-center gap-16 overflow-hidden font-[family-name:var(--font-app)]">
-      <main className="flex flex-1 items-center justify-center gap-8">
-        <h1 className="hidden">遊戲對戰 | 牆壁圍棋 Wall Go</h1>
-        <PlayClient />
-      </main>
-    </div>
-  );
+export default function LocalPage() {
+  return <LocalView locale="zh-TW" />;
 }

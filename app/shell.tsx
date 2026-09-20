@@ -64,6 +64,14 @@ export function Shell({ locale, children }: { locale: Locale; children: React.Re
 }
 
 /** 與語系無關的 metadata（圖示、作者、metadataBase…），兩個 root layout 共用。 */
+/*
+  只放**與語系無關**的欄位（圖示、metadataBase、作者…）。
+
+  標題、描述、keywords、openGraph、twitter 全部交給 i18n/metadata.ts
+  依語系產生。留在這裡的話，任何忘記自訂 metadata 的新頁面都會
+  安靜地掛上中文 og —— 而 og 不會出現在畫面上，要等到別人分享出去
+  才會有人發現。
+*/
 export const baseMetadata: Metadata = {
   metadataBase: new URL(process.env.SITE_URL || 'https://quoridorgame.com'),
   /*
@@ -79,11 +87,6 @@ export const baseMetadata: Metadata = {
        只會讓那句話讀起來像機器寫的。改成講清楚這是什麼、怎麼玩、
        要不要註冊 —— 那才是點不點進來的依據。
   */
-  title: {
-    default: "牆壁圍棋 Wall Go 線上免費玩 | 2-3 人策略圈地遊戲",
-    template: "%s | 牆壁圍棋 Wall Go"
-  },
-  description: "Netflix《魔鬼的計謀：死亡密室》裡的牆壁圍棋，線上免費玩。移動棋子、築牆圈地，地盤大的人獲勝。支援 2-3 人對戰、單人挑戰電腦與連線對局，免下載免註冊。",
   icons: {
     // SVG 優先（可無限縮放、檔案最小），.ico 是舊瀏覽器與「直接抓 /favicon.ico」
     // 那類行為的保底。兩者同一份設計，換版時要一起換。
@@ -98,7 +101,6 @@ export const baseMetadata: Metadata = {
   // 關鍵字欄位對 Google 早已無效，留著是給其他索引器看的。
   // 只保留真的描述這個遊戲的詞 —— 塞「圍棋」「迷宮遊戲」這種
   // 只是沾邊的字，對排名沒幫助，對點進來的人是誤導。
-  keywords: ["牆壁圍棋", "Wall Go", "魔鬼的計謀", "死亡密室", "圈地遊戲", "策略遊戲", "線上桌遊"],
   authors: [{ name: "Zach Chiu" }],
   creator: "Zach Chiu",
   publisher: "Zach Chiu",
@@ -106,27 +108,5 @@ export const baseMetadata: Metadata = {
     email: false,
     address: false,
     telephone: false,
-  },
-  openGraph: {
-    type: "website",
-    locale: "zh_TW",
-    url: process.env.SITE_URL,
-    title: "牆壁圍棋 Wall Go 線上免費玩",
-    description: "Netflix《魔鬼的計謀：死亡密室》裡的牆壁圍棋。築牆圈地，地盤大的人獲勝。2-3 人對戰、單人挑戰電腦，免下載免註冊。",
-    siteName: "牆壁圍棋 Wall Go",
-    images: [
-      {
-        url: `/og-image.png`,
-        width: 1200,
-        height: 630,
-        alt: "牆壁圍棋 Wall Go —— 7x7 棋盤上紅藍雙方以牆圍出各自地盤",
-      },
-    ],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "牆壁圍棋 Wall Go 線上免費玩",
-    description: "Netflix《魔鬼的計謀：死亡密室》裡的牆壁圍棋。築牆圈地，地盤大的人獲勝。免下載免註冊。",
-    images: [`/og-image.png`],
   },
 };

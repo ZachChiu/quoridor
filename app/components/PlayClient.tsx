@@ -45,6 +45,9 @@ import {
 import { evaluate } from "@/game/score";
 import type { GameState, PlayerKey, WallDir } from "@/game/types";
 import type { Turn } from "@/game/engine";
+import { useGameText, useLocale } from '@/i18n/LocaleProvider';
+import { localePath } from '@/i18n/locales';
+import { fmt } from '@/i18n/content/game';
 
 type OnlinePhase = 'initializing' | 'waiting' | 'playing' | 'error';
 
@@ -139,6 +142,8 @@ export default function PlayClient({ roomId }: PlayClientProps) {
 
   // 手機築牆時底部會升起方向控制盤，底部的狀態膠囊要讓位。
   // 條件與 Chessboard 共用同一個判斷，不各寫一份。
+  const g = useGameText();
+  const locale = useLocale();
   const isCoarse = useCoarsePointer();
   const wallPadOpen = wallPadVisible({
     coarse: isCoarse, locked: isLock, placing: isPlacing, hasSelection: !!state.selected,
@@ -210,7 +215,7 @@ export default function PlayClient({ roomId }: PlayClientProps) {
         const existing = await getRoom(roomId!);
         if (cancelled) return;
         if (!existing) {
-          setError('不存在的對局');
+          setError(g.play.noRoom);
           setPhase('error');
           return;
         }
@@ -225,13 +230,13 @@ export default function PlayClient({ roomId }: PlayClientProps) {
         } else {
           const next = slots.find(s => !existing.players[s]);
           if (!next) {
-            setError('房間已滿，無法加入');
+            setError(g.play.roomFull);
             setPhase('error');
             return;
           }
           const player: RoomPlayer = {
             uid,
-            displayName: `玩家 ${uid.slice(0, 4).toUpperCase()}`,
+            displayName: fmt(g.play.playerName, { id: uid.slice(0, 4).toUpperCase() }),
             joinedAt: Date.now(),
           };
           await joinRoom(roomId!, next, player);
@@ -255,7 +260,7 @@ export default function PlayClient({ roomId }: PlayClientProps) {
         if (assignedKey === 'A') setShareModalOpen(true);
       } catch (e) {
         console.error(e);
-        setError('連線失敗，請重新整理後再試');
+        setError(g.play.connectFail);
         setPhase('error');
       }
     })();
@@ -267,7 +272,7 @@ export default function PlayClient({ roomId }: PlayClientProps) {
 
         dev 的 StrictMode 會刻意讓 effect 跑「掛載 → 卸載 → 再掛載」。
         第一次掛載把 initialized 設成 true，卸載後第二次掛載就被自己的
-        守衛擋掉 —— 於是連線初始化永遠不會執行，畫面卡在「正在連線…」。
+        守衛擋掉 —— 於是連線初始化永遠不會執行，畫面卡在「{g.play.connecting}」。
 
         production build 沒有這個雙呼叫，所以只有 npm run dev 會卡住，
         只測 build 產物完全看不到。這個旗標本來是防「deps 變動時重複初始化」，
@@ -276,7 +281,9 @@ export default function PlayClient({ roomId }: PlayClientProps) {
       initialized.current = false;
       unsubscribe?.();
     };
-  }, [isOnline, roomId, ensureUser]);
+    // g 是模組層常數（GAME_TEXT[locale]），同一語系下參考不變 ——
+    // 加進依賴不會讓這個連線 effect 重跑。
+  }, [isOnline, roomId, ensureUser, g]);
 
   // 讀路徑：Firebase 上的 WGF 有變且非自己寫入的，就從空棋盤完整重建
   useEffect(() => {
@@ -368,7 +375,7 @@ export default function PlayClient({ roomId }: PlayClientProps) {
     return (
       <div className="flex items-center gap-3 text-lg">
         <div className="size-4 animate-spin rounded-full border-2 border-gray-900 border-t-transparent"></div>
-        正在連線…
+        {g.play.connecting}
       </div>
     );
   }
@@ -377,7 +384,7 @@ export default function PlayClient({ roomId }: PlayClientProps) {
     return (
       <div className="flex flex-col items-center gap-6">
         <p className="text-lg text-red-500">{error}</p>
-        <Link href="/" className="underline hover:opacity-70">返回首頁</Link>
+        <Link href="/" className="underline hover:opacity-70">{g.play.backHome}</Link>
       </div>
     );
   }
@@ -398,7 +405,7 @@ export default function PlayClient({ roomId }: PlayClientProps) {
       <div className="fixed left-5 top-5 z-50 flex flex-col gap-3">
         <button
           type="button"
-          aria-label="回首頁"
+          aria-label={g.play.home}
           onClick={(e) => {
             // 圓從這顆鈕的中心擴散出去 —— 它本身就是圓的，起點天生吻合。
             //
@@ -406,7 +413,7 @@ export default function PlayClient({ roomId }: PlayClientProps) {
             // 而且終點是首頁的奶油底，色調連得上。試過深墨，整片黑太重 ——
             // 進場的顏色代表「你選了什麼」，離場不該比進場還搶戲。
             const r = e.currentTarget.getBoundingClientRect();
-            navigate('/', {
+            navigate(localePath(locale, '/'), {
               wipe: {
                 x: r.left + r.width / 2,
                 y: r.top + r.height / 2,
@@ -426,7 +433,7 @@ export default function PlayClient({ roomId }: PlayClientProps) {
           className="rounded-full bg-primary-50 p-3.5 text-2xl text-tile-ink transition hover:brightness-95 active:scale-95">
           <GiHouse />
         </button>
-        <IconButton color="bg-primary-50 text-tile-ink" handleClickEvent={handleRuleBtnOpen} label="遊玩方式">
+        <IconButton color="bg-primary-50 text-tile-ink" handleClickEvent={handleRuleBtnOpen} label={g.play.howToPlay}>
           <GiRuleBook />
         </IconButton>
       </div>
@@ -506,7 +513,7 @@ export default function PlayClient({ roomId }: PlayClientProps) {
                 wgf: toWgf(state),
                 mode: isOnline ? 'online' : aiDifficulty ? 'ai' : 'local',
                 playersNum,
-                result: outcome.join('/') || '未結束',
+                result: outcome.join('/') || g.play.unfinished,
                 ua: typeof navigator !== 'undefined' ? navigator.userAgent : '',
                 viewport: typeof window !== 'undefined'
                   ? `${window.innerWidth}x${window.innerHeight}@${window.devicePixelRatio}` : '',

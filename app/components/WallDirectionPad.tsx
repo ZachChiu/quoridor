@@ -1,6 +1,8 @@
 'use client';
 import React from 'react';
 import type { Direction } from '@/types/chessboard';
+import { useGameText } from '@/i18n/LocaleProvider';
+import { fmt } from '@/i18n/content/game';
 
 /**
  * 手機用的築牆控制盤。
@@ -26,7 +28,6 @@ type Props = {
 };
 
 const ARROW: Record<Direction, string> = { top: 'M12 5v14M5 12l7-7 7 7', bottom: 'M12 19V5M5 12l7 7 7-7', left: 'M19 12H5M12 5l-7 7 7 7', right: 'M5 12h14M12 5l7 7-7 7' };
-const LABEL: Record<Direction, string> = { top: '上方', bottom: '下方', left: '左方', right: '右方' };
 // grid 位置：十字排列，中央留給確認鍵
 const POS: Record<Direction, string> = { top: 'col-start-2 row-start-1', bottom: 'col-start-2 row-start-3', left: 'col-start-1 row-start-2', right: 'col-start-3 row-start-2' };
 
@@ -43,6 +44,8 @@ export const wallPadVisible = (o: {
 }) => o.coarse && !o.locked && !o.placing && o.hasSelection;
 
 export default function WallDirectionPad({ legal, pending, onPick, onConfirm, color }: Props) {
+  const g = useGameText();
+  const LABEL: Record<Direction, string> = { top: g.pad.top, bottom: g.pad.bottom, left: g.pad.left, right: g.pad.right };
   const any = (Object.keys(legal) as Direction[]).some((d) => legal[d]);
   if (!any) return null;
 
@@ -50,10 +53,10 @@ export default function WallDirectionPad({ legal, pending, onPick, onConfirm, co
     <div
       className="bg-primary-50/95 fixed inset-x-0 bottom-0 z-40 flex items-center justify-center gap-4 border-t-2 border-tile-ink/10 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur"
       role="group"
-      aria-label="築牆方向"
+      aria-label={g.pad.heading}
     >
       <p className="max-w-36 text-sm font-bold leading-snug text-ink-soft">
-        {pending ? `要在${LABEL[pending]}築牆` : '選一個方向築牆'}
+        {pending ? fmt(g.pad.pending, { side: LABEL[pending] }) : g.pad.pick}
       </p>
 
       <div className="grid grid-cols-3 grid-rows-3 gap-1">
@@ -62,7 +65,7 @@ export default function WallDirectionPad({ legal, pending, onPick, onConfirm, co
             key={dir}
             type="button"
             disabled={!legal[dir]}
-            aria-label={`選擇${LABEL[dir]}`}
+            aria-label={fmt(g.pad.choose, { side: LABEL[dir] })}
             aria-pressed={pending === dir}
             onClick={() => onPick(dir)}
             className={`${POS[dir]} grid size-12 place-items-center rounded-xl transition
@@ -80,7 +83,7 @@ export default function WallDirectionPad({ legal, pending, onPick, onConfirm, co
         <button
           type="button"
           disabled={!pending}
-          aria-label="確定築牆"
+          aria-label={g.pad.confirm}
           onClick={onConfirm}
           className="col-start-2 row-start-2 grid size-12 place-items-center rounded-xl bg-tile-ink text-tile-cream transition enabled:active:scale-95 disabled:opacity-20"
         >

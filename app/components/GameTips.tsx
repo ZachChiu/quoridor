@@ -1,7 +1,9 @@
 import React, { useMemo } from "react";
-import { PLAYER_NAME, PLAYER_ON, playerVar, type PlayerKey } from "@/config/players";
+import { PLAYER_ON, playerVar, type PlayerKey } from "@/config/players";
 import type { Player } from "@/types/chessboard";
 import { useGame } from "@/contexts/GameContext";
+import { useGameText } from '@/i18n/LocaleProvider';
+import { fmt } from '@/i18n/content/game';
 
 interface Props {
   isPlacingChess: boolean;
@@ -24,24 +26,25 @@ interface Props {
  * 畫面不會從頭到尾都是同一塊黑。遊戲結束沒有當前玩家，才回到深墨。
  */
 export default React.memo(function GameTips({ isPlacingChess, currentPlayer, winingStatus, breakWallCountObj, aiThinking, shiftUp }: Props) {
+  const g = useGameText();
   const { gameState } = useGame();
   const over = winingStatus.length > 0;
   const p = currentPlayer as PlayerKey | null;
 
   const tipText = useMemo(() => {
     if (over) {
-      const names = winingStatus.map(w => PLAYER_NAME[w as PlayerKey]).filter(Boolean);
-      return winingStatus[0] === 'draw' ? '遊戲結束！' : `遊戲結束！${names.join('、')}勝利！`;
+      const names = winingStatus.map(w => g.players[w as PlayerKey]).filter(Boolean);
+      return winingStatus[0] === 'draw' ? g.tips.over : fmt(g.tips.overWin, { names: names.join('、') });
     }
-    const who = p ? PLAYER_NAME[p] : '';
-    if (aiThinking) return `${who} 思考中…`;
-    return isPlacingChess ? `${who} · 放置棋子` : `${who} · 移動棋子`;
-  }, [isPlacingChess, over, winingStatus, p, aiThinking]);
+    const who = p ? g.players[p] : '';
+    if (aiThinking) return fmt(g.tips.thinking, { who });
+    return isPlacingChess ? fmt(g.tips.placing, { who }) : fmt(g.tips.moving, { who });
+  }, [isPlacingChess, over, winingStatus, p, aiThinking, g]);
 
   const breakWallText = useMemo(() => {
     if (over || isPlacingChess || gameState.playersNum !== 3 || !p) return null;
-    return breakWallCountObj?.[p] > 0 ? '還有一次破牆機會' : '沒有破牆機會';
-  }, [isPlacingChess, over, gameState.playersNum, breakWallCountObj, p]);
+    return breakWallCountObj?.[p] > 0 ? g.tips.breakLeft : g.tips.breakNone;
+  }, [isPlacingChess, over, gameState.playersNum, breakWallCountObj, p, g]);
 
   return (
     <div

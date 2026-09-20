@@ -4,8 +4,10 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import PlayClient from '@/components/PlayClient';
+import { useGameText } from '@/i18n/LocaleProvider';
 
 export default function MatchClient() {
+  const g = useGameText();
   const searchParams = useSearchParams();
   // null ＝ 還沒讀到 hash，'' ＝ 讀完了但沒有 roomId。
   // 兩者必須分開：初次 render 時 effect 還沒跑，若用 '' 當初值會先閃一下錯誤畫面。
@@ -38,17 +40,17 @@ export default function MatchClient() {
     return (
       <div className="flex flex-col items-center gap-5 px-6 text-center">
         <div>
-          <p className="text-xs font-bold tracking-widest text-ink-soft">連線對戰</p>
-          <h2 className="mt-1 text-3xl font-black">這個連結沒有指向任何對局</h2>
+          <p className="text-xs font-bold tracking-widest text-ink-soft">{g.share.kicker}</p>
+          <h2 className="mt-1 text-3xl font-black">{g.play.badLink}</h2>
         </div>
         <p className="text-sm leading-relaxed text-ink-soft">
-          邀請連結可能被截斷了。跟對方要一次完整的連結，或回首頁開一間新的。
+          {g.play.badLinkBody}
         </p>
         <Link
           href="/"
           className="rounded-2xl bg-tile-amber px-6 py-4 text-lg font-black text-tile-ink transition hover:brightness-95 active:scale-[0.98]"
         >
-          回首頁
+          {g.play.backHome}
         </Link>
       </div>
     );

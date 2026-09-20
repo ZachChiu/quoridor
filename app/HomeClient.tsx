@@ -24,7 +24,9 @@ const wipeFrom = ({ rect, color, icon, iconSize, label, kicker, row, iconColor, 
   from: { width: rect.width, height: rect.height, radius: 16 },
   icon, iconSize, label, kicker, row, iconColor, fg,
 });
-import { useMessages } from "@/i18n/LocaleProvider";
+import { useMessages, useGameText, useLocale } from "@/i18n/LocaleProvider";
+import { localePath } from "@/i18n/locales";
+import { fmt } from "@/i18n/content/game";
 import { useGame } from "@/contexts/GameContext";
 import { useRuleModal } from "@/contexts/RuleModalContext";
 import { useUser } from "@/contexts/UserContext";
@@ -44,6 +46,10 @@ import type { PiecePlacement } from "@/types/wgf";
 export default function HomeClient() {
   const { navigate } = useTransition();
   const t = useMessages();
+  const g = useGameText();
+  // 導航要帶語系：/en 按下磁磚必須進 /en/local，不是 /local ——
+  // 否則整個遊戲畫面會掉回中文。
+  const locale = useLocale();
   const { gameState, setGameState } = useGame();
   const { ensureUser } = useUser();
   const [isCreating, setIsCreating] = useState(false);
@@ -57,14 +63,14 @@ export default function HomeClient() {
   */
   const startLocal = (playersNum: number, origin: TileOrigin) => {
     setGameState({ ...gameState, playersNum, aiDifficulty: null });
-    navigate('/local', { wipe: wipeFrom(origin) });
+    navigate(localePath(locale, '/local'), { wipe: wipeFrom(origin) });
     trackButtonClick(`start_local_game_${playersNum}p`);
   };
 
   const startSolo = (aiDifficulty: Difficulty, at: { x: number; y: number }) => {
     setSoloOpen(false);
     setGameState({ ...gameState, playersNum: 2, aiDifficulty });
-    navigate('/solo', { wipe: { ...at, color: TONE_COLOR.orange } });
+    navigate(localePath(locale, '/solo'), { wipe: { ...at, color: TONE_COLOR.orange } });
     trackButtonClick(`start_solo_game_${aiDifficulty}`);
   };
 
@@ -79,7 +85,7 @@ export default function HomeClient() {
       const uid = await ensureUser();
       const player: RoomPlayer = {
         uid,
-        displayName: `玩家 ${uid.slice(0, 4).toUpperCase()}`,
+        displayName: fmt(g.play.playerName, { id: uid.slice(0, 4).toUpperCase() }),
         joinedAt: Date.now(),
       };
 
@@ -96,7 +102,7 @@ export default function HomeClient() {
 
       const roomId = await createRoom(playersNum as 2 | 3, 'A', player, initialWgf);
       setGameState({ ...gameState, playersNum, aiDifficulty: null });
-      navigate(`/match#roomId=${roomId}`, { wipe: wipeFrom(origin) });
+      navigate(`${localePath(locale, '/match')}#roomId=${roomId}`, { wipe: wipeFrom(origin) });
       trackButtonClick(`start_connect_game_${playersNum}p`);
     } finally {
       setIsCreating(false);

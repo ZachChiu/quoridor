@@ -3,6 +3,7 @@ import { LOCALES, DEFAULT_LOCALE, localePath, localeFromPath, stripLocale, toLoc
 import { getMessages } from '@/i18n';
 import { STEP_TEXT } from '@/i18n/content/steps';
 import { FAQ_TEXT } from '@/i18n/content/faq';
+import { GAME_TEXT } from '@/i18n/content/game';
 
 /**
  * 多語內容的一致性。
@@ -120,5 +121,61 @@ describe('網址組合', () => {
     expect(toLocale('en')).toBe('en');
     expect(toLocale('de')).toBe('zh-TW');
     expect(toLocale('')).toBe('zh-TW');
+  });
+});
+
+describe('遊戲內 UI 四語一致', () => {
+  const keys = (o: object, prefix = ''): string[] =>
+    Object.entries(o).flatMap(([k, v]) =>
+      typeof v === 'object' && v !== null ? keys(v, `${prefix}${k}.`) : [`${prefix}${k}`]
+    );
+  const flat = (o: object, prefix = ''): [string, string][] =>
+    Object.entries(o).flatMap(([k, v]) =>
+      typeof v === 'object' && v !== null ? flat(v, `${prefix}${k}.`) : [[`${prefix}${k}`, String(v)] as [string, string]]
+    );
+
+  it('四語的 key 完全一致', () => {
+    const ref = keys(GAME_TEXT[DEFAULT_LOCALE]).sort();
+    for (const l of LOCALES) expect(keys(GAME_TEXT[l]).sort(), l).toEqual(ref);
+  });
+
+  it('沒有空字串', () => {
+    for (const l of LOCALES) {
+      for (const [k, v] of flat(GAME_TEXT[l])) expect(v.trim(), `${l}.${k}`).not.toBe('');
+    }
+  });
+
+  it('佔位符必須跟中文版一模一樣 —— 少一個就會在畫面上印出空白', () => {
+    const ph = (s: string) => (s.match(/\{\w+\}/g) ?? []).sort();
+    const ref = Object.fromEntries(flat(GAME_TEXT[DEFAULT_LOCALE]));
+    for (const l of LOCALES) {
+      if (l === DEFAULT_LOCALE) continue;
+      for (const [k, v] of flat(GAME_TEXT[l])) expect(ph(v), `${l}.${k}`).toEqual(ph(ref[k]));
+    }
+  });
+
+  /*
+    這一條是因為我自己犯過兩次：翻譯到一半留下一個英文單字
+    （「コリドールは competition ではなく」「リンクを friends に送ると」）。
+    混在整段日文裡用眼睛掃真的看不出來，但讀者一眼就會發現。
+
+    允許清單只放真的會原樣出現的專有名詞。
+  */
+  it('日文與韓文裡不該混進英文單字', () => {
+    const allow = /^(Wall|Go|email|CC|BY|ISC|Netflix|Quoridor|AI|CPU)$/i;
+    for (const l of ['ja', 'ko'] as const) {
+      for (const [k, v] of flat(GAME_TEXT[l])) {
+        // 佔位符 {row} 裡的變數名是給程式看的，不是給人讀的文案
+        const words = v.replace(/\{\w+\}/g, '').match(/[A-Za-z]{2,}/g) ?? [];
+        const bad = words.filter((w) => !allow.test(w));
+        expect(bad, `${l}.${k} → 「${v}」`).toEqual([]);
+      }
+      for (const s of STEP_TEXT[l]) {
+        for (const w of (s.body.match(/[A-Za-z]{2,}/g) ?? [])) expect(allow.test(w), `${l} step: ${w}`).toBe(true);
+      }
+      for (const f of FAQ_TEXT[l]) {
+        for (const w of (f.a.match(/[A-Za-z]{2,}/g) ?? [])) expect(allow.test(w), `${l} faq: ${w}`).toBe(true);
+      }
+    }
   });
 });

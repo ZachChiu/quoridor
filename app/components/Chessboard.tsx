@@ -17,8 +17,9 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import SectionShadow from "./SectionShadow";
 import WallDirectionPad, { wallPadVisible } from "./WallDirectionPad";
 import { useCoarsePointer } from "@/hook/useCoarsePointer";
-import { PLAYER_NAME } from "@/config/players";
 import { boardSignature, diffBoard, territoryWave, newWall, pathBetween } from "./boardMotion";
+import { useGameText } from '@/i18n/LocaleProvider';
+import { fmt } from '@/i18n/content/game';
 
 type Props = {
   size: number;
@@ -62,6 +63,7 @@ export default React.memo(function Chessboard({
   // const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 
   const breakWallCount = breakWallCountObj?.[currentPlayer as Exclude<Player, null>];
+  const g = useGameText();
 
   /*
     手指裝置上，築牆改成「先選方向、再確認」。
@@ -390,7 +392,7 @@ export default React.memo(function Chessboard({
         <div
           ref={gridRef}
           role="grid"
-          aria-label="棋盤"
+          aria-label={g.board.label}
           onKeyDown={onGridKeyDown}
           className="grid size-full gap-[var(--board-gap)] overflow-hidden rounded-xl bg-board-line"
           style={
@@ -474,13 +476,13 @@ export default React.memo(function Chessboard({
                   // 49 格各佔一個的話，光是穿過棋盤就要按 49 次 tab。
                   tabIndex={cursor.row === rowIndex && cursor.col === colIndex ? 0 : -1}
                   aria-label={[
-                    `第 ${rowIndex + 1} 列第 ${colIndex + 1} 行`,
-                    cellPlayer ? `${PLAYER_NAME[cellPlayer]}棋子`
-                      : territory ? `${PLAYER_NAME[territory]}領地` : '空格',
-                    isAvailableMove ? '可移動到這裡' : null,
-                    !isLock && isPlacingChess && !cellPlayer ? '可放置棋子' : null,
-                    hasHorizontalWallPlayer ? '下方有牆' : null,
-                    hasVerticalWall ? '右方有牆' : null,
+                    fmt(g.board.cell, { row: rowIndex + 1, col: colIndex + 1 }),
+                    cellPlayer ? fmt(g.board.piece, { player: g.players[cellPlayer] })
+                      : territory ? fmt(g.board.territory, { player: g.players[territory] }) : g.board.empty,
+                    isAvailableMove ? g.board.canMove : null,
+                    !isLock && isPlacingChess && !cellPlayer ? g.board.canPlace : null,
+                    hasHorizontalWallPlayer ? g.board.wallBelow : null,
+                    hasVerticalWall ? g.board.wallRight : null,
                   ].filter(Boolean).join('，')}
                   onClick={() => onClickSelectChess(cellPlayer, rowIndex, colIndex, isAvailableMove)}
                 >
@@ -602,7 +604,7 @@ export default React.memo(function Chessboard({
                       {isHorizontalWallBreakable && (
                         <button
                           type="button"
-                          aria-label="破壞下方的牆"
+                          aria-label={g.board.breakBelow}
                           className="animate-shine absolute left-1/2 top-1/2 z-30 grid size-7 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-tile-ink text-sm text-tile-cream ring-2 ring-primary-50"
                           onClick={(e) => { e.stopPropagation(); onClickBreakWall(rowIndex, colIndex, 'horizontal'); }}
                         >
@@ -621,7 +623,7 @@ export default React.memo(function Chessboard({
                       {isVerticalWallBreakable && (
                         <button
                           type="button"
-                          aria-label="破壞右方的牆"
+                          aria-label={g.board.breakRight}
                           className="animate-shine absolute left-1/2 top-1/2 z-30 grid size-7 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-tile-ink text-sm text-tile-cream ring-2 ring-primary-50"
                           onClick={(e) => { e.stopPropagation(); onClickBreakWall(rowIndex, colIndex, 'vertical'); }}
                         >
@@ -642,7 +644,7 @@ export default React.memo(function Chessboard({
                       {checkWallBuildable(rowIndex, colIndex, 'top') && (
                         <button
                           type="button"
-                          aria-label="在上方築牆"
+                          aria-label={g.board.buildTop}
                           className={`wall-hit-h absolute inset-x-[18%] top-[calc(var(--board-gap)*-0.5)] z-20 h-[9px] -translate-y-1/2 rounded-full transition hover:inset-x-[-3px] hover:opacity-100 ${pendingWall === 'top' ? 'inset-x-[-3px] opacity-100' : 'opacity-70'}`}
                           style={{ backgroundColor: PLAYER_VAR[currentPlayer] }}
                           onClick={(e) => { e.stopPropagation(); onWallEdge(rowIndex, colIndex, 'top'); }}
@@ -651,7 +653,7 @@ export default React.memo(function Chessboard({
                       {checkWallBuildable(rowIndex, colIndex, 'bottom') && (
                         <button
                           type="button"
-                          aria-label="在下方築牆"
+                          aria-label={g.board.buildBottom}
                           className={`wall-hit-h absolute inset-x-[18%] bottom-[calc(var(--board-gap)*-0.5)] z-20 h-[9px] translate-y-1/2 rounded-full transition hover:inset-x-[-3px] hover:opacity-100 ${pendingWall === 'bottom' ? 'inset-x-[-3px] opacity-100' : 'opacity-70'}`}
                           style={{ backgroundColor: PLAYER_VAR[currentPlayer] }}
                           onClick={(e) => { e.stopPropagation(); onWallEdge(rowIndex, colIndex, 'bottom'); }}
@@ -660,7 +662,7 @@ export default React.memo(function Chessboard({
                       {checkWallBuildable(rowIndex, colIndex, 'left') && (
                         <button
                           type="button"
-                          aria-label="在左方築牆"
+                          aria-label={g.board.buildLeft}
                           className={`wall-hit-v absolute inset-y-[18%] left-[calc(var(--board-gap)*-0.5)] z-20 w-[9px] -translate-x-1/2 rounded-full transition hover:inset-y-[-3px] hover:opacity-100 ${pendingWall === 'left' ? 'inset-y-[-3px] opacity-100' : 'opacity-70'}`}
                           style={{ backgroundColor: PLAYER_VAR[currentPlayer] }}
                           onClick={(e) => { e.stopPropagation(); onWallEdge(rowIndex, colIndex, 'left'); }}
@@ -669,7 +671,7 @@ export default React.memo(function Chessboard({
                       {checkWallBuildable(rowIndex, colIndex, 'right') && (
                         <button
                           type="button"
-                          aria-label="在右方築牆"
+                          aria-label={g.board.buildRight}
                           className={`wall-hit-v absolute inset-y-[18%] right-[calc(var(--board-gap)*-0.5)] z-20 w-[9px] translate-x-1/2 rounded-full transition hover:inset-y-[-3px] hover:opacity-100 ${pendingWall === 'right' ? 'inset-y-[-3px] opacity-100' : 'opacity-70'}`}
                           style={{ backgroundColor: PLAYER_VAR[currentPlayer] }}
                           onClick={(e) => { e.stopPropagation(); onWallEdge(rowIndex, colIndex, 'right'); }}

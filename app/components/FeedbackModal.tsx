@@ -4,6 +4,7 @@ import { GiChatBubble } from 'react-icons/gi';
 import Modal from './Modal';
 import Button from './Button';
 import { trackButtonClick } from '@/utils/analytics';
+import { useGameText, useMessages } from '@/i18n/LocaleProvider';
 
 /**
  * 對局結束後的意見回饋。
@@ -21,13 +22,17 @@ type Props = {
   onSubmit: (rating: 1 | 2 | 3, message: string, contact: string) => Promise<void>;
 };
 
-const FACES: { value: 1 | 2 | 3; emoji: string; label: string; tone: string }[] = [
-  { value: 1, emoji: '😖', label: '很卡', tone: 'bg-tile-red text-tile-cream' },
-  { value: 2, emoji: '🙂', label: '還行', tone: 'bg-tile-amber text-tile-ink' },
-  { value: 3, emoji: '🤩', label: '很好玩', tone: 'bg-tile-forest text-tile-cream' },
+const FACES: { value: 1 | 2 | 3; emoji: string; tone: string }[] = [
+  { value: 1, emoji: '😖', tone: 'bg-tile-red text-tile-cream' },
+  { value: 2, emoji: '🙂', tone: 'bg-tile-amber text-tile-ink' },
+  { value: 3, emoji: '🤩', tone: 'bg-tile-forest text-tile-cream' },
 ];
 
 const FeedbackModal: React.FC<Props> = ({ isOpen, onClose, onSubmit }) => {
+  const g = useGameText();
+  const t = useMessages();
+  const closeLabel = t.ui.close;
+  const faceLabels = [g.feedback.bad, g.feedback.ok, g.feedback.good];
   const [rating, setRating] = useState<1 | 2 | 3 | null>(null);
   const [message, setMessage] = useState('');
   const [contact, setContact] = useState('');
@@ -58,23 +63,23 @@ const FeedbackModal: React.FC<Props> = ({ isOpen, onClose, onSubmit }) => {
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={state === 'sent' ? '收到了，謝謝' : '這局玩起來如何？'}
-      kicker="給開發者的話"
+      title={state === 'sent' ? g.feedback.sent : g.feedback.heading}
+      kicker={g.feedback.kicker}
       icon={GiChatBubble}
       band={{ className: 'bg-tile-purple', fg: 'text-tile-cream' }}
       footer={
         state === 'sent' ? (
-          <Button color="bg-tile-ink text-tile-cream" handleClickEvent={onClose}>關閉</Button>
+          <Button color="bg-tile-ink text-tile-cream" handleClickEvent={onClose}>{closeLabel}</Button>
         ) : (
           <>
             <Button color="text-ink-soft hover:bg-tile-ink/[0.06] bg-transparent" handleClickEvent={onClose}>
-              先不要
+              {g.feedback.later}
             </Button>
             <Button
               color={rating ? 'bg-tile-ink text-tile-cream' : 'bg-tile-ink/20 text-tile-ink/40'}
               handleClickEvent={submit}
             >
-              {state === 'sending' ? '送出中…' : '送出'}
+              {state === 'sending' ? g.feedback.sending : g.feedback.submit}
             </Button>
           </>
         )
@@ -82,11 +87,11 @@ const FeedbackModal: React.FC<Props> = ({ isOpen, onClose, onSubmit }) => {
     >
       {state === 'sent' ? (
         <p className="text-sm leading-relaxed">
-          你的這局棋譜也一起送出了，所以我看得到你當下的盤面 —— 不必再描述一次。
+          {g.feedback.sentBody}
         </p>
       ) : (
         <>
-          <div className="flex gap-2" role="radiogroup" aria-label="這局的感覺">
+          <div className="flex gap-2" role="radiogroup" aria-label={g.feedback.ratingLabel}>
             {FACES.map((f) => (
               <button
                 key={f.value}
@@ -99,39 +104,39 @@ const FeedbackModal: React.FC<Props> = ({ isOpen, onClose, onSubmit }) => {
                 }`}
               >
                 <span className="text-2xl leading-none" aria-hidden="true">{f.emoji}</span>
-                {f.label}
+                {faceLabels[f.value - 1]}
               </button>
             ))}
           </div>
 
           <label className="mt-4 block">
-            <span className="text-sm font-bold">哪裡怪怪的？或想說什麼都可以</span>
+            <span className="text-sm font-bold">{g.feedback.messageLabel}</span>
             <textarea
               value={message}
               onChange={(e) => setMessage(e.target.value.slice(0, 800))}
               rows={3}
               className="mt-1.5 w-full resize-none rounded-xl bg-primary-50 p-3 text-sm outline-none ring-tile-ink/30 focus:ring-2"
-              placeholder="例如：三人局有人不能動的時候畫面卡住了"
+              placeholder={g.feedback.placeholder}
             />
           </label>
 
           <label className="mt-3 block">
-            <span className="text-sm font-bold text-ink-soft">想被回覆的話留個聯絡方式（選填）</span>
+            <span className="text-sm font-bold text-ink-soft">{g.feedback.contactLabel}</span>
             <input
               value={contact}
               onChange={(e) => setContact(e.target.value.slice(0, 120))}
               className="mt-1.5 w-full rounded-xl bg-primary-50 p-3 text-sm outline-none ring-tile-ink/30 focus:ring-2"
-              placeholder="email 或任何找得到你的地方"
+              placeholder={g.feedback.contactPlaceholder}
             />
           </label>
 
           <p className="mt-3 text-xs leading-relaxed text-ink-soft">
-            送出時會一併附上這局的棋譜與裝置資訊，我才重現得出你遇到的狀況。
+            {g.feedback.note}
           </p>
 
           {state === 'failed' && (
             <p className="mt-3 rounded-xl bg-tile-red/10 p-3 text-sm font-bold text-tile-red">
-              送不出去 —— 可能是網路斷了。再按一次送出試試。
+              {g.feedback.failed}
             </p>
           )}
         </>
