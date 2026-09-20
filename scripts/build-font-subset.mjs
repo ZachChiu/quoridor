@@ -58,10 +58,18 @@ function stripComments(src) {
   return out;
 }
 
+/**
+ * 測試檔要排除：`it('…')` 的描述是字串不是註解，剝註解剝不掉，
+ * 但那些字一個都不會渲染到畫面上。實測會多帶進 60 幾個字。
+ * Worker 同理 —— 它沒有 UI。
+ */
+const SKIP = /\.test\.tsx?$|[\\/]workers[\\/]/;
+
 function walk(dir) {
   return readdirSync(dir).flatMap((name) => {
     const p = join(dir, name);
     if (statSync(p).isDirectory()) return walk(p);
+    if (SKIP.test(p)) return [];
     return ['.ts', '.tsx'].includes(extname(p)) ? [p] : [];
   });
 }
