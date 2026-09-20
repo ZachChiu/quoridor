@@ -189,6 +189,7 @@ export default function PlayClient({ roomId }: PlayClientProps) {
   useEffect(() => {
     if (!isOnline || initialized.current) return;
     initialized.current = true;
+    // 這道旗標會在 cleanup 裡放掉 —— 見下方的說明。
 
     let unsubscribe: (() => void) | undefined;
     let cancelled = false;
@@ -255,6 +256,18 @@ export default function PlayClient({ roomId }: PlayClientProps) {
 
     return () => {
       cancelled = true;
+      /*
+        必須把旗標放掉。
+
+        dev 的 StrictMode 會刻意讓 effect 跑「掛載 → 卸載 → 再掛載」。
+        第一次掛載把 initialized 設成 true，卸載後第二次掛載就被自己的
+        守衛擋掉 —— 於是連線初始化永遠不會執行，畫面卡在「正在連線…」。
+
+        production build 沒有這個雙呼叫，所以只有 npm run dev 會卡住，
+        只測 build 產物完全看不到。這個旗標本來是防「deps 變動時重複初始化」，
+        放掉它不影響那件事：真的重新初始化時本來就該重跑。
+      */
+      initialized.current = false;
       unsubscribe?.();
     };
   }, [isOnline, roomId, ensureUser]);

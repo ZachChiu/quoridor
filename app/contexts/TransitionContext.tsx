@@ -74,14 +74,29 @@ export const TransitionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     [router]
   );
 
-  // cover 播完 → 切路由
+  /*
+    cover 播完 → 切路由。
+
+    router.push 必須在 updater **外面**。setState 的 updater 是純函式，
+    React 可以重複呼叫、也可以在 render 期間呼叫（dev 的 StrictMode 一定會
+    雙呼叫）—— 把導航放進去就等於在 render 中更新 Router：
+
+      Cannot update a component (`Router`) while rendering a different
+      component (`TransitionProvider`)
+
+    後果是導航被吞掉，動畫照播但頁面沒換，使用者按了連線對戰卻回到原地。
+    production build 沒有 StrictMode，所以只有 npm run dev 會出現 ——
+    這也是為什麼只測 build 產物會漏掉它。
+
+    改成直接讀 closure 裡的 state：這個 callback 只由動畫的 onComplete 呼叫，
+    那時 render 早就結束了，不會有讀到舊值的問題（WipeOverlay 每次 render
+    都把最新的 onDone 同步進 ref）。
+  */
   const handleCovered = useCallback(() => {
-    setState((s) => {
-      if (s.phase !== 'cover' || s.pushed) return s;
-      router.push(s.target);
-      return { ...s, pushed: true };
-    });
-  }, [router]);
+    if (state.phase !== 'cover' || state.pushed) return;
+    router.push(state.target);
+    setState({ ...state, pushed: true });
+  }, [state, router]);
 
   // 新頁面的 pathname 生效 → 掃走。在 render 期間比對而不是用 effect：
   // 後者會多一次 render，中間那一幀是「已經到新頁面但色帶還沒開始掃」。
