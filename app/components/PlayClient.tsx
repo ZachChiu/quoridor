@@ -3,12 +3,12 @@ import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { GiHouse, GiRuleBook } from "react-icons/gi";
 import Link from 'next/link';
 import Chessboard from "@/components/Chessboard";
-import SectionShadow from "@/components/SectionShadow";
 import ChampionModal from "@/components/ChampionModal";
 import GameStatus from "@/components/GameStatus";
 import GameTips from "@/components/GameTips";
 import IconButton from "@/components/IconButton";
 import ShareLinkModal from "@/components/ShareLinkModal";
+import WaitingRoom from "@/components/WaitingRoom";
 
 import type { Player, Direction } from "@/types/chessboard.ts";
 import flatten from 'lodash-es/flatten';
@@ -703,23 +703,11 @@ export default function PlayClient({ roomId }: PlayClientProps) {
 
       {/* 連線模式：等待畫面 */}
       {isOnline && phase === 'waiting' && (
-        <div className="flex flex-col items-center gap-6">
-          <div className="flex items-center gap-3 text-lg">
-            <div className="size-4 animate-spin rounded-full border-2 border-tile-ink border-t-transparent"></div>
-            等待其他玩家加入…
-          </div>
-          <p className="text-sm text-gray-500">
-            {joinedCount} / {totalCount} 玩家已加入
-          </p>
-          <SectionShadow className='!size-auto'>
-            <button
-              onClick={() => setShareModalOpen(true)}
-              className="relative z-10 flex items-center gap-2 rounded-xl bg-tile-amber px-6 py-3 font-black transition hover:brightness-95 active:scale-[0.98]"
-            >
-              分享邀請連結
-            </button>
-          </SectionShadow>
-        </div>
+        <WaitingRoom
+          joinedCount={joinedCount}
+          totalCount={totalCount}
+          onShare={() => setShareModalOpen(true)}
+        />
       )}
 
       {/* 棋盤（本地模式 or 連線模式已開始）*/}
