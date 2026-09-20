@@ -189,14 +189,16 @@ describe('領地計算', () => {
     expect(t.ownerByCell['0,0']).toBe('A');
   });
 
-  it('區域內同時有雙方棋子時不計入任何人', () => {
+  it('區域內同時有雙方棋子時不計入任何人，且歸類為「爭奪中」而非「中立」', () => {
     let s = createGame(2);
     s = runOpening(s, [[3, 3], [3, 4], [0, 0], [6, 6]]);
     const t = computeTerritories(s);
-    // 全盤連通且含 A、B 棋子 → 全為中立，無人得分
+    // 全盤連通且含 A、B 棋子 → 勝負未定，無人得分
     expect(t.owned.A).toEqual([]);
     expect(t.owned.B).toEqual([]);
-    expect(t.neutral).toHaveLength(49);
+    expect(t.contested).toHaveLength(49);
+    // 中立區專指「已封閉且完全沒有棋子」的格子，與爭奪中的區域語意不同
+    expect(t.neutral).toEqual([]);
     expect(t.settled).toBe(false);
   });
 

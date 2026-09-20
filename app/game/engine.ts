@@ -282,6 +282,71 @@ export function placeWall(
   });
 }
 
+// ─── 完整回合（供 AI 搜尋使用）──────────────────────────────────────────────
+
+/**
+ * 一個完整回合：選一顆棋子、移動 0–2 步、蓋一道牆。
+ *
+ * UI 是分步操作的，但 AI 搜尋需要以「整個回合」為單位展開，
+ * 否則同一回合的中間狀態會被當成獨立節點，搜尋深度失去意義。
+ */
+export type Turn = {
+  /** 起始位置。 */
+  from: Move;
+  /** 移動後位置；與 from 相同代表零步移動。 */
+  to: Move;
+  /** 回合結束時蓋的牆。 */
+  wall: WallSlot;
+};
+
+/** 列舉當前玩家所有合法的完整回合。 */
+export function legalTurns(state: GameState): Turn[] {
+  const turns: Turn[] = [];
+  const pieces = state.pieceIndex[state.currentPlayer] ?? [];
+
+  for (const from of pieces) {
+    // 確保從乾淨的回合狀態出發（selectPiece 對同一格會取消選取）
+    const selected = selectPiece(
+      { ...state, selected: null, remainSteps: 2 },
+      from.row,
+      from.col
+    );
+
+    const moves = legalMoves(selected);
+
+    // 零步移動（原地蓋牆）只在「能離開再回來」時才合法 —— 依節目原版規則。
+    // legalMoves 非空即代表至少有一格相鄰空位可去可回。
+    // 完全被封死的棋子不能被選取，因此不貢獻任何回合。
+    const canStay = moves.length > 0;
+    const destinations: Move[] = canStay
+      ? [{ row: from.row, col: from.col }, ...moves]
+      : [];
+
+    for (const to of destinations) {
+      const isStay = to.row === from.row && to.col === from.col;
+      const moved = isStay ? selected : movePiece(selected, to.row, to.col);
+
+      for (const wall of legalWalls(moved)) {
+        turns.push({ from: { row: from.row, col: from.col }, to, wall });
+      }
+    }
+  }
+
+  return turns;
+}
+
+/** 套用一個完整回合，回傳輪到下一位玩家的新狀態。 */
+export function applyTurn(state: GameState, turn: Turn): GameState {
+  const selected = selectPiece(
+    { ...state, selected: null, remainSteps: 2 },
+    turn.from.row,
+    turn.from.col
+  );
+  const isStay = turn.to.row === turn.from.row && turn.to.col === turn.from.col;
+  const moved = isStay ? selected : movePiece(selected, turn.to.row, turn.to.col);
+  return placeWall(moved, turn.wall.row, turn.wall.col, turn.wall.dir);
+}
+
 // ─── 回合推進 ─────────────────────────────────────────────────────────────────
 
 /**
@@ -294,6 +359,14 @@ export function placeWall(
  */
 export function shouldSkipTurn(state: GameState): boolean {
   if (isPlacingPhase(state)) return false;
+
+  // 完全沒有合法手就一定要跳過，否則遊戲會卡死。
+  //
+  // 這在導入「零步移動需能離開再回來」之後才可能發生：例如兩顆敵方棋子被封在
+  // 同一個兩格區域內，雙方都沒有相鄰空位，於是誰都無法選取棋子。
+  // 舊規則下還能靠原地蓋牆把區域切開，新規則下不行。
+  if (legalTurns(state).length === 0) return true;
+
   if (isBreakWallAvailable(state) && state.breakWallCount[state.currentPlayer] > 0) {
     return false;
   }
@@ -335,6 +408,52 @@ export function skipUnplayable(state: GameState): GameState {
   }
 
   return next;
+}
+
+/**
+ * 回退一個回合。
+ *
+ * 直接由棋譜重播 —— 不需另存任何快照，因為 WGF 已完整記錄每一步。
+ *
+ * @param untilPlayer - 指定時會持續回退，直到輪到該玩家為止。
+ *   單人模式用它一次退掉「我的一手 + AI 的一手」，否則按一次悔棋只會
+ *   退回 AI 剛走完的局面，玩家仍然不能動。
+ */
+export function undoTurn(state: GameState, untilPlayer?: PlayerKey): GameState {
+  if (state.turns.length === 0) return state;
+
+  const wgf = toWgf(state);
+  let target = state.turns.length - 1;
+  let result = replay(wgf, target);
+
+  if (untilPlayer) {
+    while (target > 0 && result.currentPlayer !== untilPlayer) {
+      target -= 1;
+      result = replay(wgf, target);
+    }
+  }
+
+  return result;
+}
+
+/**
+ * 遊戲是否已結束。
+ *
+ * 兩種情況：
+ * 1. 所有棋子都被封閉在只有自己陣營的區域中（正常終局）
+ * 2. 所有玩家都沒有合法手 —— 局面已不可能再改變，等同結束
+ *
+ * 第 2 點是「零步移動需能離開再回來」帶來的新情況：可能出現雙方棋子
+ * 互相卡死、但區域仍被判定為爭奪中的盤面。若不視為終局，遊戲會永遠停住。
+ */
+export function isGameOver(state: GameState): boolean {
+  if (isPlacingPhase(state)) return false;
+  if (computeTerritories(state).settled) return true;
+
+  return playerKeys(state.playersNum).every(
+    (player) =>
+      legalTurns({ ...state, currentPlayer: player, selected: null, remainSteps: 2 }).length === 0
+  );
 }
 
 // ─── WGF ──────────────────────────────────────────────────────────────────────

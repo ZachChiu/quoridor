@@ -9,7 +9,6 @@ import GameTips from "@/components/GameTips";
 import IconButton from "@/components/IconButton";
 import WaitingRoom from "@/components/WaitingRoom";
 import { useAiOpponent } from "@/hook/useAiOpponent";
-import { applyTurn, type AiTurn } from "@/game/ai";
 import { playerKeys } from "@/game/territory";
 import ShareLinkModal from "@/components/ShareLinkModal";
 import BreakWallConfirmModal from "@/components/BreakWallConfirmModal";
@@ -38,9 +37,11 @@ import {
   replay,
   selectPiece,
   toWgf,
+  applyTurn,
 } from "@/game/engine";
 import { evaluate } from "@/game/score";
 import type { GameState, PlayerKey, WallDir } from "@/game/types";
+import type { Turn } from "@/game/engine";
 
 type OnlinePhase = 'initializing' | 'waiting' | 'playing' | 'error';
 
@@ -60,7 +61,7 @@ type GameEvent =
   | { type: 'placeOpening'; row: number; col: number }
   | { type: 'placeWall'; row: number; col: number; dir: WallDir }
   | { type: 'breakWall'; row: number; col: number; dir: WallDir }
-  | { type: 'aiTurn'; turn: AiTurn };
+  | { type: 'aiTurn'; turn: Turn };
 
 /**
  * 以 reducer 串接 engine 的純函式。
@@ -146,7 +147,6 @@ export default function PlayClient({ roomId }: PlayClientProps) {
     [aiDifficulty, playersNum]
   );
   const isAiTurn = aiPlayers.includes(state.currentPlayer);
-  const { requestTurn, requestOpening, thinking } = useAiOpponent();
 
   // 只有輪到我的時候才能操作（遊戲結束、或輪到 AI 時一律鎖定）
   const isMyTurn = useMemo(() => {
@@ -155,35 +155,30 @@ export default function PlayClient({ roomId }: PlayClientProps) {
     return state.currentPlayer === myPlayerKey;
   }, [isLock, isAiTurn, isOnline, myPlayerKey, state.currentPlayer]);
 
-  /*
-    輪到 AI 就去問 Worker，拿到就照「選子 → 移動 → 築牆」依序 dispatch。
-
-    用 stale ref 擋重入：Worker 是非同步的，回覆期間 state 會變（例如使用者
-    按了重新開始），這時要把結果丟掉而不是硬套上去。
-  */
-  const aiRunId = useRef(0);
-  useEffect(() => {
-    if (!isAiTurn || isLock || !aiDifficulty) return;
-    // 只在「乾淨的回合起點」出手。effect 依賴 state，若不設這道閘，
-    // 回合中途的每次狀態變化都會再問一次 Worker。
-    if (state.selected || state.currentTurnActions.length > 0) return;
-
-    const runId = ++aiRunId.current;
-    const snapshot = state;
-
-    (async () => {
-      if (isPlacingPhase(snapshot)) {
-        const cell = await requestOpening(snapshot, snapshot.currentPlayer);
-        if (runId !== aiRunId.current || !cell) return;
-        dispatch({ type: 'placeOpening', row: cell.row, col: cell.col });
-        return;
+  const { think, warmup: warmupAi } = useAiOpponent(
+    useCallback((move) => {
+      if (move.kind === 'opening') {
+        dispatch({ type: 'placeOpening', row: move.cell.row, col: move.cell.col });
+      } else {
+        dispatch({ type: 'aiTurn', turn: move.turn });
       }
-      const turn = await requestTurn(snapshot, snapshot.currentPlayer, aiDifficulty);
-      // Worker 是非同步的，這段期間使用者可能按了重新開始 —— 過期的結果要丟掉
-      if (runId !== aiRunId.current || !turn) return;
-      dispatch({ type: 'aiTurn', turn });
-    })();
-  }, [isAiTurn, isLock, aiDifficulty, state, requestTurn, requestOpening]);
+    }, [])
+  );
+
+  const wgf = useMemo(() => toWgf(state), [state]);
+
+  // 進入單人模式時先預熱 Worker，第一次思考才不必等模組載入
+  useEffect(() => {
+    if (!aiDifficulty) return;
+    warmupAi(wgf, aiDifficulty);
+    // 只在進入 AI 模式時預熱一次，故意不依賴 wgf
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aiDifficulty, warmupAi]);
+
+  useEffect(() => {
+    if (!isAiTurn || !aiDifficulty) return;
+    think(wgf, aiDifficulty);
+  }, [isAiTurn, aiDifficulty, wgf, think]);
 
   // ─── Firebase 初始化（online only）──────────────────────────────────────────
   useEffect(() => {
@@ -440,7 +435,7 @@ export default function PlayClient({ roomId }: PlayClientProps) {
             currentPlayer={state.currentPlayer}
             winingStatus={outcome}
             breakWallCountObj={state.breakWallCount}
-            aiThinking={thinking}
+            aiThinking={isAiTurn}
           />
 
           <div className="chessboard-container size-[90dvw] md:size-[90dvh] md:portrait:size-[90dvw] md:landscape:size-[90dvh]">

@@ -1,67 +1,70 @@
 'use client'
-import { useCallback, useEffect, useRef, useState } from 'react';
-import type { AiRequestBody, AiResponse } from '@/workers/ai.worker';
-import type { AiTurn, Difficulty } from '@/game/ai';
-import type { GameState, Move, PlayerKey } from '@/game/types';
+import { useCallback, useEffect, useRef } from 'react';
+import type { Difficulty } from '@/game/ai';
+import type { AiMove, AiRequest, AiResponse } from '@/workers/ai.worker';
 
 /**
- * 把 AI 包成「問一手、等回覆」的介面。
+ * 驅動 AI Worker。
  *
- * Worker 以動態的 new URL(...) 建立，Turbopack 會把它切成獨立的 chunk ——
- * 不玩單人對戰的人不會下載 AI 的搜尋程式碼。
+ * 每次請求帶一個遞增的 id，只接受最新一次的回覆 ——
+ * 使用者中途重新開始或悔棋時，先前那次思考的結果必須丟棄，
+ * 否則會把過期的走法套用到新盤面上。
  */
-export function useAiOpponent() {
+export function useAiOpponent(onMove: (move: AiMove) => void) {
   const workerRef = useRef<Worker | null>(null);
-  const seq = useRef(0);
-  const pending = useRef(new Map<number, (value: AiResponse) => void>());
-  const [thinking, setThinking] = useState(false);
+  const latestIdRef = useRef(0);
+  const onMoveRef = useRef(onMove);
+
+  // 在 effect 中同步而非 render 期間寫入 —— render 期間讀寫 ref
+  // 會讓 React Compiler 無法正確推導，並在 concurrent 渲染下產生非預期結果。
+  useEffect(() => {
+    onMoveRef.current = onMove;
+  }, [onMove]);
 
   useEffect(() => {
     const worker = new Worker(new URL('../workers/ai.worker.ts', import.meta.url));
-    worker.onmessage = (event: MessageEvent<AiResponse>) => {
-      pending.current.get(event.data.id)?.(event.data);
-      pending.current.delete(event.data.id);
-    };
     workerRef.current = worker;
-    // 把 Map 複製到區域變數再給 cleanup 用：ref.current 在 cleanup 執行時
-    // 可能已經指向別的東西（react-hooks/exhaustive-deps 擋的就是這個）
-    const inflight = pending.current;
+
+    worker.onmessage = (event: MessageEvent<AiResponse>) => {
+      const data = event.data;
+      if (data.id !== latestIdRef.current) return; // 過期結果，丟棄
+      if (!data.ok) {
+        console.error('[ai] worker 失敗：', data.error);
+        return;
+      }
+      if (data.move) onMoveRef.current(data.move);
+    };
+
     return () => {
       worker.terminate();
       workerRef.current = null;
-      inflight.clear();
     };
   }, []);
 
-  const ask = useCallback((req: AiRequestBody): Promise<AiResponse | null> => {
-    const worker = workerRef.current;
-    if (!worker) return Promise.resolve(null);
-    const id = ++seq.current;
-    setThinking(true);
-    return new Promise<AiResponse | null>((resolve) => {
-      pending.current.set(id, (value) => {
-        setThinking(false);
-        resolve(value);
-      });
-      worker.postMessage({ ...req, id });
-    });
+  /** 請 AI 思考。呼叫此函式會讓先前尚未回覆的請求失效。 */
+  const think = useCallback(
+    (wgf: string, difficulty: Difficulty, options?: { maxDepth?: number; budgetMs?: number }) => {
+      const id = ++latestIdRef.current;
+      const request: AiRequest = { id, wgf, difficulty, ...options };
+      workerRef.current?.postMessage(request);
+    },
+    []
+  );
+
+  /**
+   * 預熱 Worker：載入模組並讓 JIT 暖身，結果丟棄。
+   *
+   * 在玩家還在思考第一手時呼叫，可把首次思考的一次性成本移出關鍵路徑。
+   */
+  const warmup = useCallback((wgf: string, difficulty: Difficulty) => {
+    // 用 id 0 送出，永遠不會等於 latestIdRef 的下一個值，回覆會被丟棄
+    workerRef.current?.postMessage({ id: -1, wgf, difficulty, warmup: true } as AiRequest);
   }, []);
 
-  const requestTurn = useCallback(
-    async (state: GameState, me: PlayerKey, difficulty: Difficulty): Promise<AiTurn | null> => {
-      const res = await ask({ kind: 'turn', state, me, difficulty });
-      return res?.kind === 'turn' ? res.turn : null;
-    },
-    [ask]
-  );
+  /** 讓目前進行中的思考結果失效（例如重新開始）。 */
+  const cancel = useCallback(() => {
+    latestIdRef.current++;
+  }, []);
 
-  const requestOpening = useCallback(
-    async (state: GameState, me: PlayerKey): Promise<Move | null> => {
-      const res = await ask({ kind: 'opening', state, me });
-      return res?.kind === 'opening' ? res.cell : null;
-    },
-    [ask]
-  );
-
-  return { requestTurn, requestOpening, thinking };
+  return { think, warmup, cancel };
 }
