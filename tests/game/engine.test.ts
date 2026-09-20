@@ -14,10 +14,10 @@ import {
   selectPiece,
   shouldSkipTurn,
   toWgf,
-} from './engine';
-import { computeTerritories } from './territory';
-import { evaluate } from './score';
-import type { GameState, PlayerKey } from './types';
+} from '@/game/engine';
+import { computeTerritories } from '@/game/territory';
+import { evaluate } from '@/game/score';
+import type { GameState, PlayerKey } from '@/game/types';
 
 /** 依序擺放開局棋子，回傳進入對弈階段的狀態。 */
 function runOpening(state: GameState, cells: [number, number][]): GameState {

@@ -2,9 +2,9 @@ import { describe, it, expect } from 'vitest';
 import {
   createGame, isPlacingPhase, placeOpeningPiece, legalTurns, applyTurn,
   isGameOver, skipUnplayable, shouldSkipTurn, toWgf, replay, turnOrder,
-} from './engine';
-import { computeTerritories } from './territory';
-import type { GameState, PlayerKey } from './types';
+} from '@/game/engine';
+import { computeTerritories } from '@/game/territory';
+import type { GameState, PlayerKey } from '@/game/types';
 
 /**
  * 「有人動不了」的時候會怎樣。

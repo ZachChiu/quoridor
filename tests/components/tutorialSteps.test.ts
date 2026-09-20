@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { STEPS } from './tutorialSteps';
+import { STEPS } from '@/components/tutorialSteps';
 import { ownerByCellFor } from '@/game/territory';
 import type { Player, PlayerKey } from '@/game/types';
-import type { TutorialBoardProps } from './TutorialBoard';
+import type { TutorialBoardProps } from '@/components/TutorialBoard';
 
 /**
  * 教學插圖的領地是由規則推導的，所以「這張圖在示範什麼」可以被驗證。

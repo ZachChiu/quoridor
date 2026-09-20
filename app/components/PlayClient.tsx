@@ -409,6 +409,15 @@ export default function PlayClient({ roomId }: PlayClientProps) {
                 x: r.left + r.width / 2,
                 y: r.top + r.height / 2,
                 color: 'rgb(var(--tile-cream))',
+                // 這顆鈕本來就是圓的，圓角給半徑即可 —— 於是它是
+                // 「圓脹大、再縮回圓」，沒有多餘的方轉圓。
+                from: { width: r.width, height: r.height, radius: r.width / 2 },
+                icon: GiHouse,
+                // 這顆鈕的圖示只有 24px，寫死 text-7xl 會變成一顆比按鈕
+                // 還大的房子憑空冒出來 —— 量它真正的尺寸。
+                iconSize: e.currentTarget.querySelector('svg')?.getBoundingClientRect().height,
+                iconColor: 'rgb(var(--tile-ink))',
+                fg: 'rgb(var(--tile-ink))',
               },
             });
           }}

@@ -2,8 +2,8 @@ import { describe, it, expect } from 'vitest';
 import {
   createGame, isPlacingPhase, openingOrder, placeOpeningPiece,
   legalTurns, applyTurn, isGameOver, skipUnplayable, toWgf, replay,
-} from './engine';
-import type { GameState } from './types';
+} from '@/game/engine';
+import type { GameState } from '@/game/types';
 
 /**
  * WGF 字串長度的上界。

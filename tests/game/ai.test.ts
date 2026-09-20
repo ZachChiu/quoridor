@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { chooseTurn, evaluateFor } from './ai';
-import { applyTurn, createGame, legalTurns, placeOpeningPiece } from './engine';
-import { computeTerritories } from './territory';
-import type { GameState, PlayerKey } from './types';
+import { chooseTurn, evaluateFor } from '@/game/ai';
+import { applyTurn, createGame, legalTurns, placeOpeningPiece } from '@/game/engine';
+import { computeTerritories } from '@/game/territory';
+import type { GameState, PlayerKey } from '@/game/types';
 
 function runOpening(state: GameState, cells: [number, number][]): GameState {
   return cells.reduce((s, [row, col]) => placeOpeningPiece(s, row, col), state);

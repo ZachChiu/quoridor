@@ -19,7 +19,9 @@ npm run release:preview       # 先看會打成什麼版號、併哪條分支
 npm run release -- "版本標題"  # 把目前分支併進 main、打 tag、推出去（詳見〈打版〉）
 ```
 
-測試以 Vitest 執行，集中於 `app/game/*.test.ts`。
+測試以 Vitest 執行，全部集中在 **`tests/`**，不與原始碼混放（`app/` 底下只留會被打包的東西）。
+目錄對應 `app/`：`tests/game/` 對 `app/game/`、`tests/components/` 對 `app/components/`。
+測試一律用 `@/` 別名 import，不用相對路徑。
 
 ## 架構
 
@@ -141,7 +143,7 @@ AI 的一個回合是**單一 reducer 轉換**（`type: 'aiTurn'`）。分三次
 
 ## 主要慣例
 
-- **遊戲規則**：一律寫在 `app/game/`（純函式、無 React、無副作用），元件只負責 UI 與同步。規則變更必須同時補 `app/game/*.test.ts`。
+- **遊戲規則**：一律寫在 `app/game/`（純函式、無 React、無副作用），元件只負責 UI 與同步。規則變更必須同時補 `tests/game/*.test.ts`。
 - **狀態變更**：engine 的每個操作都回傳全新 state，禁止就地修改傳入的物件。（已移除 lodash-es，不再使用 `cloneDeep()`。）
 - **型別定義**：統一放 `app/types/`；`app/utils/` 只放邏輯函式。
 - **玩家顏色**：定義為 CSS 變數 `--player-A/B/C`，位於 `app/globals.css` 第 5–45 行；透過 Tailwind 自訂色彩 `player-A`、`player-B`、`player-C` 引用。

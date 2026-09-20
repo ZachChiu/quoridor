@@ -1,18 +1,25 @@
 'use client'
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
-import dynamic from 'next/dynamic';
 import { usePathname, useRouter } from 'next/navigation';
 import type { Wipe } from '@/components/WipeOverlay';
+import WipeOverlay from '@/components/WipeOverlay';
 
-// 動態載入，anime.js 才不會進首屏。實測只在元件內部 await import 不夠 ——
-// Turbopack 仍會把約 11.7 KB gzip 提到首屏。
-const WipeOverlay = dynamic(() => import('@/components/WipeOverlay'), { ssr: false });
+/*
+  靜態 import 而不是 next/dynamic。
+
+  實測 dynamic 版本從按下去到覆蓋層進 DOM 要 308ms，而且預先把模組載好
+  也不會變快（等 4 秒再按仍是 314ms）—— 慢的不是下載，是 dynamic 自己
+  那一輪 lazy/Suspense 的解析。300ms 的空窗按起來就像沒按到。
+
+  anime.js 仍然是動態載入（在元件的 effect 裡），所以真正大的那一包
+  不會進首包；靜態進來的只有這個元件本身。第一格畫面因此可以立刻畫出
+  「停在磁磚上的色塊」，動畫引擎晚一點到也不影響觀感。
+*/
 
 export type { Wipe } from '@/components/WipeOverlay';
 
 interface NavOptions {
   /** 蓋滿時顯示的字，例如進入對局時的「遊戲開始」。省略則只掃場不停留。 */
-  title?: string;
   /** 轉場形式。省略時用色帶。 */
   wipe?: Wipe;
 }
@@ -29,8 +36,8 @@ type State =
   | { phase: 'idle' }
   // pushed 放在 state 而不是 ref：ref 沒辦法在 render 期間讀（react-hooks/refs），
   // 而「路由生效就掃走」用 render 期間比對比用 effect 乾淨。
-  | { phase: 'cover'; pushed: boolean; title?: string; target: string; wipe: Wipe }
-  | { phase: 'uncover'; title?: string; target: string; wipe: Wipe };
+  | { phase: 'cover'; pushed: boolean; target: string; wipe: Wipe }
+  | { phase: 'uncover'; target: string; wipe: Wipe };
 
 /** 取出 href 的路徑部分 —— /match#roomId=… 的 pathname 是 /match。 */
 const pathOf = (href: string) => href.split('#')[0].split('?')[0].replace(/\/$/, '') || '/';
@@ -49,6 +56,31 @@ export const TransitionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const pathname = usePathname();
   const [state, setState] = useState<State>({ phase: 'idle' });
 
+  /*
+    閒置時先把動畫用的 chunk 載起來。
+
+    WipeOverlay 與 anime.js 都是動態載入的（約 15 KB gzip，不該進首包）。
+    但那表示第一次按下磁磚時要先下載才會動 —— 實測開頭約 330ms 畫面
+    完全沒反應，按起來像沒按到。
+
+    在閒置時先載掉就沒有這個空窗，而且仍然不佔首包。失敗不處理：
+    真的要用的時候 dynamic import 會再試一次。
+  */
+  useEffect(() => {
+    const warm = () => {
+      void import('@/components/WipeOverlay').catch(() => {});
+      void import('animejs').catch(() => {});
+    };
+    if (typeof window === 'undefined') return;
+    // 必須用 window.requestIdleCallback(...) 而不是先取出函式再呼叫 ——
+    // 拆出來呼叫時 this 不是 window，Chrome 會丟 Illegal invocation，
+    // 於是預載整個沒跑掉（而且是安靜地沒跑掉）。
+    const w = window as unknown as Window & { requestIdleCallback?: (cb: () => void) => number };
+    if (typeof w.requestIdleCallback === 'function') { w.requestIdleCallback(warm); return; }
+    const id = window.setTimeout(warm, 1200);
+    return () => window.clearTimeout(id);
+  }, []);
+
   const navigate = useCallback(
     (href: string, options?: NavOptions) => {
       // 開了 prefers-reduced-motion 就直接換頁。不是把動畫放慢 ——
@@ -62,7 +94,6 @@ export const TransitionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       }
       setState({
         phase: 'cover', pushed: false, target: href,
-        title: options?.title,
         // 沒指定起點就從畫面中心擴散 —— 任何未來的呼叫端都不會壞
         wipe: options?.wipe ?? {
           x: window.innerWidth / 2,
@@ -101,7 +132,7 @@ export const TransitionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   // 新頁面的 pathname 生效 → 掃走。在 render 期間比對而不是用 effect：
   // 後者會多一次 render，中間那一幀是「已經到新頁面但色帶還沒開始掃」。
   if (state.phase === 'cover' && state.pushed && pathOf(pathname) === pathOf(state.target)) {
-    setState({ phase: 'uncover', title: state.title, target: state.target, wipe: state.wipe });
+    setState({ phase: 'uncover', target: state.target, wipe: state.wipe });
   }
 
   // 保險：路由若因任何原因沒生效，2 秒後仍要把畫面還給使用者 ——
@@ -110,7 +141,7 @@ export const TransitionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     if (state.phase !== 'cover') return;
     const timer = setTimeout(() => {
       setState((s) =>
-        s.phase === 'cover' ? { phase: 'uncover', title: s.title, target: s.target, wipe: s.wipe } : s
+        s.phase === 'cover' ? { phase: 'uncover', target: s.target, wipe: s.wipe } : s
       );
     }, 2000);
     return () => clearTimeout(timer);
@@ -125,7 +156,6 @@ export const TransitionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         <WipeOverlay
           phase={state.phase}
           wipe={state.wipe}
-          title={state.title}
           onDone={state.phase === 'cover' ? handleCovered : handleUncovered}
         />
       )}

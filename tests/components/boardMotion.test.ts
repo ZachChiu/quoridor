@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { boardSignature, diffBoard, territoryWave, newWall, pathBetween } from './boardMotion';
+import { boardSignature, diffBoard, territoryWave, newWall, pathBetween } from '@/components/boardMotion';
 import type { Player } from '@/types/chessboard';
 
 const grid = (rows: string[]): Player[][] =>

@@ -8,10 +8,10 @@ import {
   placeOpeningPiece,
   selectPiece,
   undoTurn,
-} from './engine';
-import { computeTerritories } from './territory';
-import { getWinners } from './score';
-import type { GameState, Player, PlayerKey } from './types';
+} from '@/game/engine';
+import { computeTerritories } from '@/game/territory';
+import { getWinners } from '@/game/score';
+import type { GameState, Player, PlayerKey } from '@/game/types';
 
 function runOpening(state: GameState, cells: [number, number][]): GameState {
   return cells.reduce((s, [row, col]) => placeOpeningPiece(s, row, col), state);

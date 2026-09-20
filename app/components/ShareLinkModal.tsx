@@ -71,19 +71,8 @@ const ShareLinkModal: React.FC<Props> = ({ isOpen, shareUrl, joinedCount, totalC
     >
       <p className="text-sm leading-relaxed">把連結傳給朋友，他們點開就會直接坐進這間房。</p>
 
-      {/* 有系統分享面板就讓它當主要動作，整排寬、拇指按得到。 */}
-      {canShare && (
-        <button
-          type="button"
-          onClick={handleShare}
-          className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-tile-blue px-4 py-3 text-base font-black text-tile-cream transition active:scale-[0.98]"
-        >
-          <LuShare2 className="text-lg" aria-hidden="true" />
-          分享連結
-        </button>
-      )}
 
-      <div className={`${canShare ? 'mt-3' : 'mt-4'} flex items-center gap-2 rounded-xl bg-primary-50 p-2 pl-4`}>
+      <div className="mt-4 flex items-center gap-2 rounded-xl bg-primary-50 p-2 pl-4">
         <span className="flex-1 select-all truncate font-mono text-sm">{shareUrl}</span>
         <button
           type="button"
@@ -97,6 +86,19 @@ const ShareLinkModal: React.FC<Props> = ({ isOpen, shareUrl, joinedCount, totalC
           {copied ? '已複製' : '複製'}
         </button>
       </div>
+
+      {/* 分享鍵放在網址下面：先看到要送出去的是什麼，再決定怎麼送。
+          有系統分享面板時它才出現，整排寬、拇指按得到。 */}
+      {canShare && (
+        <button
+          type="button"
+          onClick={handleShare}
+          className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-tile-blue px-4 py-3 text-base font-black text-tile-cream transition active:scale-[0.98]"
+        >
+          <LuShare2 className="text-lg" aria-hidden="true" />
+          分享連結
+        </button>
+      )}
 
       <div className="mt-6 flex items-center gap-3">
         {SEATS.slice(0, totalCount).map((p, i) => {

@@ -126,6 +126,21 @@
 /* 不提供深色模式：這是一套明確走淺色（奶油底 + 飽和色塊）的設計，
    只翻轉背景會讓奶油色面板浮在黑底上，比不做更糟。 */
 
+/*
+  html 也要上底色，不能只給 body。
+
+  Safari 的橡皮筋回彈（捲過頭那一段）畫的是 html 的背景；body 撐不滿
+  視窗時露出來的也是它。只設 body 的話，捲到底或往上拉會閃出一塊白。
+
+  Modal 開啟時 body 會被設成 position: fixed（背景捲動鎖），那時
+  body 的背景更不保證鋪滿 —— html 這一層是保險。
+
+  這個值與 app/layout.tsx 的 themeColor 必須一致。
+*/
+html {
+  background-color: var(--background);
+}
+
 body {
   color: var(--foreground);
   background: var(--background);
