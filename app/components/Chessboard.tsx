@@ -8,18 +8,6 @@ import { GiHammerBreak } from "react-icons/gi";
  * Tailwind 的靜態掃描看不到拼接出來的字串，safelist 又容易漏 ——
  * 走變數就完全沒有這個問題。
  */
-/**
- * 星位：四個角落的起手點與天元。
- * 以盤面大小推導而不是寫死座標 —— 目前只有 7×7，但棋盤大小本來就是參數。
- */
-const isStarPoint = (row: number, col: number, size: number) => {
-  const mid = (size - 1) / 2;
-  if (!Number.isInteger(mid)) return false;
-  const edge = Math.floor(size / 4) + (size % 4 === 3 ? 0 : 1);
-  return (row === mid && col === mid)
-    || ([edge, size - 1 - edge].includes(row) && [edge, size - 1 - edge].includes(col));
-};
-
 const PLAYER_VAR: Record<string, string> = {
   A: 'var(--player-A)',
   B: 'var(--player-B)',
@@ -304,16 +292,6 @@ export default React.memo(function Chessboard({
                   key={`${rowIndex}-${colIndex}`}
                   onClick={() => onClickSelectChess(cellPlayer, rowIndex, colIndex, isAvailableMove)}
                 >
-                  {/* 星位。
-                      49 個一模一樣的格子沒有地標，視線抓不到自己在哪 ——
-                      圍棋在盤面標星位就是為了這件事。取的是兩人局的四個
-                      起手點與天元，所以它同時也在暗示「這四個角是開局位置」。
-                      形狀用菱形而非圓點，才不會和「可移動落點」混淆；
-                      開局階段不畫，那時每一格都有灰點，再疊菱形只是雜訊。 */}
-                  {isStarPoint(rowIndex, colIndex, size) && !isPlacingChess && (
-                    <div className="pointer-events-none absolute size-[14%] rotate-45 bg-board-line opacity-[0.17]" />
-                  )}
-
                   {/* 選取中的格子。
                       原本是深墨外框，但框線和築牆預覽佔在同一條邊上互相搶 ——
                       框一重，45% 的預覽就被壓掉了。改成整格微染玩家色：
