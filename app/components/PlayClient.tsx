@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useMemo, useCallback, useReducer, useRef } from "react";
 import { GiHouse, GiRuleBook } from "react-icons/gi";
+import dynamic from "next/dynamic";
 import Link from 'next/link';
 import Chessboard from "@/components/Chessboard";
 import ChampionModal from "@/components/ChampionModal";
@@ -8,6 +9,10 @@ import GameStatus from "@/components/GameStatus";
 import GameTips from "@/components/GameTips";
 import IconButton from "@/components/IconButton";
 import WaitingRoom from "@/components/WaitingRoom";
+// 整個元件動態載入，而不是只在它內部動態 import anime.js ——
+// 後者 Turbopack 仍會把一部分（約 11.7 KB gzip）提到 /local 的首屏。
+// 這樣才是真的「要播的時候才載」。
+const GameStartOverlay = dynamic(() => import("@/components/GameStartOverlay"), { ssr: false });
 import { useAiOpponent } from "@/hook/useAiOpponent";
 import { applyTurn, type AiTurn } from "@/game/ai";
 import { playerKeys } from "@/game/territory";
@@ -125,10 +130,24 @@ export default function PlayClient({ roomId }: PlayClientProps) {
   // 是否手動關閉過，避免用 effect 去同步一個本來就能算出來的狀態。
   const [championDismissed, setChampionDismissed] = useState(false);
 
+  /*
+    開局擺放結束的那一刻 ＝ 真正開打，播一次開場動畫。
+
+    在 render 期間比對前值而不是用 effect：後者會多跑一次 render，
+    而且 react-hooks/set-state-in-effect 本來就在擋。這是 React 官方
+    對「狀態隨另一個值改變而調整」的建議寫法。
+  */
+  const [showGameStart, setShowGameStart] = useState(false);
+
   const playersNum = state.playersNum;
   const { territories, outcome } = useMemo(() => evaluate(state), [state]);
   const isLock = outcome.length > 0;
   const isPlacing = isPlacingPhase(state);
+  const [wasPlacing, setWasPlacing] = useState(isPlacing);
+  if (isPlacing !== wasPlacing) {
+    setWasPlacing(isPlacing);
+    if (!isPlacing) setShowGameStart(true);
+  }
   const canBreakWall = engineHasBreakWall(state);
 
   // 避免自己寫入 Firebase 的內容又觸發自己重播
@@ -339,6 +358,9 @@ export default function PlayClient({ roomId }: PlayClientProps) {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [isLock]);
 
+  // useCallback 讓 overlay 的主 effect 能只跑一次
+  const handleGameStartDone = useCallback(() => setShowGameStart(false), []);
+
   const { ruleModalState, setRuleModalState } = useRuleModal();
   const handleRuleBtnOpen = () => setRuleModalState({ ...ruleModalState, isOpen: true });
 
@@ -367,6 +389,8 @@ export default function PlayClient({ roomId }: PlayClientProps) {
   return (
     <>
       {/* 首頁按鈕 */}
+      {showGameStart && <GameStartOverlay onDone={handleGameStartDone} />}
+
       {/* 左上角的操作鈕。用 flex 直排而不是各自寫死 top 值 ——
           之前兩顆的尺寸不同，間距是按舊尺寸算出來的，改一顆就會對不齊。
           彩色＝可點：回首頁琥珀、遊玩方式森綠（與首頁同名磁磚同色）。 */}
