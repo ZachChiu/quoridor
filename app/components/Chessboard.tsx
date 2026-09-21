@@ -20,6 +20,7 @@ import { useCoarsePointer } from "@/hook/useCoarsePointer";
 import { boardSignature, diffBoard, territoryWave, newWall, pathBetween } from "./boardMotion";
 import { useGameText } from '@/i18n/LocaleProvider';
 import { fmt } from '@/i18n/content/game';
+import { isCursorKey, nextCursor } from '@/components/boardCursor';
 
 type Props = {
   size: number;
@@ -125,17 +126,12 @@ export default React.memo(function Chessboard({
     // 焦點在格子裡的牆按鈕上時，交給按鈕自己處理 —— 不然 Enter 會被按兩次。
     if (!(e.target instanceof HTMLElement) || !e.target.dataset.cell) return;
 
-    const step: Record<string, [number, number]> = {
-      ArrowUp: [-1, 0], ArrowDown: [1, 0], ArrowLeft: [0, -1], ArrowRight: [0, 1],
-    };
-    const d = step[e.key];
-    if (d) {
+    // 移動游標的那幾顆鍵（方向鍵、Home / End）都在 boardCursor 裡，
+    // 連同邊界夾取一起，那邊有測試蓋著。
+    if (isCursorKey(e.key)) {
       e.preventDefault();
       setKbActive(true);
-      setCursor((c) => ({
-        row: Math.min(size - 1, Math.max(0, c.row + d[0])),
-        col: Math.min(size - 1, Math.max(0, c.col + d[1])),
-      }));
+      setCursor((c) => nextCursor(c, e.key, { size, ctrl: e.ctrlKey || e.metaKey }) ?? c);
       return;
     }
     if (e.key === 'Enter' || e.key === ' ') {
