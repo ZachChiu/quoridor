@@ -16,10 +16,15 @@ const noop = () => {};
 
 /** 回放控制鍵。定義在元件外面 —— 在 render 裡宣告元件會讓 React 每次
     都當成新型別、整棵子樹重新掛載，也是 react-compiler 在擋的事。 */
-function Ctl({ onClick, label, children }: { onClick: () => void; label: string; children: React.ReactNode }) {
+function Ctl({ onClick, label, disabled, children }: {
+  onClick: () => void; label: string; disabled?: boolean; children: React.ReactNode;
+}) {
   return (
-    <button type="button" onClick={onClick} aria-label={label}
-            className="grid size-11 place-items-center rounded-xl bg-tile-ink/[0.07] text-xl text-tile-ink transition active:scale-95">
+    /* 到頭與到尾時真的 disable，不只是按下去沒反應 ——
+       一顆看起來能按、按了卻什麼都不動的鍵，會被讀成「這頁壞了」。
+       disabled 同時讓讀屏念出「已停用」，而不是讓人反覆嘗試。 */
+    <button type="button" onClick={onClick} aria-label={label} disabled={disabled}
+            className="grid size-11 place-items-center rounded-xl bg-tile-ink/[0.07] text-xl text-tile-ink transition active:scale-95 disabled:pointer-events-none disabled:opacity-30">
       {children}
     </button>
   );
@@ -157,13 +162,13 @@ export default function ReplayClient() {
         </div>
 
         <div className="flex items-center gap-2 rounded-2xl bg-primary-50 px-3 py-2">
-          <Ctl onClick={() => go(0)} label={t.replay.first}><LuChevronFirst /></Ctl>
-          <Ctl onClick={() => go(turnIndex - 1)} label={t.replay.prev}><LuChevronLeft /></Ctl>
+          <Ctl onClick={() => go(0)} label={t.replay.first} disabled={turnIndex === 0}><LuChevronFirst /></Ctl>
+          <Ctl onClick={() => go(turnIndex - 1)} label={t.replay.prev} disabled={turnIndex === 0}><LuChevronLeft /></Ctl>
           <Ctl onClick={togglePlay} label={isPlaying ? t.replay.pause : t.replay.play}>
             {isPlaying ? <LuPause /> : <LuPlay />}
           </Ctl>
-          <Ctl onClick={() => go(turnIndex + 1)} label={t.replay.next}><LuChevronRight /></Ctl>
-          <Ctl onClick={() => go(totalTurns)} label={t.replay.last}><LuChevronLast /></Ctl>
+          <Ctl onClick={() => go(turnIndex + 1)} label={t.replay.next} disabled={atEnd}><LuChevronRight /></Ctl>
+          <Ctl onClick={() => go(totalTurns)} label={t.replay.last} disabled={atEnd}><LuChevronLast /></Ctl>
           <span className="ml-1 whitespace-nowrap px-2 text-sm font-bold tabular-nums">
             {fmt(t.replay.turn, { n: turnIndex, total: totalTurns })}
           </span>
