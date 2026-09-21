@@ -29,6 +29,17 @@ export type Wipe = {
   kicker?: string;
   /** 來源是橫向排列（寬磁磚是圖左字右）還是直向 */
   row?: boolean;
+  /**
+   * 把文字放大成整個畫面的標題。
+   *
+   * 一般的轉場是「這塊磁磚脹開」，字維持磁磚上的大小才對得起來，而且它是
+   * 色塊的子元素、會被色塊的形狀裁掉 —— 那正是「圖示被色塊吃掉」的效果。
+   *
+   * 原地閃一下的那種（連線房坐滿）沒有來源磁磚，文字就是主角本身。
+   * 所以 big 的字畫在色塊**外面**：不被裁、不反向縮放，蓋滿之後才淡入。
+   * 放在裡面的話會被那個只有幾十 px 的起點方框夾住，四個字斷成直排。
+   */
+  big?: boolean;
   iconColor?: string;
   fg?: string;
 };
@@ -103,6 +114,7 @@ const WipeOverlay: React.FC<Props> = ({ phase, wipe, onDone }) => {
       const shape = root.querySelector<HTMLElement>('[data-shape]');
       if (!shape) { doneRef.current(); return; }
       const face = root.querySelector<HTMLElement>('[data-face]');
+      const big = root.querySelector<HTMLElement>('[data-big]');
 
       const s = coverScale(wipe);
       const { radius } = boxOf(wipe);
@@ -138,6 +150,8 @@ const WipeOverlay: React.FC<Props> = ({ phase, wipe, onDone }) => {
       if (phase === 'cover') {
         tl.add(shape, { borderRadius: [`${radius}px`, round], duration: 200 }, 0);
         tl.add(drive, { s: [1, s], duration: 540, onUpdate: apply }, 60);
+        // 大標在色塊快蓋滿時才淡入 —— 早了會疊在還看得見的舊畫面上
+        if (big) tl.add(big, { opacity: [0, 1], duration: 260 }, 360);
       } else {
         /*
           一段連續的縮小，不拆段。
@@ -154,6 +168,8 @@ const WipeOverlay: React.FC<Props> = ({ phase, wipe, onDone }) => {
         */
         tl.add(drive, { s: [s, 0], duration: 700, ease: 'out(3)', onUpdate: apply }, 0);
         tl.add(shape, { borderRadius: [round, `${radius}px`], duration: 220 }, 60);
+        // 先把字收掉再讓色塊縮 —— 不然字會浮在越縮越小的色塊外面
+        if (big) tl.add(big, { opacity: [1, 0], duration: 180 }, 0);
       }
 
       timeline = tl;
@@ -200,7 +216,7 @@ const WipeOverlay: React.FC<Props> = ({ phase, wipe, onDone }) => {
       >
         {/* 磁磚的臉：圖示與文字。放在色塊**裡面**，所以會被色塊的形狀裁掉。
             大小靠每一幀的反向縮放維持不變（見上方 apply）。 */}
-        {(Icon || wipe.label) && (
+        {(Icon || (wipe.label && !wipe.big)) && (
           <div
             data-face
             className={`pointer-events-none absolute inset-0 flex items-center justify-center ${
@@ -237,6 +253,19 @@ const WipeOverlay: React.FC<Props> = ({ phase, wipe, onDone }) => {
         )}
       </div>
 
+      {/* 整個畫面的大標。色塊的兄弟節點，所以不會被 overflow-hidden 裁掉，
+          也不跟著反向縮放 —— 它不屬於任何一塊磁磚，本來就該是固定大小。 */}
+      {wipe.big && wipe.label && (
+        <div
+          data-big
+          className="pointer-events-none absolute inset-0 flex items-center justify-center px-6"
+          style={{ color: wipe.fg, opacity: phase === 'cover' ? 0 : 1 }}
+        >
+          <span className="whitespace-nowrap text-center font-[family-name:var(--font-app)] text-4xl font-black tracking-tight md:text-6xl">
+            {wipe.label}
+          </span>
+        </div>
+      )}
     </div>
   );
 };

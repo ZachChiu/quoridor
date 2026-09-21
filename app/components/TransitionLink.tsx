@@ -19,6 +19,8 @@ type Props = {
   radius?: number;
   className?: string;
   'aria-label'?: string;
+  hrefLang?: string;
+  'aria-current'?: React.AriaAttributes['aria-current'];
   children: React.ReactNode;
 };
 

@@ -1,95 +1,112 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { usePathname } from 'next/navigation';
-import Link from 'next/link';
-import { LuGlobe } from 'react-icons/lu';
+import { LuGlobe, LuCheck } from 'react-icons/lu';
+import Modal from './Modal';
 import { LOCALES, LOCALE_NAME, localeFromPath, localePath, stripLocale } from '@/i18n/locales';
 import { useMessages } from '@/i18n/LocaleProvider';
 
 /**
  * 語言切換。
  *
- * 原本四個語言名平鋪在首頁底下，佔掉一整行而且四個字串長度不一，
- * 版面會跟著語系抖動。改成一顆地球鈕，按了才展開。
+ * 一顆地球鈕開一個 Modal，不是下拉選單。
  *
- * 展開的清單仍然是真的 <a> —— 爬蟲要走得過去，那是四個語系互相
- * 連通的唯一路徑（hreflang 是給機器的提示，不是連結）。
+ * 下拉的兩個問題：它要自己處理往上還是往下開（置頂列往下、頁尾往上，
+ * 兩邊各一套定位），而且清單為了讓爬蟲讀得到必須一直留在 DOM，
+ * 於是它還會把版面撐寬 —— 先前就因此在規則頁多出一條水平捲軸。
  *
- * 切換時停在**同一頁**：在規則頁想換語言的人要的是同一份規則的另一個
- * 語言，不是被丟回首頁重走一次。
+ * 改用站上既有的 Modal：位置由 Modal 負責（永遠置中），
+ * inert、焦點鎖、Escape、背景捲動鎖全部現成，不必再寫一次。
+ *
+ * 切換時停在**同一頁**：在規則頁想換語言的人要的是同一份規則的
+ * 另一個語言，不是被丟回首頁重走一次。
+ *
+ * 底層仍然是真的 `<a href>`（TransitionLink 包的就是 a）：爬蟲走得過去，
+ * cmd／中鍵開新分頁照常。zh-TW 與其他語系分屬兩套 root layout，
+ * Next 會自己退回整頁載入 —— 那正是我們要的，<html lang> 因此一定是對的。
+ *
+ * ── 這裡刻意沒有換場動畫 ─────────────────────────────────────────
+ * 站上其他「會換頁」的按鈕都有掃場，只有這裡是硬切。
+ *
+ * zh-TW 與其他語系分屬兩個 root layout（為了 `<html lang>`），Next 只能
+ * 整份文件重載 —— 覆蓋層跟著舊文件消失，離場那半段得靠 sessionStorage
+ * 交棒給新文件，再用一段 pre-paint 的 inline script 先鋪一塊同色色塊頂著。
+ * 那一套在產品建置上是連續的，但在 dev server 上會漏出一幀沒遮住的新頁面，
+ * 而且 inline script 動到 `<html>` 的屬性會讓 React 報 hydration mismatch。
+ *
+ * 一個只在正式站對、開發時看起來像壞掉的動畫不值得留著。換語言一次
+ * 造訪頂多做一次，整頁重載本來就正常。
  */
-/**
- * `placement` 決定清單往上還是往下開。
- *
- * 首頁的切換器在底部，往上開；規則頁在置頂列，必須往下開 ——
- * 往上開會開到畫面外，而且因為清單一直在 DOM 裡（只切 inert），
- * 它還會把頁面撐出一條水平捲軸。
- */
-export default function LanguageSwitcher({ placement = 'up' }: { placement?: 'up' | 'down' } = {}) {
+export default function LanguageSwitcher({ onDark = false }: { onDark?: boolean } = {}) {
   const pathname = usePathname() ?? '/';
   const current = localeFromPath(pathname);
   const bare = stripLocale(pathname);
   const t = useMessages();
   const [open, setOpen] = useState(false);
-  const rootRef = useRef<HTMLDivElement>(null);
-
-  // 點外面或按 Escape 收起來。少了這兩個，展開的選單在手機上會黏住。
-  useEffect(() => {
-    if (!open) return;
-    const onDown = (e: PointerEvent) => {
-      if (!rootRef.current?.contains(e.target as Node)) setOpen(false);
-    };
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
-    document.addEventListener('pointerdown', onDown);
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('pointerdown', onDown);
-      document.removeEventListener('keydown', onKey);
-    };
-  }, [open]);
 
   return (
-    <div ref={rootRef} className="relative">
+    <>
       <button
         type="button"
-        onClick={() => setOpen((o) => !o)}
+        onClick={() => setOpen(true)}
         aria-label={t.nav.language}
-        aria-expanded={open}
-        aria-haspopup="menu"
-        className="grid size-11 place-items-center rounded-full bg-tile-ink/[0.06] text-xl text-ink-soft transition hover:bg-tile-ink/[0.12] active:scale-95"
+        aria-haspopup="dialog"
+        className={`grid size-11 place-items-center rounded-full text-xl transition active:scale-95 ${
+          onDark
+            ? 'bg-tile-cream/[0.16] text-tile-cream hover:bg-tile-cream/[0.26]'
+            : 'bg-tile-ink/[0.06] text-ink-soft hover:bg-tile-ink/[0.12]'
+        }`}
       >
         <LuGlobe aria-hidden="true" />
       </button>
 
-      {/*
-        清單永遠留在 DOM 裡，只切換 inert 與可見度 ——
-        爬蟲讀得到那四條連結，而收起時焦點不會跑進去。
-        這與站上其他 Modal 的作法一致。
-      */}
-      <div
-        {...(open ? {} : { inert: true })}
-        role="menu"
-        aria-label={t.nav.language}
-        className={`absolute z-50 overflow-hidden rounded-xl bg-primary-50 shadow-[0_4px_16px_rgba(20,16,16,0.12)] transition ${
-          placement === 'up' ? 'bottom-full left-1/2 mb-2 -translate-x-1/2' : 'right-0 top-full mt-2'
-        } ${open ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'}`}
+      <Modal
+        isOpen={open}
+        onClose={() => setOpen(false)}
+        title={t.nav.language}
+        icon={LuGlobe}
+        band={{ className: 'bg-tile-blue', fg: 'text-tile-cream' }}
       >
-        {LOCALES.map((l) => (
-          <Link
-            key={l}
-            href={localePath(l, bare)}
-            hrefLang={l}
-            role="menuitem"
-            aria-current={l === current ? 'true' : undefined}
-            onClick={() => setOpen(false)}
-            className={`block whitespace-nowrap px-4 py-2.5 text-sm font-bold transition ${
-              l === current ? 'bg-tile-ink text-tile-cream' : 'text-tile-ink hover:bg-tile-ink/[0.06]'
-            }`}
-          >
-            {LOCALE_NAME[l]}
-          </Link>
-        ))}
-      </div>
-    </div>
+        <ul className="flex flex-col gap-2">
+          {LOCALES.map((l) => {
+            const row = 'flex items-center justify-between rounded-xl px-4 py-3.5 text-base font-black transition';
+            // 已經在這個語言了：連結留著給爬蟲，但按下去只是關掉 ——
+            // 讓它重新載入同一頁，使用者會以為自己按錯了。
+            if (l === current) {
+              return (
+                <li key={l}>
+                  <a
+                    href={localePath(l, bare)}
+                    hrefLang={l}
+                    aria-current="true"
+                    onClick={(e) => {
+                      if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+                      e.preventDefault();
+                      setOpen(false);
+                    }}
+                    className={`${row} bg-tile-ink text-tile-cream`}
+                  >
+                    {LOCALE_NAME[l]}
+                    <LuCheck aria-hidden="true" />
+                  </a>
+                </li>
+              );
+            }
+            return (
+              <li key={l}>
+                {/* 真的 a、真的整頁重載：<html lang> 因此一定是對的 */}
+                <a
+                  href={localePath(l, bare)}
+                  hrefLang={l}
+                  className={`${row} bg-primary-50 text-tile-ink hover:brightness-95`}
+                >
+                  {LOCALE_NAME[l]}
+                </a>
+              </li>
+            );
+          })}
+        </ul>
+      </Modal>
+    </>
   );
 }

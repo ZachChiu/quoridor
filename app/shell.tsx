@@ -10,10 +10,6 @@ import { UserProvider } from "./contexts/UserContext";
 import RuleModal from "./components/RuleModal";
 import { LocaleProvider } from "./i18n/LocaleProvider";
 import { HTML_LANG, type Locale } from "./i18n/locales";
-
-
-
-
 /**
  * 站台外殼：<html> 與所有 provider。
  *
