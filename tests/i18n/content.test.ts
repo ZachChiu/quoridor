@@ -178,6 +178,55 @@ describe('遊戲內 UI 四語一致', () => {
       }
     }
   });
+
+  /*
+    反向的漏法：別的語言的**文字系統**混進來。
+
+    用瀏覽器把四語系每一頁的畫面文字掃過一遍，唯一跨語系出現的只有
+    語言選單自己的名字（繁體中文／English／日本語／한국어）—— 那是刻意的，
+    看不懂當前語言的人才找得到自己那一項，所以 LOCALE_NAME 不在檢查範圍內。
+    其餘任何一個字混進去都是翻譯漏了，而那種漏法讀者一眼就看得出來。
+
+    這一組把同樣的檢查搬到字典層級，不需要瀏覽器也擋得住。
+  */
+  const HAN = /[\u4e00-\u9fff]/;
+  const KANA = /[\u3040-\u30ff]/;
+  const HANGUL = /[\uac00-\ud7af]/;
+
+  const everyString = (l: (typeof LOCALES)[number]) => [
+    ...flat(getMessages(l)),
+    ...flat(GAME_TEXT[l]),
+    ...STEP_TEXT[l].flatMap((s, i) => [[`step${i}.title`, s.title], [`step${i}.body`, s.body]] as [string, string][]),
+    ...FAQ_TEXT[l].flatMap((f, i) => [[`faq${i}.q`, f.q], [`faq${i}.a`, f.a]] as [string, string][]),
+  ];
+
+  it('英文字典裡不該有任何中日韓文字', () => {
+    for (const [k, v] of everyString('en')) {
+      expect(HAN.test(v), `en.${k} → 「${v}」`).toBe(false);
+      expect(KANA.test(v), `en.${k} → 「${v}」`).toBe(false);
+      expect(HANGUL.test(v), `en.${k} → 「${v}」`).toBe(false);
+    }
+  });
+
+  it('韓文字典裡不該殘留漢字或假名', () => {
+    for (const [k, v] of everyString('ko')) {
+      expect(HAN.test(v), `ko.${k} → 「${v}」`).toBe(false);
+      expect(KANA.test(v), `ko.${k} → 「${v}」`).toBe(false);
+    }
+  });
+
+  it('日文字典裡不該出現諺文', () => {
+    for (const [k, v] of everyString('ja')) {
+      expect(HANGUL.test(v), `ja.${k} → 「${v}」`).toBe(false);
+    }
+  });
+
+  it('中文字典裡不該出現假名或諺文', () => {
+    for (const [k, v] of everyString('zh-TW')) {
+      expect(KANA.test(v), `zh-TW.${k} → 「${v}」`).toBe(false);
+      expect(HANGUL.test(v), `zh-TW.${k} → 「${v}」`).toBe(false);
+    }
+  });
 });
 
 describe('教學的圖與文字要一一對應', () => {
