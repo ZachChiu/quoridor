@@ -51,15 +51,26 @@ const boxOf = (wipe: Wipe) => ({
 /**
  * 要蓋滿整個視窗需要放大幾倍。
  *
- * 以起點矩形的兩軸分別算，取大的那個 —— 寬磁磚若只照寬度算，
- * 縱向會露出未覆蓋的邊。
+ * 關鍵是**形狀是橢圓不是矩形** —— 展開過程中 border-radius 已經跑到
+ * 50%。用 `max(dx, dy)` 算出來的是「蓋住最遠的邊」需要的尺寸，
+ * 但橢圓要蓋住的是**最遠的角**，那要大得多。
+ *
+ * 之前就是這樣算的，結果畫面四個角在最大的那一刻仍然露出底色，
+ * 看起來像「還沒展開完就開始收回去」。
+ *
+ * 正確的條件是讓最遠的角落在橢圓內：
+ *
+ *     (dx / (w/2 · s))² + (dy / (h/2 · s))² ≤ 1
+ *  →  s ≥ √( (2dx/w)² + (2dy/h)² )
+ *
+ * 正方形起點時會退化成 `2·hypot(dx,dy)/w`，也就是圓要碰到對角。
  */
 function coverScale(wipe: Wipe): number {
   if (typeof window === 'undefined') return 40;
   const { width, height } = boxOf(wipe);
   const dx = Math.max(wipe.x, window.innerWidth - wipe.x);
   const dy = Math.max(wipe.y, window.innerHeight - wipe.y);
-  return Math.max((dx * 2) / width, (dy * 2) / height) * 1.08;
+  return Math.hypot((2 * dx) / width, (2 * dy) / height) * 1.04;
 }
 
 /**

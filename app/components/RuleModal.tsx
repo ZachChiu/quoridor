@@ -94,23 +94,8 @@ const RuleModal: React.FC = () => {
           <TutorialBoard {...current.board} />
         </div>
 
-        <p className="mt-4 min-h-[5.5rem] text-sm leading-relaxed">{currentText.body}</p>
+        <p className="mt-4 min-h-28 whitespace-pre-line text-sm leading-relaxed">{currentText.body}</p>
       </div>
-
-      {/* CC BY 3.0 的署名是使用條件不是禮貌，不能拿掉 —— 但它也不必
-          擋在首頁。放這裡：想知道圖從哪來的人會打開規則，不想知道的人
-          從頭到尾不會被它佔掉首屏的高度。 */}
-      <p className="mt-3 text-center text-[11px] leading-relaxed text-ink-soft">
-        {t.credits.prefix}{' '}
-        <a className="underline" href="https://game-icons.net" target="_blank" rel="noopener noreferrer">
-          game-icons.net
-        </a>
-        {t.credits.middle}{' '}
-        <a className="underline" href="https://lucide.dev" target="_blank" rel="noopener noreferrer">
-          Lucide
-        </a>
-        {t.credits.suffix}
-      </p>
 
       {/* 進度點。也可以直接點某一步跳過去 —— 回頭查某一條規則時不必一路按。 */}
       <div className="mt-2 flex justify-center gap-2">

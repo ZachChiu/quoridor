@@ -382,9 +382,21 @@ export default React.memo(function Chessboard({
             就算一道牆，之前它在畫面上完全不存在，格線直接切掉。厚度取 9px
             與盤內的牆一致，不是隨便挑的邊框寬度。
             順帶讓棋盤終於像一個物件：原本格線切邊，看起來像沒畫完。
-            厚度用百分比不用 px —— 棋盤是 90dvw / 90dvh，尺寸會跟著視窗變，
-            寫死 9px 在手機上比例會變成桌機的兩倍粗。1.25% 在 720px 時正好是 9px。 */}
-        <div className="relative size-full rounded-[1.4rem] bg-board-line p-[1.25%]">
+            厚度必須**等於盤內的牆**（固定 9px），因為它就是一道牆。
+            原本用 1.25% 讓它跟著棋盤縮放，結果手機上只有 4.4px ——
+            比盤內的牆細一半，讀起來就變回「裝飾外框」了。
+
+            圓角也跟著算：巢狀圓角要同心，內圓角 = 外圓角 − 內距。
+            原本外 22.4px、內 12px、內距 4.4px，內圓角少了 6px，
+            白格子就從那個缺口擠進外框的弧線裡 —— 手機上特別明顯。 */}
+        <div
+          className="relative size-full rounded-[var(--board-frame-r)] bg-board-line p-[var(--board-wall)]"
+          style={{
+            '--board-wall': '9px',
+            '--board-gap': '4px',
+            '--board-frame-r': '1.4rem',
+          } as React.CSSProperties}
+        >
         {/* 欄數走 inline style 而不是 `grid-cols-${size}`：
             動態拼出來的 class 名稱 Tailwind 的靜態掃描看不到，之前是靠 safelist
             列舉 7/8/9 撐著 —— 盤面大小一旦改成別的值就會靜默壞掉。
@@ -394,13 +406,12 @@ export default React.memo(function Chessboard({
           role="grid"
           aria-label={g.board.label}
           onKeyDown={onGridKeyDown}
-          className="grid size-full gap-[var(--board-gap)] overflow-hidden rounded-xl bg-board-line"
+          className="grid size-full gap-[var(--board-gap)] overflow-hidden rounded-[calc(var(--board-frame-r)-var(--board-wall))] bg-board-line"
           style={
             {
               gridTemplateColumns: `repeat(${size}, minmax(0, 1fr))`,
-              // 格縫寬度。牆的位移由它算出來（見下方 WALL_* 常數）——
-              // 兩個值必須連動，分開寫死遲早會漂掉。
-              '--board-gap': '4px',
+              // --board-gap 與 --board-wall 都定義在外框那一層，
+              // 因為外框的內距與圓角也要用到它們。這裡只是繼承。
             } as React.CSSProperties
           }
         >

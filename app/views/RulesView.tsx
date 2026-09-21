@@ -44,7 +44,7 @@ export default function RulesView({ locale }: { locale: Locale }) {
                   <span className="mr-2 text-ink-soft">{i + 1}.</span>
                   {steps[i].title}
                 </h2>
-                <p className="mt-2 text-base leading-relaxed">{steps[i].body}</p>
+                <p className="mt-2 whitespace-pre-line text-base leading-relaxed">{steps[i].body}</p>
               </div>
             </li>
           ))}

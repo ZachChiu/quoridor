@@ -179,3 +179,31 @@ describe('遊戲內 UI 四語一致', () => {
     }
   });
 });
+
+describe('教學的圖與文字要一一對應', () => {
+  it('每個語系的文字數量都等於盤面圖的數量', async () => {
+    const { STEPS } = await import('@/components/tutorialSteps');
+    for (const l of LOCALES) {
+      expect(STEP_TEXT[l].length, `${l} 的文字數與圖數不符`).toBe(STEPS.length);
+    }
+  });
+
+  it('兩人／三人規則不同的步驟，四語都要標出來', () => {
+    // 開局（index 1）與破牆（index 6）在兩人局與三人局不一樣。
+    // 混在同一段裡讓讀者自己分辨適用於誰，是這份教學原本的問題。
+    const marks: Record<string, [string, string]> = {
+      'zh-TW': ['兩人：', '三人：'],
+      en: ['2 players:', '3 players:'],
+      ja: ['2人：', '3人：'],
+      ko: ['2인:', '3인:'],
+    };
+    for (const l of LOCALES) {
+      for (const i of [1, 6]) {
+        const body = STEP_TEXT[l][i].body;
+        for (const m of marks[l]) {
+          expect(body, `${l} 第 ${i + 1} 步少了「${m}」`).toContain(m);
+        }
+      }
+    }
+  });
+});

@@ -1,5 +1,6 @@
 'use client';
 import React, { useMemo } from 'react';
+import { GiHammerBreak } from 'react-icons/gi';
 import { ownerByCellFor } from '@/game/territory';
 import type { Player } from '@/game/types';
 
@@ -36,17 +37,20 @@ export interface TutorialBoardProps {
   ghosts?: { at: Cell; side: 'top' | 'bottom' | 'left' | 'right'; player: TPlayer }[];
   /** 選取中的格子（底色微染） */
   selected?: { at: Cell; player: TPlayer };
+  /** 標成「可以打破」的牆 —— 牆上蓋一顆鐵鎚徽章，與真實棋盤同一個記號 */
+  breaks?: { at: Cell; dir: 'h' | 'v' }[];
 }
 
 const key = ([r, c]: Cell) => `${r},${c}`;
 
 export default function TutorialBoard({
-  size = 4, pieces = [], hWalls = [], vWalls = [], dots = [], ghosts = [], selected,
+  size = 4, pieces = [], hWalls = [], vWalls = [], dots = [], ghosts = [], selected, breaks = [],
 }: TutorialBoardProps) {
   const pieceMap = new Map(pieces.map((p) => [key(p.at), p.player]));
   const hMap = new Map(hWalls.map((w) => [key(w.at), w.player]));
   const vMap = new Map(vWalls.map((w) => [key(w.at), w.player]));
   const dotSet = new Set(dots.map(key));
+  const breakSet = new Set(breaks.map((b) => `${b.dir}:${key(b.at)}`));
 
   /*
     領地**由規則算出來**，不是手寫座標。
@@ -89,7 +93,15 @@ export default function TutorialBoard({
           const sideGhosts = ghosts.filter((g) => key(g.at) === k);
 
           return (
-            <div key={k} className={`relative flex items-center justify-center ${terr ? TERR[terr] : 'bg-primary-50'}`}>
+            <div
+              className={`relative flex items-center justify-center ${terr ? TERR[terr] : 'bg-primary-50'} ${
+                // 只有微染的話，「選取中」和「領地」在圖上長得一模一樣 ——
+                // 讀者會以為那一格已經是誰的地了。真實棋盤是微染**加**深墨內框，
+                // 這裡要跟著，教學裡看到的形狀進遊戲才認得出來。
+                selKey === k ? 'z-10 ring-2 ring-inset ring-tile-ink' : ''
+              }`}
+              key={k}
+            >
               {selKey === k && (
                 <div className="absolute inset-0 opacity-[0.16]" style={{ backgroundColor: PLAYER_VAR[selected!.player] }} />
               )}
@@ -101,20 +113,39 @@ export default function TutorialBoard({
               )}
               {h && (
                 <div className="absolute inset-x-[-2px] bottom-[calc(var(--board-gap)*-0.5)] z-20 h-[7px] translate-y-1/2 rounded-full"
-                     style={{ backgroundColor: PLAYER_VAR[h] }} />
+                     style={{ backgroundColor: PLAYER_VAR[h] }}>
+                  {breakSet.has(`h:${k}`) && (
+                    <span className="absolute left-1/2 top-1/2 z-30 grid size-5 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-tile-ink text-[10px] text-tile-cream ring-2 ring-primary-50">
+                      <GiHammerBreak />
+                    </span>
+                  )}
+                </div>
               )}
               {v && (
                 <div className="absolute inset-y-[-2px] right-[calc(var(--board-gap)*-0.5)] z-20 w-[7px] translate-x-1/2 rounded-full"
-                     style={{ backgroundColor: PLAYER_VAR[v] }} />
+                     style={{ backgroundColor: PLAYER_VAR[v] }}>
+                  {breakSet.has(`v:${k}`) && (
+                    <span className="absolute left-1/2 top-1/2 z-30 grid size-5 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-tile-ink text-[10px] text-tile-cream ring-2 ring-primary-50">
+                      <GiHammerBreak />
+                    </span>
+                  )}
+                </div>
               )}
               {sideGhosts.map((g) => (
                 <div
                   key={g.side}
+                  /*
+                    預覽用 18% 內縮，與真實棋盤一致（真的牆才是滿格加突出）。
+
+                    原本畫成滿格，四道圍起來就是一個完整的方框 ——
+                    讀起來像「這一格被框住了」，而不是「這四個位置你可以選一個」。
+                    縮短之後是四個分開的短樁，一眼看得出是四個選項。
+                  */
                   className={`absolute z-20 rounded-full opacity-75 ${
-                    g.side === 'top' ? 'inset-x-[-2px] top-[calc(var(--board-gap)*-0.5)] h-[7px] -translate-y-1/2'
-                    : g.side === 'bottom' ? 'inset-x-[-2px] bottom-[calc(var(--board-gap)*-0.5)] h-[7px] translate-y-1/2'
-                    : g.side === 'left' ? 'inset-y-[-2px] left-[calc(var(--board-gap)*-0.5)] w-[7px] -translate-x-1/2'
-                    : 'inset-y-[-2px] right-[calc(var(--board-gap)*-0.5)] w-[7px] translate-x-1/2'
+                    g.side === 'top' ? 'inset-x-[18%] top-[calc(var(--board-gap)*-0.5)] h-[7px] -translate-y-1/2'
+                    : g.side === 'bottom' ? 'inset-x-[18%] bottom-[calc(var(--board-gap)*-0.5)] h-[7px] translate-y-1/2'
+                    : g.side === 'left' ? 'inset-y-[18%] left-[calc(var(--board-gap)*-0.5)] w-[7px] -translate-x-1/2'
+                    : 'inset-y-[18%] right-[calc(var(--board-gap)*-0.5)] w-[7px] translate-x-1/2'
                   }`}
                   style={{ backgroundColor: PLAYER_VAR[g.player] }}
                 />

@@ -28,7 +28,6 @@ import { useMessages, useGameText, useLocale } from "@/i18n/LocaleProvider";
 import { localePath } from "@/i18n/locales";
 import { fmt } from "@/i18n/content/game";
 import { useGame } from "@/contexts/GameContext";
-import { useRuleModal } from "@/contexts/RuleModalContext";
 import { useUser } from "@/contexts/UserContext";
 import { createRoom } from "@/utils/gameService";
 import type { RoomPlayer } from "@/types/room";
@@ -54,7 +53,6 @@ export default function HomeClient() {
   const { ensureUser } = useUser();
   const [isCreating, setIsCreating] = useState(false);
   const [soloOpen, setSoloOpen] = useState(false);
-  const { ruleModalState, setRuleModalState } = useRuleModal();
 
   /*
     轉場一律是「從你按的那個東西擴散出一個圓」，顏色就是它的顏色 ——
@@ -139,7 +137,13 @@ export default function HomeClient() {
         tone="forest"
         label={t.home.rules}
         wide
-        onClick={() => setRuleModalState({ ...ruleModalState, isOpen: true })}
+        /* 導到真正的規則頁，不再開 Modal。
+           原本首頁同時有「磁磚開 Modal」與「底下一條文字連結到 /rules」
+           兩個入口 —— 同一件事兩個入口、而且行為還不一樣，
+           使用者得試過才知道哪個是哪個。
+           Modal 保留給遊戲中的「遊玩方式」按鈕：對局進行到一半時
+           不該把人換頁換走。 */
+        onClick={(o) => navigate(localePath(locale, '/rules'), { wipe: wipeFrom(o) })}
       />
       <DifficultyModal isOpen={soloOpen} onClose={() => setSoloOpen(false)} onPick={startSolo} />
     </div>

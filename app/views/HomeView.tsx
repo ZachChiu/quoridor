@@ -1,8 +1,7 @@
-import Link from 'next/link';
 import HomeClient from '@/HomeClient';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { getMessages } from '@/i18n';
-import { localePath, type Locale } from '@/i18n/locales';
+import type { Locale } from '@/i18n/locales';
 import { pageGraph, ldScript } from '@/i18n/jsonld';
 
 
@@ -36,12 +35,9 @@ export default function HomeView({ locale }: { locale: Locale }) {
             <HomeClient />
           </div>
 
-          {/* 規則頁的連結要是真的 <a>，爬蟲才走得過去 ——
-              首頁那塊「遊戲規則」磁磚開的是 Modal，對爬蟲等於不存在。 */}
-          <div className="mt-[max(0.75rem,2dvh)] flex flex-col items-center gap-2">
-            <Link href={localePath(locale, '/rules')} className="text-sm font-bold text-ink-soft underline">
-              {t.rules.heading}
-            </Link>
+          {/* 「遊戲規則」磁磚現在直接導到 /rules，所以這裡不再需要
+              一條重複的文字連結 —— 磁磚本身就是爬蟲走得過去的連結。 */}
+          <div className="mt-[max(0.75rem,2dvh)]">
             <LanguageSwitcher />
           </div>
         </main>
