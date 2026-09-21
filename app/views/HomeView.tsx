@@ -3,9 +3,8 @@ import HomeClient from '@/HomeClient';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { getMessages } from '@/i18n';
 import { localePath, type Locale } from '@/i18n/locales';
-import { organizationLd, ldScript } from '@/i18n/jsonld';
+import { pageGraph, ldScript } from '@/i18n/jsonld';
 
-const SITE = process.env.SITE_URL || 'https://quoridorgame.com';
 
 /**
  * 首頁的版面，四個語系共用。
@@ -47,34 +46,7 @@ export default function HomeView({ locale }: { locale: Locale }) {
           </div>
         </main>
 
-        <script {...ldScript(organizationLd(locale))} />
-
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              '@context': 'https://schema.org',
-              '@type': 'VideoGame',
-              name: `${t.home.titleLine1} ${t.home.titleLine2}`.trim(),
-              alternateName: 'Wall Go',
-              url: SITE + localePath(locale, '/'),
-              description: t.meta.ogDescription,
-              genre: ['Strategy', 'Board Game'],
-              gamePlatform: 'Web browser',
-              applicationCategory: 'Game',
-              operatingSystem: 'Any',
-              inLanguage: locale,
-              numberOfPlayers: { '@type': 'QuantitativeValue', minValue: 1, maxValue: 3 },
-              playMode: ['SinglePlayer', 'CoOp', 'MultiPlayer'],
-              offers: { '@type': 'Offer', price: '0', priceCurrency: 'TWD' },
-              isBasedOn: {
-                '@type': 'TVSeries',
-                name: t.meta.showName,
-                alternateName: "The Devil's Plan: Death Room",
-              },
-            }),
-          }}
-        />
+        <script {...ldScript(pageGraph(locale, 'home'))} />
       </div>
   );
 }

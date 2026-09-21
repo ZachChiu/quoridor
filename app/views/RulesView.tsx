@@ -6,7 +6,7 @@ import { STEP_TEXT } from '@/i18n/content/steps';
 import { FAQ_TEXT } from '@/i18n/content/faq';
 import { getMessages } from '@/i18n';
 import { localePath, type Locale } from '@/i18n/locales';
-import { breadcrumbLd, ldScript } from '@/i18n/jsonld';
+import { pageGraph, ldScript } from '@/i18n/jsonld';
 
 /**
  * 規則說明頁，四語系共用。
@@ -95,23 +95,7 @@ export default function RulesView({ locale }: { locale: Locale }) {
           </p>
         </div>
 
-        <script {...ldScript(breadcrumbLd(locale, [{ name: t.rules.metaTitle, path: '/rules' }]))} />
-
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              '@context': 'https://schema.org',
-              '@type': 'FAQPage',
-              inLanguage: locale,
-              mainEntity: faq.map((item) => ({
-                '@type': 'Question',
-                name: item.q,
-                acceptedAnswer: { '@type': 'Answer', text: item.a },
-              })),
-            }),
-          }}
-        />
+        <script {...ldScript(pageGraph(locale, 'rules'))} />
       </div>
   );
 }

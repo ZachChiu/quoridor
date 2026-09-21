@@ -2,7 +2,7 @@ import Link from 'next/link';
 import SoloClient from '@/(default)/solo/SoloClient';
 import { getMessages } from '@/i18n';
 import { localePath, type Locale } from '@/i18n/locales';
-import { breadcrumbLd, ldScript } from '@/i18n/jsonld';
+import { pageGraph, ldScript } from '@/i18n/jsonld';
 
 /** 單人對戰頁，四語系共用。 */
 export default function SoloView({ locale }: { locale: Locale }) {
@@ -24,7 +24,7 @@ export default function SoloView({ locale }: { locale: Locale }) {
         <SoloClient />
       </main>
 
-      <script {...ldScript(breadcrumbLd(locale, [{ name: t.solo.metaTitle, path: '/solo' }]))} />
+      <script {...ldScript(pageGraph(locale, 'solo'))} />
     </div>
   );
 }
