@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { GiHouse } from 'react-icons/gi';
 import TutorialBoard from '@/components/TutorialBoard';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { STEPS } from '@/components/tutorialSteps';
@@ -24,13 +25,28 @@ export default function RulesView({ locale }: { locale: Locale }) {
   const faq = FAQ_TEXT[locale];
 
   return (
-      <div className="mx-auto max-w-[46rem] px-5 py-[max(2rem,5dvh)] font-[family-name:var(--font-app)]">
+    <>
+      {/* 回首頁與語言切換固定在左上角 —— 這一頁會滑很長，
+          把出口放在結尾等於「讀完才准走」。位置與樣式跟遊戲頁一致，
+          兩邊的左上角是同一顆鈕。 */}
+      <div className="fixed left-5 top-5 z-50 flex flex-col items-start gap-3">
+        <Link
+          href={localePath(locale, '/')}
+          aria-label={t.nav.backHome}
+          className="grid size-12 place-items-center rounded-full bg-primary-50 text-2xl text-tile-ink shadow-[0_2px_10px_rgba(20,16,16,0.08)] transition hover:brightness-95"
+        >
+          <GiHouse />
+        </Link>
+        <LanguageSwitcher />
+      </div>
+
+      <div className="mx-auto max-w-[46rem] px-5 py-[max(2rem,5dvh)] pl-[max(1.25rem,5rem)] font-[family-name:var(--font-app)]">
         <header>
           <p className="text-sm font-bold text-ink-soft">{t.rules.kicker}</p>
           <h1 className="mt-1 text-[clamp(1.75rem,7vw,3rem)] font-black leading-[1.1] tracking-tight">
             {t.rules.heading}
           </h1>
-          <p className="mt-4 text-base leading-relaxed">{t.rules.intro}</p>
+          <p className="mt-4 whitespace-pre-line text-base leading-relaxed">{t.rules.intro}</p>
         </header>
 
         <ol className="mt-10 space-y-10">
@@ -62,19 +78,17 @@ export default function RulesView({ locale }: { locale: Locale }) {
           </dl>
         </section>
 
-        <div className="mt-12 flex flex-wrap gap-3">
+        {/* 一顆就好。原本「開始遊戲」與「單人對戰」並排，但這一頁不是
+            選玩法的地方 —— 首頁那六塊磁磚才是，那裡選項完整、
+            而且本來就是進入點。這裡只負責把人送回去。 */}
+        <div className="mt-12">
           <Link href={localePath(locale, '/')}
-                className="rounded-2xl bg-tile-amber px-6 py-4 text-lg font-black text-tile-ink transition hover:brightness-95">
+                className="inline-block rounded-2xl bg-tile-amber px-6 py-4 text-lg font-black text-tile-ink transition hover:brightness-95">
             {t.rules.ctaPlay}
-          </Link>
-          <Link href={localePath(locale, '/solo')}
-                className="rounded-2xl bg-tile-orange px-6 py-4 text-lg font-black text-tile-ink transition hover:brightness-95">
-            {t.rules.ctaSolo}
           </Link>
         </div>
 
-        <div className="mt-10 flex flex-col items-start gap-3">
-          <LanguageSwitcher />
+        <div className="mt-10">
           <p className="text-[11px] leading-relaxed text-ink-soft">
             {t.credits.prefix}{' '}
             <a className="underline" href="https://game-icons.net" target="_blank" rel="noopener noreferrer">game-icons.net</a>
@@ -86,5 +100,6 @@ export default function RulesView({ locale }: { locale: Locale }) {
 
         <script {...ldScript(pageGraph(locale, 'rules'))} />
       </div>
+    </>
   );
 }

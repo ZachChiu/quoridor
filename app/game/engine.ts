@@ -437,6 +437,26 @@ export function undoTurn(state: GameState, untilPlayer?: PlayerKey): GameState {
 }
 
 /**
+ * 取消進行中的這一回合，回到回合開始時的盤面。
+ *
+ * 實作就是重播自己的棋譜 —— `toWgf()` 只序列化**已完成**的回合
+ * （`state.turns`），進行中的 `currentTurnActions` 不在裡面。
+ * 所以 `replay(toWgf(state))` 得到的正是這一回合開始前的狀態。
+ *
+ * 不另外寫一套回溯邏輯的理由：回溯要處理移動、破牆、步數、pieceIndex、
+ * 選取狀態…每一項都要跟正向操作保持一致，而重播本來就走同一條路徑，
+ * 不可能算出跟正常對局不同的結果。
+ *
+ * 連線模式也安全：WGF 字串沒變，同步用的 effect 不會被觸發。
+ */
+export function cancelTurn(state: GameState): GameState {
+  if (state.currentTurnActions.length === 0 && state.remainSteps === 2 && !state.selected) {
+    return state;
+  }
+  return replay(toWgf(state));
+}
+
+/**
  * 遊戲是否已結束。
  *
  * 兩種情況：

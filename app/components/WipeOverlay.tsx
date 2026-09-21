@@ -106,7 +106,6 @@ const WipeOverlay: React.FC<Props> = ({ phase, wipe, onDone }) => {
 
       const s = coverScale(wipe);
       const { radius } = boxOf(wipe);
-      // 脹大之後圓角也跟著被放大，所以要先除掉 scale 才會看起來是正圓。
       const round = `${Math.max(boxOf(wipe).width, boxOf(wipe).height)}px`;
 
       const tl = createTimeline({
@@ -114,37 +113,48 @@ const WipeOverlay: React.FC<Props> = ({ phase, wipe, onDone }) => {
         onComplete: () => { if (!cancelled) doneRef.current(); },
       });
 
-      if (phase === 'cover') {
-        /*
-          方塊 → 圓 → 蓋滿。圖示與文字留在原位不跟著放大，
-          所以看起來是「那塊磁磚打開了」而不是「有東西蓋過來」。
+      /*
+        圖示是色塊的**子元素**，色塊 overflow: hidden ——
+        所以圖示永遠被色塊當下的實際形狀裁切，包含圓角。
 
-          face 全程不動 opacity。第一版讓它在蓋滿前先淡出，結果進場尾段
-          到離場開頭之間圖示整個不見，看起來像閃了一下 ——
-          中間還夾著換路由，那段空白特別明顯。現在它從按下去到
-          最後收掉為止都在，只有最後跟色塊一起消失。
-        */
+        但子元素會跟著父層一起縮放，所以每一幀反向補償：
+        父層 scale(s)、子層 scale(1/s)，相乘等於 1，圖示的視覺大小不變。
+
+        效果上就是：色塊收小的時候圖示不跟著縮，而是**被色塊從外緣吃掉**。
+        用 overflow 而不是自己算 clip-path，是因為圓角在收尾時會從圓變回
+        方塊 —— 自己算就得跟著換形狀，用 overflow 則是瀏覽器直接照著
+        border-radius 裁，永遠一致。
+
+        1/s 在 s 趨近 0 時會爆掉，所以夾在 20 倍。那時色塊只剩原本的 5%
+        （約 8px），圖示本來就幾乎看不見了。
+      */
+      const drive = { s: phase === 'cover' ? 1 : s };
+      const apply = () => {
+        shape.style.transform = `scale(${drive.s})`;
+        if (face) face.style.transform = `scale(${Math.min(1 / Math.max(drive.s, 1e-4), 20)})`;
+      };
+      apply();
+
+      if (phase === 'cover') {
         tl.add(shape, { borderRadius: [`${radius}px`, round], duration: 200 }, 0);
-        tl.add(shape, { scale: [1, s], duration: 540 }, 60);
+        tl.add(drive, { s: [1, s], duration: 540, onUpdate: apply }, 60);
       } else {
         /*
-          圓 → 收成方塊 → 一路縮到不見。
+          離場拆成兩段，因為「圖示被吃掉」需要時間才看得見。
 
-          關鍵是「一路」：第一版縮到按鈕大小就停住，再用 opacity 淡出，
-          於是看起來是兩件事 —— 先縮小，然後消失。現在 scale 直接走到 0，
-          圖示與文字用同一條曲線同步縮，整個東西是連續地被收走的，
-          中間沒有任何一幀是靜止的。
+          圖示不會縮，所以只有在色塊比圖示還小的時候才會被裁到。
+          一段式的話（色塊從 37 倍一路縮到 0），那個窗口只有約 45ms ——
+          機制是對的，但畫面上等於沒發生。
 
-          圓角在 55% 左右就收完，所以下降的後半段是按鈕的形狀而不是圓，
-          「它變回那顆按鈕然後被收起來」這件事才讀得出來。
+          第一段（420ms）：從蓋滿收回原本磁磚的大小。這一段圖示完整可見。
+          第二段（300ms）：從磁磚大小收到 0。色塊這時比圖示小，
+          圖示就在這 300ms 裡被從外緣一圈圈吃掉。
 
-          進場時 face 刻意不縮（要留在原地讓人看清楚按了什麼），
-          離場才跟著一起走 —— 兩邊的目的不同，不必對稱。
+          圓角在第一段末尾收回方塊，所以吃掉的過程是方塊在吃，不是圓在吃。
         */
-        const ease = 'inOut(2.6)';
-        tl.add(shape, { scale: [s, 0], duration: 620, ease }, 0);
-        tl.add(shape, { borderRadius: [round, `${radius}px`], duration: 240 }, 120);
-        if (face) tl.add(face, { scale: [1, 0], duration: 620, ease }, 0);
+        tl.add(drive, { s: [s, 1], duration: 420, ease: 'out(2.4)', onUpdate: apply }, 0);
+        tl.add(shape, { borderRadius: [round, `${radius}px`], duration: 220 }, 220);
+        tl.add(drive, { s: [1, 0], duration: 300, ease: 'inOut(2)', onUpdate: apply }, 440);
       }
 
       timeline = tl;
@@ -160,7 +170,7 @@ const WipeOverlay: React.FC<Props> = ({ phase, wipe, onDone }) => {
   const s = coverScale(wipe);
   const Icon = wipe.icon;
 
-  /** 起點方塊的位置。圖示層與色塊層共用同一組座標，兩者才會完全疊合。 */
+  /** 起點方塊在畫面上的位置與尺寸。圖示層是它的子元素，用 inset-0 貼齊。 */
   const seat: React.CSSProperties = {
     left: wipe.x - box.width / 2,
     top: wipe.y - box.height / 2,
@@ -177,55 +187,56 @@ const WipeOverlay: React.FC<Props> = ({ phase, wipe, onDone }) => {
     >
       <div
         data-shape
-        className="absolute"
+        className="absolute overflow-hidden"
         style={{
           ...seat,
           background: wipe.color,
+          borderRadius: phase === 'cover' ? box.radius : Math.max(box.width, box.height),
           transformOrigin: 'center',
           willChange: 'transform',
-          borderRadius: phase === 'cover' ? box.radius : Math.max(box.width, box.height),
+          // 初始值要在 render 就給對。離場的第一幀若是 scale(1)（原本磁磚
+          // 的大小），畫面會先閃一下小方塊，等 effect 跑起來才撐滿。
           transform: phase === 'cover' ? 'scale(1)' : `scale(${s})`,
         }}
-      />
-
-      {/* 磁磚的臉：圖示與文字。不跟著放大，所以展開時它就停在原地。 */}
-      {(Icon || wipe.label) && (
-        <div
-          data-face
-          className={`pointer-events-none absolute flex items-center justify-center ${
-            wipe.row ? 'flex-row gap-3' : 'flex-col gap-2'
-          }`}
-          style={{ ...seat, color: wipe.fg, transformOrigin: 'center', willChange: 'transform' }}
-        >
-          {Icon && (
-            /*
-              尺寸用來源元素上量到的實際值，不是寫死的 text-7xl。
-
-              寫死的話，48px 的回首頁鈕會頂著一顆 72px 的房子圖示 ——
-              大得溢出按鈕本身，看起來就是「有個東西突然冒出來」
-              而不是「這顆鈕打開了」。磁磚上的圖示也會對不準。
-            */
-            <Icon
-              style={{
-                fontSize: wipe.iconSize ? `${wipe.iconSize}px` : undefined,
-                flexShrink: 0,
-                ...(wipe.iconColor ? { fill: wipe.iconColor } : {}),
-              }}
-              aria-hidden="true"
-            />
-          )}
-          {wipe.label && (
-            <span className={`font-[family-name:var(--font-app)] leading-tight ${
-              wipe.row ? 'text-lg font-black' : 'flex flex-col items-center'
-            }`}>
-              {!wipe.row && wipe.kicker && (
-                <span className="text-xs font-bold opacity-75 md:text-sm">{wipe.kicker}</span>
-              )}
-              <span className={wipe.row ? '' : 'text-lg font-black md:text-xl'}>{wipe.label}</span>
-            </span>
-          )}
-        </div>
-      )}
+      >
+        {/* 磁磚的臉：圖示與文字。放在色塊**裡面**，所以會被色塊的形狀裁掉。
+            大小靠每一幀的反向縮放維持不變（見上方 apply）。 */}
+        {(Icon || wipe.label) && (
+          <div
+            data-face
+            className={`pointer-events-none absolute inset-0 flex items-center justify-center ${
+              wipe.row ? 'flex-row gap-3' : 'flex-col gap-2'
+            }`}
+            style={{
+              color: wipe.fg,
+              transformOrigin: 'center',
+              willChange: 'transform',
+              transform: phase === 'cover' ? 'scale(1)' : `scale(${Math.min(1 / s, 20)})`,
+            }}
+          >
+            {Icon && (
+              <Icon
+                style={{
+                  fontSize: wipe.iconSize ? `${wipe.iconSize}px` : undefined,
+                  flexShrink: 0,
+                  ...(wipe.iconColor ? { fill: wipe.iconColor } : {}),
+                }}
+                aria-hidden="true"
+              />
+            )}
+            {wipe.label && (
+              <span className={`font-[family-name:var(--font-app)] leading-tight ${
+                wipe.row ? 'text-lg font-black' : 'flex flex-col items-center'
+              }`}>
+                {!wipe.row && wipe.kicker && (
+                  <span className="text-xs font-bold opacity-75 md:text-sm">{wipe.kicker}</span>
+                )}
+                <span className={wipe.row ? '' : 'text-lg font-black md:text-xl'}>{wipe.label}</span>
+              </span>
+            )}
+          </div>
+        )}
+      </div>
 
     </div>
   );

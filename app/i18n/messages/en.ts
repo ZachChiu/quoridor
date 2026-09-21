@@ -29,7 +29,7 @@ const en: Messages = {
     kicker: 'How to play',
     heading: 'Wall Go rules',
     intro:
-      "Wall Go comes from Netflix's The Devil's Plan: Death Room. The rules fit in three words: move, build, enclose. But every wall you build helps your opponent as much as you, which is where the depth comes from. Here is the whole game, one step and one diagram at a time.",
+      "Wall Go comes from the Netflix series The Devil's Plan: Death Room. It is a variant of Go, played on a 7×7 board by two or three players.\nA turn is two things: move one piece, then build one wall. Each step below comes with a diagram.",
     metaTitle: 'Rules',
     metaDescription:
       "Complete Wall Go rules: opening placement, moving 0 to 2 squares and then building a wall each turn, scoring enclosed territory, the 3-player wall break, and how the game ends. From Netflix's The Devil's Plan: Death Room.",
