@@ -86,6 +86,21 @@ interface Props {
   /** 橫跨整列的寬磁磚（不強制正方形）。 */
   wide?: boolean;
   /**
+   * 這塊磁磚會去到哪一頁。
+   *
+   * 給了就渲染成真的 `<a href>`，沒給才是 `<button>`。
+   *
+   * 首頁的每一個入口原本都是 button —— 對使用者沒差，對爬蟲是「首頁沒有
+   * 連到任何地方」。`/rules` 是整站的 SEO 主力落地頁，卻沒有任何一條
+   * 站內連結指向它，只靠 sitemap 撐著。
+   *
+   * 點擊行為完全不變（照樣跑換場動畫），但 cmd／ctrl／中鍵一律放行給
+   * 瀏覽器 —— 攔截那些等於把「在新分頁開啟」弄壞。
+   *
+   * 連線那兩塊沒有 href：房間要先建出來才知道網址，沒有靜態目標可指。
+   */
+  href?: string;
+  /**
    * 滑鼠移入或取得焦點時觸發，用來預熱。
    * 連線那兩塊會在這裡先把 Firebase SDK 載起來並匿名登入 ——
    * 等按下去才開始載，使用者會乾等一到兩秒。
@@ -94,29 +109,34 @@ interface Props {
 }
 
 export default function GameTile({
-  icon: Icon, kicker, label, tone, onClick, disabled, wide, onPrefetch,
+  icon: Icon, kicker, label, tone, onClick, disabled, wide, onPrefetch, href,
 }: Props) {
-  return (
-    <button
-      type="button"
-      onClick={disabled ? undefined : (e) => onClick({
-        rect: e.currentTarget.getBoundingClientRect(),
-        color: TONE_COLOR[tone],
-        icon: Icon, label, kicker, row: wide,
-        // 直接量畫面上那顆圖示，而不是把 text-7xl / md:text-8xl 的斷點
-        // 邏輯在轉場那邊再推一次 —— 推錯了就是大小對不上。
-        iconSize: e.currentTarget.querySelector('svg')?.getBoundingClientRect().height,
-        iconColor: ICON_FILL[tone], fg: TEXT_COLOR[tone],
-      })}
-      onPointerEnter={onPrefetch}
-      onFocus={onPrefetch}
-      disabled={disabled}
-      style={{ '--tile-icon-fill': ICON_FILL[tone] } as React.CSSProperties}
-      className={`${TONE[tone]} ${wide ? 'col-span-2 flex-row gap-3 py-4' : 'aspect-square flex-col gap-2'}
-        group flex items-center justify-center rounded-2xl p-3
-        transition enabled:hover:brightness-95 enabled:active:scale-[0.97]
-        disabled:cursor-not-allowed disabled:opacity-45`}
-    >
+  const fire = (e: React.MouseEvent<HTMLElement>) => onClick({
+    rect: e.currentTarget.getBoundingClientRect(),
+    color: TONE_COLOR[tone],
+    icon: Icon, label, kicker, row: wide,
+    // 直接量畫面上那顆圖示，而不是把 text-7xl / md:text-8xl 的斷點
+    // 邏輯在轉場那邊再推一次 —— 推錯了就是大小對不上。
+    iconSize: e.currentTarget.querySelector('svg')?.getBoundingClientRect().height,
+    iconColor: ICON_FILL[tone], fg: TEXT_COLOR[tone],
+  });
+
+  const shared = {
+    onPointerEnter: onPrefetch,
+    onFocus: onPrefetch,
+    style: { '--tile-icon-fill': ICON_FILL[tone] } as React.CSSProperties,
+    /*
+      停用狀態自己寫，不用 enabled:/disabled: 變體 —— `<a>` 沒有 :disabled，
+      同一份 class 要能給兩種標籤用。
+    */
+    className: `${TONE[tone]} ${wide ? 'col-span-2 flex-row gap-3 py-4' : 'aspect-square flex-col gap-2'}
+      group flex items-center justify-center rounded-2xl p-3 transition ${
+        disabled ? 'cursor-not-allowed opacity-45' : 'hover:brightness-95 active:scale-[0.97]'
+      }`,
+  };
+
+  const inner = (
+    <>
       {/* tile-icon 管填色，tile-icon-anim 管 hover 時那下輕晃。
           晃動只在有 hover 的裝置上啟用（見 globals.css）—— 手機沒有 hover，
           而這個效果不承擔任何說明責任，看不到也不會少懂什麼。 */}
@@ -130,6 +150,30 @@ export default function GameTile({
         )}
         <span className={wide ? '' : 'text-lg font-black leading-tight md:text-xl'}>{label}</span>
       </span>
+    </>
+  );
+
+  if (href) {
+    return (
+      <a
+        href={href}
+        {...shared}
+        onClick={(e) => {
+          if (disabled) { e.preventDefault(); return; }
+          // 修飾鍵與中鍵放行給瀏覽器，「在新分頁開啟」才不會壞掉
+          if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+          e.preventDefault();
+          fire(e);
+        }}
+      >
+        {inner}
+      </a>
+    );
+  }
+
+  return (
+    <button type="button" disabled={disabled} {...shared} onClick={disabled ? undefined : fire}>
+      {inner}
     </button>
   );
 }

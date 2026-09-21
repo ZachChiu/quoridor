@@ -15,8 +15,9 @@ const en: Messages = {
     showName: "The Devil's Plan: Death Room",
   },
   home: {
+    // 英文版只有一行 —— 中文名對英文讀者不是資訊，是雜訊。
+    // titleLine2 整個不給（型別上是選填），HomeView 會連換行一起省掉。
     titleLine1: 'Wall Go',
-    titleLine2: '牆壁圍棋',
     tagline: 'Enclose the most ground · 2–3 players',
     localKicker: 'Local',
     onlineKicker: 'Online',

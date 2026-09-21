@@ -72,12 +72,24 @@ const zhTW = {
  * 逼著寫出一模一樣的中文字面值），陣列保持 readonly ——
  * 一般陣列可以指派給 readonly 陣列，反過來不行。
  */
-export type Messages = {
+type Mirror = {
   [K in keyof typeof zhTW]: {
     [P in keyof (typeof zhTW)[K]]: (typeof zhTW)[K][P] extends readonly string[]
       ? readonly string[]
       : string;
   };
+};
+
+/**
+ * `home.titleLine2` 是「這個語言對這個遊戲的另一個叫法」——
+ * 中文配 Wall Go、日文配 Wall Go、韓文配 Wall Go。英文沒有第二個叫法，
+ * 所以它可以整個不給。
+ *
+ * 用「沒有這個 key」表示，而不是填空字串：空字串和「忘了翻」長得
+ * 一模一樣，而 tests/i18n/content.test.ts 不准空字串，擋的正是後者。
+ */
+export type Messages = Omit<Mirror, 'home'> & {
+  home: Omit<Mirror['home'], 'titleLine2'> & { titleLine2?: string };
 };
 
 export default zhTW;
