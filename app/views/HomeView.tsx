@@ -3,6 +3,7 @@ import HomeClient from '@/HomeClient';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { getMessages } from '@/i18n';
 import { localePath, type Locale } from '@/i18n/locales';
+import { organizationLd, ldScript } from '@/i18n/jsonld';
 
 const SITE = process.env.SITE_URL || 'https://quoridorgame.com';
 
@@ -45,6 +46,8 @@ export default function HomeView({ locale }: { locale: Locale }) {
             <LanguageSwitcher />
           </div>
         </main>
+
+        <script {...ldScript(organizationLd(locale))} />
 
         <script
           type="application/ld+json"

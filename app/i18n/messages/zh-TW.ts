@@ -61,6 +61,8 @@ const zhTW = {
   online: { metaTitle: '連線對戰', srHeading: '連線對戰 | 牆壁圍棋 Wall Go' },
   replay: { metaTitle: '棋譜回放', metaDescription: '一手一手重看整局牆壁圍棋，可前後跳轉。', srHeading: '棋譜回放 | 牆壁圍棋 Wall Go', empty: '這個連結沒有帶棋譜', emptyBody: '回放連結需要帶上棋譜。跟對方要一次完整的連結。', turn: '第 {n} / {total} 手', first: '回到開局', prev: '上一手', play: '播放', pause: '暫停', next: '下一手', last: '跳到最後' },
   ui: { next: '下一步', prev: '上一步', startGame: '開始遊戲', close: '關閉', pickLevel: '選擇難度' },
+  notFound: { title: '找不到這一頁', body: '這個網址可能打錯了，或是那一局已經結束了。', home: '回首頁', rules: '看看怎麼玩' },
+  crumb: { home: '首頁' },
   nav: { language: '語言', backHome: '回首頁' },
   credits: { prefix: '圖示來自', middle: '（CC BY 3.0）與', suffix: '（ISC）' },
 } as const;

@@ -55,6 +55,8 @@ const ko: Messages = {
   online: { metaTitle: '온라인 대전', srHeading: '온라인 대전 | 벽바둑 Wall Go' },
   replay: { metaTitle: '기보 다시보기', metaDescription: '한 수씩 대국을 다시 볼 수 있습니다. 앞뒤로 이동도 자유롭습니다.', srHeading: '기보 다시보기 | 벽바둑 Wall Go', empty: '이 링크에는 기보가 없습니다', emptyBody: '다시보기 링크에는 기보가 필요합니다. 전체 링크를 다시 받아 주세요.', turn: '{total}수 중 {n}수', first: '처음으로', prev: '이전 수', play: '재생', pause: '일시정지', next: '다음 수', last: '마지막으로' },
   ui: { next: '다음', prev: '이전', startGame: '게임 시작', close: '닫기', pickLevel: '난이도 선택' },
+  notFound: { title: '페이지를 찾을 수 없습니다', body: '주소가 잘못되었거나, 가리키던 대국이 이미 끝났을 수 있습니다.', home: '홈으로', rules: '플레이 방법 보기' },
+  crumb: { home: '홈' },
   nav: { language: '언어', backHome: '홈으로' },
   credits: { prefix: '아이콘 출처:', middle: '(CC BY 3.0) 및', suffix: '(ISC)' },
 };

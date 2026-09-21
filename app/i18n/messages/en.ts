@@ -55,6 +55,8 @@ const en: Messages = {
   online: { metaTitle: 'Online play', srHeading: 'Online play | Wall Go' },
   replay: { metaTitle: 'Replay', metaDescription: 'Step through a whole game of Wall Go, one move at a time.', srHeading: 'Replay | Wall Go', empty: 'This link has no game record', emptyBody: 'A replay link needs the game record attached. Ask for the full link again.', turn: 'Move {n} of {total}', first: 'Back to the start', prev: 'Previous move', play: 'Play', pause: 'Pause', next: 'Next move', last: 'Jump to the end' },
   ui: { next: 'Next', prev: 'Back', startGame: 'Start playing', close: 'Close', pickLevel: 'Pick a level' },
+  notFound: { title: 'Page not found', body: 'That address may have a typo in it, or the game it pointed to has already finished.', home: 'Go home', rules: 'How to play' },
+  crumb: { home: 'Home' },
   nav: { language: 'Language', backHome: 'Back to home' },
   credits: { prefix: 'Icons from', middle: '(CC BY 3.0) and', suffix: '(ISC)' },
 };

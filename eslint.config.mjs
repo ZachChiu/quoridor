@@ -12,6 +12,8 @@ const eslintConfig = [
       "node_modules/**",
       "next-env.d.ts",
       "public/**",
+      // CloudFront Function 的進入點由 AWS 呼叫，不是這個專案的模組
+      'infra/**',
     ],
   },
   ...nextCoreWebVitals,
