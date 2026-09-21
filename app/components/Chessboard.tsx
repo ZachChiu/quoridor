@@ -39,6 +39,10 @@ type Props = {
   selectCell: (row: number, col: number) => void;
   setChessPosition: (row: number, col: number) => void;
   onClickBreakWall: (row: number, col: number, direction: 'horizontal' | 'vertical') => void;
+  /** 把進行中的回合倒回開始前（手機控制盤的「重來」） */
+  cancelTurn?: () => void;
+  /** 這一回合已經動過 */
+  turnDirty?: boolean;
 };
 
 export default React.memo(function Chessboard({
@@ -59,6 +63,8 @@ export default React.memo(function Chessboard({
   breakWallCountObj,
   isBreakWallAvailable,
   onClickBreakWall,
+  cancelTurn,
+  turnDirty = false,
 }: Props) {
   // const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 
@@ -708,11 +714,28 @@ export default React.memo(function Chessboard({
             left: checkWallBuildable(selectedChess.row, selectedChess.col, 'left'),
             right: checkWallBuildable(selectedChess.row, selectedChess.col, 'right'),
           }}
+          // 一步之內到得了的四個鄰格。availableMoves 是剩餘步數內的完整
+          // 可達集合，鄰格在不在裡面就等於那個方向能不能走。
+          movable={{
+            top: availableMoves.some((m) => m.row === selectedChess.row - 1 && m.col === selectedChess.col),
+            bottom: availableMoves.some((m) => m.row === selectedChess.row + 1 && m.col === selectedChess.col),
+            left: availableMoves.some((m) => m.row === selectedChess.row && m.col === selectedChess.col - 1),
+            right: availableMoves.some((m) => m.row === selectedChess.row && m.col === selectedChess.col + 1),
+          }}
+          onMove={(dir) => {
+            const d = { top: [-1, 0], bottom: [1, 0], left: [0, -1], right: [0, 1] }[dir];
+            selectCell(selectedChess.row + d[0], selectedChess.col + d[1]);
+            // 移動之後原本選的那道牆多半已經不合法了，清掉重選
+            setPendingWall(null);
+          }}
           pending={pendingWall}
           onPick={setPendingWall}
           onConfirm={() => {
             if (pendingWall) commitWall(selectedChess.row, selectedChess.col, pendingWall);
           }}
+          onRedo={() => { setPendingWall(null); cancelTurn?.(); }}
+          dirty={turnDirty}
+          remainSteps={remainSteps}
           color={PLAYER_VAR[currentPlayer]}
         />
       )}

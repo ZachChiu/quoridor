@@ -50,7 +50,7 @@ export default React.memo(function GameTips({ isPlacingChess, currentPlayer, win
     <div
       className={`fixed right-5 flex flex-col gap-1 rounded-2xl px-4 py-3 text-sm font-black ${
         // 手機築牆時，底部會升起方向控制盤。膠囊得讓位，不然會被壓在後面。
-        shiftUp ? 'bottom-[calc(11.5rem+env(safe-area-inset-bottom))]' : 'bottom-5 lg:bottom-[5dvh]'
+        shiftUp ? 'bottom-[calc(var(--wall-pad-h)+0.75rem)]' : 'bottom-5 lg:bottom-[5dvh]'
       } ${over || !p ? 'bg-tile-ink text-tile-cream' : PLAYER_ON[p]}`}
       style={over || !p ? undefined : { backgroundColor: playerVar(p) }}
     >

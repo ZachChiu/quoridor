@@ -140,21 +140,20 @@ const WipeOverlay: React.FC<Props> = ({ phase, wipe, onDone }) => {
         tl.add(drive, { s: [1, s], duration: 540, onUpdate: apply }, 60);
       } else {
         /*
-          離場拆成兩段，因為「圖示被吃掉」需要時間才看得見。
+          一段連續的縮小，不拆段。
 
-          圖示不會縮，所以只有在色塊比圖示還小的時候才會被裁到。
-          一段式的話（色塊從 37 倍一路縮到 0），那個窗口只有約 45ms ——
-          機制是對的，但畫面上等於沒發生。
+          先前拆成「先收回磁磚大小、再收到 0」兩段，是為了讓「圖示被吃掉」
+          有時間看見。但兩段的緩動都在接點收到速度 0 —— 於是它會在原本
+          按鈕的大小上明顯停一下，再重新啟動。那個停頓比它想解決的問題還礙眼。
 
-          第一段（420ms）：從蓋滿收回原本磁磚的大小。這一段圖示完整可見。
-          第二段（300ms）：從磁磚大小收到 0。色塊這時比圖示小，
-          圖示就在這 300ms 裡被從外緣一圈圈吃掉。
+          改成單一 tween 配 out 緩動就同時滿足兩件事：開頭快、結尾慢。
+          以 out(3) 計算，大約後 30% 的時間色塊都小於原本的按鈕 ——
+          也就是圖示被吃掉的那段自然就慢下來了，不需要切成兩段。
 
-          圓角在第一段末尾收回方塊，所以吃掉的過程是方塊在吃，不是圓在吃。
+          圓角在前半段收回方塊，所以吃掉的過程是方塊在吃，不是圓在吃。
         */
-        tl.add(drive, { s: [s, 1], duration: 420, ease: 'out(2.4)', onUpdate: apply }, 0);
-        tl.add(shape, { borderRadius: [round, `${radius}px`], duration: 220 }, 220);
-        tl.add(drive, { s: [1, 0], duration: 300, ease: 'inOut(2)', onUpdate: apply }, 440);
+        tl.add(drive, { s: [s, 0], duration: 700, ease: 'out(3)', onUpdate: apply }, 0);
+        tl.add(shape, { borderRadius: [round, `${radius}px`], duration: 220 }, 60);
       }
 
       timeline = tl;

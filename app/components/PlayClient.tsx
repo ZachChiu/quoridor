@@ -40,8 +40,8 @@ import {
   replay,
   selectPiece,
   toWgf,
-  applyTurn,
-} from "@/game/engine";
+  applyTurn, cancelTurn,
+  } from "@/game/engine";
 import { evaluate } from "@/game/score";
 import type { GameState, PlayerKey, WallDir } from "@/game/types";
 import type { Turn } from "@/game/engine";
@@ -67,6 +67,7 @@ type GameEvent =
   | { type: 'placeOpening'; row: number; col: number }
   | { type: 'placeWall'; row: number; col: number; dir: WallDir }
   | { type: 'breakWall'; row: number; col: number; dir: WallDir }
+  | { type: 'cancelTurn' }
   | { type: 'aiTurn'; turn: Turn };
 
 /**
@@ -84,6 +85,9 @@ function gameReducer(state: GameState, event: GameEvent): GameState {
       return replay(event.wgf);
     case 'select':
       return selectPiece(state, event.row, event.col);
+    // 取消進行中的回合，回到回合開始時的盤面（手機方向盤的「重來」）
+    case 'cancelTurn':
+      return cancelTurn(state);
     case 'move':
       return movePiece(state, event.row, event.col);
     case 'placeOpening':
@@ -466,7 +470,22 @@ export default function PlayClient({ roomId }: PlayClientProps) {
             shiftUp={wallPadOpen}
           />
 
-          <div className="chessboard-container size-[90dvw] md:size-[90dvh] md:portrait:size-[90dvw] md:landscape:size-[90dvh]">
+          <div
+            /*
+              控制盤升起時棋盤要往上讓，不然下緣會被蓋住 ——
+              而被蓋住的正是你正要點的那幾格。
+
+              只把棋盤縮小不夠：它是在**整個視窗**裡置中，不是在扣掉
+              控制盤之後的空間裡置中。所以再加一個等於控制盤高度的下邊距 ——
+              置中的是「含邊距的方塊」，於是內容剛好往上移半個控制盤，
+              等同在剩餘空間裡置中。
+            */
+            className={`chessboard-container ${
+              wallPadOpen
+                ? 'mb-[var(--wall-pad-h)] size-[min(90dvw,calc(100dvh-var(--wall-pad-h)-7rem))]'
+                : 'size-[90dvw]'
+            } md:size-[90dvh] md:portrait:size-[90dvw] md:landscape:size-[90dvh]`}
+          >
             <Chessboard
               size={BOARD_SIZE}
               board={state.board}
@@ -485,6 +504,10 @@ export default function PlayClient({ roomId }: PlayClientProps) {
               selectCell={selectCell}
               setChessPosition={setChessPosition}
               onClickBreakWall={onClickBreakWall}
+            cancelTurn={() => { if (isMyTurn) dispatch({ type: 'cancelTurn' }); }}
+            // 「已經動過」= 這一回合有動作、或步數被用掉、或選了棋子。
+            // 三者任一成立，「重來」就該是可按的。
+            turnDirty={state.currentTurnActions.length > 0 || state.remainSteps < 2 || !!state.selected}
             />
           </div>
 
