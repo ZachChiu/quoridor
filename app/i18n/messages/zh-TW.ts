@@ -9,15 +9,15 @@
  */
 const zhTW = {
   meta: {
-    titleDefault: '牆壁圍棋 Wall Go 線上免費玩 | 2-3 人策略圈地遊戲',
+    titleDefault: '牆壁圍棋 Wall Go 線上免費玩 | 魔鬼的計謀：死亡密室',
     titleTemplate: '%s | 牆壁圍棋 Wall Go',
     description:
-      'Netflix《魔鬼的計謀：死亡密室》裡的牆壁圍棋，線上免費玩。移動棋子、築牆圈地，地盤大的人獲勝。支援 2-3 人對戰、單人挑戰電腦與連線對局，免下載免註冊。',
-    keywords: ['牆壁圍棋', 'Wall Go', '魔鬼的計謀', '死亡密室', '圈地遊戲', '策略遊戲', '線上桌遊'],
+      'Netflix 韓國實境節目《魔鬼的計謀：死亡密室》裡的牆壁圍棋，線上免費玩。7×7 棋盤上移動棋子、築牆圈地，地盤最大的人獲勝。支援 2-3 人對戰、單人挑戰電腦與連線對局，免下載免註冊。',
+    keywords: ['牆壁圍棋', 'Wall Go', '魔鬼的計謀', '死亡密室', '圍棋變體', '圈地遊戲', '線上桌遊'],
     ogTitle: '牆壁圍棋 Wall Go 線上免費玩',
     ogDescription:
-      'Netflix《魔鬼的計謀：死亡密室》裡的牆壁圍棋。築牆圈地，地盤大的人獲勝。2-3 人對戰、單人挑戰電腦，免下載免註冊。',
-    ogAlt: '牆壁圍棋 Wall Go —— 7x7 棋盤上紅藍雙方以牆圍出各自地盤',
+      '《魔鬼的計謀：死亡密室》裡的牆壁圍棋。7×7 棋盤、築牆圈地，地盤最大的人獲勝。免下載免註冊。',
+    ogAlt: '牆壁圍棋 Wall Go —— 7×7 棋盤上紅藍雙方以牆圍出各自地盤',
     showName: '魔鬼的計謀：死亡密室',
   },
   home: {
@@ -58,7 +58,8 @@ const zhTW = {
     srHeading: '單人對戰 | 牆壁圍棋 Wall Go',
   },
   local: { metaTitle: '本機對戰', srHeading: '本機對戰 | 牆壁圍棋 Wall Go' },
-  match: { metaTitle: '連線對戰', srHeading: '連線對戰 | 牆壁圍棋 Wall Go' },
+  online: { metaTitle: '連線對戰', srHeading: '連線對戰 | 牆壁圍棋 Wall Go' },
+  replay: { metaTitle: '棋譜回放', metaDescription: '一手一手重看整局牆壁圍棋，可前後跳轉。', srHeading: '棋譜回放 | 牆壁圍棋 Wall Go', empty: '這個連結沒有帶棋譜', emptyBody: '回放連結需要帶上棋譜。跟對方要一次完整的連結。', turn: '第 {n} / {total} 手', first: '回到開局', prev: '上一手', play: '播放', pause: '暫停', next: '下一手', last: '跳到最後' },
   ui: { next: '下一步', prev: '上一步', startGame: '開始遊戲', close: '關閉', pickLevel: '選擇難度' },
   nav: { language: '語言', backHome: '回首頁' },
   credits: { prefix: '圖示來自', middle: '（CC BY 3.0）與', suffix: '（ISC）' },

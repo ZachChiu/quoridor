@@ -102,7 +102,7 @@ export default function HomeClient() {
 
       const roomId = await createRoom(playersNum as 2 | 3, 'A', player, initialWgf);
       setGameState({ ...gameState, playersNum, aiDifficulty: null });
-      navigate(`${localePath(locale, '/match')}#roomId=${roomId}`, { wipe: wipeFrom(origin) });
+      navigate(`${localePath(locale, '/online')}#roomId=${roomId}`, { wipe: wipeFrom(origin) });
       trackButtonClick(`start_connect_game_${playersNum}p`);
     } finally {
       setIsCreating(false);

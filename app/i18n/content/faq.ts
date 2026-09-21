@@ -11,8 +11,8 @@ export type FaqItem = { q: string; a: string };
 
 export const FAQ_TEXT: Record<Locale, FaqItem[]> = {
   'zh-TW': [
-    { q: '牆壁圍棋和 Quoridor 有什麼不同？',
-      a: '兩者都會在格線上放牆，但目標完全相反。Quoridor 是賽跑——先走到對面就贏，牆只是用來擋路。牆壁圍棋是圈地——用牆把區域封閉起來，封閉區域裡只有自己的棋子時那塊地才算你的，最後比誰的地盤格數多。另外牆壁圍棋每回合「一定」要蓋一道牆，Quoridor 的牆有數量上限且可以選擇不放。' },
+    { q: '牆壁圍棋和圍棋有什麼不同？',
+      a: '牆壁圍棋是圍棋的變體，目標一樣是圈地，但手段完全不同。圍棋是 19×19、下了子就不能動，靠子與子之間的連結圍地；牆壁圍棋是 7×7，棋子**每回合都會動**，圍地靠的是牆而不是棋子。另外它沒有吃子，也沒有劫爭 —— 一道牆放下去就不會消失（三人局的破牆每人整局限一次）。規則少得多，一局大約十分鐘。'},
     { q: '牆壁圍棋出自哪裡？',
       a: '出自 Netflix 實境節目《魔鬼的計謀：死亡密室》。節目中作為對決項目之一登場，規則簡單但變化很深，播出後有不少人在找線上版。' },
     { q: '一個人可以玩嗎？',
@@ -25,8 +25,8 @@ export const FAQ_TEXT: Record<Locale, FaqItem[]> = {
       a: '系統會自動跳過。當你所有棋子都被封在自己的地盤裡、做什麼都不會改變結果時，回合會直接交給下一位。所有棋子都被封住時遊戲就結束、開始計分。' },
   ],
   en: [
-    { q: 'How is Wall Go different from Quoridor?',
-      a: 'Both place walls on a grid, but the goals are opposites. Quoridor is a race — first to the far side wins, and walls exist to slow people down. Wall Go is about claiming ground — you seal areas off with walls, and an area counts as yours only if the pieces inside are all yours. Whoever holds the most squares wins. Wall Go also makes building compulsory every single turn, whereas in Quoridor walls are limited in number and optional.' },
+    { q: 'How is Wall Go different from Go?',
+      a: 'Wall Go is a variant of Go (baduk): the goal is still to claim the most ground, but the method is different. Go is played on a 19×19 board where stones never move once placed, and territory comes from how the stones connect. Wall Go is 7×7, your pieces **move every turn**, and territory comes from walls rather than from the pieces themselves. There are no captures and no ko fights — once a wall is down it stays (bar the single wall break each player gets in a 3-player game). Far fewer rules, and a game takes about ten minutes.' },
     { q: 'Where does Wall Go come from?',
       a: "It appeared on the Netflix series The Devil's Plan: Death Room as one of the challenges. The rules are simple but the play is deep, and a lot of people went looking for an online version after it aired." },
     { q: 'Can I play on my own?',
@@ -39,8 +39,8 @@ export const FAQ_TEXT: Record<Locale, FaqItem[]> = {
       a: 'Your turn is skipped automatically. Once all your pieces are sealed inside your own territory and nothing you do can change the result, play passes straight to the next person. When every piece is sealed in, the game ends and scores are counted.' },
   ],
   ja: [
-    { q: 'ウォールゴーとコリドール（Quoridor）は何が違うの？',
-      a: 'どちらも盤に壁を置きますが、目的は正反対です。コリドールは競走で、先に向こう側へ着いた人の勝ち。壁は足止めの道具です。ウォールゴーは陣取りで、壁で領域を囲み、その中に自分の駒しかなければその領域が自分のものになります。最後にマス数が多い人の勝ちです。またウォールゴーでは毎ターン必ず壁を作りますが、コリドールの壁は枚数制限があり、置かない選択もできます。' },
+    { q: 'ウォールゴーと囲碁は何が違うの？',
+      a: 'ウォールゴーは囲碁の派生で、陣地を広げるという目的は同じですが、やり方が違います。囲碁は19路盤で、置いた石は動かず、石のつながりで地を囲みます。ウォールゴーは7路盤で、駒は**毎ターン動き**、地を囲むのは石ではなく壁です。取りもコウもなく、置いた壁は消えません（3人対戦の壁壊しは各自1回だけ）。ルールははるかに少なく、一局はおよそ10分です。' },
     { q: 'ウォールゴーはどこで登場したの？',
       a: 'Netflix の『デビルズプラン：デスルーム』に対決種目のひとつとして登場しました。ルールは単純ですが展開が深く、放送後にオンライン版を探す人が増えました。' },
     { q: 'ひとりでも遊べる？',
@@ -53,9 +53,9 @@ export const FAQ_TEXT: Record<Locale, FaqItem[]> = {
       a: '自動でスキップされます。自分の駒がすべて自分の陣地に閉じ込められ、何をしても結果が変わらない状態になると、手番はそのまま次の人へ移ります。全員の駒が閉じ込められた時点で終了し、得点計算に入ります。' },
   ],
   ko: [
-    { q: '월 고와 코리도(Quoridor)는 무엇이 다른가요?',
-      a: '둘 다 판에 벽을 놓지만 목표가 정반대입니다. 코리도는 달리기입니다. 먼저 반대편에 닿으면 이기고, 벽은 상대를 늦추는 도구일 뿐입니다. 월 고는 영역 싸움입니다. 벽으로 구역을 둘러싸고, 그 안에 내 말만 있어야 내 영역이 됩니다. 마지막에 칸 수가 많은 사람이 이깁니다. 또 월 고는 매 턴 반드시 벽을 세워야 하지만, 코리도의 벽은 개수 제한이 있고 놓지 않아도 됩니다.' },
-    { q: '월 고는 어디에서 나온 게임인가요?',
+    { q: '벽바둑과 바둑은 무엇이 다른가요?',
+      a: '벽바둑은 바둑의 변형입니다. 영역을 많이 차지한다는 목표는 같지만 방법이 다릅니다. 바둑은 19줄 판에서 한 번 놓은 돌은 움직이지 않고, 돌의 연결로 집을 만듭니다. 벽바둑은 7줄 판이고 말이 **매 턴 움직이며**, 영역을 만드는 것은 돌이 아니라 벽입니다. 따내기도 없고 패도 없으며, 한 번 세운 벽은 사라지지 않습니다(3인전의 벽 부수기는 각자 한 번뿐). 규칙이 훨씬 적고 한 판에 10분 정도 걸립니다.' },
+    { q: '벽바둑는 어디에서 나온 게임인가요?',
       a: '넷플릭스 『데블스 플랜: 데스룸』에 대결 종목 중 하나로 등장했습니다. 규칙은 단순하지만 수읽기가 깊어서, 방송 이후 온라인 버전을 찾는 사람이 많아졌습니다.' },
     { q: '혼자서도 할 수 있나요?',
       a: '가능합니다. 컴퓨터 대전이 3단계로 준비되어 있습니다. 컴퓨터는 각 칸에 누가 먼저 닿는지(보로노이 분할)를 계산해서 두기 때문에 아무렇게나 두지 않습니다.' },

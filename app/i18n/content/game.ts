@@ -260,7 +260,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       failed: '보내지 못했습니다. 연결이 끊겼을 수 있습니다. 다시 눌러보세요.',
     },
     share: {
-      shareTitle: '월 고 Wall Go', shareText: '방을 만들었어요. 링크를 누르면 바로 들어올 수 있습니다!',
+      shareTitle: '벽바둑 Wall Go', shareText: '방을 만들었어요. 링크를 누르면 바로 들어올 수 있습니다!',
       heading: '친구 초대하기', kicker: '온라인 대전', copied: '복사됨', copyAria: '링크 복사',
       copy: '복사', waiting: '대기 중', body: '링크를 친구에게 보내면, 열자마자 이 방으로 들어옵니다.',
       share: '링크 공유',

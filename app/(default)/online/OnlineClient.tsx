@@ -6,7 +6,7 @@ import Link from 'next/link';
 import PlayClient from '@/components/PlayClient';
 import { useGameText } from '@/i18n/LocaleProvider';
 
-export default function MatchClient() {
+export default function OnlineClient() {
   const g = useGameText();
   const searchParams = useSearchParams();
   // null ＝ 還沒讀到 hash，'' ＝ 讀完了但沒有 roomId。

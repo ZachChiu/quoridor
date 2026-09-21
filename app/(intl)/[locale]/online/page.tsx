@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import MatchView from '@/views/MatchView';
+import OnlineView from '@/views/OnlineView';
 import { getMessages } from '@/i18n';
 import { PREFIXED, toLocale } from '@/i18n/locales';
 
@@ -18,11 +18,11 @@ export async function generateMetadata({
   params,
 }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const t = getMessages(toLocale((await params).locale));
-  return { title: t.match.metaTitle, robots: { index: false, follow: false } };
+  return { title: t.online.metaTitle, robots: { index: false, follow: false } };
 }
 
 export default async function Page({
   params,
 }: { params: Promise<{ locale: string }> }) {
-  return <MatchView locale={toLocale((await params).locale)} />;
+  return <OnlineView locale={toLocale((await params).locale)} />;
 }

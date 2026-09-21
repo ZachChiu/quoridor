@@ -1,14 +1,13 @@
 import type { Metadata } from 'next';
-import MatchView from '@/views/MatchView';
-import { getMessages } from '@/i18n';
+import MatchRedirect from './MatchRedirect';
 
 export const metadata: Metadata = {
-  title: getMessages('zh-TW').match.metaTitle,
-  // 沒有 roomId 就是一張錯誤畫面，有 roomId 也是某兩個人的私人對局 ——
-  // 兩種都不該進索引。sitemap 也排除了它，這裡是第二道。
-  robots: { index: false, follow: false },
+  // 這一頁只是轉址，不該被索引；canonical 指向新網址，
+  // 讓已經收錄 /match 的搜尋引擎知道該換過去。
+  robots: { index: false, follow: true },
+  alternates: { canonical: '/online' },
 };
 
-export default function MatchPage() {
-  return <MatchView locale="zh-TW" />;
+export default function MatchLegacy() {
+  return <MatchRedirect />;
 }
