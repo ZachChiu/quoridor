@@ -20,7 +20,10 @@ const SITE = process.env.SITE_URL || 'https://quoridorgame.com';
  *
  * ── 哪些會有搜尋結果的外觀、哪些不會 ────────────────────────────
  *
- * - **BreadcrumbList**：會顯示，把結果頁的網址列換成階層
+ * - **BreadcrumbList**：會顯示，把結果頁的網址列換成階層。
+ *   Google 的文件**沒有**要求頁面上要有看得見的麵包屑 —— 這裡刻意
+ *   只留標記不放導覽：那條導覽在遊戲頁會和左上角的回首頁鈕疊在一起，
+ *   而它提供的資訊（你在站台的哪一層）在只有兩層的站台上等於零
  * - **Organization / WebSite**：影響站台識別與 logo
  * - **VideoGame / TVSeries**：沒有對應的 rich result，是給知識圖譜與
  *   語意理解用的。成本零

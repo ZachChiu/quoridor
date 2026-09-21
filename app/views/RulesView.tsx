@@ -25,17 +25,6 @@ export default function RulesView({ locale }: { locale: Locale }) {
 
   return (
       <div className="mx-auto max-w-[46rem] px-5 py-[max(2rem,5dvh)] font-[family-name:var(--font-app)]">
-        {/* 可見的麵包屑。BreadcrumbList 的結構化資料應該對得上畫面上
-            真的存在的導覽 —— 只寫 JSON-LD 而畫面沒有，屬於
-            「標記與內容不符」，Google 的處理是整組不採用。 */}
-        <nav aria-label={t.crumb.home} className="mb-4 text-sm font-bold text-ink-soft">
-          <Link href={localePath(locale, '/')} className="underline hover:opacity-70">
-            {t.crumb.home}
-          </Link>
-          <span className="mx-2 opacity-50">/</span>
-          <span aria-current="page">{t.rules.metaTitle}</span>
-        </nav>
-
         <header>
           <p className="text-sm font-bold text-ink-soft">{t.rules.kicker}</p>
           <h1 className="mt-1 text-[clamp(1.75rem,7vw,3rem)] font-black leading-[1.1] tracking-tight">
