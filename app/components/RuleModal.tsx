@@ -24,6 +24,19 @@ const RuleModal: React.FC = () => {
   // 圖不分語言、文字分 —— 兩邊靠索引對齊，長度由測試鎖住
   const text = STEP_TEXT[locale];
   const [step, setStep] = useState(0);
+  /*
+    翻頁的方向。內容要從哪一邊進來由它決定 ——
+    往後翻就從右邊進、往前翻就從左邊進，和手指的方向一致。
+    用 state 而不是比對前值：直接在換頁的當下就知道方向，不必推。
+  */
+  const [dir, setDir] = useState<'next' | 'prev'>('next');
+  const goTo = useCallback((n: number) => {
+    setStep((cur) => {
+      const target = Math.min(Math.max(n, 0), STEPS.length - 1);
+      if (target !== cur) setDir(target > cur ? 'next' : 'prev');
+      return target;
+    });
+  }, []);
   const isOpen = ruleModalState.isOpen;
   const last = step === STEPS.length - 1;
 
@@ -43,13 +56,13 @@ const RuleModal: React.FC = () => {
 
   // 左右方向鍵翻頁。Escape 關閉由 Modal 統一處理。
   const onKeyDown = useCallback((e: KeyboardEvent) => {
-    if (e.key === 'ArrowRight') setStep((s) => Math.min(s + 1, STEPS.length - 1));
-    if (e.key === 'ArrowLeft') setStep((s) => Math.max(s - 1, 0));
-  }, []);
+    if (e.key === 'ArrowRight') goTo(step + 1);
+    if (e.key === 'ArrowLeft') goTo(step - 1);
+  }, [goTo, step]);
 
 
-  const next = useCallback(() => setStep((s) => Math.min(s + 1, STEPS.length - 1)), []);
-  const prev = useCallback(() => setStep((s) => Math.max(s - 1, 0)), []);
+  const next = useCallback(() => goTo(step + 1), [goTo, step]);
+  const prev = useCallback(() => goTo(step - 1), [goTo, step]);
   // 手機上翻頁不該只有底下那顆按鈕 —— 一步一頁的東西，手指預期可以滑。
   const swipe = useSwipe(next, prev);
 
@@ -70,7 +83,7 @@ const RuleModal: React.FC = () => {
           {step > 0 && (
             <Button
               color="text-ink-soft hover:bg-tile-ink/[0.06] bg-transparent"
-              handleClickEvent={() => setStep(step - 1)}
+              handleClickEvent={prev}
             >
               {t.ui.prev}
             </Button>
@@ -79,7 +92,7 @@ const RuleModal: React.FC = () => {
               按鈕再帶一個就是兩個不相干的顏色在同一塊小面板上打架
               —— 綠色 header 配黃色按鈕看起來怪，原因就在這。
               深墨不屬於任何色相，放在哪個色帶下面都成立。 */}
-          <Button color="bg-tile-ink text-tile-cream" handleClickEvent={last ? close : () => setStep(step + 1)}>
+          <Button color="bg-tile-ink text-tile-cream" handleClickEvent={last ? close : next}>
             <span className="flex items-center justify-center gap-2">
               {last ? <><GiPlayButton /> {t.ui.startGame}</> : t.ui.next}
             </span>
@@ -89,12 +102,14 @@ const RuleModal: React.FC = () => {
     >
       {/* 滑動範圍涵蓋圖與文字，不只棋盤 —— 手指會落在哪裡不該由我決定。
           touch-pan-y 讓垂直捲動照常交給瀏覽器，只有水平方向歸我們處理。 */}
-      <div className="touch-pan-y" {...swipe}>
+      <div className="touch-pan-y overflow-hidden" {...swipe}>
+        <div key={step} className={dir === 'next' ? 'animate-step-next' : 'animate-step-prev'}>
         <div className="mx-auto w-full max-w-[240px]">
           <TutorialBoard {...current.board} />
         </div>
 
         <p className="mt-4 min-h-28 whitespace-pre-line text-sm leading-relaxed">{currentText.body}</p>
+        </div>
       </div>
 
       {/* 進度點。也可以直接點某一步跳過去 —— 回頭查某一條規則時不必一路按。 */}
@@ -105,7 +120,7 @@ const RuleModal: React.FC = () => {
             type="button"
             aria-label={`${i + 1}. ${text[i].title}`}
             aria-current={i === step ? 'step' : undefined}
-            onClick={() => setStep(i)}
+            onClick={() => goTo(i)}
             // 圓點本身是 8px，當觸控目標太小（WCAG 2.5.8 最低 24px）。
             // 按鈕撐到 24px 但保持透明，看到的仍然只有那顆點。
             className="group grid h-6 min-w-6 place-items-center"

@@ -18,7 +18,14 @@ import { useMessages } from '@/i18n/LocaleProvider';
  * 切換時停在**同一頁**：在規則頁想換語言的人要的是同一份規則的另一個
  * 語言，不是被丟回首頁重走一次。
  */
-export default function LanguageSwitcher() {
+/**
+ * `placement` 決定清單往上還是往下開。
+ *
+ * 首頁的切換器在底部，往上開；規則頁在置頂列，必須往下開 ——
+ * 往上開會開到畫面外，而且因為清單一直在 DOM 裡（只切 inert），
+ * 它還會把頁面撐出一條水平捲軸。
+ */
+export default function LanguageSwitcher({ placement = 'up' }: { placement?: 'up' | 'down' } = {}) {
   const pathname = usePathname() ?? '/';
   const current = localeFromPath(pathname);
   const bare = stripLocale(pathname);
@@ -63,9 +70,9 @@ export default function LanguageSwitcher() {
         {...(open ? {} : { inert: true })}
         role="menu"
         aria-label={t.nav.language}
-        className={`absolute bottom-full left-1/2 z-50 mb-2 -translate-x-1/2 overflow-hidden rounded-xl bg-primary-50 shadow-[0_4px_16px_rgba(20,16,16,0.12)] transition ${
-          open ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'
-        }`}
+        className={`absolute z-50 overflow-hidden rounded-xl bg-primary-50 shadow-[0_4px_16px_rgba(20,16,16,0.12)] transition ${
+          placement === 'up' ? 'bottom-full left-1/2 mb-2 -translate-x-1/2' : 'right-0 top-full mt-2'
+        } ${open ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'}`}
       >
         {LOCALES.map((l) => (
           <Link

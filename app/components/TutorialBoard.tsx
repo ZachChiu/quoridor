@@ -79,9 +79,25 @@ export default function TutorialBoard({
 
   return (
     <div
-      className="grid aspect-square w-full gap-[var(--board-gap)] overflow-hidden rounded-xl bg-board-line"
-      style={{ gridTemplateColumns: `repeat(${size}, minmax(0, 1fr))`, '--board-gap': '3px' } as React.CSSProperties}
+      /*
+        外圈那道框是**牆**，不是裝飾 —— 規則裡棋盤外緣本來就算一道牆，
+        真實棋盤也是這樣畫的。原本教學的小棋盤沒有它，結果放進
+        規則頁的卡片之後，格子的奶油色和卡片底色一模一樣，
+        整個棋盤溶進背景裡只剩線條浮著。
+
+        厚度與盤內的牆一致（7px），圓角同心（內 = 外 − 厚度）。
+      */
+      className="aspect-square w-full rounded-[var(--tb-frame-r)] bg-board-line p-[var(--tb-wall)]"
+      style={{
+        '--tb-wall': '7px',
+        '--tb-frame-r': '0.85rem',
+        '--board-gap': '3px',
+      } as React.CSSProperties}
       aria-hidden="true"
+    >
+    <div
+      className="grid size-full gap-[var(--board-gap)] overflow-hidden rounded-[calc(var(--tb-frame-r)-var(--tb-wall))] bg-board-line"
+      style={{ gridTemplateColumns: `repeat(${size}, minmax(0, 1fr))` } as React.CSSProperties}
     >
       {Array.from({ length: size }, (_, r) =>
         Array.from({ length: size }, (_, c) => {
@@ -154,6 +170,7 @@ export default function TutorialBoard({
           );
         })
       )}
+    </div>
     </div>
   );
 }

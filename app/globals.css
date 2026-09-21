@@ -320,3 +320,22 @@ body {
   .wall-hit-h::after { inset: -8px -10px; }
   .wall-hit-v::after { inset: -10px -8px; }
 }
+
+/* 規則說明翻頁。手指往左滑＝看下一頁，內容就該從右邊進來 ——
+   只有內容默默換掉的話，滑動有沒有生效全靠猜。
+   位移刻意小（14%）：這是說明不是輪播，重點是「換了一頁」而不是滑行本身。 */
+@keyframes step-in-next {
+  from { opacity: 0; transform: translateX(14%); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes step-in-prev {
+  from { opacity: 0; transform: translateX(-14%); }
+  to   { opacity: 1; transform: none; }
+}
+.animate-step-next { animation: step-in-next 240ms var(--mo-out) both; }
+.animate-step-prev { animation: step-in-prev 240ms var(--mo-out) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-step-next,
+  .animate-step-prev { animation: none !important; }
+}
