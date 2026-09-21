@@ -1,4 +1,5 @@
 import type { Difficulty } from '@/game/ai';
+import { localePath, type Locale } from '@/i18n/locales';
 
 /**
  * 對局模式放在網址的 hash 裡。
@@ -52,4 +53,24 @@ export function parseGameHash(hash: string): GameMode {
 export function readGameHash(): GameMode {
   if (typeof window === 'undefined') return {};
   return parseGameHash(window.location.hash);
+}
+
+/**
+ * 房間邀請連結。
+ *
+ * 兩件先前都錯的事：
+ *
+ * 1. **指向 `/online`，不是 `/match`。** `/match` 是路由改名前的相容層，
+ *    靠一段 client-side `location.replace` 轉過去。發出去的邀請連結
+ *    指著它，等於每個被邀請的人都白繞一跳 —— 而且它只有 zh-TW 有。
+ * 2. **留在邀請者自己的語系。** 原本寫死無前綴，於是 /ja 的人分享出去、
+ *    朋友落在中文站 —— 那是不會有人回報的那種壞掉：連結能用、遊戲也能玩，
+ *    只是全是看不懂的字。朋友多半跟邀請者說同一種語言，這是手上最好的
+ *    猜測；猜錯了頁面上還有語言切換器。
+ *
+ * 抽成函式而不是寫在元件裡，是為了能測 —— 這條字串壞掉的唯一症狀
+ * 是「朋友點進來看到別的東西」，在元件裡沒有任何辦法自動驗證。
+ */
+export function roomShareUrl(origin: string, locale: Locale, roomId: string): string {
+  return `${origin}${localePath(locale, '/online')}#roomId=${roomId}`;
 }

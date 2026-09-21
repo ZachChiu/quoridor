@@ -53,6 +53,7 @@ import type { GameState, PlayerKey, WallDir } from "@/game/types";
 import type { Turn } from "@/game/engine";
 import { useGameText, useLocale } from '@/i18n/LocaleProvider';
 import { localePath } from '@/i18n/locales';
+import { roomShareUrl } from '@/utils/gameMode';
 import { fmt } from '@/i18n/content/game';
 
 type OnlinePhase = 'initializing' | 'waiting' | 'playing' | 'error';
@@ -136,9 +137,11 @@ export default function PlayClient({ roomId, playersNum: routePlayers }: PlayCli
   const [error, setError] = useState('');
   const initialized = useRef(false);
 
+  // 邀請連結留在邀請者自己的語系（理由見 roomShareUrl）
+  const locale = useLocale();
   const shareUrl =
     isOnline && typeof window !== 'undefined'
-      ? `${window.location.origin}/match#roomId=${roomId}`
+      ? roomShareUrl(window.location.origin, locale, roomId!)
       : '';
 
   // ─── 遊戲狀態 ────────────────────────────────────────────────────────────────
@@ -191,7 +194,6 @@ export default function PlayClient({ roomId, playersNum: routePlayers }: PlayCli
   const isPlacing = isPlacingPhase(state);
 
   const g = useGameText();
-  const locale = useLocale();
 
   /*
     ── 版面靠 CSS 斷點分岔，不靠 JS ────────────────────────────────

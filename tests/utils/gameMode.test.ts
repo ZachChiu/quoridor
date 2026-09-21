@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { gameHash, parseGameHash, readGameHash, toPlayersNum } from '@/utils/gameMode';
+import { gameHash, parseGameHash, readGameHash, toPlayersNum, roomShareUrl } from '@/utils/gameMode';
+import { LOCALES } from '@/i18n/locales';
 
 /*
   對局模式怎麼寫進網址、怎麼讀回來。
@@ -71,5 +72,41 @@ describe('readGameHash：伺服器端不能炸', () => {
     // vitest 的 environment 是 node，本來就沒有 window
     expect(typeof window).toBe('undefined');
     expect(readGameHash()).toEqual({});
+  });
+});
+
+describe('roomShareUrl', () => {
+  const ORIGIN = 'https://quoridorgame.com';
+
+  it('指向 /online 而不是舊的 /match 相容層', () => {
+    expect(roomShareUrl(ORIGIN, 'zh-TW', 'r')).not.toContain('/match');
+    expect(roomShareUrl(ORIGIN, 'ja', 'r')).not.toContain('/match');
+  });
+
+  it('zh-TW 不加前綴', () => {
+    expect(roomShareUrl(ORIGIN, 'zh-TW', 'abc123')).toBe(
+      'https://quoridorgame.com/online#roomId=abc123'
+    );
+  });
+
+  it('其他語系帶著自己的前綴 —— 朋友點進來不會落在中文站', () => {
+    expect(roomShareUrl(ORIGIN, 'ja', 'abc123')).toBe(
+      'https://quoridorgame.com/ja/online#roomId=abc123'
+    );
+    expect(roomShareUrl(ORIGIN, 'ko', 'abc123')).toBe(
+      'https://quoridorgame.com/ko/online#roomId=abc123'
+    );
+    expect(roomShareUrl(ORIGIN, 'en', 'abc123')).toBe(
+      'https://quoridorgame.com/en/online#roomId=abc123'
+    );
+  });
+
+  it('四個語系各自產生不同的連結', () => {
+    const urls = LOCALES.map((l) => roomShareUrl(ORIGIN, l, 'r'));
+    expect(new Set(urls).size).toBe(LOCALES.length);
+  });
+
+  it('roomId 原樣帶過去（Firebase push key 含 - 與 _）', () => {
+    expect(roomShareUrl(ORIGIN, 'zh-TW', '-OaB_c12XyZ')).toContain('#roomId=-OaB_c12XyZ');
   });
 });

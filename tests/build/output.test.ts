@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
+import { roomShareUrl } from '@/utils/gameMode';
+import { LOCALES as ALL_LOCALES } from '@/i18n/locales';
 
 /*
   對**建置產物**（out/）的檢查。
@@ -32,6 +34,21 @@ describe.skipIf(!built)('建置產物', () => {
         for (const l of LOCALES) {
           expect(existsSync(join(OUT, l, p, 'index.html')), `/${l}/${p}`).toBe(true);
         }
+      }
+    });
+
+    /*
+      邀請連結指的那一頁，在每個語系都必須真的存在。
+
+      這條是用建置產物驗 roomShareUrl，而不是再比對一次字串 ——
+      先前它指著 `/match`，那是舊路由的相容層、而且只有 zh-TW 有，
+      所以 /ja 的人分享出去就是 404。單純比對字串不會發現這件事，
+      因為字串本身「看起來」完全合理。
+    */
+    it('邀請連結的目的地，四語系都有這一頁', () => {
+      for (const l of ALL_LOCALES) {
+        const url = new URL(roomShareUrl('https://example.com', l, 'r'));
+        expect(existsSync(join(OUT, url.pathname, 'index.html')), url.pathname).toBe(true);
       }
     });
 
