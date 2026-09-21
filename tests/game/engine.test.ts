@@ -5,6 +5,7 @@ import {
   createGame,
   legalBreaks,
   legalMoves,
+  isPlacingPhase,
   legalWalls,
   movePiece,
   openingOrder,
@@ -334,5 +335,28 @@ describe('自動跳過與勝負', () => {
     let s = createGame(2);
     s = runOpening(s, [[3, 3], [3, 4], [0, 0], [6, 6]]);
     expect(evaluate(s).outcome).toEqual([]);
+  });
+
+  /*
+    整個棋盤本來就被外緣的牆封起來，所以第一顆棋子放下去的那一刻，
+    49 格全部符合「封閉區塊內只有這位玩家的棋子」—— 計分板會寫 49。
+    規則沒錯，是它在棋子還沒擺完時套用得太早。
+  */
+  it('開局擺子階段不計分（放第一顆棋不會變成 49 格）', () => {
+    let s = createGame(2);
+    s = placeOpeningPiece(s, 3, 2);
+    expect(isPlacingPhase(s)).toBe(true);
+    const { territories, scores } = evaluate(s);
+    expect(scores).toEqual({ A: 0, B: 0 });
+    expect(territories.owned.A).toEqual([]);
+    expect(territories.ownerByCell).toEqual({});
+  });
+
+  it('擺完之後才開始算領地', () => {
+    let s = createGame(2);
+    s = runOpening(s, [[3, 3], [3, 4], [0, 0], [6, 6]]);
+    expect(isPlacingPhase(s)).toBe(false);
+    // 全盤仍是一個連通區塊、而且兩方都有棋子 —— 中立，誰都不得分
+    expect(evaluate(s).scores).toEqual({ A: 0, B: 0 });
   });
 });
