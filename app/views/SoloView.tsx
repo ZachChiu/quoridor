@@ -8,7 +8,7 @@ export default function SoloView({ locale }: { locale: Locale }) {
   const t = getMessages(locale);
   return (
     <div className="flex min-h-dvh items-center justify-center overflow-hidden font-[family-name:var(--font-app)]">
-      <main className="flex flex-1 items-center justify-center">
+      <main className="flex flex-1 items-center justify-center self-stretch">
         <h1 className="sr-only">{t.solo.srHeading}</h1>
         <SoloClient />
       </main>

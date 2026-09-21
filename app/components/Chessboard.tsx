@@ -15,7 +15,7 @@ const PLAYER_VAR: Record<string, string> = {
 };
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import SectionShadow from "./SectionShadow";
-import WallDirectionPad, { wallPadVisible } from "./WallDirectionPad";
+import WallDirectionPad from "./WallDirectionPad";
 import { useCoarsePointer } from "@/hook/useCoarsePointer";
 import { boardSignature, diffBoard, territoryWave, newWall, pathBetween } from "./boardMotion";
 import { useGameText } from '@/i18n/LocaleProvider';
@@ -41,6 +41,18 @@ type Props = {
   onClickBreakWall: (row: number, col: number, direction: 'horizontal' | 'vertical') => void;
   /** 把進行中的回合倒回開始前（手機控制盤的「重來」） */
   cancelTurn?: () => void;
+  /**
+   * 選好但還沒確認的那道牆。狀態放在 PlayClient ——
+   * 步驟提示現在排在棋盤與控制盤中間、由 PlayClient 渲染，
+   * 而「有沒有選好牆」是它判斷「在第幾步」的依據之一。
+   */
+  pendingWall: Direction | null;
+  setPendingWall: (d: Direction | null) => void;
+  breakMode: boolean;
+  onToggleBreak: () => void;
+  onWallStep: boolean;
+  /** 手機控制盤上的「投降結算」—— 開確認 Modal，實際結算在 PlayClient */
+  onSurrender?: () => void;
   /** 這一回合已經動過 */
   turnDirty?: boolean;
 };
@@ -64,6 +76,12 @@ export default React.memo(function Chessboard({
   isBreakWallAvailable,
   onClickBreakWall,
   cancelTurn,
+  onSurrender,
+  pendingWall,
+  setPendingWall,
+  breakMode,
+  onToggleBreak,
+  onWallStep,
   turnDirty = false,
 }: Props) {
   // const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
@@ -129,7 +147,6 @@ export default React.memo(function Chessboard({
   }, [size]);
 
   const isCoarse = useCoarsePointer();
-  const [pendingWall, setPendingWall] = useState<Direction | null>(null);
 
   // 換一格、或換人下之後，還沒確認的方向就不再成立。
   const wallCtx = selectedChess ? `${selectedChess.row},${selectedChess.col},${currentPlayer}` : '';
@@ -151,7 +168,7 @@ export default React.memo(function Chessboard({
   const onWallEdge = useCallback((row: number, col: number, dir: Direction) => {
     if (isCoarse) setPendingWall(dir);
     else commitWall(row, col, dir);
-  }, [isCoarse, commitWall]);
+  }, [isCoarse, commitWall, setPendingWall]);
 
   const onClickSelectChess = (selectedPlayer: Player, row: number, col: number, isAvailableMove: boolean) => {
     if (!selectedPlayer && isPlacingChess) {
@@ -656,13 +673,29 @@ export default React.memo(function Chessboard({
                     是同一種形狀，差別只有深淺。改成當前玩家色的半透明預覽，
                     形狀與尺寸都跟築好之後一模一樣：看到的就是會得到的。
                   */}
-                  {isSelecting && currentPlayer && (
+                  {isSelecting && currentPlayer && (() => {
+                    /*
+                      被選中的那一道要**撐開成整格**，不是只變不透明。
+
+                      原本兩個 inset-x 同時掛著（`inset-x-[18%]` 與
+                      `inset-x-[-3px]`），誰贏取決於它們在產出的 CSS 裡誰比較
+                      後面 —— 不是 class 字串裡的順序。18% 贏了，所以那一道
+                      永遠沒撐開過；`hover:` 那個之所以有效，只是因為變體
+                      一律排在無前綴之後。滑鼠因此看得到、手指看不到。
+
+                      改成一次只掛一個：選中時給撐開的值，沒選中時給縮短的值。
+                    */
+                    const bar = (dir: Direction, axis: 'x' | 'y') =>
+                      pendingWall === dir
+                        ? `inset-${axis}-[-3px] opacity-100`
+                        : `inset-${axis}-[18%] opacity-70`;
+                    return (
                     <>
                       {checkWallBuildable(rowIndex, colIndex, 'top') && (
                         <button
                           type="button"
                           aria-label={g.board.buildTop}
-                          className={`wall-hit-h absolute inset-x-[18%] top-[calc(var(--board-gap)*-0.5)] z-20 h-[9px] -translate-y-1/2 rounded-full transition hover:inset-x-[-3px] hover:opacity-100 ${pendingWall === 'top' ? 'inset-x-[-3px] opacity-100' : 'opacity-70'}`}
+                          className={`wall-hit-h absolute top-[calc(var(--board-gap)*-0.5)] z-20 h-[9px] -translate-y-1/2 rounded-full transition hover:inset-x-[-3px] hover:opacity-100 ${bar('top', 'x')}`}
                           style={{ backgroundColor: PLAYER_VAR[currentPlayer] }}
                           onClick={(e) => { e.stopPropagation(); onWallEdge(rowIndex, colIndex, 'top'); }}
                         />
@@ -671,7 +704,7 @@ export default React.memo(function Chessboard({
                         <button
                           type="button"
                           aria-label={g.board.buildBottom}
-                          className={`wall-hit-h absolute inset-x-[18%] bottom-[calc(var(--board-gap)*-0.5)] z-20 h-[9px] translate-y-1/2 rounded-full transition hover:inset-x-[-3px] hover:opacity-100 ${pendingWall === 'bottom' ? 'inset-x-[-3px] opacity-100' : 'opacity-70'}`}
+                          className={`wall-hit-h absolute bottom-[calc(var(--board-gap)*-0.5)] z-20 h-[9px] translate-y-1/2 rounded-full transition hover:inset-x-[-3px] hover:opacity-100 ${bar('bottom', 'x')}`}
                           style={{ backgroundColor: PLAYER_VAR[currentPlayer] }}
                           onClick={(e) => { e.stopPropagation(); onWallEdge(rowIndex, colIndex, 'bottom'); }}
                         />
@@ -680,7 +713,7 @@ export default React.memo(function Chessboard({
                         <button
                           type="button"
                           aria-label={g.board.buildLeft}
-                          className={`wall-hit-v absolute inset-y-[18%] left-[calc(var(--board-gap)*-0.5)] z-20 w-[9px] -translate-x-1/2 rounded-full transition hover:inset-y-[-3px] hover:opacity-100 ${pendingWall === 'left' ? 'inset-y-[-3px] opacity-100' : 'opacity-70'}`}
+                          className={`wall-hit-v absolute left-[calc(var(--board-gap)*-0.5)] z-20 w-[9px] -translate-x-1/2 rounded-full transition hover:inset-y-[-3px] hover:opacity-100 ${bar('left', 'y')}`}
                           style={{ backgroundColor: PLAYER_VAR[currentPlayer] }}
                           onClick={(e) => { e.stopPropagation(); onWallEdge(rowIndex, colIndex, 'left'); }}
                         />
@@ -689,13 +722,14 @@ export default React.memo(function Chessboard({
                         <button
                           type="button"
                           aria-label={g.board.buildRight}
-                          className={`wall-hit-v absolute inset-y-[18%] right-[calc(var(--board-gap)*-0.5)] z-20 w-[9px] translate-x-1/2 rounded-full transition hover:inset-y-[-3px] hover:opacity-100 ${pendingWall === 'right' ? 'inset-y-[-3px] opacity-100' : 'opacity-70'}`}
+                          className={`wall-hit-v absolute right-[calc(var(--board-gap)*-0.5)] z-20 w-[9px] translate-x-1/2 rounded-full transition hover:inset-y-[-3px] hover:opacity-100 ${bar('right', 'y')}`}
                           style={{ backgroundColor: PLAYER_VAR[currentPlayer] }}
                           onClick={(e) => { e.stopPropagation(); onWallEdge(rowIndex, colIndex, 'right'); }}
                         />
                       )}
                     </>
-                  )}
+                    );
+                  })()}
                 </div>
               )
             })}
@@ -705,8 +739,10 @@ export default React.memo(function Chessboard({
         </div>
       </SectionShadow>
 
-      {/* 手機的築牆控制盤。固定在畫面底部（拇指區），不佔棋盤的位置。 */}
-      {wallPadVisible({ coarse: isCoarse, locked: isLock }) && currentPlayer && (() => {
+      {/* 手機的築牆控制盤。固定在畫面底部（拇指區），不佔棋盤的位置。
+          「是不是手指裝置」由它自己的 CSS 斷點決定（見該元件），
+          這裡只管「牌局還沒結束」—— 那是 JS 才知道的事。 */}
+      {!isLock && currentPlayer && (() => {
         const sel = selectedChess;
         const none = { top: false, bottom: false, left: false, right: false };
         /** 四個方向上「已經存在、而且打得破」的牆。三人局限定。 */
@@ -753,7 +789,12 @@ export default React.memo(function Chessboard({
             onPick={setPendingWall}
             onConfirm={() => { if (sel && pendingWall) commitWall(sel.row, sel.col, pendingWall); }}
             onRedo={() => { setPendingWall(null); cancelTurn?.(); }}
+            breakMode={breakMode}
+            onToggleBreak={onToggleBreak}
+            onWallStep={onWallStep}
+            onSurrender={() => onSurrender?.()}
             dirty={turnDirty}
+            myTurn={!isLock && !!currentPlayer}
             remainSteps={remainSteps}
             color={PLAYER_VAR[currentPlayer]}
           />

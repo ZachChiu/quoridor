@@ -59,10 +59,19 @@
           ".validate": "newData.isString() && newData.val().matches(/^(waiting|opening|playing|finished)$/)"
         },
 
-        // 勝負只由房主（A）寫入 —— PlayClient 也是這樣實作的，
-        // 三個客戶端同時寫同一個結果沒有意義，而且給了竄改的機會。
+        /*
+          任何在座的玩家都寫得了。
+
+          原本只允許房主（A）—— 因為當時「遊戲自然結束」的確只有 A 會寫。
+          但投降是**投降的人自己寫**：那是唯一無法從棋譜推導出來的結束方式，
+          B 或 C 投降時若寫不進來，對手永遠不會知道這局結束了。
+          而且 update() 是原子的，winners 被擋會連同 status 一起失敗。
+
+          安全性上沒有放寬什麼：在座玩家本來就能寫任意 wgf，
+          而勝負完全由 wgf 決定 —— 能改棋譜的人本來就能決定結果。
+        */
         "winners": {
-          ".write": "auth != null && root.child('rooms/' + $roomId + '/players/A/uid').val() === auth.uid"
+          ".write": "auth != null && (root.child('rooms/' + $roomId + '/players/A/uid').val() === auth.uid || root.child('rooms/' + $roomId + '/players/B/uid').val() === auth.uid || root.child('rooms/' + $roomId + '/players/C/uid').val() === auth.uid)"
         },
 
         "players": {

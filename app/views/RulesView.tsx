@@ -1,4 +1,4 @@
-import { GiHouse } from 'react-icons/gi';
+import { GiHut, GiPlayButton } from 'react-icons/gi';
 import TutorialBoard from '@/components/TutorialBoard';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import TransitionLink from '@/components/TransitionLink';
@@ -56,15 +56,18 @@ export default function RulesView({ locale }: { locale: Locale }) {
         <div className="mx-auto flex max-w-[46rem] items-center gap-3 px-4 py-2.5">
           <TransitionLink
             href={home}
-            color="rgb(var(--tile-forest))"
+            /* 回首頁一律用紙色擴散，與遊戲頁那顆回首頁鈕一致 ——
+               綠是「規則」這條線的顏色，用在離開規則頁上會讓人以為
+               還在規則裡。 */
+            color="rgb(var(--tile-cream))"
             radius={24}
             aria-label={t.nav.backHome}
-            className="grid size-11 shrink-0 place-items-center rounded-full bg-tile-cream/[0.16] text-xl text-tile-cream transition hover:bg-tile-cream/[0.26]"
+            className="grid size-11 shrink-0 place-items-center rounded-full bg-primary-50 text-xl text-tile-ink shadow-[0_1px_6px_rgba(20,16,16,0.12)] ring-2 ring-tile-ink/10 transition hover:brightness-95"
           >
-            <GiHouse />
+            <GiHut />
           </TransitionLink>
           <span className="min-w-0 flex-1 truncate text-sm font-black">{t.rules.metaTitle}</span>
-          <LanguageSwitcher placement="down" />
+          <LanguageSwitcher />
         </div>
       </header>
 
@@ -124,10 +127,11 @@ export default function RulesView({ locale }: { locale: Locale }) {
         {/* 整排寬的長條。讀完一長頁之後的唯一出口，不該是一顆小按鈕。 */}
         <TransitionLink
           href={home}
-          color="rgb(var(--tile-forest))"
+          color="rgb(var(--tile-orange))"
           radius={16}
-          className="mt-10 flex w-full items-center justify-center rounded-2xl bg-tile-forest px-6 py-5 text-lg font-black text-tile-cream transition hover:brightness-95 active:scale-[0.99]"
+          className="mt-10 flex w-full items-center justify-center rounded-2xl bg-tile-orange px-6 py-5 text-lg font-black text-tile-ink transition hover:brightness-95 active:scale-[0.99]"
         >
+          <GiPlayButton className="mr-2 text-base" aria-hidden="true" />
           {t.rules.ctaPlay}
         </TransitionLink>
 

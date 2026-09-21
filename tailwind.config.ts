@@ -8,9 +8,23 @@ export default {
   ],
   theme: {
     extend: {
+      /*
+        斷點順序就是優先順序 —— Tailwind 依這裡的宣告順序決定同名工具類誰蓋誰，
+        所以 coarse 那三個放在 md / landscape 後面，才蓋得掉它們。
+
+        **「是不是手指裝置」一律用這組 CSS 斷點判，不要用 JS。**
+        這站是靜態匯出，HTML 在建置時就固定了，裡面不可能知道待會兒是誰打開它；
+        JS 的 matchMedia 要等 hydration 之後才成立，於是手機重整會先畫一次
+        桌機版面再整個跳成手機版。media query 從第一幀就是對的，不會跳。
+        （JS 只留給「按下去要有什麼行為」那種判斷，那時早就 hydrate 完了。）
+      */
       screens: {
         'portrait': {'raw': '(orientation: portrait)'},
         'landscape': {'raw': '(orientation: landscape)'},
+        'coarse': {'raw': '(pointer: coarse)'},
+        'coarse-port': {'raw': '(pointer: coarse) and (orientation: portrait)'},
+        'coarse-land': {'raw': '(pointer: coarse) and (orientation: landscape)'},
+        'fine': {'raw': '(pointer: fine)'},
       },
       colors: {
         // Tailwind 預設的 gray-900 是帶藍的 #111827，壓在奶油底上偏冷。

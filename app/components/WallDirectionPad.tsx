@@ -1,9 +1,9 @@
 'use client';
-import React, { useState } from 'react';
-import { LuCheck, LuRotateCcw, LuHammer } from 'react-icons/lu';
+import React from 'react';
+import { LuCheck, LuRotateCcw, LuFlag, LuHammer } from 'react-icons/lu';
 import type { Direction } from '@/types/chessboard';
 import { useGameText } from '@/i18n/LocaleProvider';
-import { fmt } from '@/i18n/content/game';
+import TurnGuide from './TurnGuide';
 
 /**
  * 手機用的操作盤。
@@ -47,9 +47,22 @@ type Props = {
   onBreak: (dir: Direction) => void;
   onConfirm: () => void;
   onRedo: () => void;
+  /** 投降結算 —— 由上層開確認 Modal，這裡只負責按鈕 */
+  onSurrender: () => void;
   dirty: boolean;
-  remainSteps: number;
   color: string;
+  /** 現在是不是我的回合 */
+  myTurn: boolean;
+  remainSteps: number;
+  /**
+   * 破牆模式。狀態放在 PlayClient 而不是這裡 ——
+   * 步驟提示（TurnGuide）現在排在棋盤與控制盤中間、由 PlayClient 渲染，
+   * 它也要知道現在是不是在挑要破的牆。同一件事兩個地方各存一份遲早對不上。
+   */
+  breakMode: boolean;
+  onToggleBreak: () => void;
+  /** 移動已經結束，只剩蓋牆。同樣由 PlayClient 算（它手上有 pending 與 legalMoves）。 */
+  onWallStep: boolean;
 };
 
 const ARROW: Record<Direction, string> = {
@@ -69,31 +82,40 @@ const WALL_POS: Record<Direction, string> = {
 const WALL_BAR: Record<Direction, string> = {
   top: 'h-[6px] w-8', bottom: 'h-[6px] w-8', left: 'h-8 w-[6px]', right: 'h-8 w-[6px]',
 };
-const DIRS: Direction[] = ['top', 'bottom', 'left', 'right'];
+/*
+  ✓ / ↺ / 🔨 放在**九宮格的四個角**。
 
-/**
- * 控制盤現在該不該出現。
- *
- * 只看「是不是手指裝置」與「牌局有沒有結束」—— 刻意**不**看有沒有
- * 選中棋子。看了的話它就會忽隱忽現，而每一次出現都把版面推一次。
- */
-export const wallPadVisible = (o: { coarse: boolean; locked: boolean }) =>
-  o.coarse && !o.locked;
+  九宮格＝四個箭頭與中央棋子圍出來的 3x3（格線的第 2~4 列與第 2~4 欄），
+  它的四個角原本是空的。牆的長條在更外面一圈，所以這三顆夾在
+  「移動」與「築牆」之間，位置上正好對應它們的角色：
+  都是對這一手的操作，而不是方向。
+
+  ✓ 與 ↺ 是一組（送出／收回），並排在下面兩角；🔨 放右上、🏳 放左上。
+
+  上面兩角是「這一局」的事（破牆、投降），下面兩角是「這一手」的事
+  （重來、完成）—— 離手指近的那一排才是每回合都會按的。
+
+  先前放在最外圈的四角，離十字太遠，看起來仍然是另外一組東西。
+*/
+const CORNER = {
+  surrender: 'col-start-2 row-start-2',
+  hammer: 'col-start-4 row-start-2',
+  redo: 'col-start-2 row-start-4',
+  confirm: 'col-start-4 row-start-4',
+} as const;
+const DIRS: Direction[] = ['top', 'bottom', 'left', 'right'];
 
 export default function WallDirectionPad({
   placing, selected, movable, buildable, breakable, breaksLeft,
-  pending, onPick, onMove, onBreak, onConfirm, onRedo, dirty, remainSteps, color,
+  pending, onPick, onMove, onBreak, onConfirm, onRedo, onSurrender, dirty, color, myTurn, remainSteps,
+  breakMode, onToggleBreak, onWallStep,
 }: Props) {
   const g = useGameText();
-  const [breakMode, setBreakMode] = useState(false);
 
   const canBreakAny = breaksLeft !== undefined && breaksLeft > 0 && DIRS.some((d) => breakable[d]);
   // 破牆模式下外圈代表「可以打破的牆」而不是「可以蓋的位置」
   const active = breakMode ? breakable : buildable;
   const onOuter = breakMode ? onBreak : onPick;
-
-  // 沒得破牆時自動退出破牆模式 —— 留在一個什麼都按不了的模式裡最令人困惑
-  if (breakMode && !canBreakAny) setBreakMode(false);
 
   const moveLabel: Record<Direction, string> = {
     top: g.pad.moveUp, bottom: g.pad.moveDown, left: g.pad.moveLeft, right: g.pad.moveRight,
@@ -102,42 +124,37 @@ export default function WallDirectionPad({
     top: g.pad.wallUp, bottom: g.pad.wallDown, left: g.pad.wallLeft, right: g.pad.wallRight,
   };
 
-  const onWallStep = pending !== null;
-  const hint = placing ? g.pad.hintPlace
-    : !selected ? g.pad.hintWait
-    : breakMode ? g.pad.breakPick
-    : onWallStep ? g.pad.hintReady
-    : remainSteps > 0 ? g.pad.hintMove
-    : g.pad.hintWall;
-
-  const stepChip = (label: string, on: boolean, extra?: React.ReactNode) => (
-    <span
-      className={`rounded-full px-2.5 py-1 ${on ? 'text-tile-cream' : 'bg-tile-ink/[0.07] text-ink-soft'}`}
-      style={on ? { backgroundColor: color } : undefined}
-    >
-      {label}
-      {extra}
-    </span>
-  );
-
   return (
     <div
-      className="bg-primary-50/95 fixed inset-x-0 bottom-0 z-40
-                 h-[var(--wall-pad-h)] border-t-2 border-tile-ink/10 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur
-                 landscape:inset-y-0 landscape:left-auto landscape:right-0 landscape:flex landscape:h-auto
-                 landscape:w-[var(--wall-pad-w)] landscape:flex-col landscape:justify-center landscape:border-l-2
-                 landscape:border-t-0 landscape:pb-2 landscape:pr-[max(0.5rem,env(safe-area-inset-right))]"
-    >
-      <div className="mb-1.5 flex items-center justify-center gap-2 text-xs font-black">
-        {stepChip(g.pad.step1, !onWallStep && !breakMode,
-          remainSteps > 0 && !onWallStep && !breakMode && selected ? (
-            <span className="ml-1 font-bold opacity-80">{fmt(g.pad.remain, { n: remainSteps })}</span>
-          ) : null)}
-        <span className="text-ink-soft/40">›</span>
-        {stepChip(g.pad.step2, onWallStep || breakMode)}
-      </div>
+      /*
+        `hidden coarse:block` —— 出不出現由 CSS 決定，不由 JS。
 
-      <p className="mb-2 px-2 text-center text-xs font-bold text-ink-soft">{hint}</p>
+        先前是用 useCoarsePointer() 在 render 時決定要不要掛這個元件。
+        靜態匯出的 HTML 不知道裝置是什麼，那個值在 hydration 之前一律是
+        false，於是手機一重整就會先畫出一次沒有控制盤的桌機版面、
+        接著整個版面再跳一次。改成 media query 就沒有「之前」——
+        第一幀就已經是對的。
+      */
+      className="bg-primary-50/95 fixed inset-x-0 bottom-0 z-40 hidden
+                 h-[var(--wall-pad-h)] border-t-2 border-tile-ink/10 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2.5 backdrop-blur
+                 coarse:block
+                 coarse-land:inset-y-0 coarse-land:left-auto coarse-land:right-0 coarse-land:flex coarse-land:h-auto
+                 coarse-land:w-[var(--wall-pad-w)] coarse-land:flex-col coarse-land:justify-center coarse-land:border-l-2
+                 coarse-land:border-t-0 coarse-land:pb-2 coarse-land:pr-[max(0.5rem,env(safe-area-inset-right))]"
+    >
+      {/* 橫式的提示收在控制盤內部頂端（那是這欄的標籤）。
+          直式的那顆由 PlayClient 排在棋盤與控制盤中間的文件流裡，
+          所以這顆在直式要隱藏 —— 同一個元件、兩個掛載點。 */}
+      <TurnGuide
+        className="hidden landscape:absolute landscape:inset-x-0 landscape:top-3 landscape:flex"
+        placing={placing}
+        myTurn={myTurn}
+        selected={selected}
+        onWallStep={onWallStep}
+        breakMode={breakMode}
+        remainSteps={remainSteps}
+        color={color}
+      />
 
       <div className="flex items-center justify-center gap-3 px-4 landscape:flex-col landscape:gap-2 landscape:px-2">
         <div
@@ -185,6 +202,64 @@ export default function WallDirectionPad({
             </button>
           ))}
 
+          {/* 投降放左上角。和破牆同一排 —— 都是「對整局」而不是「對這一手」
+              的操作，而且都不可逆，所以兩顆都會再跳一次確認。 */}
+          <button
+            type="button"
+            disabled={placing || !myTurn}
+            aria-label={g.surrender.label}
+            onClick={onSurrender}
+            className={`${CORNER.surrender} grid size-11 place-items-center rounded-xl bg-tile-ink/[0.07] text-xl text-ink-soft transition enabled:active:scale-95 disabled:opacity-20`}
+          >
+            <LuFlag />
+          </button>
+          <button
+            type="button"
+            disabled={!pending}
+            aria-label={g.pad.done}
+            onClick={onConfirm}
+            className={`${CORNER.confirm} grid size-11 place-items-center rounded-xl bg-tile-ink text-2xl text-tile-cream transition enabled:active:scale-95 disabled:opacity-20`}
+          >
+            <LuCheck />
+          </button>
+          <button
+            type="button"
+            disabled={!dirty}
+            aria-label={g.pad.redo}
+            onClick={onRedo}
+            className={`${CORNER.redo} grid size-11 place-items-center rounded-xl bg-tile-ink/[0.07] text-xl text-ink-soft transition enabled:active:scale-95 disabled:opacity-20`}
+          >
+            <LuRotateCcw />
+          </button>
+          {/* 破牆只有三人局有，所以這顆只在那時才佔位置。
+              按下去之後外圈的長條改代表「可以打破的牆」（染成磚紅），
+              再按一下退出 —— 不做成一次性的動作，因為選錯牆的代價是
+              整局唯一的一次機會。 */}
+          {/* 兩人局沒有破牆，但那一角空著會讓九宮格看起來缺了一塊 ——
+              四個角只剩三個有東西，十字的形狀就散了。補一塊同樣大小、
+              同樣底色但更淡的空位：看得出「這裡有個位置，只是這一局用不到」，
+              而它不是按鈕（不可點、不進焦點、讀屏不念）。 */}
+          {breaksLeft === undefined && (
+            <span
+              className={`${CORNER.hammer} size-11 rounded-xl bg-tile-ink/[0.03]`}
+              aria-hidden="true"
+            />
+          )}
+          {breaksLeft !== undefined && (
+            <button
+              type="button"
+              disabled={!canBreakAny}
+              aria-label={breaksLeft > 0 ? g.pad.breakWall : g.pad.breakNone}
+              aria-pressed={breakMode}
+              onClick={onToggleBreak}
+              className={`${CORNER.hammer} grid size-11 place-items-center rounded-xl text-xl transition enabled:active:scale-95 disabled:opacity-20 ${
+                breakMode ? 'bg-tile-red text-tile-cream' : 'bg-tile-ink/[0.07] text-ink-soft'
+              }`}
+            >
+              <LuHammer />
+            </button>
+          )}
+
           <span className="col-start-3 row-start-3 grid place-items-center" aria-hidden="true">
             <span
               className="block size-6 rounded-full transition-opacity"
@@ -193,44 +268,6 @@ export default function WallDirectionPad({
           </span>
         </div>
 
-        <div className="flex flex-col gap-2 landscape:flex-row">
-          <button
-            type="button"
-            disabled={!pending}
-            aria-label={g.pad.done}
-            onClick={onConfirm}
-            className="grid size-12 place-items-center rounded-xl bg-tile-ink text-2xl text-tile-cream transition enabled:active:scale-95 disabled:opacity-20"
-          >
-            <LuCheck />
-          </button>
-          <button
-            type="button"
-            disabled={!dirty}
-            aria-label={g.pad.redo}
-            onClick={() => { setBreakMode(false); onRedo(); }}
-            className="grid size-12 place-items-center rounded-xl bg-tile-ink/[0.07] text-xl text-ink-soft transition enabled:active:scale-95 disabled:opacity-20"
-          >
-            <LuRotateCcw />
-          </button>
-          {/* 破牆只有三人局有，所以這顆只在那時才佔位置。
-              按下去之後外圈的長條改代表「可以打破的牆」（染成磚紅），
-              再按一下退出 —— 不做成一次性的動作，因為選錯牆的代價是
-              整局唯一的一次機會。 */}
-          {breaksLeft !== undefined && (
-            <button
-              type="button"
-              disabled={!canBreakAny}
-              aria-label={breaksLeft > 0 ? g.pad.breakWall : g.pad.breakNone}
-              aria-pressed={breakMode}
-              onClick={() => setBreakMode((b) => !b)}
-              className={`grid size-12 place-items-center rounded-xl text-xl transition enabled:active:scale-95 disabled:opacity-20 ${
-                breakMode ? 'bg-tile-red text-tile-cream' : 'bg-tile-ink/[0.07] text-ink-soft'
-              }`}
-            >
-              <LuHammer />
-            </button>
-          )}
-        </div>
       </div>
     </div>
   );

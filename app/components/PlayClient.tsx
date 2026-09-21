@@ -1,6 +1,9 @@
 'use client'
 import { useState, useEffect, useMemo, useCallback, useReducer, useRef } from "react";
-import { GiHouse, GiRuleBook } from "react-icons/gi";
+// 小圓鈕與首頁磁磚用同一套圖示（game-icons 實心）——
+// 同一件事在兩個地方長得不一樣，會讓人以為那是兩個不同的東西。
+import { GiHut, GiRuleBook } from "react-icons/gi";
+import { LuFlag } from "react-icons/lu";
 import Link from 'next/link';
 import Chessboard from "@/components/Chessboard";
 import ChampionModal from "@/components/ChampionModal";
@@ -10,11 +13,13 @@ import IconButton from "@/components/IconButton";
 import WaitingRoom from "@/components/WaitingRoom";
 import { useAiOpponent } from "@/hook/useAiOpponent";
 import { playerKeys } from "@/game/territory";
+import { playerVar } from "@/config/players";
+import TurnGuide from "@/components/TurnGuide";
+import { legalMoves } from "@/game/engine";
 import ShareLinkModal from "@/components/ShareLinkModal";
 import FeedbackModal from "@/components/FeedbackModal";
 import BreakWallConfirmModal from "@/components/BreakWallConfirmModal";
-import { wallPadVisible } from "@/components/WallDirectionPad";
-import { useCoarsePointer } from "@/hook/useCoarsePointer";
+import SurrenderConfirmModal from "@/components/SurrenderConfirmModal";
 
 import type { Direction } from "@/types/chessboard";
 
@@ -42,7 +47,7 @@ import {
   toWgf,
   applyTurn, cancelTurn,
   } from "@/game/engine";
-import { evaluate } from "@/game/score";
+import { evaluate, getWinners, type Outcome } from "@/game/score";
 import type { GameState, PlayerKey, WallDir } from "@/game/types";
 import type { Turn } from "@/game/engine";
 import { useGameText, useLocale } from '@/i18n/LocaleProvider';
@@ -53,6 +58,14 @@ type OnlinePhase = 'initializing' | 'waiting' | 'playing' | 'error';
 
 interface PlayClientProps {
   roomId?: string;
+  /**
+   * 本機對戰的人數，由路由給（`/local/3`）。
+   *
+   * 不從 GameContext 讀：那個值只活在 React state，重整就沒了，
+   * 而且伺服器端不知道 —— 靜態 HTML 會先畫一次兩人盤，等 hydration
+   * 之後才跳成三人。路由帶著的話，建置時就定了。
+   */
+  playersNum?: 2 | 3;
 }
 
 /** Chessboard 的方向語彙 → engine 的牆方向。 */
@@ -105,14 +118,17 @@ function gameReducer(state: GameState, event: GameEvent): GameState {
   }
 }
 
-export default function PlayClient({ roomId }: PlayClientProps) {
+export default function PlayClient({ roomId, playersNum: routePlayers }: PlayClientProps) {
   const { gameState } = useGame();
   const { ensureUser } = useUser();
-  const { navigate } = useTransition();
+  const { navigate, flash } = useTransition();
   const isOnline = !!roomId;
 
   // ─── 連線狀態（只在 online 模式使用）────────────────────────────────────────
   const [phase, setPhase] = useState<OnlinePhase>('initializing');
+  // 房間坐滿只會發生一次 —— 用 ref 而不是比對 phase，subscribe 的 callback
+  // 是在 effect 裡建立的，closure 裡的 phase 永遠是掛載當下那個值。
+  const startedRef = useRef(false);
   const [room, setRoom] = useState<Room | null>(null);
   const [myPlayerKey, setMyPlayerKey] = useState<PlayerKey | null>(null);
   const [shareModalOpen, setShareModalOpen] = useState(false);
@@ -127,32 +143,157 @@ export default function PlayClient({ roomId }: PlayClientProps) {
   // ─── 遊戲狀態 ────────────────────────────────────────────────────────────────
   //
   // 全部規則邏輯都在 app/game/ 的純函式裡，這裡只持有一個不可變的 GameState。
-  // 本機模式在掛載時就能從 GameContext 取得正確人數；連線模式的初值會立刻被
-  // 來自 Firebase 的 WGF 重播覆蓋，因此初始人數用 2 即可。
+  //
+  // 人數優先吃路由給的值（`/local/3`）—— 那是伺服器端就知道的，
+  // 第一幀畫出來就是對的。單人模式沒有路由參數，退回 GameContext。
+  // 連線模式的初值會立刻被來自 Firebase 的 WGF 重播覆蓋，用 2 即可。
   const [state, dispatch] = useReducer(
     gameReducer,
-    isOnline ? 2 : ((gameState.playersNum === 3 ? 3 : 2) as 2 | 3),
+    isOnline ? 2 : (routePlayers ?? ((gameState.playersNum === 3 ? 3 : 2) as 2 | 3)),
     createGame
   );
   // 冠軍 Modal 的開啟與否完全由「是否已分出勝負」推導，只額外記錄使用者
   // 是否手動關閉過，避免用 effect 去同步一個本來就能算出來的狀態。
   const [championDismissed, setChampionDismissed] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
+  // 控制盤的破牆模式。指引在畫面上方、開關在下方的控制盤裡，
+  // 所以狀態放在共同的父層。
 
   const playersNum = state.playersNum;
-  const { territories, outcome } = useMemo(() => evaluate(state), [state]);
+  const { territories, scores, outcome: naturalOutcome } = useMemo(() => evaluate(state), [state]);
+
+  /*
+    投降結算。
+
+    刻意**不**寫進 GameState：棋譜（WGF）記的是「下了什麼」，
+    投降不是一手棋，塞進去會讓 replay 的語意變成兩種東西。
+    盤面本身仍然完全由棋譜決定，這裡只是提前停止。
+
+    分數照常由 evaluate 算出來的 scores 判勝負 —— 「投降」在這個
+    遊戲裡的意思是「就此收手、照現況算分」，不是「直接判對手贏」。
+
+    連線模式：投降的人把結果寫進 Firebase，對手從 room.winners 收到。
+    這是唯一不能從棋譜推導的結束方式，所以非寫不可。
+  */
+  const [resigned, setResigned] = useState(false);
+  const [surrenderOpen, setSurrenderOpen] = useState(false);
+  const remoteWinners = isOnline ? room?.winners : undefined;
+
+  const outcome = useMemo<Outcome>(() => {
+    if (naturalOutcome.length) return naturalOutcome;
+    if (remoteWinners?.length) return remoteWinners;
+    if (resigned) return getWinners(scores, state.playersNum, territories.regionSizes);
+    return [];
+  }, [naturalOutcome, remoteWinners, resigned, scores, state.playersNum, territories.regionSizes]);
+
   const isLock = outcome.length > 0;
   const isPlacing = isPlacingPhase(state);
 
-  // 手機築牆時底部會升起方向控制盤，底部的狀態膠囊要讓位。
-  // 條件與 Chessboard 共用同一個判斷，不各寫一份。
   const g = useGameText();
   const locale = useLocale();
-  const isCoarse = useCoarsePointer();
-  // 控制盤從開局到終局都在，所以版面的讓位也是固定的 ——
-  // 不再隨著「有沒有選中棋子」忽大忽小。
-  const wallPadOpen = wallPadVisible({ coarse: isCoarse, locked: isLock });
+
+  /*
+    ── 版面靠 CSS 斷點分岔，不靠 JS ────────────────────────────────
+    「有沒有控制盤」＝「是不是手指裝置」，而那是 coarse / coarse-land
+    這兩個斷點的事（見 tailwind.config.ts）。先前是用 useCoarsePointer()
+    在 render 時決定，但靜態匯出的 HTML 不知道裝置是什麼 —— 那個值在
+    hydration 之前一律是 false，於是手機一重整就先畫一次桌機版面、
+    再整個跳成手機版。CSS 沒有「之前」，第一幀就是對的。
+
+    唯一還交給 JS 的是 isLock：牌局結束控制盤會收起來，版面要跟著回到
+    沒有控制盤的排法。那是玩出來的狀態，不會在載入時閃。
+  */
+  const padGone = isLock;
+
+  /*
+    左上那兩顆鈕的排法。只有手機橫躺時改直排 —— 那時上方只剩約 390px
+    高，而左側正好是棋盤讓出來的空白，直排剛好站在那裡；橫排則會和
+    右上的比分在同一列上對衝。直式與桌機都是橫排，上方本來就空著。
+  */
+  const topButtons = padGone ? '' : 'coarse-land:flex-col';
+
+  /*
+    棋盤佔多大、擺在哪。
+
+    這段寫在 JSX 外面，不是圖方便 —— 字型子集的掃描器一碰到反引號就
+    整段當成字串，寫在模板字串裡的註解會被當成「頁面用得到的字」算進
+    子集，白白把只有原始碼看得到的字塞進字型檔。
+
+    ── 讓位的方式：padding，不是 margin ────────────────────────────
+    控制盤是 fixed，脫離文件流，所以沒有東西「推」得動。
+    先前的寫法是給棋盤一個等於控制盤高度的 margin-bottom，硬把它從
+    視窗正中央拉上來 —— 那是在用位移模擬擠壓，兩個數字（盤面大小與
+    位移量）各自算各自的，改一個就得記得改另一個。
+
+    改成讓**內容區自己變小**：外層拿 padding 把控制盤那一塊讓出來，
+    棋盤就在剩下的框裡正常對齊，位移量是 0。
+
+    ── 對齊 ───────────────────────────────────────────────────────
+    直式靠下：留白全部集中到上方，那裡本來就要放按鈕與比分。
+    下邊距 = 控制盤高 + 5rem。那 5rem 裡放步驟標（26px），上下各留 27px ——
+    棋盤下緣、步驟標、控制盤上緣線三者等距。提示句是絕對定位浮在步驟標
+    上方的，不佔這條流，所以有沒有它都不會改變這個距離。
+    橫式靠右：貼著控制盤，左下那塊空地讓給比分。
+
+    ── 為什麼 coarse 要能蓋掉 md ──────────────────────────────────
+    橫躺的手機（例如 844x390）寬度超過 md 斷點，md:landscape:size-[90dvh]
+    會蓋掉替控制盤讓位的尺寸 —— 斷點量的是寬度，但「這是不是手機」量的是
+    有沒有精準指標。所以 coarse 在 tailwind.config.ts 裡宣告在 md 後面。
+  */
+  /*
+    ── 直式是真的「排在一起」，不是各自定位 ────────────────────────
+    這一層是 flex column：棋盤 → gap 16px → 步驟提示，整欄靠下，
+    下邊距只留控制盤高度 + 16px。於是三者的間距就是同一個 gap，
+    不用推算、也不會因為量到 padding box 還是 border box 而差 2px。
+
+    先前是「棋盤靠下 + 一個算出來的大 padding」配「提示絕對定位掛在
+    控制盤上緣」—— 兩套機制湊出來的距離，改一邊就要記得改另一邊。
+
+    橫式維持靠右貼著控制盤（提示在控制盤內部，是那一欄的標籤）。
+  */
+  const boardArea = padGone ? ''
+    : 'coarse:justify-end coarse:gap-4 coarse:pb-[calc(var(--wall-pad-h)+1rem)] '
+      + 'coarse-land:items-end coarse-land:justify-center coarse-land:gap-0 coarse-land:pb-0 '
+      + 'coarse-land:pr-[calc(var(--wall-pad-w)+0.75rem)]';
+
+  const BOARD_FREE = 'size-[90dvw] md:size-[90dvh] md:portrait:size-[90dvw] md:landscape:size-[90dvh]';
+  const boardBox = padGone ? BOARD_FREE
+    : 'size-[90dvw] fine:md:size-[90dvh] fine:md:portrait:size-[90dvw] fine:md:landscape:size-[90dvh]'
+      /*
+        扣掉的不只是控制盤 —— 左上那兩顆鈕（直式 72px 高、橫式 72px 寬）
+        也要算進去，不然小螢幕會把棋盤畫到按鈕底下。
+        iPhone SE（375x667）實測：只扣 9rem 的話棋盤落在 y=64，
+        而按鈕到 y=72，整整壓過去 8px。
+
+        直式：控制盤 + 16px + 步驟標 26px + 16px + 按鈕 72px + 呼吸 18px ≈ 9.25rem
+        橫式：控制盤 + 按鈕欄 72px + 左右呼吸 40px ≈ 7rem
+        大螢幕不受影響（那邊是 90dvw / 86dvh 先封頂）。
+      */
+      + ' coarse:size-[min(90dvw,calc(100dvh-var(--wall-pad-h)-9.25rem))]'
+      + ' coarse-land:size-[min(86dvh,calc(100dvw-var(--wall-pad-w)-7rem))]';
+
+  /*
+    控制盤與棋盤共用的兩個 UI 狀態。
+
+    原本 pendingWall 鎖在 Chessboard、breakMode 鎖在控制盤裡 —— 但步驟提示
+    現在排在棋盤與控制盤**中間的文件流**上，由這裡渲染，它也要知道這兩件事。
+    與其讓同一件事在三個地方各存一份，不如提到唯一持有狀態的這一層。
+  */
+  const [pendingWall, setPendingWall] = useState<Direction | null>(null);
+  const [breakMode, setBreakMode] = useState(false);
+
+  const onWallStep = useMemo(
+    () => !!state.selected && !isPlacing
+      && (pendingWall !== null || state.remainSteps === 0 || legalMoves(state).length === 0),
+    [state, isPlacing, pendingWall],
+  );
+
+
   const canBreakWall = engineHasBreakWall(state);
+  // 這一局根本沒有破牆（兩人局）就不該停在破牆模式裡 ——
+  // 留在一個什麼都按不了的模式最令人困惑。細部的「周圍有沒有牆可破」
+  // 由控制盤自己判斷（它手上才有四個方向的資料）。
+  if (breakMode && !canBreakWall) setBreakMode(false);
 
   // 避免自己寫入 Firebase 的內容又觸發自己重播
   const lastAppliedWgf = useRef<string>('');
@@ -254,6 +395,40 @@ export default function PlayClient({ roomId }: PlayClientProps) {
           setRoom(updated);
           const joined = Object.keys(updated.players).length;
           if (joined >= updated.playersNum) {
+            /*
+              坐滿了 —— 原地掃一次「遊戲開始」。
+
+              沒有這一下的話，等待畫面會直接被棋盤取代。正在看分享連結、
+              或是剛按完加入的人，畫面就只是「突然變了」，不會意識到
+              對局已經開始、而且可能已經輪到自己。
+
+              色塊用自己的顏色：每個人看到的是他自己那一方在開場。
+            */
+            if (!startedRef.current) {
+              startedRef.current = true;
+              flash({
+                x: window.innerWidth / 2,
+                y: window.innerHeight / 2,
+                color: assignedKey ? playerVar(assignedKey) : 'rgb(var(--tile-ink))',
+                label: g.play.gameStart,
+                fg: 'rgb(var(--tile-cream))',
+                big: true,
+              }, {
+                // 蓋滿之後停一下再掃走 —— 不停的話蓋上去與掃下來是連在一起的，
+                // 「遊戲開始」四個字根本來不及讀。
+                holdMs: 700,
+                /*
+                  分享 Modal 在**色塊底下**才關掉。
+
+                  先關再蓋的話（兩個 setState 在同一輪 render）Modal 的淡出
+                  會和色塊的擴散一起跑：你會看到 Modal 先消失一半，
+                  然後才被蓋住 —— 兩件事互相干擾，看起來很趕。
+                  等畫面全被蓋住再換，掃開時就已經是乾淨的棋盤。
+                */
+                onCovered: () => { setShareModalOpen(false); setPhase('playing'); },
+              });
+              return;
+            }
             setPhase('playing');
             setShareModalOpen(false);
           } else {
@@ -286,8 +461,8 @@ export default function PlayClient({ roomId }: PlayClientProps) {
       unsubscribe?.();
     };
     // g 是模組層常數（GAME_TEXT[locale]），同一語系下參考不變 ——
-    // 加進依賴不會讓這個連線 effect 重跑。
-  }, [isOnline, roomId, ensureUser, g]);
+    // 加進依賴不會讓這個連線 effect 重跑。flash 是 useCallback([])，同理。
+  }, [isOnline, roomId, ensureUser, g, flash]);
 
   // 讀路徑：Firebase 上的 WGF 有變且非自己寫入的，就從空棋盤完整重建
   useEffect(() => {
@@ -309,11 +484,13 @@ export default function PlayClient({ roomId }: PlayClientProps) {
     updateGameState(roomId, wgf, state.currentPlayer);
   }, [state, isOnline, roomId]);
 
-  // 遊戲結束時，由房主（A）負責寫入勝者資訊
+  // 遊戲結束時寫入勝者資訊。平常由房主（A）負責；投降的人不論是誰都要寫 ——
+  // 投降是唯一不能從棋譜推導的結束方式，不寫的話對手永遠不會知道。
   useEffect(() => {
-    if (!isOnline || !roomId || myPlayerKey !== 'A' || outcome.length === 0) return;
+    if (!isOnline || !roomId || outcome.length === 0) return;
+    if (myPlayerKey !== 'A' && !resigned) return;
     setRoomWinner(roomId, outcome);
-  }, [isOnline, roomId, myPlayerKey, outcome]);
+  }, [isOnline, roomId, myPlayerKey, outcome, resigned]);
 
   // ─── 操作 ────────────────────────────────────────────────────────────────────
 
@@ -359,8 +536,15 @@ export default function PlayClient({ roomId }: PlayClientProps) {
   const restartGame = useCallback(() => {
     dispatch({ type: 'reset', playersNum });
     setChampionDismissed(false);
+    setResigned(false);
     trackButtonClick(`restart_local_game_${playersNum}p`);
   }, [playersNum]);
+
+  const confirmSurrender = useCallback(() => {
+    setSurrenderOpen(false);
+    setResigned(true);
+    trackButtonClick(`surrender_${isOnline ? 'online' : 'local'}_${playersNum}p`);
+  }, [isOnline, playersNum]);
 
   // 當用戶嘗試離開頁面且遊戲尚未結束時顯示確認對話框
   useEffect(() => {
@@ -406,7 +590,7 @@ export default function PlayClient({ roomId }: PlayClientProps) {
           已經有兩到三個玩家色在跑，操作鈕再各帶一個色相就是五個色相同時
           在搶注意力。它們是「離開這一局」的出口，本來就不該比盤面搶眼。
           也不用深墨 —— 那在奶油底上太重。 */}
-      <div className="fixed left-5 top-5 z-50 flex flex-col gap-3">
+      <div className={`fixed left-5 top-5 z-50 flex flex-row gap-3 ${topButtons}`}>
         <button
           type="button"
           aria-label={g.play.home}
@@ -425,7 +609,7 @@ export default function PlayClient({ roomId }: PlayClientProps) {
                 // 這顆鈕本來就是圓的，圓角給半徑即可 —— 於是它是
                 // 「圓脹大、再縮回圓」，沒有多餘的方轉圓。
                 from: { width: r.width, height: r.height, radius: r.width / 2 },
-                icon: GiHouse,
+                icon: GiHut,
                 // 這顆鈕的圖示只有 24px，寫死 text-7xl 會變成一顆比按鈕
                 // 還大的房子憑空冒出來 —— 量它真正的尺寸。
                 iconSize: e.currentTarget.querySelector('svg')?.getBoundingClientRect().height,
@@ -435,7 +619,7 @@ export default function PlayClient({ roomId }: PlayClientProps) {
             });
           }}
           className="rounded-full bg-primary-50 p-3.5 text-2xl text-tile-ink transition hover:brightness-95 active:scale-95">
-          <GiHouse />
+          <GiHut />
         </button>
         <IconButton color="bg-primary-50 text-tile-ink" handleClickEvent={handleRuleBtnOpen} label={g.play.howToPlay}>
           <GiRuleBook />
@@ -455,51 +639,55 @@ export default function PlayClient({ roomId }: PlayClientProps) {
       {(!isOnline || phase === 'playing') && (
         <>
           <GameStatus
-            shiftAside={wallPadOpen}
             isLock={isLock}
             currentPlayer={state.currentPlayer}
             uniqTerritories={territories.owned}
             playersNum={playersNum}
           />
 
+          {/*
+            控制盤在時不顯示回合提示。
+
+            它說的三件事（輪到誰、現在該做什麼、還有沒有破牆）控制盤
+            已經全部說了：中央的點是當前玩家的顏色、步驟標寫著現在在
+            哪一步、鐵鎚鍵的啟用狀態就是破牆還在不在。
+            同一件事講兩次只是多一個浮在畫面上的東西。
+          */}
           <GameTips
             isPlacingChess={isPlacing}
             currentPlayer={state.currentPlayer}
             winingStatus={outcome}
             breakWallCountObj={state.breakWallCount}
             aiThinking={isAiTurn}
-            shiftUp={wallPadOpen}
+            selected={!!state.selected}
+            remainSteps={state.remainSteps}
+            onWallStep={onWallStep}
+            playersNum={playersNum}
+            onShowResult={() => setChampionDismissed(false)}
           />
 
-          <div
-            /*
-              控制盤升起時棋盤要往上讓，不然下緣會被蓋住 ——
-              而被蓋住的正是你正要點的那幾格。
+          {/* 桌機的投降。手機在控制盤的左上角，那裡已經有一顆；
+              這顆補的是「沒有控制盤的時候投降要按哪裡」。
 
-              只把棋盤縮小不夠：它是在**整個視窗**裡置中，不是在扣掉
-              控制盤之後的空間裡置中。所以再加一個等於控制盤高度的下邊距 ——
-              置中的是「含邊距的方塊」，於是內容剛好往上移半個控制盤，
-              等同在剩餘空間裡置中。
-            */
-            /*
-              控制盤在時**不套 md: 那組規則**。
+              擺左下：右下是提示膠囊、右上是比分、左上是離開這一局的出口，
+              左下是唯一空著的角，而它本來就是「結束」這一類的動作。
+              紙色而非磚紅 —— 它要能被找到，但不該比盤面搶眼；
+              真正的警告留在按下去之後的確認 Modal 上。 */}
+          {!isLock && !isPlacing && (
+            <button
+              type="button"
+              onClick={() => setSurrenderOpen(true)}
+              className="fixed bottom-5 left-5 z-40 flex items-center gap-2 rounded-full bg-primary-50
+                         px-[18px] py-3 text-[15px] font-black text-ink-soft transition
+                         hover:text-tile-ink active:scale-95 lg:bottom-[5dvh] coarse:hidden"
+            >
+              <LuFlag className="text-xl" />
+              {g.surrender.label}
+            </button>
+          )}
 
-              橫躺的手機（例如 844x390）寬度超過 md 斷點，於是
-              md:landscape:size-[90dvh] 會蓋掉替控制盤讓位的尺寸 ——
-              斷點量的是寬度，但「這是不是手機」量的是有沒有精準指標。
-              控制盤只在 pointer: coarse 出現，它在就代表是手指裝置，
-              這時該聽控制盤的，不是聽斷點的。
-            */
-            className={`chessboard-container ${
-              wallPadOpen
-                ? // 直式：控制盤在下，棋盤讓出高度並上移半個控制盤
-                  'mb-[var(--wall-pad-h)] size-[min(90dvw,calc(100dvh-var(--wall-pad-h)-7rem))] ' +
-                  // 橫式：控制盤在右，棋盤讓出寬度並左移半個控制盤
-                  'landscape:mb-0 landscape:mr-[var(--wall-pad-w)] ' +
-                  'landscape:size-[min(86dvh,calc(100dvw-var(--wall-pad-w)-2rem))]'
-                : 'size-[90dvw] md:size-[90dvh] md:portrait:size-[90dvw] md:landscape:size-[90dvh]'
-            }`}
-          >
+          <div className={`flex flex-1 flex-col items-center justify-center self-stretch ${boardArea}`}>
+          <div className={`chessboard-container ${boardBox}`}>
             <Chessboard
               size={BOARD_SIZE}
               board={state.board}
@@ -519,10 +707,32 @@ export default function PlayClient({ roomId }: PlayClientProps) {
               setChessPosition={setChessPosition}
               onClickBreakWall={onClickBreakWall}
             cancelTurn={() => { if (isMyTurn) dispatch({ type: 'cancelTurn' }); }}
+            onSurrender={() => setSurrenderOpen(true)}
+            pendingWall={pendingWall}
+            setPendingWall={setPendingWall}
+            breakMode={breakMode}
+            onToggleBreak={() => setBreakMode((b) => !b)}
+            onWallStep={onWallStep}
             // 「已經動過」= 這一回合有動作、或步數被用掉、或選了棋子。
             // 三者任一成立，「重來」就該是可按的。
             turnDirty={state.currentTurnActions.length > 0 || state.remainSteps < 2 || !!state.selected}
             />
+          </div>
+
+          {/* 直式的步驟提示：排在棋盤與控制盤之間的文件流上，上下各 16px（外層的 gap）。
+              橫式那顆在控制盤內部（見 WallDirectionPad），所以這顆只在直式顯示。 */}
+          {!padGone && state.currentPlayer && (
+            <TurnGuide
+              className="hidden coarse-port:flex"
+              placing={isPlacing}
+              myTurn={isMyTurn}
+              selected={!!state.selected}
+              onWallStep={onWallStep}
+              breakMode={breakMode}
+              remainSteps={state.remainSteps}
+              color={playerVar(state.currentPlayer)}
+            />
+          )}
           </div>
 
           <ChampionModal
@@ -551,6 +761,13 @@ export default function PlayClient({ roomId }: PlayClientProps) {
                 mode: isOnline ? 'online' : aiDifficulty ? 'ai' : 'local',
                 playersNum,
                 result: outcome.join('/') || g.play.unfinished,
+                /*
+                  自然結束 vs 投降。判斷不看本地的 resigned ——
+                  連線時投降的可能是對手，那邊 resigned 是 false，
+                  但 naturalOutcome 仍然是空的（棋譜上這局沒下完）。
+                  「沒有自然結束卻有結果」就是投降。
+                */
+                ended: naturalOutcome.length ? 'natural' : outcome.length ? 'resign' : 'unfinished',
                 ua: typeof navigator !== 'undefined' ? navigator.userAgent : '',
                 viewport: typeof window !== 'undefined'
                   ? `${window.innerWidth}x${window.innerHeight}@${window.devicePixelRatio}` : '',
@@ -562,6 +779,12 @@ export default function PlayClient({ roomId }: PlayClientProps) {
             isOpen={isBreakWallModalOpen}
             onClose={handleBreakWallCancel}
             onCheck={handleBreakWallConfirm}
+          />
+
+          <SurrenderConfirmModal
+            isOpen={surrenderOpen}
+            onClose={() => setSurrenderOpen(false)}
+            onConfirm={confirmSurrender}
           />
         </>
       )}

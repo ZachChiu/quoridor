@@ -1,7 +1,7 @@
 'use client';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { GiHouse } from 'react-icons/gi';
+import { GiHut } from 'react-icons/gi';
 import { LuChevronFirst, LuChevronLast, LuChevronLeft, LuChevronRight, LuPause, LuPlay } from 'react-icons/lu';
 import Chessboard from '@/components/Chessboard';
 import GameStatus from '@/components/GameStatus';
@@ -117,7 +117,7 @@ export default function ReplayClient() {
     <>
       <Link href={localePath(locale, '/')} aria-label={t.nav.backHome}
             className="fixed left-5 top-5 z-50 grid size-12 place-items-center rounded-full bg-primary-50 text-2xl text-tile-ink transition hover:brightness-95">
-        <GiHouse />
+        <GiHut />
       </Link>
 
       <GameStatus
@@ -147,6 +147,12 @@ export default function ReplayClient() {
             selectCell={noop}
             setChessPosition={noop}
             onClickBreakWall={noop}
+          /* 回放沒有控制盤，這幾個只是型別上的必填 */
+          pendingWall={null}
+          setPendingWall={() => {}}
+          breakMode={false}
+          onToggleBreak={() => {}}
+          onWallStep={false}
           />
         </div>
 

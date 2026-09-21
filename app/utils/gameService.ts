@@ -179,6 +179,16 @@ export type Feedback = {
   mode: 'local' | 'online' | 'ai';
   playersNum: number;
   result: string;
+  /**
+   * 這局是怎麼結束的。
+   *
+   * `wgf` 是使用者按下「給點意見」當下的盤面，而投降不會寫進棋譜
+   * （投降不是一手棋）—— 所以光看棋譜會是一局「還沒下完」卻有 result 的
+   * 紀錄，讀的人得自己推敲。這個欄位把它講明白。
+   *
+   * natural：照規則下完　resign：有人投降結算　unfinished：還沒結束就送出
+   */
+  ended: 'natural' | 'resign' | 'unfinished';
   ua: string;
   viewport: string;
 };

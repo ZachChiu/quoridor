@@ -2,11 +2,12 @@
 import { useState } from "react";
 import { GiBrain, GiMeshNetwork, GiRuleBook, GiTabletopPlayers, GiThreeFriends, GiWireframeGlobe } from "react-icons/gi";
 import { useTransition } from "@/contexts/TransitionContext";
+import { gameHash } from '@/utils/gameMode';
 import { trackButtonClick } from "@/utils/analytics";
 // Game Icons（game-icons.net，CC BY 3.0）—— react-icons 已內建，不需另外安裝。
 // 選它而不是線條圖示：參考稿的圖示是實心剪影壓在色塊上，
 // Lucide 的細線在大尺寸的彩色磁磚上會顯得單薄。
-import GameTile, { TONE_COLOR, type TileOrigin } from "./components/GameTile";
+import GameTile, { type TileOrigin } from "./components/GameTile";
 import DifficultyModal from "./components/DifficultyModal";
 import type { Difficulty } from "@/game/ai";
 
@@ -61,14 +62,18 @@ export default function HomeClient() {
   */
   const startLocal = (playersNum: number, origin: TileOrigin) => {
     setGameState({ ...gameState, playersNum, aiDifficulty: null });
-    navigate(localePath(locale, '/local'), { wipe: wipeFrom(origin) });
+    // 人數寫在路由裡 —— 不寫的話重整就掉回兩人，而且靜態 HTML 也會先
+    // 畫一次兩人盤（見 (default)/local/[players]/page.tsx）
+    navigate(localePath(locale, playersNum === 3 ? '/local/3' : '/local'), { wipe: wipeFrom(origin) });
     trackButtonClick(`start_local_game_${playersNum}p`);
   };
 
   const startSolo = (aiDifficulty: Difficulty, at: { x: number; y: number }) => {
     setSoloOpen(false);
     setGameState({ ...gameState, playersNum: 2, aiDifficulty });
-    navigate(localePath(locale, '/solo'), { wipe: { ...at, color: TONE_COLOR.orange } });
+    // 難度選單的按鈕是白底（bg-primary-50），擴散就該是白的 ——
+    // 用陶橘會變成「按了白鈕卻噴出橘色」，對不上自己按的東西。
+    navigate(localePath(locale, '/solo') + gameHash({ aiDifficulty }), { wipe: { ...at, color: 'rgb(var(--tile-cream))' } });
     trackButtonClick(`start_solo_game_${aiDifficulty}`);
   };
 
@@ -127,11 +132,16 @@ export default function HomeClient() {
       小字與圖示承擔，色彩專心製造衝突感。
     */
     <div className="relative z-20 grid w-full grid-cols-2 gap-3 md:gap-4">
-      <GameTile icon={GiTabletopPlayers} tone="amber"  kicker={t.home.localKicker} label={t.home.twoPlayers} onClick={(o) => startLocal(2, o)} />
-      <GameTile icon={GiThreeFriends}    tone="purple" kicker={t.home.localKicker} label={t.home.threePlayers} onClick={(o) => startLocal(3, o)} />
+      {/* 有靜態目標的都給 href，渲染成真的連結 —— 首頁本來一條站內連結都沒有，
+          爬蟲走不進 /rules（整站的 SEO 主力落地頁）。連線那兩塊沒有：
+          房間要先建出來才知道網址。 */}
+      <GameTile icon={GiTabletopPlayers} tone="amber"  kicker={t.home.localKicker} label={t.home.twoPlayers} href={localePath(locale, '/local')} onClick={(o) => startLocal(2, o)} />
+      <GameTile icon={GiThreeFriends}    tone="purple" kicker={t.home.localKicker} label={t.home.threePlayers} href={localePath(locale, '/local/3')} onClick={(o) => startLocal(3, o)} />
       <GameTile icon={GiWireframeGlobe}  tone="blue"   kicker={t.home.onlineKicker} label={t.home.twoPlayers} onClick={(o) => startConnect(2, o)} onPrefetch={prewarm} />
       <GameTile icon={GiMeshNetwork}     tone="red"    kicker={t.home.onlineKicker} label={t.home.threePlayers} onClick={(o) => startConnect(3, o)} onPrefetch={prewarm} />
-      <GameTile icon={GiBrain} tone="orange" label={t.home.solo} wide onClick={() => setSoloOpen(true)} />
+      {/* 單人這塊按下去是開難度選單，但 /solo 本身站得住（自備選單），
+          所以 href 照給 —— cmd 點開的是那一頁，爬蟲也走得過去。 */}
+      <GameTile icon={GiBrain} tone="orange" label={t.home.solo} wide href={localePath(locale, '/solo')} onClick={() => setSoloOpen(true)} />
       <GameTile
         icon={GiRuleBook}
         tone="forest"
@@ -143,6 +153,7 @@ export default function HomeClient() {
            使用者得試過才知道哪個是哪個。
            Modal 保留給遊戲中的「遊玩方式」按鈕：對局進行到一半時
            不該把人換頁換走。 */
+        href={localePath(locale, '/rules')}
         onClick={(o) => navigate(localePath(locale, '/rules'), { wipe: wipeFrom(o) })}
       />
       <DifficultyModal isOpen={soloOpen} onClose={() => setSoloOpen(false)} onPick={startSolo} />
