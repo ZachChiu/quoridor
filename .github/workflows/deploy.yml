@@ -32,6 +32,18 @@ jobs:
       - name: 檢查字型子集
         run: npm run font:check
 
+      # 這三道原本只在本機跑 —— 也就是「忘了跑」跟「跑了沒過」對 CI 來說
+      # 長得一模一樣，壞掉的規則邏輯照樣會被部署上去。放在 build 之前：
+      # 型別或測試沒過就不該浪費時間建置，更不該上線。
+      - name: 檢查型別
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: 測試
+        run: npm test
+
       - name: 構建專案
         run: npm run build
         env:

@@ -18,7 +18,7 @@ export async function generateMetadata({
   params,
 }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const t = getMessages(toLocale((await params).locale));
-  return { title: t.online.metaTitle, robots: { index: false, follow: false } };
+  return { title: t.online.metaTitle, robots: { index: false, follow: true } };
 }
 
 export default async function Page({

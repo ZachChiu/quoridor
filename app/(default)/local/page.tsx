@@ -14,6 +14,13 @@ export const metadata: Metadata = {
     要讓它值得被索引，得先給它一段真正的內容（例如「兩人怎麼在同一台
     裝置上輪流玩」），那是另一件事。
   */
+  /*
+    noindex 但 **follow** —— 四個語系、五個對局頁面都要一致。
+
+    先前 (default) 寫 follow、(intl) 寫 nofollow，同一頁在不同語系下
+    行為不同（實測掃出來的）。這些頁面有回首頁與規則的連結，
+    nofollow 等於把站內連結切斷，而不索引本來就不需要連帶封鎖連結。
+  */
   robots: { index: false, follow: true },
 };
 

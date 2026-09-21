@@ -546,14 +546,27 @@ export default function PlayClient({ roomId, playersNum: routePlayers }: PlayCli
     trackButtonClick(`surrender_${isOnline ? 'online' : 'local'}_${playersNum}p`);
   }, [isOnline, playersNum]);
 
-  // 當用戶嘗試離開頁面且遊戲尚未結束時顯示確認對話框
+  /*
+    離開頁面前確認 —— 但只在「真的有東西會被丟掉」的時候。
+
+    原本的條件是 `!isLock`：一進 /local 什麼都還沒做就已經會攔人，
+    而那時候按上一頁根本沒有損失，跳出「確定要離開嗎」只是擋路。
+    使用者被沒有意義的確認擋過幾次之後，真正該停下來的那次也會直接按掉。
+
+    改成看盤面上有沒有進度：開局擺過子、下過回合、或這一手動到一半。
+    連線模式不看這個 —— 那邊離開等於讓對手空等，任何時候都該問一聲。
+  */
+  const hasProgress = isOnline
+    || state.openingPlacements.length > 0
+    || state.turns.length > 0
+    || state.currentTurnActions.length > 0;
+
   useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (!isLock) e.preventDefault();
-    };
+    if (isLock || !hasProgress) return;
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => e.preventDefault();
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [isLock]);
+  }, [isLock, hasProgress]);
 
   const { ruleModalState, setRuleModalState } = useRuleModal();
   const handleRuleBtnOpen = () => setRuleModalState({ ...ruleModalState, isOpen: true });
