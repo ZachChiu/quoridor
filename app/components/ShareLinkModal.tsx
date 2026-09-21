@@ -23,6 +23,12 @@ const SEATS: PlayerKey[] = ['A', 'B', 'C'];
  *
  * 色帶用靛藍 —— 與首頁「連線」那兩塊磁磚同色，一眼知道自己在連線這條線上。
  *
+ * 面板裡就**只有這一個色相加中性**。複製鍵原本是琥珀、複製完變森綠、
+ * 分享鍵又是靛藍 —— 一塊小面板上四個色相在搶，而且分享鍵跟色帶同色，
+ * 主要動作反而糊在背景裡。兩顆按鈕一律深墨：深墨不屬於任何色相，
+ * 放在哪個色帶下面都成立，層級改用「整排寬 vs 靠右一顆」表示。
+ * 座位的圓點不算 —— 那是玩家顏色，是資訊不是裝飾。
+ *
  * 人數原本只是一行「1 / 2 玩家已加入」。改成一排座位：已入座的染該玩家的
  * 顏色，空位是虛線圈。同一個資訊，但不用讀字就看得懂，而且顏色與待會兒
  * 盤面上的棋子對得起來。
@@ -80,9 +86,7 @@ const ShareLinkModal: React.FC<Props> = ({ isOpen, shareUrl, joinedCount, totalC
           type="button"
           onClick={handleCopy}
           aria-label={copied ? g.share.copied : g.share.copyAria}
-          className={`flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-black transition ${
-            copied ? 'bg-tile-forest text-tile-cream' : 'bg-tile-amber text-tile-ink hover:brightness-95'
-          }`}
+          className="flex shrink-0 items-center gap-1.5 rounded-lg bg-tile-ink px-3 py-2 text-sm font-black text-tile-cream transition hover:brightness-125 active:scale-[0.98]"
         >
           {copied ? <GiCheckMark /> : <LuCopy />}
           {copied ? g.share.copied : g.share.copy}
@@ -95,7 +99,7 @@ const ShareLinkModal: React.FC<Props> = ({ isOpen, shareUrl, joinedCount, totalC
         <button
           type="button"
           onClick={handleShare}
-          className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-tile-blue px-4 py-3 text-base font-black text-tile-cream transition active:scale-[0.98]"
+          className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-tile-ink px-4 py-3 text-base font-black text-tile-cream transition hover:brightness-125 active:scale-[0.98]"
         >
           <LuShare2 className="text-lg" aria-hidden="true" />
           {g.share.share}

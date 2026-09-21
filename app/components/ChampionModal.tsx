@@ -9,6 +9,7 @@ import { Player } from '@/types/chessboard';
 import { useGameText } from '@/i18n/LocaleProvider';
 import { fmt } from '@/i18n/content/game';
 
+
 interface ChampionModalProps {
   winners: (Player | 'draw')[];
   isOpen: boolean;
@@ -50,13 +51,6 @@ const ChampionModal: React.FC<ChampionModalProps> = ({
     ? g.champion.draw
     : fmt(g.champion.win, { names: winnerKeys.map((w) => g.players[w]).join('、') });
 
-  const message = isDraw
-    ? g.champion.drawBody
-    : fmt(g.champion.congrats, {
-        names: winnerKeys.map((w) => g.players[w]).join('、'),
-        suffix: winnerKeys.length > 1 ? g.champion.tied : g.champion.took,
-      });
-
   // 單一勝方才用他的顏色；並列或平局沒有代表色，回到深墨。
   const solo = !isDraw && winnerKeys.length === 1 ? winnerKeys[0] : null;
 
@@ -70,24 +64,33 @@ const ChampionModal: React.FC<ChampionModalProps> = ({
       band={solo
         ? { style: { backgroundColor: playerVar(solo) }, fg: PLAYER_ON[solo] }
         : { className: 'bg-tile-ink', fg: 'text-tile-cream' }}
+      /*
+        兩排：次要的兩顆左右並排，主要動作自己一整條在下面。
+
+        三顆擠一排的時候每顆只剩約 95px，中文四個字剛好塞不下；而且
+        「再來一局」和另外兩顆一樣寬，看不出誰才是主要動作。
+        分兩排之後寬度就是層級 —— 不必再靠顏色去喊。
+      */
       footer={
-        <>
-          {/* 回饋放在最左邊、樣式最輕 —— 它不該和「再來一局」搶主要動作，
-              但也不能藏到別的頁面去：離開這個畫面就沒人會回頭找它了。 */}
-          {onFeedback && (
-            <Button color="text-ink-soft hover:bg-tile-ink/[0.06] bg-transparent" handleClickEvent={onFeedback}>
-              {g.champion.feedback}
+        <div className="flex w-full flex-col gap-3">
+          <div className="flex gap-3">
+            {/* 回饋放在最左邊、樣式最輕 —— 它不該和「再來一局」搶主要動作，
+                但也不能藏到別的頁面去：離開這個畫面就沒人會回頭找它了。 */}
+            {onFeedback && (
+              <Button color="text-ink-soft hover:bg-tile-ink/[0.06] bg-transparent" handleClickEvent={onFeedback}>
+                {g.champion.feedback}
+              </Button>
+            )}
+            <Button color="text-ink-soft hover:bg-tile-ink/[0.06] bg-transparent" handleClickEvent={onClose}>
+              {g.champion.seeBoard}
             </Button>
-          )}
-          <Button color="text-ink-soft hover:bg-tile-ink/[0.06] bg-transparent" handleClickEvent={onClose}>
-            {g.champion.seeBoard}
-          </Button>
+          </div>
           {/* 深墨而非琥珀：三人局的黃方比分條就是琥珀，緊鄰著放會被讀成同一件事。
               深墨不屬於任何玩家，在這面彩色的板子上永遠不會撞色。 */}
           {onRestart && (
             <Button color="bg-tile-ink text-tile-cream" handleClickEvent={onRestart}>{g.champion.playAgain}</Button>
           )}
-        </>
+        </div>
       }
     >
       <div className="flex flex-col gap-2">
@@ -113,7 +116,6 @@ const ChampionModal: React.FC<ChampionModalProps> = ({
           );
         })}
       </div>
-      <p className="mt-4 text-sm leading-relaxed text-ink-soft">{message}</p>
     </Modal>
   );
 };

@@ -130,7 +130,21 @@ const Modal: React.FC<Props> = ({
 
         <div className="p-6">{children}</div>
 
-        {footer && <div className="flex gap-3 px-6 pb-6">{footer}</div>}
+        {/*
+          按鈕尺寸由這一列決定，不由 Button 自己。
+
+          Button 的預設是給版面上那種單獨一顆的大 CTA 用的（lg 斷點會長到
+          24px 字 + 20px padding）。同一組尺寸塞進 max-w-md 的面板裡、
+          而且一次三顆，每顆只剩約 95px —— 中文四個字在 24px 下就是 96px，
+          於是「給點意見」斷成兩行。
+
+          面板寬度是固定的，所以這裡不跟著斷點放大。
+        */}
+        {footer && (
+          <div className="flex gap-3 px-6 pb-6 [&_button]:p-3.5 [&_button]:text-base [&_button]:tracking-normal [&_button]:lg:p-4 [&_button]:lg:text-base">
+            {footer}
+          </div>
+        )}
       </div>
     </div>
   );
