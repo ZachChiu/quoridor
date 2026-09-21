@@ -149,9 +149,9 @@ export default function PlayClient({ roomId }: PlayClientProps) {
   const g = useGameText();
   const locale = useLocale();
   const isCoarse = useCoarsePointer();
-  const wallPadOpen = wallPadVisible({
-    coarse: isCoarse, locked: isLock, placing: isPlacing, hasSelection: !!state.selected,
-  });
+  // 控制盤從開局到終局都在，所以版面的讓位也是固定的 ——
+  // 不再隨著「有沒有選中棋子」忽大忽小。
+  const wallPadOpen = wallPadVisible({ coarse: isCoarse, locked: isLock });
   const canBreakWall = engineHasBreakWall(state);
 
   // 避免自己寫入 Firebase 的內容又觸發自己重播
@@ -455,6 +455,7 @@ export default function PlayClient({ roomId }: PlayClientProps) {
       {(!isOnline || phase === 'playing') && (
         <>
           <GameStatus
+            shiftAside={wallPadOpen}
             isLock={isLock}
             currentPlayer={state.currentPlayer}
             uniqTerritories={territories.owned}
@@ -480,11 +481,24 @@ export default function PlayClient({ roomId }: PlayClientProps) {
               置中的是「含邊距的方塊」，於是內容剛好往上移半個控制盤，
               等同在剩餘空間裡置中。
             */
+            /*
+              控制盤在時**不套 md: 那組規則**。
+
+              橫躺的手機（例如 844x390）寬度超過 md 斷點，於是
+              md:landscape:size-[90dvh] 會蓋掉替控制盤讓位的尺寸 ——
+              斷點量的是寬度，但「這是不是手機」量的是有沒有精準指標。
+              控制盤只在 pointer: coarse 出現，它在就代表是手指裝置，
+              這時該聽控制盤的，不是聽斷點的。
+            */
             className={`chessboard-container ${
               wallPadOpen
-                ? 'mb-[var(--wall-pad-h)] size-[min(90dvw,calc(100dvh-var(--wall-pad-h)-7rem))]'
-                : 'size-[90dvw]'
-            } md:size-[90dvh] md:portrait:size-[90dvw] md:landscape:size-[90dvh]`}
+                ? // 直式：控制盤在下，棋盤讓出高度並上移半個控制盤
+                  'mb-[var(--wall-pad-h)] size-[min(90dvw,calc(100dvh-var(--wall-pad-h)-7rem))] ' +
+                  // 橫式：控制盤在右，棋盤讓出寬度並左移半個控制盤
+                  'landscape:mb-0 landscape:mr-[var(--wall-pad-w)] ' +
+                  'landscape:size-[min(86dvh,calc(100dvw-var(--wall-pad-w)-2rem))]'
+                : 'size-[90dvw] md:size-[90dvh] md:portrait:size-[90dvw] md:landscape:size-[90dvh]'
+            }`}
           >
             <Chessboard
               size={BOARD_SIZE}

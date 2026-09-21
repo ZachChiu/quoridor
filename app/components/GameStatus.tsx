@@ -4,6 +4,8 @@ import type { Player } from "@/types/chessboard";
 import { useGameText } from '@/i18n/LocaleProvider';
 
 interface Props {
+  /** 手機控制盤正在畫面上，計分要避開它 */
+  shiftAside?: boolean;
   isLock: boolean;
   currentPlayer: Player;
   uniqTerritories: { A: string[]; B: string[], C?: string[] };
@@ -22,12 +24,18 @@ interface Props {
  * 一眼就看得到。刻意不只靠呼吸動畫 —— 動畫在截圖裡不存在，
  * 對開了 prefers-reduced-motion 的人也等於沒有。
  */
-export default React.memo(function GameStatus({ isLock, currentPlayer, uniqTerritories, playersNum }: Props) {
+export default React.memo(function GameStatus({ isLock, currentPlayer, uniqTerritories, playersNum, shiftAside }: Props) {
   const g = useGameText();
   const players: PlayerKey[] = playersNum === 3 ? ['A', 'B', 'C'] : ['A', 'B'];
 
   return (
-    <div className="fixed right-5 top-5 flex flex-col items-end gap-1.5 md:top-[5dvh]">
+    <div
+      className={`fixed top-5 flex flex-col items-end gap-1.5 md:top-[5dvh] ${
+        // 橫式時控制盤佔住右側，計分要往左讓 —— 不讓的話它會疊在
+        // 方向鍵上面，而那是整局都要一直按的東西。
+        shiftAside ? 'right-5 landscape:right-[calc(var(--wall-pad-w)+1.25rem)]' : 'right-5'
+      }`}
+    >
       {players.map((p) => {
         const active = !isLock && currentPlayer === p;
         return (

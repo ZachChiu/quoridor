@@ -706,39 +706,59 @@ export default React.memo(function Chessboard({
       </SectionShadow>
 
       {/* 手機的築牆控制盤。固定在畫面底部（拇指區），不佔棋盤的位置。 */}
-      {wallPadVisible({ coarse: isCoarse, locked: isLock, placing: isPlacingChess, hasSelection: !!selectedChess }) && selectedChess && currentPlayer && (
-        <WallDirectionPad
-          legal={{
-            top: checkWallBuildable(selectedChess.row, selectedChess.col, 'top'),
-            bottom: checkWallBuildable(selectedChess.row, selectedChess.col, 'bottom'),
-            left: checkWallBuildable(selectedChess.row, selectedChess.col, 'left'),
-            right: checkWallBuildable(selectedChess.row, selectedChess.col, 'right'),
-          }}
-          // 一步之內到得了的四個鄰格。availableMoves 是剩餘步數內的完整
-          // 可達集合，鄰格在不在裡面就等於那個方向能不能走。
-          movable={{
-            top: availableMoves.some((m) => m.row === selectedChess.row - 1 && m.col === selectedChess.col),
-            bottom: availableMoves.some((m) => m.row === selectedChess.row + 1 && m.col === selectedChess.col),
-            left: availableMoves.some((m) => m.row === selectedChess.row && m.col === selectedChess.col - 1),
-            right: availableMoves.some((m) => m.row === selectedChess.row && m.col === selectedChess.col + 1),
-          }}
-          onMove={(dir) => {
-            const d = { top: [-1, 0], bottom: [1, 0], left: [0, -1], right: [0, 1] }[dir];
-            selectCell(selectedChess.row + d[0], selectedChess.col + d[1]);
-            // 移動之後原本選的那道牆多半已經不合法了，清掉重選
-            setPendingWall(null);
-          }}
-          pending={pendingWall}
-          onPick={setPendingWall}
-          onConfirm={() => {
-            if (pendingWall) commitWall(selectedChess.row, selectedChess.col, pendingWall);
-          }}
-          onRedo={() => { setPendingWall(null); cancelTurn?.(); }}
-          dirty={turnDirty}
-          remainSteps={remainSteps}
-          color={PLAYER_VAR[currentPlayer]}
-        />
-      )}
+      {wallPadVisible({ coarse: isCoarse, locked: isLock }) && currentPlayer && (() => {
+        const sel = selectedChess;
+        const none = { top: false, bottom: false, left: false, right: false };
+        /** 四個方向上「已經存在、而且打得破」的牆。三人局限定。 */
+        const breakable = sel && isBreakWallAvailable && breakWallCount > 0 ? {
+          top: !!horizontalWalls?.[sel.row - 1]?.[sel.col],
+          bottom: !!horizontalWalls?.[sel.row]?.[sel.col],
+          left: !!verticalWalls?.[sel.row]?.[sel.col - 1],
+          right: !!verticalWalls?.[sel.row]?.[sel.col],
+        } : none;
+        return (
+          <WallDirectionPad
+            placing={isPlacingChess}
+            selected={!!sel}
+            movable={sel ? {
+              top: availableMoves.some((m) => m.row === sel.row - 1 && m.col === sel.col),
+              bottom: availableMoves.some((m) => m.row === sel.row + 1 && m.col === sel.col),
+              left: availableMoves.some((m) => m.row === sel.row && m.col === sel.col - 1),
+              right: availableMoves.some((m) => m.row === sel.row && m.col === sel.col + 1),
+            } : none}
+            buildable={sel ? {
+              top: checkWallBuildable(sel.row, sel.col, 'top'),
+              bottom: checkWallBuildable(sel.row, sel.col, 'bottom'),
+              left: checkWallBuildable(sel.row, sel.col, 'left'),
+              right: checkWallBuildable(sel.row, sel.col, 'right'),
+            } : none}
+            breakable={breakable}
+            breaksLeft={isBreakWallAvailable ? breakWallCount : undefined}
+            onMove={(dir) => {
+              if (!sel) return;
+              const d = { top: [-1, 0], bottom: [1, 0], left: [0, -1], right: [0, 1] }[dir];
+              selectCell(sel.row + d[0], sel.col + d[1]);
+              // 移動之後原本選的那道牆多半已經不合法了，清掉重選
+              setPendingWall(null);
+            }}
+            onBreak={(dir) => {
+              if (!sel) return;
+              // 破牆的座標與築牆一致：上＝上一格的橫牆、左＝左一格的直牆
+              if (dir === 'top') onClickBreakWall(sel.row - 1, sel.col, 'horizontal');
+              else if (dir === 'bottom') onClickBreakWall(sel.row, sel.col, 'horizontal');
+              else if (dir === 'left') onClickBreakWall(sel.row, sel.col - 1, 'vertical');
+              else onClickBreakWall(sel.row, sel.col, 'vertical');
+            }}
+            pending={pendingWall}
+            onPick={setPendingWall}
+            onConfirm={() => { if (sel && pendingWall) commitWall(sel.row, sel.col, pendingWall); }}
+            onRedo={() => { setPendingWall(null); cancelTurn?.(); }}
+            dirty={turnDirty}
+            remainSteps={remainSteps}
+            color={PLAYER_VAR[currentPlayer]}
+          />
+        );
+      })()}
     </div>
   );
 });

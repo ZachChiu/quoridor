@@ -30,6 +30,14 @@ import { pageGraph, ldScript } from '@/i18n/jsonld';
 
 /** 破牆那一步只有三人局有，用不同的色帶標出來 —— 它不適用於所有人。 */
 const THREE_PLAYER_STEP = 6;
+/*
+  森綠只用在置頂列 —— 那是這一頁的身分色（對應首頁的規則磁磚與
+  遊玩方式 Modal 的色帶）。編號徽章維持深墨：一個面板只放一個色相
+  加中性，色帶已經是綠的，八個綠徽章排下來只會把那個綠稀釋掉。
+
+  例外是破牆那一張，用磚紅 —— 照 CLAUDE.md 的對應（破牆磚紅），
+  而且它只有三人局適用，需要一眼看出「這條不適用於所有人」。
+*/
 
 export default function RulesView({ locale }: { locale: Locale }) {
   const t = getMessages(locale);
@@ -48,10 +56,10 @@ export default function RulesView({ locale }: { locale: Locale }) {
         <div className="mx-auto flex max-w-[46rem] items-center gap-3 px-4 py-2.5">
           <TransitionLink
             href={home}
-            color="rgb(var(--tile-cream))"
+            color="rgb(var(--tile-forest))"
             radius={24}
             aria-label={t.nav.backHome}
-            className="grid size-11 shrink-0 place-items-center rounded-full bg-primary-50 text-xl text-tile-ink transition hover:brightness-95"
+            className="grid size-11 shrink-0 place-items-center rounded-full bg-tile-cream/[0.16] text-xl text-tile-cream transition hover:bg-tile-cream/[0.26]"
           >
             <GiHouse />
           </TransitionLink>
@@ -76,7 +84,7 @@ export default function RulesView({ locale }: { locale: Locale }) {
             return (
               <li
                 key={i}
-                className={`rounded-2xl p-4 md:p-5 ${threeOnly ? 'bg-tile-amber/[0.18]' : 'bg-primary-50'}`}
+                className={`rounded-2xl p-4 md:p-5 ${threeOnly ? 'bg-tile-red/[0.12]' : 'bg-primary-50'}`}
               >
                 <div className="grid gap-4 md:grid-cols-[180px_1fr] md:items-start">
                   <div className="mx-auto w-full max-w-[180px] md:mx-0">
@@ -86,7 +94,7 @@ export default function RulesView({ locale }: { locale: Locale }) {
                     <h2 className="flex items-start gap-2.5 text-lg font-black leading-snug md:text-xl">
                       <span
                         className={`mt-0.5 grid size-6 shrink-0 place-items-center rounded-full text-xs ${
-                          threeOnly ? 'bg-tile-amber text-tile-ink' : 'bg-tile-ink text-tile-cream'
+                          threeOnly ? 'bg-tile-red text-tile-cream' : 'bg-tile-ink text-tile-cream'
                         }`}
                       >
                         {i + 1}
@@ -116,9 +124,9 @@ export default function RulesView({ locale }: { locale: Locale }) {
         {/* 整排寬的長條。讀完一長頁之後的唯一出口，不該是一顆小按鈕。 */}
         <TransitionLink
           href={home}
-          color="rgb(var(--tile-amber))"
+          color="rgb(var(--tile-forest))"
           radius={16}
-          className="mt-10 flex w-full items-center justify-center rounded-2xl bg-tile-amber px-6 py-5 text-lg font-black text-tile-ink transition hover:brightness-95 active:scale-[0.99]"
+          className="mt-10 flex w-full items-center justify-center rounded-2xl bg-tile-forest px-6 py-5 text-lg font-black text-tile-cream transition hover:brightness-95 active:scale-[0.99]"
         >
           {t.rules.ctaPlay}
         </TransitionLink>
