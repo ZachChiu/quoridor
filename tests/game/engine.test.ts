@@ -5,6 +5,7 @@ import {
   createGame,
   legalBreaks,
   legalMoves,
+  hasStarted,
   isPlacingPhase,
   legalWalls,
   movePiece,
@@ -350,6 +351,36 @@ describe('自動跳過與勝負', () => {
     expect(scores).toEqual({ A: 0, B: 0 });
     expect(territories.owned.A).toEqual([]);
     expect(territories.ownerByCell).toEqual({});
+  });
+
+  /*
+    「離開前要不要攔人」靠這個判斷。什麼都還沒做就跳確認只是擋路，
+    而使用者被沒有意義的確認擋過幾次之後，真正該停下來的那次也會直接按掉。
+  */
+  describe('hasStarted：這一局動過沒有', () => {
+    it('剛建好的盤面沒有動過', () => {
+      expect(hasStarted(createGame(2))).toBe(false);
+      expect(hasStarted(createGame(3))).toBe(false);
+    });
+
+    it('放下第一顆開局棋子就算動過', () => {
+      expect(hasStarted(placeOpeningPiece(createGame(2), 3, 2))).toBe(true);
+    });
+
+    it('擺完開局之後仍然算動過', () => {
+      const s = runOpening(createGame(2), [[3, 3], [3, 4], [0, 0], [6, 6]]);
+      expect(hasStarted(s)).toBe(true);
+    });
+
+    it('對弈階段只是選了棋子（還沒走）也算 —— 那一手已經開始了', () => {
+      let s = runOpening(createGame(2), [[3, 3], [3, 4], [0, 0], [6, 6]]);
+      const before = s.turns.length;
+      s = selectPiece(s, 3, 3);
+      s = movePiece(s, 2, 3);
+      expect(s.turns.length).toBe(before);        // 回合還沒收束
+      expect(s.currentTurnActions.length).toBeGreaterThan(0);
+      expect(hasStarted(s)).toBe(true);
+    });
   });
 
   it('擺完之後才開始算領地', () => {

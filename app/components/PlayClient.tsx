@@ -15,7 +15,7 @@ import { useAiOpponent } from "@/hook/useAiOpponent";
 import { playerKeys } from "@/game/territory";
 import { playerVar } from "@/config/players";
 import TurnGuide from "@/components/TurnGuide";
-import { legalMoves } from "@/game/engine";
+import { hasStarted, legalMoves } from "@/game/engine";
 import ShareLinkModal from "@/components/ShareLinkModal";
 import FeedbackModal from "@/components/FeedbackModal";
 import BreakWallConfirmModal from "@/components/BreakWallConfirmModal";
@@ -556,10 +556,8 @@ export default function PlayClient({ roomId, playersNum: routePlayers }: PlayCli
     改成看盤面上有沒有進度：開局擺過子、下過回合、或這一手動到一半。
     連線模式不看這個 —— 那邊離開等於讓對手空等，任何時候都該問一聲。
   */
-  const hasProgress = isOnline
-    || state.openingPlacements.length > 0
-    || state.turns.length > 0
-    || state.currentTurnActions.length > 0;
+  // 連線模式不看盤面 —— 那邊離開等於讓對手空等，任何時候都該問一聲
+  const hasProgress = isOnline || hasStarted(state);
 
   useEffect(() => {
     if (isLock || !hasProgress) return;

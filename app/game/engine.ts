@@ -466,6 +466,22 @@ export function cancelTurn(state: GameState): GameState {
  * 第 2 點是「零步移動需能離開再回來」帶來的新情況：可能出現雙方棋子
  * 互相卡死、但區域仍被判定為爭奪中的盤面。若不視為終局，遊戲會永遠停住。
  */
+/**
+ * 這一局有沒有動過。
+ *
+ * 「動過」＝開局擺過子、收束過回合、或這一手正在進行中。
+ * 三者都沒有就是一個剛建好、還沒有人碰過的盤面。
+ *
+ * 給「離開前要不要攔人」用：什麼都還沒做就跳確認只是擋路，
+ * 而使用者被沒有意義的確認擋過幾次之後，真正該停下來的那次也會直接按掉。
+ * 放在這裡而不是元件裡，是因為它問的是 GameState 的性質，不是畫面的。
+ */
+export function hasStarted(state: GameState): boolean {
+  return state.openingPlacements.length > 0
+    || state.turns.length > 0
+    || state.currentTurnActions.length > 0;
+}
+
 export function isGameOver(state: GameState): boolean {
   if (isPlacingPhase(state)) return false;
   if (computeTerritories(state).settled) return true;
