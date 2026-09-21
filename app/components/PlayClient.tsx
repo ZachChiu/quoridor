@@ -14,6 +14,7 @@ import WaitingRoom from "@/components/WaitingRoom";
 import { useAiOpponent } from "@/hook/useAiOpponent";
 import { playerKeys } from "@/game/territory";
 import { playerVar } from "@/config/players";
+import { shouldPushWgf } from "@/utils/wgfSync";
 import TurnGuide from "@/components/TurnGuide";
 import { hasStarted, legalMoves } from "@/game/engine";
 import ShareLinkModal from "@/components/ShareLinkModal";
@@ -297,6 +298,19 @@ export default function PlayClient({ roomId, playersNum: routePlayers }: PlayCli
 
   // 避免自己寫入 Firebase 的內容又觸發自己重播
   const lastAppliedWgf = useRef<string>('');
+  /*
+    有沒有先讀到房間的棋譜。
+
+    在讀到之前**一個字都不能寫回去** —— 連線模式的初始 state 是寫死的
+    createGame(2)（那時還不知道房間是幾人局），而寫入 effect 在第一次
+    render 就會跑。room 還是 null 的那一瞬間，它會把本地這份兩人棋譜
+    蓋掉 Firebase 上的 "3|||"，接著讀取 effect 看到的已經是自己剛寫的，
+    於是永遠不會重播房間原本的內容。
+
+    症狀是：連線三人房一定會變成兩人局，而且三個人的畫面**一致地錯**，
+    所以看起來完全正常 —— 實測 38 手打完，全程沒有任何錯誤訊息。
+  */
+  const syncedFromRoom = useRef(false);
 
   // ─── 單人對戰 ────────────────────────────────────────────────────────────────
   //
@@ -468,6 +482,7 @@ export default function PlayClient({ roomId, playersNum: routePlayers }: PlayCli
   useEffect(() => {
     if (!isOnline || !room?.wgf || room.wgf === lastAppliedWgf.current) return;
     lastAppliedWgf.current = room.wgf;
+    syncedFromRoom.current = true;
     dispatch({ type: 'replay', wgf: room.wgf });
   }, [room?.wgf, isOnline]);
 
@@ -477,9 +492,13 @@ export default function PlayClient({ roomId, playersNum: routePlayers }: PlayCli
   // 會改變 WGF，選取與移動不會，因此不必逐一判斷哪些操作需要同步。
   // lastAppliedWgf 同時擋掉自己寫入所觸發的重播（echo）。
   useEffect(() => {
-    if (!isOnline || !roomId) return;
+    if (!roomId) return;
     const wgf = toWgf(state);
-    if (wgf === lastAppliedWgf.current) return;
+    // 「還沒讀到房間就不准寫」的理由與後果見 utils/wgfSync.ts
+    if (!shouldPushWgf({
+      isOnline, syncedFromRoom: syncedFromRoom.current,
+      localWgf: wgf, lastApplied: lastAppliedWgf.current,
+    })) return;
     lastAppliedWgf.current = wgf;
     updateGameState(roomId, wgf, state.currentPlayer);
   }, [state, isOnline, roomId]);
