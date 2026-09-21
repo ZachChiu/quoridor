@@ -16,7 +16,8 @@ module.exports = {
     '/robots.txt',
     // 對局畫面：沒有可讀內容，收錄了也只是空殼。四個語系一起排除 ——
     // sitemap 與頁面的 robots 必須說同一件事，不然 Search Console 會報錯。
-    '/local', '/*/local',
+    // /local/2 與 /local/3 也一起排除 —— 跟 /local 是同一個空殼畫面
+    '/local', '/*/local', '/local/*', '/*/local/*',
     '/online', '/*/online',
     // 舊網址，只做轉址
     '/match',
