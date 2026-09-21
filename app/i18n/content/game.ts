@@ -27,6 +27,7 @@ export type GameText = {
     wallUp: string; wallDown: string; wallLeft: string; wallRight: string;
     hintMove: string; hintWall: string; hintReady: string;
     breakWall: string; breakPick: string; breakNone: string;
+    breakUp: string; breakDown: string; breakLeft: string; breakRight: string;
     hintWait: string;
   };
   tips: {
@@ -77,7 +78,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       heading: '築牆方向', top: '上方', bottom: '下方', left: '左方', right: '右方',
       pick: '選一個方向築牆', pending: '要在{side}築牆', choose: '選擇{side}', confirm: '確定築牆',
     step1: '① 移動', step2: '② 築牆', stepPlace: '放棋子', remain: '還可走 {n} 格', noMove: '不移動也可以', done: '完成這一步', redo: '重來這一步', moveUp: '往上移動', moveDown: '往下移動', moveLeft: '往左移動', moveRight: '往右移動', wallUp: '在上方築牆', wallDown: '在下方築牆', wallLeft: '在左方築牆', wallRight: '在右方築牆', hintMove: '先移動棋子（或不動）', hintWall: '再選一道牆', hintReady: '按 ✓ 完成這一步',
-    breakWall: '破牆', breakPick: '選一道要打破的牆', breakNone: '這一局的破牆已經用掉了', hintWait: '等對手下',
+    breakWall: '破牆', breakUp: '打破上方的牆', breakDown: '打破下方的牆', breakLeft: '打破左方的牆', breakRight: '打破右方的牆', breakPick: '選一道要打破的牆', breakNone: '這一局的破牆已經用掉了', hintWait: '等對手下',
     },
     tips: {
       over: '遊戲結束！', overWin: '遊戲結束！{names}勝利！', thinking: '{who} 思考中…',
@@ -139,7 +140,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       heading: 'Wall direction', top: 'above', bottom: 'below', left: 'the left', right: 'the right',
       pick: 'Pick a direction', pending: 'Building {side}', choose: 'Choose {side}', confirm: 'Build the wall',
     step1: '1 Move', step2: '2 Wall', stepPlace: 'Place a piece', remain: '{n} squares left', noMove: 'staying put is fine', done: 'Finish this turn', redo: 'Start this turn over', moveUp: 'Move up', moveDown: 'Move down', moveLeft: 'Move left', moveRight: 'Move right', wallUp: 'Build a wall above', wallDown: 'Build a wall below', wallLeft: 'Build a wall to the left', wallRight: 'Build a wall to the right', hintMove: 'Move your piece (or stay put)', hintWall: 'Now pick a wall', hintReady: 'Press ✓ to finish',
-    breakWall: 'Break a wall', breakPick: 'Pick a wall to break', breakNone: 'You have used your wall break', hintWait: 'Waiting for your opponent',
+    breakWall: 'Break a wall', breakUp: 'Break the wall above', breakDown: 'Break the wall below', breakLeft: 'Break the wall to the left', breakRight: 'Break the wall to the right', breakPick: 'Pick a wall to break', breakNone: 'You have used your wall break', hintWait: 'Waiting for your opponent',
     },
     tips: {
       over: 'Game over', overWin: 'Game over — {names} wins!', thinking: '{who} is thinking…',
@@ -201,7 +202,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       heading: '壁の向き', top: '上', bottom: '下', left: '左', right: '右',
       pick: '向きを選んでください', pending: '{side}に壁を作ります', choose: '{side}を選ぶ', confirm: '壁を作る',
     step1: '① 移動', step2: '② 壁', stepPlace: '駒を置く', remain: 'あと {n} マス', noMove: '動かさなくてもよい', done: 'この手を確定', redo: 'この手をやり直す', moveUp: '上へ移動', moveDown: '下へ移動', moveLeft: '左へ移動', moveRight: '右へ移動', wallUp: '上に壁を作る', wallDown: '下に壁を作る', wallLeft: '左に壁を作る', wallRight: '右に壁を作る', hintMove: 'まず駒を動かす（動かさなくてもよい）', hintWall: '次に壁を選ぶ', hintReady: '✓ で確定',
-    breakWall: '壁を壊す', breakPick: '壊す壁を選ぶ', breakNone: '壁を壊す回数は使い切りました', hintWait: '相手の番です',
+    breakWall: '壁を壊す', breakUp: '上の壁を壊す', breakDown: '下の壁を壊す', breakLeft: '左の壁を壊す', breakRight: '右の壁を壊す', breakPick: '壊す壁を選ぶ', breakNone: '壁を壊す回数は使い切りました', hintWait: '相手の番です',
     },
     tips: {
       over: 'ゲーム終了', overWin: 'ゲーム終了 —— {names}の勝ち！', thinking: '{who} が考えています…',
@@ -263,7 +264,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       heading: '벽 방향', top: '위', bottom: '아래', left: '왼쪽', right: '오른쪽',
       pick: '방향을 고르세요', pending: '{side}에 벽을 세웁니다', choose: '{side} 선택', confirm: '벽 세우기',
     step1: '① 이동', step2: '② 벽', stepPlace: '말 놓기', remain: '{n}칸 남음', noMove: '움직이지 않아도 됩니다', done: '이 수 완료', redo: '이 수 다시', moveUp: '위로 이동', moveDown: '아래로 이동', moveLeft: '왼쪽으로 이동', moveRight: '오른쪽으로 이동', wallUp: '위에 벽 세우기', wallDown: '아래에 벽 세우기', wallLeft: '왼쪽에 벽 세우기', wallRight: '오른쪽에 벽 세우기', hintMove: '먼저 말을 움직이세요 (안 움직여도 됩니다)', hintWall: '이제 벽을 고르세요', hintReady: '✓ 를 누르면 완료',
-    breakWall: '벽 부수기', breakPick: '부술 벽을 고르세요', breakNone: '벽 부수기를 이미 사용했습니다', hintWait: '상대 차례입니다',
+    breakWall: '벽 부수기', breakUp: '위쪽 벽 부수기', breakDown: '아래쪽 벽 부수기', breakLeft: '왼쪽 벽 부수기', breakRight: '오른쪽 벽 부수기', breakPick: '부술 벽을 고르세요', breakNone: '벽 부수기를 이미 사용했습니다', hintWait: '상대 차례입니다',
     },
     tips: {
       over: '게임 종료', overWin: '게임 종료 —— {names} 승리!', thinking: '{who} 생각 중…',

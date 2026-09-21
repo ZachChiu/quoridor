@@ -120,9 +120,14 @@ export default function WallDirectionPad({
   const moveLabel: Record<Direction, string> = {
     top: g.pad.moveUp, bottom: g.pad.moveDown, left: g.pad.moveLeft, right: g.pad.moveRight,
   };
-  const wallLabel: Record<Direction, string> = {
-    top: g.pad.wallUp, bottom: g.pad.wallDown, left: g.pad.wallLeft, right: g.pad.wallRight,
-  };
+  /*
+    破牆模式下外圈那四顆做的是「打破牆」，不是「蓋牆」—— 標籤要跟著換。
+    不換的話讀屏會唸「在上方築牆」，而按下去其實是把上方的牆打掉，
+    那是唯一一個不可逆的操作，唸錯的代價特別大。
+  */
+  const wallLabel: Record<Direction, string> = breakMode
+    ? { top: g.pad.breakUp, bottom: g.pad.breakDown, left: g.pad.breakLeft, right: g.pad.breakRight }
+    : { top: g.pad.wallUp, bottom: g.pad.wallDown, left: g.pad.wallLeft, right: g.pad.wallRight };
 
   return (
     <div

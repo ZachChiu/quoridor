@@ -159,7 +159,16 @@ describe('回合流程', () => {
     expect(broken.breakWallCount.A).toBe(0);
     expect(broken.horizontalWalls[3][3]).toBeNull();
     expect(broken.currentPlayer).toBe('A'); // 回合未結束
-    expect(legalBreaks(broken)).toEqual([]); // 次數用完
+    /*
+      破完之後就再也破不了 —— 這一行同時是 PlayClient 那道
+      `if (breakMode && !canBreakNow) setBreakMode(false)` 的理由。
+
+      少了那道防線會走進死路：破牆模式下四個方向吃的是「可破的牆」，
+      這時全是 false；而鐵鎚也因為次數用完而停用，按不動、退不出來。
+      結果是這一手蓋不了牆（回合結束不了），整個控制盤只剩投降和重來。
+      實測過，而且 console 完全乾淨 —— 只有真的去按才會發現。
+    */
+    expect(legalBreaks(broken)).toEqual([]);
   });
 
   it('兩人模式沒有破牆機會', () => {

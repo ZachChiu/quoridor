@@ -16,7 +16,7 @@ import { playerKeys } from "@/game/territory";
 import { playerVar } from "@/config/players";
 import { shouldPushWgf } from "@/utils/wgfSync";
 import TurnGuide from "@/components/TurnGuide";
-import { hasStarted, legalMoves } from "@/game/engine";
+import { hasStarted, legalBreaks, legalMoves } from "@/game/engine";
 import ShareLinkModal from "@/components/ShareLinkModal";
 import FeedbackModal from "@/components/FeedbackModal";
 import BreakWallConfirmModal from "@/components/BreakWallConfirmModal";
@@ -291,10 +291,20 @@ export default function PlayClient({ roomId, playersNum: routePlayers }: PlayCli
 
 
   const canBreakWall = engineHasBreakWall(state);
-  // 這一局根本沒有破牆（兩人局）就不該停在破牆模式裡 ——
-  // 留在一個什麼都按不了的模式最令人困惑。細部的「周圍有沒有牆可破」
-  // 由控制盤自己判斷（它手上才有四個方向的資料）。
-  if (breakMode && !canBreakWall) setBreakMode(false);
+
+  /*
+    現在這一刻真的破得了牆嗎 —— 交給 engine 判斷（它一次看完「這局有沒有
+    破牆規則」「還剩幾次」「選中的棋子旁邊有沒有牆」）。
+
+    破不了就自動退出破牆模式。**沒有這一條會走進死路**：破完那一次之後
+    鐵鎚變停用（次數用完），而破牆模式下四個方向吃的是 breakable ——
+    也全是 false。於是這一手蓋不了牆（回合結束不了），鐵鎚又因為停用而
+    按不動，退不出來。實測當下整個控制盤只剩「投降」和「重來」能按。
+
+    控制盤原本自己有這段判斷，把 breakMode 提上來時漏掉了。
+  */
+  const canBreakNow = legalBreaks(state).length > 0;
+  if (breakMode && !canBreakNow) setBreakMode(false);
 
   // 避免自己寫入 Firebase 的內容又觸發自己重播
   const lastAppliedWgf = useRef<string>('');
