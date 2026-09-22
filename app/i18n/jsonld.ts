@@ -1,6 +1,7 @@
-import { getMessages } from './index';
+import { getMessages, siteName } from './index';
 import { FAQ_TEXT } from './content/faq';
 import { localePath, type Locale } from './locales';
+import { ogImageUrl, OG_SIZE } from './metadata';
 
 const SITE = process.env.SITE_URL || 'https://quoridorgame.com';
 
@@ -60,7 +61,7 @@ function organizationNode(locale: Locale) {
   return {
     '@type': 'Organization',
     '@id': id('organization'),
-    name: `${t.home.titleLine1} ${t.home.titleLine2}`.trim(),
+    name: siteName(locale),
     url: SITE,
     logo: { '@type': 'ImageObject', url: `${SITE}/icon-192.png`, width: 192, height: 192 },
   };
@@ -72,7 +73,7 @@ function websiteNode(locale: Locale) {
     '@type': 'WebSite',
     '@id': id('website'),
     url: SITE,
-    name: `${t.home.titleLine1} ${t.home.titleLine2}`.trim(),
+    name: siteName(locale),
     alternateName: 'Wall Go',
     publisher: { '@id': id('organization') },
     inLanguage: locale,
@@ -85,7 +86,7 @@ function gameNode(locale: Locale) {
   return {
     '@type': 'VideoGame',
     '@id': id('game'),
-    name: `${t.home.titleLine1} ${t.home.titleLine2}`.trim(),
+    name: siteName(locale),
     alternateName: 'Wall Go',
     url: SITE + localePath(locale, '/'),
     description: t.meta.ogDescription,
@@ -99,7 +100,7 @@ function gameNode(locale: Locale) {
     offers: { '@type': 'Offer', price: '0', priceCurrency: 'TWD', availability: 'https://schema.org/InStock' },
     publisher: { '@id': id('organization') },
     isBasedOn: { '@id': id('series') },
-    image: `${SITE}/og-image.png`,
+    image: ogImageUrl(locale, '/'),
   };
 }
 
@@ -150,7 +151,7 @@ export function pageGraph(locale: Locale, kind: PageKind) {
           description: t.meta.description,
           isPartOf: { '@id': id('website') },
           about: { '@id': id('game') },
-          primaryImageOfPage: { '@type': 'ImageObject', url: `${SITE}/og-image.png` },
+          primaryImageOfPage: { '@type': 'ImageObject', url: ogImageUrl(locale, '/'), ...OG_SIZE },
           inLanguage: locale,
         },
       ],

@@ -18,3 +18,21 @@ export function getMessages(locale: Locale): Messages {
 }
 
 export type { Messages };
+
+/**
+ * 站名：「牆壁圍棋 Wall Go」，英文只有「Wall Go」。
+ *
+ * 英文的 `titleLine2` 是**整個不給**的（型別上選填）—— 英文站不需要在
+ * Wall Go 旁邊再放一次中文名。先前這裡是用字串模板直接拼：
+ *
+ *     `${t.home.titleLine1} ${t.home.titleLine2}`.trim()
+ *
+ * `undefined` 進了模板會變成字面上的 "undefined"，`.trim()` 也救不了 ——
+ * 於是整個英文站的 og:site_name 與三個 JSON-LD 節點都是「Wall Go undefined」。
+ * 那不會出現在畫面上任何地方，只出現在分享預覽與結構化資料裡，
+ * 所以看網站看一輩子也看不到。
+ */
+export function siteName(locale: Locale): string {
+  const t = getMessages(locale);
+  return [t.home.titleLine1, t.home.titleLine2].filter(Boolean).join(' ');
+}
