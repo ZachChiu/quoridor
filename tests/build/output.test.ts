@@ -61,6 +61,37 @@ describe.skipIf(!built)('建置產物', () => {
       }
     });
 
+    /*
+      分享圖：每一頁每一語系都要有自己的一張，而且那張檔案真的在 out/ 裡。
+
+      這條擋的是兩種安靜的壞掉：
+      1. 六頁共用一張圖（先前如此），而且那張是中文的 —— 英日韓的人
+         分享出去預覽圖上是一排中文字，沒人會回報。
+      2. og:image 指向一個不存在的檔案 —— 抓取器拿不到圖就只顯示一行字，
+         頁面本身完全正常，所以在瀏覽器裡怎麼看都看不出來。
+    */
+    it('六頁 × 四語系各有自己的分享圖，檔案都在，而且沒有兩頁共用', () => {
+      const PAGES = ['', 'rules', 'solo', 'local', 'online', 'replay'];
+      const seen = new Map<string, string>();
+      for (const l of ALL_LOCALES) {
+        for (const page of PAGES) {
+          const dir = l === 'zh-TW' ? page : join(l, page);
+          const src = html(join(dir, 'index.html'));
+          const m = src.match(/property="og:image"\s+content="([^"]+)"/);
+          expect(m, `/${dir} 沒有 og:image`).not.toBeNull();
+
+          const rel = new URL(m![1]).pathname;
+          expect(existsSync(join(OUT, rel)), `${rel} 不存在`).toBe(true);
+
+          const key = `${l}|${page}`;
+          const clash = [...seen.entries()].find(([, v]) => v === rel);
+          expect(clash?.[0], `${key} 與 ${clash?.[0]} 共用 ${rel}`).toBeUndefined();
+          seen.set(key, rel);
+        }
+      }
+      expect(seen.size).toBe(PAGES.length * ALL_LOCALES.length);
+    });
+
     it('404 是真的一頁，不是空殼', () => {
       expect(existsSync(join(OUT, '404.html'))).toBe(true);
       expect(html('404.html').length).toBeGreaterThan(1000);

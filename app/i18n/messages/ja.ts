@@ -54,6 +54,15 @@ const ja: Messages = {
   local: { metaTitle: 'ローカル対戦', srHeading: 'ローカル対戦 | ウォールゴー Wall Go' },
   online: { metaTitle: 'オンライン対戦', srHeading: 'オンライン対戦 | ウォールゴー Wall Go' },
   replay: { metaTitle: '棋譜再生', metaDescription: '一手ずつ対局を見返せます。前後への移動も自由です。', srHeading: '棋譜再生 | ウォールゴー Wall Go', empty: 'このリンクには棋譜がありません', emptyBody: '再生リンクには棋譜が必要です。完全なリンクをもう一度もらってください。', turn: '{total} 手中 {n} 手目', first: '最初に戻る', prev: '前の手', play: '再生', pause: '一時停止', next: '次の手', last: '最後へ' },
+  ogImage: {
+    home: 'いちばん広い陣地を取る · 2〜3人対戦',
+    rules: '配置・移動・壁・囲い・得点',
+    local: '1台の端末で2〜3人が交代',
+    online: 'リンクを送ればそのまま一緒に',
+    solo: 'コンピュータ対戦は3段階',
+    replay: '一手ずつ最初から見直す',
+  },
+
   ui: { next: '次へ', prev: '戻る', startGame: 'ゲームを始める', close: '閉じる', pickLevel: 'レベルを選ぶ' },
   notFound: { title: 'ページが見つかりません', body: 'アドレスが間違っているか、その対局はすでに終わっているかもしれません。', home: 'ホームへ', rules: '遊び方を見る' },
   crumb: { home: 'ホーム' },

@@ -60,6 +60,20 @@ const zhTW = {
   local: { metaTitle: '本機對戰', srHeading: '本機對戰 | 牆壁圍棋 Wall Go' },
   online: { metaTitle: '連線對戰', srHeading: '連線對戰 | 牆壁圍棋 Wall Go' },
   replay: { metaTitle: '棋譜回放', metaDescription: '一手一手重看整局牆壁圍棋，可前後跳轉。', srHeading: '棋譜回放 | 牆壁圍棋 Wall Go', empty: '這個連結沒有帶棋譜', emptyBody: '回放連結需要帶上棋譜。跟對方要一次完整的連結。', turn: '第 {n} / {total} 手', first: '回到開局', prev: '上一手', play: '播放', pause: '暫停', next: '下一手', last: '跳到最後' },
+  /*
+    分享圖上那一行字。與 ogDescription 分開是因為圖上放得下的字少得多 ——
+    一句話超過十來個字，在 1200×630 上就得縮到看不清。
+    改這裡要跑 npm run og:build 重建圖，CI 有 og:check 擋著。
+  */
+  ogImage: {
+    home: '圍出最大的地盤 · 2–3 人對戰',
+    rules: '擺子、移動、築牆、圈地、計分',
+    local: '同一台裝置，2–3 人輪流下',
+    online: '把連結傳給朋友，點開就能一起下',
+    solo: '電腦對手分三級',
+    replay: '一手一手重看整局',
+  },
+
   ui: { next: '下一步', prev: '上一步', startGame: '開始遊戲', close: '關閉', pickLevel: '選擇難度' },
   notFound: { title: '找不到這一頁', body: '這個網址可能打錯了，或是那一局已經結束了。', home: '回首頁', rules: '看看怎麼玩' },
   crumb: { home: '首頁' },

@@ -12,6 +12,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "font:subset": "node scripts/build-font-subset.mjs",
+    "og:build": "node scripts/build-og-images.mjs",
+    "og:check": "node scripts/build-og-images.mjs --check",
     "font:check": "node scripts/build-font-subset.mjs --check",
     "release": "node scripts/release.mjs",
     "release:preview": "node scripts/release.mjs --dry-run",

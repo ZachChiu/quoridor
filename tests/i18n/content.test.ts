@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { LOCALES, DEFAULT_LOCALE, localePath, localeFromPath, stripLocale, toLocale } from '@/i18n/locales';
-import { getMessages } from '@/i18n';
+import { getMessages, siteName } from '@/i18n';
 import { STEP_TEXT } from '@/i18n/content/steps';
 import { FAQ_TEXT } from '@/i18n/content/faq';
 import { GAME_TEXT } from '@/i18n/content/game';
@@ -93,6 +93,67 @@ describe('字典每個語系都齊全', () => {
           }
         }
       }
+    }
+  });
+});
+
+describe('站名', () => {
+  /*
+    先前是字串模板直接拼 `${titleLine1} ${titleLine2}`，而英文的 titleLine2
+    整個不給 —— 拼出來是字面上的 "Wall Go undefined"，`.trim()` 救不了。
+    那個字串進了 og:site_name 與三個 JSON-LD 節點，但不出現在畫面上任何
+    地方，所以看網站永遠看不到。
+  */
+  it('沒有任何語系拼出 undefined / null', () => {
+    for (const l of LOCALES) {
+      expect(siteName(l), l).not.toMatch(/undefined|null/);
+    }
+  });
+
+  it('每個語系都以 Wall Go 結尾 —— 那是不翻譯的專有名詞', () => {
+    for (const l of LOCALES) {
+      expect(siteName(l), l).toMatch(/Wall Go$/);
+    }
+  });
+
+  it('中日韓帶自己的譯名，英文只有 Wall Go', () => {
+    expect(siteName('en')).toBe('Wall Go');
+    for (const l of LOCALES.filter((x) => x !== 'en')) {
+      expect(siteName(l).length, l).toBeGreaterThan('Wall Go'.length);
+    }
+  });
+});
+
+describe('分享圖文案', () => {
+  const PAGES = ['home', 'rules', 'local', 'online', 'solo', 'replay'] as const;
+
+  it('六頁四語都有，而且不是空的', () => {
+    for (const l of LOCALES) {
+      const og = getMessages(l).ogImage;
+      for (const p of PAGES) {
+        expect(og[p], `${l}.ogImage.${p}`).toBeTruthy();
+        expect(og[p].trim().length, `${l}.ogImage.${p}`).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  /*
+    1200×630 上這行字是 30px。超過四十個字元就得縮到看不清 ——
+    而那只有在別人把連結貼進聊天室時才看得到。
+  */
+  it('每一句都短得放得下（≤ 42 字元）', () => {
+    for (const l of LOCALES) {
+      const og = getMessages(l).ogImage;
+      for (const p of PAGES) {
+        expect(og[p].length, `${l}.ogImage.${p} = 「${og[p]}」`).toBeLessThanOrEqual(42);
+      }
+    }
+  });
+
+  it('同一個語系裡六句各不相同 —— 六頁共用一句就等於沒分頁', () => {
+    for (const l of LOCALES) {
+      const og = getMessages(l).ogImage;
+      expect(new Set(PAGES.map((p) => og[p])).size, l).toBe(PAGES.length);
     }
   });
 });

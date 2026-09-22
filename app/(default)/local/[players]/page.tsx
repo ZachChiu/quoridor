@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
+import { playMetadata } from '@/i18n/metadata';
 import LocalView from '@/views/LocalView';
-import { getMessages } from '@/i18n';
 import { toPlayersNum } from '@/utils/gameMode';
 
 /**
@@ -21,11 +21,7 @@ export function generateStaticParams() {
 }
 
 export async function generateMetadata(): Promise<Metadata> {
-  return {
-    title: getMessages('zh-TW').local.metaTitle,
-    // 與 /local 一致：一進去就開局，除了 sr-only 的 h1 之外沒有可讀內容
-    robots: { index: false, follow: true },
-  };
+  return playMetadata('zh-TW', '/local');
 }
 
 export default async function Page({

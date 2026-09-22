@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
+import { playMetadata } from '@/i18n/metadata';
 import ReplayView from '@/views/ReplayView';
-import { getMessages } from '@/i18n';
 import { PREFIXED, toLocale } from '@/i18n/locales';
 
 export function generateStaticParams() {
@@ -10,8 +10,7 @@ export function generateStaticParams() {
 export async function generateMetadata({
   params,
 }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
-  const t = getMessages(toLocale((await params).locale));
-  return { title: t.replay.metaTitle, robots: { index: false, follow: true } };
+  return playMetadata(toLocale((await params).locale), '/replay');
 }
 
 export default async function Page({

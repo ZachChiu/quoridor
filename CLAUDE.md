@@ -13,6 +13,8 @@ npm test                # 執行 Vitest（app/game 的規則與 AI 測試）
 RUN_AI_BENCH=1 npm test # 連 AI 對局強度與難度階梯一起跑（約 5 分鐘）
 npm run font:subset     # 依原始碼實際用字重建字型子集
 npm run font:check      # 只檢查子集有沒有落後（CI 用）
+npm run og:build        # 重建每頁每語系的分享圖至 public/og/（要連網）
+npm run og:check        # 只檢查文案有沒有落後（CI 用）
 npm start               # 以 serve 提供 /out 靜態檔案（next start 不支援 output: export）
 
 npm run release:preview       # 先看會打成什麼版號、併哪條分支
@@ -132,6 +134,16 @@ players/{ A?, B?, C? }/{ uid, displayName, joinedAt }
   CI 有 `font:check` 擋著。
 - **Modal** 共用 `app/components/Modal.tsx`。關閉時務必保留 `inert` ——
   只用 `opacity-0` 不會把內容移出無障礙樹。
+- **分享圖**（og:image）**每頁每語系各一張**，共 24 張，由
+  `scripts/build-og-images.mjs` 產生到 `public/og/{page}-{locale}.png`，
+  版面在 `scripts/og-design.mjs`。改了 `ogImage.*` 文案要跑 `npm run og:build`，
+  CI 有 `og:check` 擋著。
+  **不要改用 Next 的 `opengraph-image.tsx`** —— 那個慣例產出的檔案沒有副檔名
+  （`out/rules/opengraph-image-1mfdno`），`aws s3 sync` 推不出 Content-Type，
+  抓取器拿到 `binary/octet-stream` 就不顯示圖。實測確認過。
+  字型必須是 TTF/OTF/WOFF，satori 不吃 woff2；Google Fonts 只有在
+  **不送 User-Agent** 時才回 TrueType。
+  盤面上不放任何灰點 —— 那不代表任何規則，只會讓人以為那些格子有什麼特別。
 
 ## 單人對戰
 
