@@ -4,10 +4,12 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import PlayClient from '@/components/PlayClient';
-import { useGameText } from '@/i18n/LocaleProvider';
+import { useGameText, useLocale } from '@/i18n/LocaleProvider';
+import { localePath } from '@/i18n/locales';
 
 export default function OnlineClient() {
   const g = useGameText();
+  const locale = useLocale();
   const searchParams = useSearchParams();
   // null ＝ 還沒讀到 hash，'' ＝ 讀完了但沒有 roomId。
   // 兩者必須分開：初次 render 時 effect 還沒跑，若用 '' 當初值會先閃一下錯誤畫面。
@@ -47,7 +49,7 @@ export default function OnlineClient() {
           {g.play.badLinkBody}
         </p>
         <Link
-          href="/"
+          href={localePath(locale, '/')}
           className="rounded-2xl bg-tile-amber px-6 py-4 text-lg font-black text-tile-ink transition hover:brightness-95 active:scale-[0.98]"
         >
           {g.play.backHome}

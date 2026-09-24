@@ -639,7 +639,7 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
     return (
       <div className="flex flex-col items-center gap-6">
         <p className="text-lg text-red-500">{error}</p>
-        <Link href="/" className="underline hover:opacity-70">{g.play.backHome}</Link>
+        <Link href={localePath(locale, "/")} className="underline hover:opacity-70">{g.play.backHome}</Link>
       </div>
     );
   }
