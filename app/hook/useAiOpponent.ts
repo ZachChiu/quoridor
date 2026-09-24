@@ -32,6 +32,10 @@ export function useAiOpponent(onMove: (move: AiMove) => void) {
   const holdRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // 最新一次請求的棋譜 —— Worker 失敗時拿它算保底的一手
   const pendingWgfRef = useRef('');
+  // Worker 本身死掉了（onerror）。之後每一手都直接走保底，不再問它 ——
+  // 問一個載不起來的 Worker 永遠不會有回覆，AI 會在下一手卡住。
+  const deadRef = useRef(false);
+  const playFallbackRef = useRef<() => void>(() => {});
 
   // 在 effect 中同步而非 render 期間寫入 —— render 期間讀寫 ref
   // 會讓 React Compiler 無法正確推導，並在 concurrent 渲染下產生非預期結果。
@@ -70,6 +74,7 @@ export function useAiOpponent(onMove: (move: AiMove) => void) {
       onerror 管的是 Worker 本身載不起來（chunk 下載失敗之類），
       那種情況 onmessage 永遠不會來。
     */
+    playFallbackRef.current = playFallback;
     function playFallback() {
       const wgf = pendingWgfRef.current;
       if (!wgf) return;
@@ -79,6 +84,7 @@ export function useAiOpponent(onMove: (move: AiMove) => void) {
     }
     worker.onerror = (event) => {
       console.error('[ai] worker 無法執行，改下保底的一手：', event.message);
+      deadRef.current = true;
       playFallback();
     };
 
@@ -96,6 +102,14 @@ export function useAiOpponent(onMove: (move: AiMove) => void) {
       if (holdRef.current) { clearTimeout(holdRef.current); holdRef.current = null; }
       askedAtRef.current = performance.now();
       pendingWgfRef.current = wgf;
+      if (deadRef.current) {
+        // 一樣壓到最短思考時間，不然 AI 那一手會跟你的同時落下
+        holdRef.current = setTimeout(() => {
+          holdRef.current = null;
+          if (id === latestIdRef.current) playFallbackRef.current();
+        }, MIN_THINK_MS);
+        return;
+      }
       const request: AiRequest = { id, wgf, difficulty, ...options };
       workerRef.current?.postMessage(request);
     },
