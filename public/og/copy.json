@@ -90,43 +90,43 @@
   },
   "ja": {
     "home": {
-      "kicker": "デビルズプラン：デスルーム",
+      "kicker": "悪魔の計略 ～デビルズ・プラン～",
       "title": [
-        "ウォールゴー",
+        "壁囲碁",
         "Wall Go"
       ],
       "line": "いちばん広い陣地を取る · 2〜3人対戦"
     },
     "rules": {
-      "kicker": "ウォールゴー Wall Go",
+      "kicker": "壁囲碁 Wall Go",
       "title": [
         "ルール"
       ],
       "line": "配置・移動・壁・囲い・得点"
     },
     "local": {
-      "kicker": "ウォールゴー Wall Go",
+      "kicker": "壁囲碁 Wall Go",
       "title": [
         "ローカル対戦"
       ],
       "line": "1台の端末で2〜3人が交代"
     },
     "online": {
-      "kicker": "ウォールゴー Wall Go",
+      "kicker": "壁囲碁 Wall Go",
       "title": [
         "オンライン対戦"
       ],
       "line": "リンクを送ればそのまま一緒に"
     },
     "solo": {
-      "kicker": "ウォールゴー Wall Go",
+      "kicker": "壁囲碁 Wall Go",
       "title": [
         "ひとりで遊ぶ"
       ],
       "line": "コンピュータ対戦は3段階"
     },
     "replay": {
-      "kicker": "ウォールゴー Wall Go",
+      "kicker": "壁囲碁 Wall Go",
       "title": [
         "棋譜再生"
       ],

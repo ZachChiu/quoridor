@@ -1,21 +1,21 @@
 import type { Messages } from './zh-TW';
 
-/** 用詞照 app/i18n/glossary.md：ウォールゴー、壁、陣地、駒。 */
+/** 用詞照 app/i18n/glossary.md：壁囲碁、壁、陣地、駒。 */
 const ja: Messages = {
   meta: {
-    titleDefault: 'ウォールゴー Wall Go 無料オンライン | デビルズプラン：デスルーム',
-    titleTemplate: '%s | ウォールゴー Wall Go',
+    titleDefault: '壁囲碁 Wall Go 無料オンライン | 悪魔の計略 ～デビルズ・プラン～',
+    titleTemplate: '%s | 壁囲碁 Wall Go',
     description:
-      'Netflixの韓国リアリティ番組『デビルズプラン：デスルーム』に登場したウォールゴーを、ブラウザで無料プレイ。7路盤で駒を動かし、壁を作って陣地を囲む。いちばん広い人の勝ち。2〜3人対戦、CPU戦、オンライン対戦に対応。ダウンロードも登録も不要です。',
-    keywords: ['ウォールゴー', 'Wall Go', 'デビルズプラン', 'デスルーム', '囲碁 派生', '陣取りゲーム', 'オンラインボードゲーム'],
-    ogTitle: 'ウォールゴー Wall Go 無料オンライン',
+      'Netflixの韓国リアリティ番組『悪魔の計略 ～デビルズ・プラン～』シーズン2に登場した壁囲碁を、ブラウザで無料プレイ。7路盤で駒を動かし、壁を作って陣地を囲む。いちばん広い人の勝ち。2〜3人対戦、CPU戦、オンライン対戦に対応。ダウンロードも登録も不要です。',
+    keywords: ['壁囲碁', 'Wall Go', '悪魔の計略', 'デビルズ・プラン', 'デビルズプラン シーズン2', 'ウォールゴー', '囲碁 派生', '陣取りゲーム', 'オンラインボードゲーム'],
+    ogTitle: '壁囲碁 Wall Go 無料オンライン',
     ogDescription:
-      '『デビルズプラン：デスルーム』のウォールゴー。7路盤、石ではなく壁で囲む陣取り。ダウンロードも登録も不要。',
-    ogAlt: 'ウォールゴー Wall Go —— 7路盤で赤と青が壁で自分の陣地を囲んでいる様子',
-    showName: 'デビルズプラン：デスルーム',
+      '『悪魔の計略 ～デビルズ・プラン～』の壁囲碁。7路盤、石ではなく壁で囲む陣取り。ダウンロードも登録も不要。',
+    ogAlt: '壁囲碁 Wall Go —— 7路盤で赤と青が壁で自分の陣地を囲んでいる様子',
+    showName: '悪魔の計略 ～デビルズ・プラン～',
   },
   home: {
-    titleLine1: 'ウォールゴー',
+    titleLine1: '壁囲碁',
     titleLine2: 'Wall Go',
     tagline: 'いちばん広い陣地を囲む · 2〜3人対戦',
     localKicker: 'ローカル',
@@ -27,13 +27,13 @@ const ja: Messages = {
   },
   rules: {
     kicker: '遊び方',
-    heading: 'ウォールゴー Wall Go のルール',
+    heading: '壁囲碁 Wall Go のルール',
     intro:
-      'ウォールゴーは Netflix『デビルズプラン：デスルーム』に登場した、囲碁の派生ゲームです。7路盤で2〜3人で遊びます。\n1ターンでやることは2つ。駒を1つ動かして、壁を1枚作る。以下、一手ずつ図で説明します。',
+      '壁囲碁は Netflix『悪魔の計略 ～デビルズ・プラン～』シーズン2に登場した、囲碁の派生ゲームです。7路盤で2〜3人で遊びます。\n1ターンでやることは2つ。駒を1つ動かして、壁を1枚作る。以下、一手ずつ図で説明します。',
     metaTitle: 'ルール',
     metaDescription:
-      'ウォールゴー（Wall Go）の完全ルール：配置、毎ターン0〜2マス動いてから壁を1枚作る、囲まれた領域の陣地計算、3人戦の壁破壊、勝敗の決まり方。Netflix『デビルズプラン：デスルーム』より。',
-    ogTitle: 'ウォールゴー Wall Go の遊び方',
+      '壁囲碁（Wall Go）の完全ルール：配置、毎ターン0〜2マス動いてから壁を1枚作る、囲まれた領域の陣地計算、3人戦の壁破壊、勝敗の決まり方。Netflix『悪魔の計略 ～デビルズ・プラン～』より。',
+    ogTitle: '壁囲碁 Wall Go の遊び方',
     ogDescription: '一手ずつ図でわかる：配置、移動、壁、陣地、得点。',
     faqHeading: 'よくある質問',
     ctaPlay: 'ゲームを始める',
@@ -42,18 +42,18 @@ const ja: Messages = {
   solo: {
     metaTitle: 'ひとりで遊ぶ',
     metaDescription:
-      'ひとりでもウォールゴーが遊べます。CPUは3段階。どのマスにどちらが先に届くかを計算して指すので、ランダムな手は打ちません。ダウンロードも登録も不要。',
-    ogTitle: 'ウォールゴー Wall Go ひとりで遊ぶ',
+      'ひとりでも壁囲碁が遊べます。CPUは3段階。どのマスにどちらが先に届くかを計算して指すので、ランダムな手は打ちません。ダウンロードも登録も不要。',
+    ogTitle: '壁囲碁 Wall Go ひとりで遊ぶ',
     ogDescription: 'ひとりでも遊べます。CPUは3段階。ダウンロードも登録も不要。',
     pickLevel: 'レベルを選ぶ',
     level1: 'レベル1',
     level2: 'レベル2',
     level3: 'レベル3',
-    srHeading: 'ひとりで遊ぶ | ウォールゴー Wall Go',
+    srHeading: 'ひとりで遊ぶ | 壁囲碁 Wall Go',
   },
-  local: { metaTitle: 'ローカル対戦', srHeading: 'ローカル対戦 | ウォールゴー Wall Go' },
-  online: { metaTitle: 'オンライン対戦', srHeading: 'オンライン対戦 | ウォールゴー Wall Go' },
-  replay: { metaTitle: '棋譜再生', metaDescription: '一手ずつ対局を見返せます。前後への移動も自由です。', srHeading: '棋譜再生 | ウォールゴー Wall Go', empty: 'このリンクには棋譜がありません', emptyBody: '再生リンクには棋譜が必要です。完全なリンクをもう一度もらってください。', turn: '{total} 手中 {n} 手目', first: '最初に戻る', prev: '前の手', play: '再生', pause: '一時停止', next: '次の手', last: '最後へ' },
+  local: { metaTitle: 'ローカル対戦', srHeading: 'ローカル対戦 | 壁囲碁 Wall Go' },
+  online: { metaTitle: 'オンライン対戦', srHeading: 'オンライン対戦 | 壁囲碁 Wall Go' },
+  replay: { metaTitle: '棋譜再生', metaDescription: '一手ずつ対局を見返せます。前後への移動も自由です。', srHeading: '棋譜再生 | 壁囲碁 Wall Go', empty: 'このリンクには棋譜がありません', emptyBody: '再生リンクには棋譜が必要です。完全なリンクをもう一度もらってください。', turn: '{total} 手中 {n} 手目', first: '最初に戻る', prev: '前の手', play: '再生', pause: '一時停止', next: '次の手', last: '最後へ' },
   ogImage: {
     home: 'いちばん広い陣地を取る · 2〜3人対戦',
     rules: '配置・移動・壁・囲い・得点',

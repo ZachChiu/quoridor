@@ -228,7 +228,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       failed: '送信できませんでした。通信が切れたのかもしれません。もう一度お試しください。',
     },
     share: {
-      shareTitle: 'ウォールゴー Wall Go', shareText: '部屋を作りました。リンクからそのまま参加できます！',
+      shareTitle: '壁囲碁 Wall Go', shareText: '部屋を作りました。リンクからそのまま参加できます！',
       heading: '友だちを招待', kicker: 'オンライン対戦', copied: 'コピーしました', copyAria: 'リンクをコピー',
       copy: 'コピー', waiting: '待機中', body: 'リンクを友だちに送ると、開いただけでこの部屋に入れます。',
       share: 'リンクを共有',
