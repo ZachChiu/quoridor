@@ -22,10 +22,14 @@ type Props = {
   onSubmit: (rating: 1 | 2 | 3, message: string, contact: string) => Promise<void>;
 };
 
-const FACES: { value: 1 | 2 | 3; emoji: string; tone: string }[] = [
-  { value: 1, emoji: '😖', tone: 'bg-tile-red text-tile-cream' },
-  { value: 2, emoji: '🙂', tone: 'bg-tile-amber text-tile-ink' },
-  { value: 3, emoji: '🤩', tone: 'bg-tile-forest text-tile-cream' },
+/*
+  三個表情不各帶一個顏色：紅黃綠擠在同一塊小面板上就是雜。
+  意思由表情本身承擔，選中的那個反成深墨 —— 跟整站「一個面板一個色相＋中性」一致。
+*/
+const FACES: { value: 1 | 2 | 3; emoji: string }[] = [
+  { value: 1, emoji: '😖' },
+  { value: 2, emoji: '🙂' },
+  { value: 3, emoji: '🤩' },
 ];
 
 const FeedbackModal: React.FC<Props> = ({ isOpen, onClose, onSubmit }) => {
@@ -100,7 +104,7 @@ const FeedbackModal: React.FC<Props> = ({ isOpen, onClose, onSubmit }) => {
                 aria-checked={rating === f.value}
                 onClick={() => setRating(f.value)}
                 className={`flex flex-1 flex-col items-center gap-1 rounded-xl py-3 text-sm font-black transition ${
-                  rating === f.value ? f.tone : 'bg-tile-ink/[0.06] text-ink-soft'
+                  rating === f.value ? 'bg-tile-ink text-tile-cream' : 'bg-tile-ink/[0.06] text-ink-soft'
                 }`}
               >
                 <span className="text-2xl leading-none" aria-hidden="true">{f.emoji}</span>

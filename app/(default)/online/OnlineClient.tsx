@@ -50,7 +50,7 @@ export default function OnlineClient() {
         </p>
         <Link
           href={localePath(locale, '/')}
-          className="rounded-2xl bg-tile-amber px-6 py-4 text-lg font-black text-tile-ink transition hover:brightness-95 active:scale-[0.98]"
+          className="rounded-2xl bg-tile-ink px-6 py-4 text-lg font-black text-tile-cream transition hover:brightness-110 active:scale-[0.98]"
         >
           {g.play.backHome}
         </Link>

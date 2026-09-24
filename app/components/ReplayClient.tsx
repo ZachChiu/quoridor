@@ -111,7 +111,7 @@ export default function ReplayClient() {
         <h2 className="text-2xl font-black">{t.replay.empty}</h2>
         <p className="text-sm leading-relaxed text-ink-soft">{t.replay.emptyBody}</p>
         <Link href={localePath(locale, '/')}
-              className="rounded-2xl bg-tile-amber px-6 py-4 text-lg font-black text-tile-ink transition hover:brightness-95">
+              className="rounded-2xl bg-tile-ink px-6 py-4 text-lg font-black text-tile-cream transition hover:brightness-110">
           {t.rules.ctaPlay}
         </Link>
       </div>

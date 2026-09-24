@@ -14,6 +14,7 @@ import { localePath, type Locale } from '@/i18n/locales';
  * has occurred」：英文、沒樣式，看起來像網站整個壞掉了。
  *
  * 版面跟 404 同一套（大字 + 標題 + 說明 + 兩個出口），圖示用裂開的牆 ——
+ * 按鈕只用深墨（主要）與中性灰（次要），不帶色相：畫面上唯一的顏色是那道牆。
  * 這個遊戲裡「牆」就是一切，牆裂了是最直接的比喻。
  *
  * 「重新整理」用整頁重新載入而不是只重繪這一段：錯誤多半來自某個
@@ -41,7 +42,7 @@ export default function ErrorScreen({ t, locale, onRetry }: {
           {/* 用 <a> 而不是 next/link：這裡的 client 狀態已經不可信，整頁載入最保險 */}
           <a
             href={localePath(locale, '/')}
-            className="rounded-2xl bg-tile-amber px-6 py-4 text-lg font-black text-tile-ink transition hover:brightness-95"
+            className="rounded-2xl bg-tile-ink/[0.07] px-6 py-4 text-lg font-black text-tile-ink transition hover:bg-tile-ink/[0.12]"
           >
             {t.home}
           </a>

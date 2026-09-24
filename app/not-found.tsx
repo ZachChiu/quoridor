@@ -39,11 +39,11 @@ export default function NotFound() {
           <p className="text-base leading-relaxed text-ink-soft">{t.notFound.body}</p>
           <div className="mt-2 flex flex-wrap justify-center gap-3">
             <Link href="/"
-                  className="rounded-2xl bg-tile-amber px-6 py-4 text-lg font-black text-tile-ink transition hover:brightness-95">
+                  className="rounded-2xl bg-tile-ink px-6 py-4 text-lg font-black text-tile-cream transition hover:brightness-110">
               {t.notFound.home}
             </Link>
             <Link href="/rules"
-                  className="rounded-2xl bg-tile-forest px-6 py-4 text-lg font-black text-tile-cream transition hover:brightness-95">
+                  className="rounded-2xl bg-tile-ink/[0.07] px-6 py-4 text-lg font-black text-tile-ink transition hover:bg-tile-ink/[0.12]">
               {t.notFound.rules}
             </Link>
           </div>

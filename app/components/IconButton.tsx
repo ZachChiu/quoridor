@@ -5,7 +5,7 @@ import { ButtonHTMLAttributes } from 'react';
 interface IconButtonProps {
   children: React.ReactNode;
   type?: ButtonHTMLAttributes<HTMLButtonElement>['type'];
-  /** 覆寫底色與文字色，例如 `bg-tile-amber text-tile-ink`。省略時是深墨色籌碼。 */
+  /** 覆寫底色與文字色，例如 `bg-primary-50 text-tile-ink`。省略時是深墨色籌碼。 */
   color?: string;
   handleClickEvent?: () => void;
   /** 無障礙名稱。icon 沒有文字，少了它螢幕閱讀器只會念「按鈕」。 */
