@@ -64,6 +64,7 @@ const ko: Messages = {
   },
 
   ui: { next: '다음', prev: '이전', startGame: '게임 시작', close: '닫기', pickLevel: '난이도 선택' },
+  error: { title: '문제가 발생했습니다', body: '화면을 처리하는 중 오류가 났습니다. 새로고침하면 대부분 복구됩니다. 온라인 대전은 방에 모든 수가 남아 있어 이어서 둘 수 있습니다.', retry: '새로고침', home: '홈으로' },
   notFound: { title: '페이지를 찾을 수 없습니다', body: '주소가 잘못되었거나, 가리키던 대국이 이미 끝났을 수 있습니다.', home: '홈으로', rules: '플레이 방법 보기' },
   crumb: { home: '홈' },
   nav: { language: '언어', backHome: '홈으로' },

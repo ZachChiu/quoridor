@@ -75,6 +75,7 @@ const zhTW = {
   },
 
   ui: { next: '下一步', prev: '上一步', startGame: '開始遊戲', close: '關閉', pickLevel: '選擇難度' },
+  error: { title: '出了點問題', body: '畫面執行時出錯了，重新整理通常就能恢復。連線對局的每一手都存在房間裡，重新整理後會接著下。', retry: '重新整理', home: '回首頁' },
   notFound: { title: '找不到這一頁', body: '這個網址可能打錯了，或是那一局已經結束了。', home: '回首頁', rules: '看看怎麼玩' },
   crumb: { home: '首頁' },
   nav: { language: '語言', backHome: '回首頁' },

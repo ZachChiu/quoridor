@@ -64,6 +64,7 @@ const ja: Messages = {
   },
 
   ui: { next: '次へ', prev: '戻る', startGame: 'ゲームを始める', close: '閉じる', pickLevel: 'レベルを選ぶ' },
+  error: { title: 'エラーが発生しました', body: '画面の処理中にエラーが起きました。再読み込みすると、たいてい元に戻ります。オンライン対戦は部屋に手がすべて残っているので、続きから再開できます。', retry: '再読み込み', home: 'ホームに戻る' },
   notFound: { title: 'ページが見つかりません', body: 'アドレスが間違っているか、その対局はすでに終わっているかもしれません。', home: 'ホームへ', rules: '遊び方を見る' },
   crumb: { home: 'ホーム' },
   nav: { language: '言語', backHome: 'ホームに戻る' },
