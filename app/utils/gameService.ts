@@ -203,11 +203,23 @@ export type Feedback = {
  *
  * 規則上只能新增、不能讀取（見 database.rules.json）。
  */
-export async function sendFeedback(data: Feedback): Promise<void> {
+export async function sendFeedback(data: Feedback, uid: string): Promise<void> {
   const { ref, push, set, db } = await rtdb();
-  const uid = (await (await import('./firebase')).getFirebaseAuth()).currentUser?.uid ?? null;
+  /*
+    uid 由呼叫端先 ensureUser() 拿到再傳進來。
+
+    先前這裡讀 `auth.currentUser` —— 但本機與單人模式從頭到尾不會登入，
+    currentUser 是 null，而規則要求 `auth != null`，寫入被拒。
+    換句話說，除了連線模式之外回饋全部送不出去。
+
+    undefined 的欄位要剝掉：RTDB 的 set() 遇到 undefined 會直接丟例外
+    （不是略過），而聯絡方式沒填就是 undefined —— 大部分人都不會填。
+  */
+  const payload = Object.fromEntries(
+    Object.entries(data).filter(([, value]) => value !== undefined)
+  );
   await set(push(ref(db, 'feedback')), {
-    ...data,
+    ...payload,
     uid,
     createdAt: Date.now(),
     locale: typeof navigator !== 'undefined' ? navigator.language : 'unknown',

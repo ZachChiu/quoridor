@@ -823,7 +823,7 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
           <FeedbackModal
             isOpen={feedbackOpen}
             onClose={() => setFeedbackOpen(false)}
-            onSubmit={(rating, message, contact) =>
+            onSubmit={async (rating, message, contact) =>
               sendFeedback({
                 rating, message, contact: contact || undefined,
                 wgf: toWgf(state),
@@ -840,7 +840,7 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
                 ua: typeof navigator !== 'undefined' ? navigator.userAgent : '',
                 viewport: typeof window !== 'undefined'
                   ? `${window.innerWidth}x${window.innerHeight}@${window.devicePixelRatio}` : '',
-              })
+              }, await ensureUser())
             }
           />
 
