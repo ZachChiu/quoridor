@@ -119,6 +119,11 @@ export function legalMoves(state: GameState): Move[] {
 
 /** 目前選取棋子四周可蓋牆的位置。牆必須相鄰於棋子的所在格。 */
 export function legalWalls(state: GameState): WallSlot[] {
+  return canPlaceWallNow(state) ? wallSlotsAround(state) : [];
+}
+
+/** 選中棋子四周還空著的牆位，不檢查這一刻准不准蓋（呼叫端已確認過）。 */
+function wallSlotsAround(state: GameState): WallSlot[] {
   if (!state.selected) return [];
   const { row, col } = state.selected;
 
@@ -182,12 +187,64 @@ export function placeOpeningPiece(state: GameState, row: number, col: number): G
   };
 }
 
+/**
+ * 現在這顆選中的棋子能不能蓋牆結束回合。
+ *
+ * 規則（節目原版）：零步移動 —— 原地蓋牆 —— 只在這顆棋子「能離開再回來」時
+ * 才合法。所以還沒移動（remainSteps 仍是 2）而且一步都走不了的棋子，不能蓋牆。
+ *
+ * 這條先前只寫在 legalTurns 裡，於是**只約束了 AI**：UI 走的是
+ * selectPiece → placeWall，完全不經過 legalTurns。真人可以選一顆被困住的
+ * 棋子直接在旁邊蓋牆 —— 例如 A、B 各一顆困在同一個兩格區域，
+ * 真人把它從中間切開，變成兩塊各一格的領地，比分就被改了；
+ * 而 computeTerritories 早已把那塊判成凍結定局。
+ *
+ * 破牆之後再判斷：破牆不扣步數，但會打開一條路，所以用的是破完的盤面。
+ */
+export function canPlaceWallNow(state: GameState): boolean {
+  if (!state.selected) return false;
+  return state.remainSteps < 2 || legalMoves(state).length > 0;
+}
+
+/**
+ * 這顆棋子這回合能不能被選。
+ *
+ * 能走就能選；走不了但旁邊有牆可破（三人局、還有次數）也能選 ——
+ * 破牆脫困正是破牆規則存在的理由。兩者皆否就是完全被封死，
+ * 選了什麼都做不了，不讓它被選。
+ */
+export function canSelectPiece(state: GameState, row: number, col: number): boolean {
+  if (state.board[row][col] !== state.currentPlayer) return false;
+  const candidate = { ...state, selected: { row, col }, remainSteps: 2 };
+  return legalMoves(candidate).length > 0 || legalBreaks(candidate).length > 0;
+}
+
+/** 這回合可以選的所有己方棋子。 */
+export function selectablePieces(state: GameState): Move[] {
+  return (state.pieceIndex[state.currentPlayer] ?? []).filter(({ row, col }) =>
+    canSelectPiece(state, row, col)
+  );
+}
+
+/**
+ * 當前玩家這回合還有沒有事可做：有合法的完整回合，或能靠破牆脫困。
+ *
+ * 跳過與終局都要用這個，不能只看 legalTurns —— legalTurns 不展開破牆，
+ * 一顆被圍死但手上還有破牆的棋子在它眼裡「沒有手」，會被永遠跳過，
+ * 偏偏那正是破牆要救的局面。
+ */
+export function canAct(state: GameState): boolean {
+  return playableTurns({ ...state, selected: null, remainSteps: 2 }).length > 0;
+}
+
 /** 選取（或取消選取）一顆己方棋子。僅在尚未移動時允許更換。 */
 export function selectPiece(state: GameState, row: number, col: number): GameState {
   if (state.remainSteps < 2) return state;
 
   const isSame = state.selected?.row === row && state.selected?.col === col;
-  return { ...state, selected: isSame ? null : { row, col } };
+  if (isSame) return { ...state, selected: null };
+  if (!canSelectPiece(state, row, col)) return state;
+  return { ...state, selected: { row, col } };
 }
 
 /** 將選取的棋子移動到目標格。 */
@@ -255,6 +312,17 @@ export function placeWall(
   col: number,
   dir: WallDir
 ): GameState {
+  if (!canPlaceWallNow(state)) return state;
+  return commitWall(state, row, col, dir);
+}
+
+/**
+ * placeWall 去掉合法性檢查的本體。
+ *
+ * AI 搜尋每個節點都要套一次回合，而那些回合全出自 legalTurns，早就驗過了 ——
+ * 再驗一次等於每個節點多算一次 legalMoves，困難難度實測會超出時間預算。
+ */
+function commitWall(state: GameState, row: number, col: number, dir: WallDir): GameState {
   const player = state.currentPlayer;
 
   const grids = {
@@ -297,6 +365,8 @@ export type Turn = {
   to: Move;
   /** 回合結束時蓋的牆。 */
   wall: WallSlot;
+  /** 移動前先破掉的牆（三人局的破牆脫困）。 */
+  break?: WallSlot;
 };
 
 /** 列舉當前玩家所有合法的完整回合。 */
@@ -305,12 +375,9 @@ export function legalTurns(state: GameState): Turn[] {
   const pieces = state.pieceIndex[state.currentPlayer] ?? [];
 
   for (const from of pieces) {
-    // 確保從乾淨的回合狀態出發（selectPiece 對同一格會取消選取）
-    const selected = selectPiece(
-      { ...state, selected: null, remainSteps: 2 },
-      from.row,
-      from.col
-    );
+    // 直接從乾淨的回合狀態選起；不走 selectPiece —— 它的可選檢查
+    // 就是下面這行 legalMoves，搜尋熱點上不值得算兩次。
+    const selected = { ...state, selected: { row: from.row, col: from.col }, remainSteps: 2 };
 
     const moves = legalMoves(selected);
 
@@ -326,7 +393,7 @@ export function legalTurns(state: GameState): Turn[] {
       const isStay = to.row === from.row && to.col === from.col;
       const moved = isStay ? selected : movePiece(selected, to.row, to.col);
 
-      for (const wall of legalWalls(moved)) {
+      for (const wall of wallSlotsAround(moved)) {
         turns.push({ from: { row: from.row, col: from.col }, to, wall });
       }
     }
@@ -337,14 +404,53 @@ export function legalTurns(state: GameState): Turn[] {
 
 /** 套用一個完整回合，回傳輪到下一位玩家的新狀態。 */
 export function applyTurn(state: GameState, turn: Turn): GameState {
-  const selected = selectPiece(
-    { ...state, selected: null, remainSteps: 2 },
-    turn.from.row,
-    turn.from.col
-  );
+  // 回合出自 legalTurns / breakOutTurns，已經驗過 —— 直接選、直接蓋
+  const selected = { ...state, selected: { row: turn.from.row, col: turn.from.col }, remainSteps: 2 };
+  const broken = turn.break
+    ? breakWall(selected, turn.break.row, turn.break.col, turn.break.dir)
+    : selected;
   const isStay = turn.to.row === turn.from.row && turn.to.col === turn.from.col;
-  const moved = isStay ? selected : movePiece(selected, turn.to.row, turn.to.col);
-  return placeWall(moved, turn.wall.row, turn.wall.col, turn.wall.dir);
+  const moved = isStay ? broken : movePiece(broken, turn.to.row, turn.to.col);
+  return commitWall(moved, turn.wall.row, turn.wall.col, turn.wall.dir);
+}
+
+/**
+ * 先破牆才走得動的回合：棋子被圍死，靠破一道相鄰的牆脫困。
+ *
+ * 不併進 legalTurns：三人局每一步都展開破牆，AI 的分支數會翻好幾倍，
+ * 而破牆一局只有一次，絕大多數時候不是好選擇。真人隨時都能破牆（UI 不受影響），
+ * 這裡只補上「不破就無事可做」的那一種 —— 見 playableTurns。
+ */
+export function breakOutTurns(state: GameState): Turn[] {
+  if (!isBreakWallAvailable(state) || state.breakWallCount[state.currentPlayer] <= 0) return [];
+  const fresh = { ...state, selected: null, remainSteps: 2 };
+  const turns: Turn[] = [];
+
+  for (const from of state.pieceIndex[state.currentPlayer] ?? []) {
+    const selected = { ...fresh, selected: { row: from.row, col: from.col } };
+    for (const slot of legalBreaks(selected)) {
+      const broken = breakWall(selected, slot.row, slot.col, slot.dir);
+      const moves = legalMoves(broken);
+      if (moves.length === 0) continue;
+      for (const to of [{ row: from.row, col: from.col }, ...moves]) {
+        const isStay = to.row === from.row && to.col === from.col;
+        const moved = isStay ? broken : movePiece(broken, to.row, to.col);
+        for (const wall of legalWalls(moved)) {
+          turns.push({ from: { row: from.row, col: from.col }, to, wall, break: slot });
+        }
+      }
+    }
+  }
+  return turns;
+}
+
+/**
+ * 輪到的人真正能下的回合：平常就是 legalTurns，
+ * 全部走不動時退而展開破牆脫困。AI 與測試的隨機玩家都用這個。
+ */
+export function playableTurns(state: GameState): Turn[] {
+  const turns = legalTurns(state);
+  return turns.length > 0 ? turns : breakOutTurns(state);
 }
 
 // ─── 回合推進 ─────────────────────────────────────────────────────────────────
@@ -360,12 +466,15 @@ export function applyTurn(state: GameState, turn: Turn): GameState {
 export function shouldSkipTurn(state: GameState): boolean {
   if (isPlacingPhase(state)) return false;
 
-  // 完全沒有合法手就一定要跳過，否則遊戲會卡死。
+  // 完全無事可做就一定要跳過，否則遊戲會卡死。
   //
   // 這在導入「零步移動需能離開再回來」之後才可能發生：例如兩顆敵方棋子被封在
   // 同一個兩格區域內，雙方都沒有相鄰空位，於是誰都無法選取棋子。
   // 舊規則下還能靠原地蓋牆把區域切開，新規則下不行。
-  if (legalTurns(state).length === 0) return true;
+  //
+  // 「無事可做」要算進破牆脫困（見 canAct）。只看 legalTurns 的話，
+  // 三人局裡被圍死、手上還有一次破牆的玩家會被永遠跳過。
+  if (!canAct(state)) return true;
 
   if (isBreakWallAvailable(state) && state.breakWallCount[state.currentPlayer] > 0) {
     return false;
@@ -487,8 +596,7 @@ export function isGameOver(state: GameState): boolean {
   if (computeTerritories(state).settled) return true;
 
   return playerKeys(state.playersNum).every(
-    (player) =>
-      legalTurns({ ...state, currentPlayer: player, selected: null, remainSteps: 2 }).length === 0
+    (player) => !canAct({ ...state, currentPlayer: player })
   );
 }
 

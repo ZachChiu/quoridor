@@ -145,17 +145,22 @@ export function computeTerritories(state: GameState): TerritoryResult {
       // 同一個小區域且都無路可走時，舊規則還能靠原地蓋牆把區域切開，新規則不行。
       // 若不把這種區域視為定局，settled 永遠不成立，對局會一路拖到整個盤面
       // 被牆切成一格一格（實測半數對局會退化成 80 回合的小比分消耗戰）。
+      //
+      // 「能動」包含破牆脫困：三人局裡還有破牆次數的棋子，只要旁邊隔著一道牆
+      // 就是空格，它就能破牆走出去，這塊區域並沒有凍結。
+      // （與 engine 的 canAct 同一個判斷，否則會提早宣告終局。）
+      const canBreak = (p: PlayerKey) => playersNum > 2 && state.breakWallCount[p] > 0;
       const anyPieceCanMove =
         occupants.size > 1 &&
         cells.some((cell) => {
           const [r, c] = cell.split(',').map(Number);
-          if (!board[r][c]) return false;
+          const piece = board[r][c];
+          if (!piece) return false;
           return DIRECTIONS.some(({ dr, dc }) => {
             const nr = r + dr;
             const nc = c + dc;
-            return (
-              inBounds(nr, nc) && !isBlocked(state, r, c, dr, dc) && !board[nr][nc]
-            );
+            if (!inBounds(nr, nc) || board[nr][nc]) return false;
+            return !isBlocked(state, r, c, dr, dc) || canBreak(piece);
           });
         });
 

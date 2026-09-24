@@ -16,7 +16,8 @@ import { playerKeys } from "@/game/territory";
 import { playerVar } from "@/config/players";
 import { shouldPushWgf } from "@/utils/wgfSync";
 import TurnGuide from "@/components/TurnGuide";
-import { hasStarted, legalBreaks, legalMoves } from "@/game/engine";
+import { canPlaceWallNow, hasStarted, legalBreaks, legalMoves, selectablePieces } from "@/game/engine";
+import type { Difficulty } from "@/game/ai";
 import ShareLinkModal from "@/components/ShareLinkModal";
 import FeedbackModal from "@/components/FeedbackModal";
 import BreakWallConfirmModal from "@/components/BreakWallConfirmModal";
@@ -287,7 +288,10 @@ export default function PlayClient({ roomId, playersNum: routePlayers }: PlayCli
 
   const onWallStep = useMemo(
     () => !!state.selected && !isPlacing
-      && (pendingWall !== null || state.remainSteps === 0 || legalMoves(state).length === 0),
+      // 走不動就進蓋牆 —— 但前提是這一刻准蓋：還沒移動、一步都走不了的棋子
+      // （被圍死、只能破牆脫困）不算，它的下一步是破牆，不是蓋牆。
+      && (pendingWall !== null || state.remainSteps === 0
+        || (canPlaceWallNow(state) && legalMoves(state).length === 0)),
     [state, isPlacing, pendingWall],
   );
 
@@ -306,6 +310,10 @@ export default function PlayClient({ roomId, playersNum: routePlayers }: PlayCli
     控制盤原本自己有這段判斷，把 breakMode 提上來時漏掉了。
   */
   const canBreakNow = legalBreaks(state).length > 0;
+  const selectableKeys = useMemo(
+    () => new Set(selectablePieces(state).map(({ row, col }) => `${row},${col}`)),
+    [state],
+  );
   if (breakMode && !canBreakNow) setBreakMode(false);
 
   // 避免自己寫入 Firebase 的內容又觸發自己重播
@@ -738,6 +746,8 @@ export default function PlayClient({ roomId, playersNum: routePlayers }: PlayCli
               currentPlayer={state.currentPlayer}
               selectedChess={state.selected}
               remainSteps={state.remainSteps}
+              canWall={canPlaceWallNow(state)}
+              selectable={selectableKeys}
               flattenTerritoriesObj={territories.ownerByCell}
               breakWallCountObj={state.breakWallCount}
               isBreakWallAvailable={canBreakWall}

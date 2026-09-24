@@ -1,4 +1,4 @@
-import { applyTurn, legalTurns, placeOpeningPiece, type Turn } from './engine';
+import { applyTurn, isPlacingPhase, placeOpeningPiece, playableTurns, type Turn } from './engine';
 import { computeTerritories, playerKeys, voronoiCount } from './territory';
 import type { GameState, PlayerKey } from './types';
 
@@ -112,7 +112,7 @@ function search(
     return evaluateFor(state, me);
   }
 
-  const turns = legalTurns(state);
+  const turns = playableTurns(state);
   // 無合法回合（棋子全被封死）—— 以當前盤面評估
   if (turns.length === 0) return evaluateFor(state, me);
 
@@ -186,7 +186,7 @@ export function chooseTurn(
   const deadline = started + budgetMs;
   const me = state.currentPlayer;
 
-  const turns = legalTurns(state);
+  const turns = playableTurns(state);
   if (turns.length === 0) {
     return { turn: null, depth: 0, nodes: 0, elapsedMs: Date.now() - started };
   }
@@ -272,4 +272,26 @@ export function chooseOpeningPlacement(
   }
 
   return best;
+}
+
+/**
+ * AI 算不出來時的保底一手：第一個空格 / 第一個能下的回合。
+ *
+ * 不求好，只求對局不會停住 —— Worker 丟例外或根本載不起來時，
+ * 原本什麼都不會發生，AI 永遠「輪到它」，玩家只能重新整理。
+ * 選法是確定性的，同一個盤面永遠給同一手。
+ */
+export function fallbackMove(
+  state: GameState
+): { kind: 'opening'; cell: { row: number; col: number } } | { kind: 'turn'; turn: Turn } | null {
+  if (isPlacingPhase(state)) {
+    for (let row = 0; row < state.board.length; row++) {
+      for (let col = 0; col < state.board[row].length; col++) {
+        if (!state.board[row][col]) return { kind: 'opening', cell: { row, col } };
+      }
+    }
+    return null;
+  }
+  const [turn] = playableTurns(state);
+  return turn ? { kind: 'turn', turn } : null;
 }

@@ -56,6 +56,13 @@ type Props = {
   onSurrender?: () => void;
   /** 這一回合已經動過 */
   turnDirty?: boolean;
+  /**
+   * 選中的棋子現在准不准蓋牆（engine 的 canPlaceWallNow）。
+   * 被圍死、還沒破牆的棋子不能原地蓋牆 —— 節目原版規則。
+   */
+  canWall?: boolean;
+  /** 這回合能選的己方棋子（`row,col`）。被圍死又破不了牆的不在裡面。沒給就是全部。 */
+  selectable?: Set<string>;
 };
 
 export default React.memo(function Chessboard({
@@ -84,6 +91,8 @@ export default React.memo(function Chessboard({
   onToggleBreak,
   onWallStep,
   turnDirty = false,
+  canWall = true,
+  selectable,
 }: Props) {
   // const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 
@@ -177,6 +186,7 @@ export default React.memo(function Chessboard({
   };
 
   const checkWallBuildable = useCallback((rowIndex: number, colIndex: number, direction: Direction): boolean => {
+    if (!canWall) return false;
     switch (direction) {
       case 'top':
         return rowIndex > 0 && !horizontalWalls[rowIndex - 1][colIndex];
@@ -189,7 +199,7 @@ export default React.memo(function Chessboard({
       default:
         return false;
     }
-  }, [size, horizontalWalls, verticalWalls]);
+  }, [canWall, size, horizontalWalls, verticalWalls]);
 
  /**
   * 計算可移動的位置
@@ -442,7 +452,9 @@ export default React.memo(function Chessboard({
               const cellPlayer: Player = board?.[rowIndex]?.[colIndex];
               const hasHorizontalWallPlayer = horizontalWalls?.[rowIndex]?.[colIndex];
               const hasVerticalWall = verticalWalls?.[rowIndex]?.[colIndex];
-              const isTurn = currentPlayer === cellPlayer;
+              // 輪到的一方、而且這顆真的選得動（被圍死的棋子不亮、不給點）
+              const isTurn = currentPlayer === cellPlayer
+                && (!selectable || selectable.has(`${rowIndex},${colIndex}`));
               const isSelecting = selectedChess?.row === rowIndex && selectedChess?.col === colIndex;
               const isAvailableMove = availableMoves.some(move => move.row === rowIndex && move.col === colIndex);
               const territory = flattenTerritoriesObj?.[`${rowIndex},${colIndex}`];

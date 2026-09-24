@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
-  createGame, isPlacingPhase, placeOpeningPiece, legalTurns, applyTurn,
+  createGame, isPlacingPhase, placeOpeningPiece, legalTurns, playableTurns, applyTurn,
   isGameOver, skipUnplayable, shouldSkipTurn, toWgf, replay, turnOrder,
 } from '@/game/engine';
 import { computeTerritories } from '@/game/territory';
@@ -111,7 +111,7 @@ describe('跳過之後，重播算出來的輪次仍然正確', () => {
         if (order3[state.turns.length % order3.length] !== state.currentPlayer) wouldHaveBeenWrong++;
         expect(replay(toWgf(state)).currentPlayer).toBe(state.currentPlayer);
 
-        const turns = legalTurns(state);
+        const turns = playableTurns(state);
         if (turns.length === 0) break;
         state = applyTurn(state, turns[Math.floor(rand() * turns.length)]);
       }

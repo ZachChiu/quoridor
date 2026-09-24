@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
-  createGame, isPlacingPhase, placeOpeningPiece, legalTurns, applyTurn,
+  createGame, isPlacingPhase, placeOpeningPiece, legalTurns, playableTurns, applyTurn,
   isGameOver, skipUnplayable, shouldSkipTurn, toWgf, replay,
 } from '@/game/engine';
 import { computeTerritories } from '@/game/territory';
@@ -28,7 +28,7 @@ function playAndCheck(playersNum: 2 | 3, seed: number, out: Violation[]) {
 
     // ── 不變量 1：跳過之後，要嘛遊戲結束、要嘛當前玩家真的能動 ──
     // 兩者皆非就是卡死：畫面停在某個人身上，但他做不了任何事。
-    if (!isGameOver(state) && legalTurns(state).length === 0) {
+    if (!isGameOver(state) && playableTurns(state).length === 0) {
       const t = computeTerritories(state);
       out.push({ seed, turn, kind: '卡死',
         detail: `輪到 ${state.currentPlayer} 但無合法手；settled=${t.settled}；` +
@@ -49,7 +49,7 @@ function playAndCheck(playersNum: 2 | 3, seed: number, out: Violation[]) {
       return;
     }
 
-    const turns = legalTurns(state);
+    const turns = playableTurns(state);
     if (turns.length === 0) break;
     state = applyTurn(state, turns[Math.floor(rand() * turns.length)]);
 
