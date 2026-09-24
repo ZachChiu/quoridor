@@ -69,6 +69,14 @@ interface PlayClientProps {
    * 之後才跳成三人。路由帶著的話，建置時就定了。
    */
   playersNum?: 2 | 3;
+  /**
+   * 單人對戰的難度。只有 /solo 會給。
+   *
+   * 不從 GameContext 讀：那個值在玩過單人之後會一直留著，
+   * 而只有首頁的本機按鈕會清掉它 —— 從上一頁或連結直接進 /local，
+   * 殘留的難度會把 B（三人局連 C）交給 AI，本機對戰就變成了單人。
+   */
+  aiDifficulty?: Difficulty | null;
 }
 
 /** Chessboard 的方向語彙 → engine 的牆方向。 */
@@ -121,7 +129,7 @@ function gameReducer(state: GameState, event: GameEvent): GameState {
   }
 }
 
-export default function PlayClient({ roomId, playersNum: routePlayers }: PlayClientProps) {
+export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficulty: soloDifficulty }: PlayClientProps) {
   const { gameState } = useGame();
   const { ensureUser } = useUser();
   const { navigate, flash } = useTransition();
@@ -334,9 +342,9 @@ export default function PlayClient({ roomId, playersNum: routePlayers }: PlayCli
 
   // ─── 單人對戰 ────────────────────────────────────────────────────────────────
   //
-  // 難度由 GameContext 帶進來（首頁選的）。設定後，除了 A 以外都交給 AI。
+  // 難度由 /solo 以 prop 帶進來。設定後，除了 A 以外都交給 AI。
   // 連線模式沒有 AI —— 那邊的對手是真人。
-  const aiDifficulty = isOnline ? null : gameState.aiDifficulty;
+  const aiDifficulty = isOnline ? null : soloDifficulty ?? null;
   const aiPlayers = useMemo(
     () => (aiDifficulty ? playerKeys(playersNum).slice(1) : []),
     [aiDifficulty, playersNum]

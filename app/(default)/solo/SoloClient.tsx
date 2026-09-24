@@ -45,7 +45,7 @@ export default function SoloClient() {
     // 只在掛載時還原一次
   }, []);
 
-  if (picked && gameState.aiDifficulty) return <PlayClient />;
+  if (picked && gameState.aiDifficulty) return <PlayClient aiDifficulty={gameState.aiDifficulty} />;
 
   return (
     <div className="flex w-full max-w-[380px] flex-col items-center gap-6 px-5">
