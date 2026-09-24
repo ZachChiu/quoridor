@@ -268,9 +268,19 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
       + 'coarse-land:items-end coarse-land:justify-center coarse-land:gap-0 coarse-land:pb-0 '
       + 'coarse-land:pr-[calc(var(--wall-pad-w)+0.75rem)]';
 
-  const BOARD_FREE = 'size-[90dvw] md:size-[90dvh] md:portrait:size-[90dvw] md:landscape:size-[90dvh]';
+  /*
+    棋盤是正方形，所以邊長取寬高較小的那一邊的 90%。
+
+    原本是「md 以下一律 90dvw、md 以上看直橫」—— 但 md 以下也有橫式：
+    iPhone SE 橫放是 667×375，90dvw 是 600px，螢幕只有 375px 高。
+    對局中控制盤在，走的是下面 coarse-land 那組所以沒事；對局一結束
+    控制盤收起來，棋盤就撐到 582px，按「看看棋盤」只看得到上半截，
+    頁面又不能捲。桌機把視窗拉成矮寬的時候整局都是這樣。
+    （自動對局在手機橫式截圖量到的。）
+  */
+  const BOARD_FREE = 'size-[min(90dvw,90dvh)]';
   const boardBox = padGone ? BOARD_FREE
-    : 'size-[90dvw] fine:md:size-[90dvh] fine:md:portrait:size-[90dvw] fine:md:landscape:size-[90dvh]'
+    : BOARD_FREE
       /*
         扣掉的不只是控制盤 —— 左上那兩顆鈕（直式 72px 高、橫式 72px 寬）
         也要算進去，不然小螢幕會把棋盤畫到按鈕底下。
