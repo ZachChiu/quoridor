@@ -234,7 +234,28 @@ export function selectablePieces(state: GameState): Move[] {
  * 偏偏那正是破牆要救的局面。
  */
 export function canAct(state: GameState): boolean {
-  return playableTurns({ ...state, selected: null, remainSteps: 2 }).length > 0;
+  // 只問「有沒有」，找到一個就停。這裡在 AI 搜尋的每個節點都會跑
+  // （commitWall → skipUnplayable → shouldSkipTurn），把所有回合列舉出來
+  // 再數長度，等於每個節點多做一次完整的走法產生。
+  const fresh = { ...state, selected: null, remainSteps: 2 };
+  const hasWallAfterMoving = (s: GameState) => {
+    const moves = legalMoves(s);
+    if (moves.length === 0) return false;
+    if (wallSlotsAround(s).length > 0) return true; // 原地蓋牆
+    return moves.some((m) => wallSlotsAround(movePiece(s, m.row, m.col)).length > 0);
+  };
+
+  for (const { row, col } of state.pieceIndex[state.currentPlayer] ?? []) {
+    if (hasWallAfterMoving({ ...fresh, selected: { row, col } })) return true;
+  }
+  if (!isBreakWallAvailable(state) || state.breakWallCount[state.currentPlayer] <= 0) return false;
+  for (const { row, col } of state.pieceIndex[state.currentPlayer] ?? []) {
+    const selected = { ...fresh, selected: { row, col } };
+    for (const slot of legalBreaks(selected)) {
+      if (hasWallAfterMoving(breakWall(selected, slot.row, slot.col, slot.dir))) return true;
+    }
+  }
+  return false;
 }
 
 /** 選取（或取消選取）一顆己方棋子。僅在尚未移動時允許更換。 */
