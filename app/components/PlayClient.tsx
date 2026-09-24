@@ -768,6 +768,7 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
               selectedChess={state.selected}
               remainSteps={state.remainSteps}
               canWall={canPlaceWallNow(state)}
+              myTurn={isMyTurn}
               selectable={selectableKeys}
               breakSlots={breakSlots}
               flattenTerritoriesObj={territories.ownerByCell}
