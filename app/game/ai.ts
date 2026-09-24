@@ -70,10 +70,7 @@ export function evaluateFor(state: GameState, me: PlayerKey): number {
   const myTerritory = t.owned[me]?.length ?? 0;
   const bestOtherTerritory = Math.max(...others.map((p) => t.owned[p]?.length ?? 0));
 
-  if (t.settled) {
-    const margin = myTerritory - bestOtherTerritory;
-    return margin === 0 ? 0 : Math.sign(margin) * (WIN_SCORE + Math.abs(margin));
-  }
+  if (t.settled) return terminalScore(t, me, others);
 
   const v = voronoiCount(state);
   const myVoronoi = v[me] ?? 0;
@@ -90,6 +87,25 @@ export function evaluateFor(state: GameState, me: PlayerKey): number {
     W.voronoi * (myVoronoi - bestOtherVoronoi) +
     W.reach * (myReach - bestOtherReach)
   );
+}
+
+/**
+ * 終局的分數。勝負要跟 score.ts 的 getWinners 同一套規則：
+ * 總領地相同時，比最大的那一塊（節目原版的破平），仍相同才是平手。
+ *
+ * 先前只比總領地 —— 總分打平時一律回 0，AI 分不出「靠最大一塊贏」和
+ * 「靠最大一塊輸」，會在兩者之間隨便挑。
+ */
+function terminalScore(
+  t: ReturnType<typeof computeTerritories>, me: PlayerKey, others: PlayerKey[]
+): number {
+  const total = (p: PlayerKey) => t.owned[p]?.length ?? 0;
+  const largest = (p: PlayerKey) => t.regionSizes[p]?.[0] ?? 0;
+  const margin = total(me) - Math.max(...others.map(total));
+  if (margin !== 0) return Math.sign(margin) * (WIN_SCORE + Math.abs(margin));
+  const rivals = others.filter((p) => total(p) === total(me));
+  const tiebreak = largest(me) - Math.max(...rivals.map(largest));
+  return tiebreak === 0 ? 0 : Math.sign(tiebreak) * WIN_SCORE;
 }
 
 /**
@@ -113,8 +129,12 @@ function search(
   }
 
   const turns = playableTurns(state);
-  // 無合法回合（棋子全被封死）—— 以當前盤面評估
-  if (turns.length === 0) return evaluateFor(state, me);
+  // 輪到的人無事可做。skipUnplayable 已經跳過所有能跳的人，還停在這裡
+  // 代表**全員**都動不了 —— isGameOver 認定這是終局，這裡也要照終局計分，
+  // 不能拿 Voronoi 之類的中局估計去猜。
+  if (turns.length === 0) {
+    return terminalScore(t, me, playerKeys(state.playersNum).filter((p) => p !== me));
+  }
 
   const isMyTurn = state.currentPlayer === me;
   let best = isMyTurn ? -Infinity : Infinity;
