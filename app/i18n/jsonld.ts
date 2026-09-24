@@ -57,7 +57,6 @@ function seriesNode(locale: Locale) {
 }
 
 function organizationNode(locale: Locale) {
-  const t = getMessages(locale);
   return {
     '@type': 'Organization',
     '@id': id('organization'),
@@ -68,7 +67,6 @@ function organizationNode(locale: Locale) {
 }
 
 function websiteNode(locale: Locale) {
-  const t = getMessages(locale);
   return {
     '@type': 'WebSite',
     '@id': id('website'),

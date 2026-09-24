@@ -53,7 +53,6 @@ function copy(locale: Locale, path: PagePath) {
 }
 
 function openGraph(locale: Locale, path: PagePath) {
-  const t = getMessages(locale);
   const c = copy(locale, path);
   const img = shareImage(locale, path);
   return {
