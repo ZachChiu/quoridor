@@ -47,7 +47,7 @@ type Props = {
   onBreak: (dir: Direction) => void;
   onConfirm: () => void;
   onRedo: () => void;
-  /** 投降結算 —— 由上層開確認 Modal，這裡只負責按鈕 */
+  /** 投降 —— 由上層開確認 Modal，這裡只負責按鈕 */
   onSurrender: () => void;
   dirty: boolean;
   color: string;

@@ -52,7 +52,7 @@ type Props = {
   breakMode: boolean;
   onToggleBreak: () => void;
   onWallStep: boolean;
-  /** 手機控制盤上的「投降結算」—— 開確認 Modal，實際結算在 PlayClient */
+  /** 手機控制盤上的「投降」—— 開確認 Modal，勝負在 PlayClient 定 */
   onSurrender?: () => void;
   /** 這一回合已經動過 */
   turnDirty?: boolean;

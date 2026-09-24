@@ -51,7 +51,7 @@ export type GameText = {
   };
   waiting: { kicker: string; heading: string; invite: string };
   breakWall: { heading: string; kicker: string; cancel: string; confirm: string; body: string };
-  surrender: { label: string; heading: string; kicker: string; cancel: string; confirm: string; body: string };
+  surrender: { label: string; heading: string; kicker: string; cancel: string; confirm: string; body: string; bodyThree: string };
   status: { claimed: string };
   play: {
     noRoom: string; roomFull: string; playerName: string; connectFail: string;
@@ -113,9 +113,10 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       body: '打破後這顆棋子可以繼續移動，但你的破牆機會會歸零 —— 這一局不會再有第二次。',
     },
     surrender: {
-      label: '投降結算', heading: '現在就結算嗎', kicker: '這一局會直接結束',
-      cancel: '繼續下', confirm: '投降結算',
-      body: '不再下了，以目前盤面計分：已經圍起來的地照算，還沒分出歸屬的空格不算任何人的。',
+      label: '投降', heading: '確定要投降嗎', kicker: '投降就算輸',
+      cancel: '繼續下', confirm: '投降',
+      body: '這一局到此結束，你判負。',
+      bodyThree: '這一局到此結束，你判負。另外兩位照目前的地盤決定勝負。',
     },
     status: { claimed: '已佔領' },
     play: {
@@ -175,9 +176,10 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       body: 'This piece can keep moving afterwards, but your wall break is then gone — there is no second one this game.',
     },
     surrender: {
-      label: 'Resign', heading: 'Score it now?', kicker: 'This ends the game',
-      cancel: 'Keep playing', confirm: 'Resign and score',
-      body: 'Stop here and score the board as it stands: territory already enclosed counts, and squares still up for grabs count for nobody.',
+      label: 'Resign', heading: 'Resign this game?', kicker: 'Resigning is a loss',
+      cancel: 'Keep playing', confirm: 'Resign',
+      body: 'The game ends here and you lose.',
+      bodyThree: 'The game ends here and you lose. The other two are ranked by the territory they hold right now.',
     },
     status: { claimed: 'Territory' },
     play: {
@@ -237,9 +239,10 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       body: '壊したあともこの駒は動かせますが、壁を壊せる回数は0になります。この一局でもう一度は使えません。',
     },
     surrender: {
-      label: '投了', heading: 'ここで集計しますか？', kicker: 'この一局は終了します',
-      cancel: '続ける', confirm: '投了して集計',
-      body: 'ここでやめて、今の盤面で集計します。すでに囲んだ陣地はそのまま数え、まだ決まっていないマスは誰のものにもなりません。',
+      label: '投了', heading: '投了しますか？', kicker: '投了は負けです',
+      cancel: '続ける', confirm: '投了する',
+      body: 'この一局はここで終わり、あなたの負けになります。',
+      bodyThree: 'この一局はここで終わり、あなたの負けになります。残りの2人は今の陣地で勝敗を決めます。',
     },
     status: { claimed: '陣地' },
     play: {
@@ -299,9 +302,10 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       body: '부순 뒤에도 이 말은 계속 움직일 수 있지만, 벽 부수기 기회는 사라집니다. 이번 판에 다시는 쓸 수 없습니다.',
     },
     surrender: {
-      label: '기권', heading: '지금 집계할까요?', kicker: '이번 판은 여기서 끝납니다',
-      cancel: '계속 두기', confirm: '기권하고 집계',
-      body: '여기서 멈추고 현재 판으로 집계합니다. 이미 둘러싼 영역은 그대로 세고, 아직 주인이 정해지지 않은 칸은 누구의 것도 아닙니다.',
+      label: '기권', heading: '기권할까요?', kicker: '기권하면 패배입니다',
+      cancel: '계속 두기', confirm: '기권',
+      body: '이번 판은 여기서 끝나고 패배로 처리됩니다.',
+      bodyThree: '이번 판은 여기서 끝나고 패배로 처리됩니다. 나머지 두 사람은 현재 영역으로 승부를 가립니다.',
     },
     status: { claimed: '영역' },
     play: {

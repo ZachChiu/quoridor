@@ -49,7 +49,7 @@ import {
   toWgf,
   applyTurn, cancelTurn,
   } from "@/game/engine";
-import { evaluate, getWinners, type Outcome } from "@/game/score";
+import { evaluate, resignOutcome, type Outcome } from "@/game/score";
 import type { GameState, PlayerKey, WallDir } from "@/game/types";
 import type { Turn } from "@/game/engine";
 import { useGameText, useLocale } from '@/i18n/LocaleProvider';
@@ -176,28 +176,32 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
   const { territories, scores, outcome: naturalOutcome } = useMemo(() => evaluate(state), [state]);
 
   /*
-    投降結算。
+    投降。**投降就是輸**（規則見 game/score.ts 的 resignOutcome）。
 
     刻意**不**寫進 GameState：棋譜（WGF）記的是「下了什麼」，
     投降不是一手棋，塞進去會讓 replay 的語意變成兩種東西。
     盤面本身仍然完全由棋譜決定，這裡只是提前停止。
 
-    分數照常由 evaluate 算出來的 scores 判勝負 —— 「投降」在這個
-    遊戲裡的意思是「就此收手、照現況算分」，不是「直接判對手贏」。
+    先前這裡是「就此收手、照現況算分」—— 投降的人如果地比較多，
+    按下投降反而會贏，等於一顆「領先就結束」的按鈕。
+
+    誰投降：連線是自己那一方；單人是玩家（A，就算正輪到電腦）；
+    本機同一台裝置輪流下，是輪到的那一方。
 
     連線模式：投降的人把結果寫進 Firebase，對手從 room.winners 收到。
     這是唯一不能從棋譜推導的結束方式，所以非寫不可。
   */
-  const [resigned, setResigned] = useState(false);
+  const [resignedBy, setResignedBy] = useState<PlayerKey | null>(null);
+  const resigned = resignedBy !== null;
   const [surrenderOpen, setSurrenderOpen] = useState(false);
   const remoteWinners = isOnline ? room?.winners : undefined;
 
   const outcome = useMemo<Outcome>(() => {
     if (naturalOutcome.length) return naturalOutcome;
     if (remoteWinners?.length) return remoteWinners;
-    if (resigned) return getWinners(scores, state.playersNum, territories.regionSizes);
+    if (resignedBy) return resignOutcome(scores, state.playersNum, resignedBy, territories.regionSizes);
     return [];
-  }, [naturalOutcome, remoteWinners, resigned, scores, state.playersNum, territories.regionSizes]);
+  }, [naturalOutcome, remoteWinners, resignedBy, scores, state.playersNum, territories.regionSizes]);
 
   const isLock = outcome.length > 0;
   const isPlacing = isPlacingPhase(state);
@@ -606,15 +610,17 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
   const restartGame = useCallback(() => {
     dispatch({ type: 'reset', playersNum });
     setChampionDismissed(false);
-    setResigned(false);
+    setResignedBy(null);
     trackButtonClick(`restart_local_game_${playersNum}p`);
   }, [playersNum]);
 
   const confirmSurrender = useCallback(() => {
     setSurrenderOpen(false);
-    setResigned(true);
+    const who: PlayerKey | null = isOnline ? myPlayerKey : aiDifficulty ? 'A' : state.currentPlayer;
+    if (!who) return;
+    setResignedBy(who);
     trackButtonClick(`surrender_${isOnline ? 'online' : 'local'}_${playersNum}p`);
-  }, [isOnline, playersNum]);
+  }, [isOnline, myPlayerKey, aiDifficulty, state.currentPlayer, playersNum]);
 
   /*
     離開頁面前確認 —— 但只在「真的有東西會被丟掉」的時候。
@@ -872,6 +878,7 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
             isOpen={surrenderOpen}
             onClose={() => setSurrenderOpen(false)}
             onConfirm={confirmSurrender}
+            playersNum={playersNum}
           />
         </>
       )}

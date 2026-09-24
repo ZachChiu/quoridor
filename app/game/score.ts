@@ -50,6 +50,34 @@ export function getWinners(
 }
 
 /**
+ * 有人投降時的勝負。**投降就是輸** —— 投降的人不會出現在勝方裡。
+ *
+ * 兩人局：另一個人贏，不管盤面上誰的地比較多。
+ * 三人局：對局就此結束，剩下兩人照目前的地盤決勝負（同分比最大的一塊）；
+ * 仍然相同就兩人並列勝方。不會是 'draw' —— 投降的人輸了，這局不是平手。
+ *
+ * 投降不是「要求結算」。照現況算分、而且對方同意才結束，那是另一件事
+ * （像圍棋的終局協議），這裡沒有做。
+ */
+export function resignOutcome(
+  scores: Scores,
+  playersNum: number,
+  resigner: PlayerKey,
+  regionSizes?: Record<PlayerKey, number[]>
+): Outcome {
+  const rest = playerKeys(playersNum).filter((k) => k !== resigner);
+  if (rest.length === 1) return rest;
+
+  const top = Math.max(...rest.map((k) => scores[k] ?? 0));
+  const leaders = rest.filter((k) => (scores[k] ?? 0) === top);
+  if (leaders.length === 1 || !regionSizes) return leaders;
+
+  const largest = (k: PlayerKey) => regionSizes[k]?.[0] ?? 0;
+  const topRegion = Math.max(...leaders.map(largest));
+  return leaders.filter((k) => largest(k) === topRegion);
+}
+
+/**
  * 一次取得領地、分數與勝負。遊戲未結束時 `outcome` 為空陣列。
  *
  * **開局擺子階段一律 0 分、沒有領地。**
