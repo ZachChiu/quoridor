@@ -843,7 +843,9 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
                   「沒有自然結束卻有結果」就是投降。
                 */
                 ended: naturalOutcome.length ? 'natural' : outcome.length ? 'resign' : 'unfinished',
-                ua: typeof navigator !== 'undefined' ? navigator.userAgent : '',
+                // 規則限 400 字。App 內建瀏覽器（FB / IG）的 UA 會超過，
+                // 不截斷的話整筆回饋都會被拒
+                ua: typeof navigator !== 'undefined' ? navigator.userAgent.slice(0, 400) : '',
                 viewport: typeof window !== 'undefined'
                   ? `${window.innerWidth}x${window.innerHeight}@${window.devicePixelRatio}` : '',
               }, await ensureUser())
