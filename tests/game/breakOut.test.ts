@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import {
-  applyTurn, breakOutTurns, canAct, canPlaceWallNow, createGame, isGameOver, legalTurns,
-  legalWalls, placeWall, playableTurns, replay, selectPiece, selectablePieces,
-  shouldSkipTurn, toWgf,
+  applyTurn, breakOutTurns, canAct, canPlaceWallNow, createGame, isGameOver, isPlacingPhase,
+  legalBreaks, legalTurns, legalWalls, placeOpeningPiece, placeWall, playableTurns, replay,
+  selectPiece, selectablePieces, shouldSkipTurn, skipUnplayable, toWgf,
 } from '@/game/engine';
-import { fallbackMove } from '@/game/ai';
+import { evaluateFor, fallbackMove } from '@/game/ai';
 import { computeTerritories } from '@/game/territory';
 import type { GameState } from '@/game/types';
 
@@ -151,5 +151,91 @@ describe('AI 的保底一手', () => {
   it('同一個盤面永遠給同一手', () => {
     const s = sealedPair(1);
     expect(fallbackMove(s)).toEqual(fallbackMove(s));
+  });
+});
+
+describe('破了也走不出去的牆，不讓被圍死的棋子破', () => {
+  /*
+    自動對局撞到的死路：A 的棋子四面被圍，唯一相鄰的牆後面站著 B。
+    破了那道牆照樣走不動，而沒移動過的棋子不准原地蓋牆 —— 這一手結束不了，
+    破牆次數卻已經扣掉。桌機上連「重來這一步」都看不到。
+  */
+  function boxedBehindPiece(): GameState {
+    const board = grid(); const h = grid(); const v = grid();
+    board[0][0] = 'A'; board[1][0] = 'B'; board[6][6] = 'C';
+    h[0][0] = 'C';           // A 下方有牆，牆後是 B
+    v[0][0] = 'C';           // A 右方有牆，牆後是空格 (0,1)
+    return boardState({
+      board, horizontalWalls: h, verticalWalls: v,
+      pieceIndex: { A: [{ row: 0, col: 0 }], B: [{ row: 1, col: 0 }], C: [{ row: 6, col: 6 }] },
+    });
+  }
+
+  it('只列出破了之後走得出去的那道', () => {
+    const s = { ...boxedBehindPiece(), selected: { row: 0, col: 0 } };
+    expect(legalBreaks(s)).toEqual([{ row: 0, col: 0, dir: 'V' }]);
+  });
+
+  it('唯一的牆後面有人 → 這顆棋子不能被選', () => {
+    const b = boxedBehindPiece();
+    b.verticalWalls[0][0] = null; b.board[0][1] = 'B'; b.pieceIndex.B.push({ row: 0, col: 1 });
+    b.horizontalWalls[0][1] = 'C'; // 讓 (0,1) 的 B 不至於影響 A：A 右邊是棋子不是牆
+    expect(selectPiece(b, 0, 0)).toBe(b);
+  });
+
+  it('走得動的棋子不受限：破哪道牆都行（打開地盤本身是策略）', () => {
+    const b = boxedBehindPiece();
+    b.verticalWalls[0][0] = null; // A 可以往右走了
+    const s = { ...b, selected: { row: 0, col: 0 } };
+    expect(legalBreaks(s)).toEqual([{ row: 0, col: 0, dir: 'H' }]);
+  });
+});
+
+describe('canAct 只問「有沒有」，答案必須跟完整列舉一致', () => {
+  it('隨機三人局的每個盤面、每個玩家', () => {
+    let r = 11;
+    const rand = () => ((r = (r * 1664525 + 1013904223) >>> 0) / 2 ** 32);
+    let checked = 0;
+    for (let game = 0; game < 20; game++) {
+      let s = createGame(3);
+      while (isPlacingPhase(s)) {
+        const empty: [number, number][] = [];
+        for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) if (!s.board[i][j]) empty.push([i, j]);
+        const [a, b] = empty[Math.floor(rand() * empty.length)];
+        s = placeOpeningPiece(s, a, b);
+      }
+      for (let t = 0; t < 80 && !isGameOver(s); t++) {
+        for (const p of ['A', 'B', 'C'] as const) {
+          const as = { ...s, currentPlayer: p, selected: null, remainSteps: 2 };
+          expect(canAct(as)).toBe(playableTurns(as).length > 0);
+          checked++;
+        }
+        s = skipUnplayable(s);
+        const turns = playableTurns(s);
+        if (!turns.length) break;
+        s = applyTurn(s, turns[Math.floor(rand() * turns.length)]);
+      }
+    }
+    expect(checked).toBeGreaterThan(500);
+  });
+});
+
+describe('AI 的終局計分跟真正的勝負規則一致', () => {
+  it('總領地打平時比最大的一塊', () => {
+    // 兩人局已定局：A、B 都是 4 格，但 A 是完整一塊、B 是 2+2
+    const board = grid(); const h = grid(); const v = grid();
+    board[0][0] = 'A';
+    for (let c = 0; c < 4; c++) h[0][c] = 'A';
+    v[0][3] = 'A';                                // A：第一列前 4 格
+    board[6][0] = 'B'; board[6][5] = 'B';
+    h[5][0] = 'B'; h[5][1] = 'B'; v[6][1] = 'B';  // B：(6,0)(6,1)
+    h[5][5] = 'B'; h[5][6] = 'B'; v[6][4] = 'B';  // B：(6,5)(6,6)
+    // 剩下的大區域沒有棋子 → 中立
+    const s = boardState({
+      playersNum: 2, board, horizontalWalls: h, verticalWalls: v,
+      pieceIndex: { A: [{ row: 0, col: 0 }], B: [{ row: 6, col: 0 }, { row: 6, col: 5 }], C: [] },
+    });
+    expect(evaluateFor(s, 'A')).toBeGreaterThan(0);
+    expect(evaluateFor(s, 'B')).toBeLessThan(0);
   });
 });

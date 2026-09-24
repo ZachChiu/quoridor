@@ -153,11 +153,27 @@ export function legalBreaks(state: GameState): WallSlot[] {
     { row, col, dir: 'V' },
   ];
 
-  return candidates.filter((slot) => {
+  const existing = candidates.filter((slot) => {
     if (!inBounds(slot.row, slot.col)) return false;
     const grid = slot.dir === 'H' ? state.horizontalWalls : state.verticalWalls;
     return !!grid[slot.row][slot.col];
   });
+
+  /*
+    還沒移動、又一步都走不了的棋子（被圍死，靠破牆脫困），只能破「破了之後
+    走得出去」的牆。
+
+    否則會走進死路：破掉的牆後面若站著別的棋子，破完照樣走不動 ——
+    而沒移動過的棋子不准原地蓋牆（canPlaceWallNow），這一手就結束不了，
+    破牆次數卻已經扣掉了。玩家只剩「重來這一步」一條路，而且看不出為什麼。
+    （自動對局實測撞到過。）
+
+    走得動的棋子不受這條限制：破一道牆打開地盤本身就是一種策略。
+  */
+  if (state.remainSteps < 2 || legalMoves(state).length > 0) return existing;
+  return existing.filter(
+    (slot) => legalMoves(breakWall(state, slot.row, slot.col, slot.dir)).length > 0
+  );
 }
 
 // ─── 操作 ─────────────────────────────────────────────────────────────────────

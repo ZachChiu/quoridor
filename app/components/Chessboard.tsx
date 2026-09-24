@@ -63,6 +63,11 @@ type Props = {
   canWall?: boolean;
   /** 這回合能選的己方棋子（`row,col`）。被圍死又破不了牆的不在裡面。沒給就是全部。 */
   selectable?: Set<string>;
+  /**
+   * 選中的棋子現在破得了哪些牆（engine 的 legalBreaks，`row,col,H|V`）。
+   * 沒給就退回「旁邊有牆就能破」。被圍死的棋子只能破「破了走得出去」的那幾道。
+   */
+  breakSlots?: Set<string>;
 };
 
 export default React.memo(function Chessboard({
@@ -93,7 +98,10 @@ export default React.memo(function Chessboard({
   turnDirty = false,
   canWall = true,
   selectable,
+  breakSlots,
 }: Props) {
+  const canBreakAt = (row: number, col: number, dir: 'H' | 'V') =>
+    !breakSlots || breakSlots.has(`${row},${col},${dir}`);
   // const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 
   const breakWallCount = breakWallCountObj?.[currentPlayer as Exclude<Player, null>];
@@ -495,14 +503,14 @@ export default React.memo(function Chessboard({
                   (rowIndex === selectedChess.row && colIndex === selectedChess.col) ||
                   (rowIndex === selectedChess.row - 1 && colIndex === selectedChess.col)
                 ) {
-                  isHorizontalWallBreakable = true;
+                  isHorizontalWallBreakable = canBreakAt(rowIndex, colIndex, 'H');
                 }
                 // 右側直牆（自己這格 or 左邊那格）
                 if (
                   (rowIndex === selectedChess.row && colIndex === selectedChess.col) ||
                   (rowIndex === selectedChess.row && colIndex === selectedChess.col - 1)
                 ) {
-                  isVerticalWallBreakable = true;
+                  isVerticalWallBreakable = canBreakAt(rowIndex, colIndex, 'V');
                 }
               }
 
@@ -755,10 +763,10 @@ export default React.memo(function Chessboard({
         const none = { top: false, bottom: false, left: false, right: false };
         /** 四個方向上「已經存在、而且打得破」的牆。三人局限定。 */
         const breakable = sel && isBreakWallAvailable && breakWallCount > 0 ? {
-          top: !!horizontalWalls?.[sel.row - 1]?.[sel.col],
-          bottom: !!horizontalWalls?.[sel.row]?.[sel.col],
-          left: !!verticalWalls?.[sel.row]?.[sel.col - 1],
-          right: !!verticalWalls?.[sel.row]?.[sel.col],
+          top: !!horizontalWalls?.[sel.row - 1]?.[sel.col] && canBreakAt(sel.row - 1, sel.col, 'H'),
+          bottom: !!horizontalWalls?.[sel.row]?.[sel.col] && canBreakAt(sel.row, sel.col, 'H'),
+          left: !!verticalWalls?.[sel.row]?.[sel.col - 1] && canBreakAt(sel.row, sel.col - 1, 'V'),
+          right: !!verticalWalls?.[sel.row]?.[sel.col] && canBreakAt(sel.row, sel.col, 'V'),
         } : none;
         return (
           <WallDirectionPad

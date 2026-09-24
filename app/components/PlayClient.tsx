@@ -317,7 +317,11 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
 
     控制盤原本自己有這段判斷，把 breakMode 提上來時漏掉了。
   */
-  const canBreakNow = legalBreaks(state).length > 0;
+  const breakSlots = useMemo(
+    () => new Set(legalBreaks(state).map(({ row, col, dir }) => `${row},${col},${dir}`)),
+    [state],
+  );
+  const canBreakNow = breakSlots.size > 0;
   const selectableKeys = useMemo(
     () => new Set(selectablePieces(state).map(({ row, col }) => `${row},${col}`)),
     [state],
@@ -765,6 +769,7 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
               remainSteps={state.remainSteps}
               canWall={canPlaceWallNow(state)}
               selectable={selectableKeys}
+              breakSlots={breakSlots}
               flattenTerritoriesObj={territories.ownerByCell}
               breakWallCountObj={state.breakWallCount}
               isBreakWallAvailable={canBreakWall}
