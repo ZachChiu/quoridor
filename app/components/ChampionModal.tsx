@@ -97,20 +97,37 @@ const ChampionModal: React.FC<ChampionModalProps> = ({
         {ranking.map(({ player, count }) => {
           // 平局時沒有輸家，一律不調暗；否則整面都是灰的，看起來像大家都輸了
           const won = isDraw || winnerKeys.includes(player);
+          /*
+            勝方滿色、而且明顯比較大；輸的一方反灰，只留一顆小色點認得出是誰。
+
+            先前全部滿色、只靠高度分名次 —— 三條都是飽和的紅藍黃，
+            視線沒有落點，看不出誰贏。反灰不用 opacity 做：淡化會把文字對比
+            壓到 2.4:1。改成中性底＋ink-soft 字，對比照樣過 4.5。
+          */
+          if (!won) {
+            return (
+              <div
+                key={player}
+                className="flex items-center gap-3 rounded-xl bg-tile-ink/[0.07] px-4 py-2.5 text-sm font-black tabular-nums text-ink-soft"
+              >
+                <span className="size-3 shrink-0 rounded-full" style={{ backgroundColor: playerVar(player) }} aria-hidden="true" />
+                <span className="flex-1">{g.players[player]}</span>
+                <span className="text-lg leading-none">{count}</span>
+                <span className="text-xs font-bold">{g.champion.squares}</span>
+              </div>
+            );
+          }
           return (
             <div
               key={player}
-              // 全部滿色，不淡化：淡化會把文字對比壓到 2.4:1。
-              // 名次改用「高度」表示 —— 勝方那條比較厚，像頒獎台，
-              // 而且不靠動畫也不靠顏色深淺，轉灰階一樣讀得出來。
-              className={`flex items-center gap-3 rounded-xl px-4 font-black tabular-nums ${
-                PLAYER_ON[player]
-              } ${won ? 'py-4 text-base' : 'py-2.5 text-sm'}`}
+              className={`flex items-center gap-3 rounded-xl px-5 font-black tabular-nums ${PLAYER_ON[player]} ${
+                isDraw ? 'py-4 text-base' : 'py-6 text-xl'
+              }`}
               style={{ backgroundColor: playerVar(player) }}
             >
-              {won && !isDraw && <GiLaurelCrown className="shrink-0 text-2xl" aria-label={g.champion.winner} />}
+              {!isDraw && <GiLaurelCrown className="shrink-0 text-3xl" aria-label={g.champion.winner} />}
               <span className="flex-1">{g.players[player]}</span>
-              <span className={`leading-none ${won ? 'text-2xl' : 'text-lg'}`}>{count}</span>
+              <span className={`leading-none ${isDraw ? 'text-2xl' : 'text-5xl'}`}>{count}</span>
               <span className="text-xs font-bold opacity-80">{g.champion.squares}</span>
             </div>
           );
