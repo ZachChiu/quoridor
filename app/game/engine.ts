@@ -587,16 +587,6 @@ export function cancelTurn(state: GameState): GameState {
 }
 
 /**
- * 遊戲是否已結束。
- *
- * 兩種情況：
- * 1. 所有棋子都被封閉在只有自己陣營的區域中（正常終局）
- * 2. 所有玩家都沒有合法手 —— 局面已不可能再改變，等同結束
- *
- * 第 2 點是「零步移動需能離開再回來」帶來的新情況：可能出現雙方棋子
- * 互相卡死、但區域仍被判定為爭奪中的盤面。若不視為終局，遊戲會永遠停住。
- */
-/**
  * 這一局有沒有動過。
  *
  * 「動過」＝開局擺過子、收束過回合、或這一手正在進行中。
@@ -612,6 +602,16 @@ export function hasStarted(state: GameState): boolean {
     || state.currentTurnActions.length > 0;
 }
 
+/**
+ * 遊戲是否已結束。
+ *
+ * 兩種情況：
+ * 1. 所有棋子都被封閉在只有自己陣營的區域中（正常終局）
+ * 2. 所有玩家都沒有合法手 —— 局面已不可能再改變，等同結束
+ *
+ * 第 2 點是「零步移動需能離開再回來」帶來的新情況：可能出現雙方棋子
+ * 互相卡死、但區域仍被判定為爭奪中的盤面。若不視為終局，遊戲會永遠停住。
+ */
 export function isGameOver(state: GameState): boolean {
   if (isPlacingPhase(state)) return false;
   if (computeTerritories(state).settled) return true;
