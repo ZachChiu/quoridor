@@ -1,4 +1,7 @@
 import type { Difficulty } from '@/game/ai';
+import type { GameMode } from '@/types/gameMode';
+
+export type { GameMode };
 import { localePath, type Locale } from '@/i18n/locales';
 
 /**
@@ -23,10 +26,6 @@ export function toPlayersNum(raw: string | undefined): 2 | 3 {
   return raw === '3' ? 3 : 2;
 }
 
-export type GameMode = {
-  playersNum?: 2 | 3;
-  aiDifficulty?: Difficulty;
-};
 
 const DIFFICULTIES: Difficulty[] = ['easy', 'normal', 'hard'];
 
