@@ -10,7 +10,6 @@ npm run build           # 產生靜態輸出至 /out（同時執行 next-sitemap
 npm run lint            # 執行 ESLint（Next 16 已移除 next lint，改用 ESLint CLI）
 npm run typecheck       # tsc --noEmit
 npm test                # 執行 Vitest（app/game 的規則與 AI 測試）
-RUN_AI_BENCH=1 npm test # 連 AI 對局強度與難度階梯一起跑（約 5 分鐘）
 npm run font:subset     # 依原始碼實際用字重建字型子集
 npm run font:check      # 只檢查子集有沒有落後（CI 用）
 npm run og:build        # 重建每頁每語系的分享圖至 public/og/（要連網）
@@ -148,7 +147,8 @@ players/{ A?, B?, C? }/{ uid, displayName, joinedAt }
 ## 單人對戰
 
 `app/game/ai.ts` 是純函式，跑在 `app/workers/ai.worker.ts` 裡（困難每手約 1.2 秒，
-放主執行緒會凍住畫面）。難度存在 `GameContext.aiDifficulty`，
+放主執行緒會凍住畫面）。難度存在 `GameContext.aiDifficulty`，但**只由 `/solo` 以 prop
+交給 `PlayClient`** —— 直接讀 context 的話，玩過單人後的殘留難度會讓 `/local` 變成 AI 局。
 設定後除了 A 以外都交給 AI；連線模式沒有 AI。
 
 AI 的一個回合是**單一 reducer 轉換**（`type: 'aiTurn'`）。分三次 dispatch 會讓
@@ -156,7 +156,8 @@ AI 的一個回合是**單一 reducer 轉換**（`type: 'aiTurn'`）。分三次
 重複去問 Worker，最後那次的回覆可能在回合已交出去之後才套用。
 
 疊代加深**只能採用完整跑完的那一層**。逾時就用殘缺的深搜結果，會比完整的
-淺搜還弱（實測困難對普通 0 勝 8 敗）。`ai.test.ts` 有測試鎖住這個回歸。
+淺搜還弱（實測困難對普通 0 勝 8 敗）。原本鎖住這個回歸的對戰測試（`RUN_AI_BENCH`）
+已在 `e802f28` 移除，目前 `ai.test.ts` 只有「對隨機走子 10 局全勝」與每手時間上限。
 
 ## 主要慣例
 
