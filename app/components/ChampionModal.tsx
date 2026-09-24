@@ -38,14 +38,20 @@ const ChampionModal: React.FC<ChampionModalProps> = ({
     [isDraw, winners]
   );
 
-  // 名次由高到低。結算畫面的重點就是排名，維持 A/B/C 原序反而要讀者自己比。
+  /*
+    勝方一律排最上面，其次才看地盤大小。
+
+    只照格數排的話，投降那一局會是「輸家在上、贏家在下」——
+    投降的人地可能比較多，但他輸了。這張表回答的是誰贏，不是誰的地大。
+  */
   const ranking = useMemo(() => {
     const keys = (['A', 'B', 'C'] as PlayerKey[])
       .filter((p) => uniqTerritories[p] !== undefined);
+    const won = (p: PlayerKey) => (winnerKeys.includes(p) ? 1 : 0);
     return keys
       .map((p) => ({ player: p, count: uniqTerritories[p]?.length ?? 0 }))
-      .sort((a, b) => b.count - a.count);
-  }, [uniqTerritories]);
+      .sort((a, b) => won(b.player) - won(a.player) || b.count - a.count);
+  }, [uniqTerritories, winnerKeys]);
 
   const title = isDraw
     ? g.champion.draw
@@ -98,19 +104,20 @@ const ChampionModal: React.FC<ChampionModalProps> = ({
           // 平局時沒有輸家，一律不調暗；否則整面都是灰的，看起來像大家都輸了
           const won = isDraw || winnerKeys.includes(player);
           /*
-            勝方滿色、而且明顯比較大；輸的一方反灰，只留一顆小色點認得出是誰。
+            勝方滿色、而且明顯比較大；輸家退到背景：淡灰底、淡灰字、色點也淡掉，
+            只留下認得出是誰的程度。
 
             先前全部滿色、只靠高度分名次 —— 三條都是飽和的紅藍黃，
-            視線沒有落點，看不出誰贏。反灰不用 opacity 做：淡化會把文字對比
-            壓到 2.4:1。改成中性底＋ink-soft 字，對比照樣過 4.5。
+            視線沒有落點，看不出誰贏。輸家的字刻意壓到約 3.6:1（ink 45%）：
+            這一行是次要資訊，要讀得到但不該搶眼；再淡就讀不清楚了。
           */
           if (!won) {
             return (
               <div
                 key={player}
-                className="flex items-center gap-3 rounded-xl bg-tile-ink/[0.07] px-4 py-2.5 text-sm font-black tabular-nums text-ink-soft"
+                className="flex items-center gap-3 rounded-xl bg-tile-ink/[0.04] px-4 py-2 text-sm font-bold tabular-nums text-tile-ink/45"
               >
-                <span className="size-3 shrink-0 rounded-full" style={{ backgroundColor: playerVar(player) }} aria-hidden="true" />
+                <span className="size-2.5 shrink-0 rounded-full opacity-40" style={{ backgroundColor: playerVar(player) }} aria-hidden="true" />
                 <span className="flex-1">{g.players[player]}</span>
                 <span className="text-lg leading-none">{count}</span>
                 <span className="text-xs font-bold">{g.champion.squares}</span>
@@ -125,7 +132,8 @@ const ChampionModal: React.FC<ChampionModalProps> = ({
               }`}
               style={{ backgroundColor: playerVar(player) }}
             >
-              {!isDraw && <GiLaurelCrown className="shrink-0 text-3xl" aria-label={g.champion.winner} />}
+              {/* 標題色帶已經有桂冠，這裡不再放同一個圖示；「勝方」留給螢幕報讀 */}
+              {!isDraw && <span className="sr-only">{g.champion.winner}</span>}
               <span className="flex-1">{g.players[player]}</span>
               <span className={`leading-none ${isDraw ? 'text-2xl' : 'text-5xl'}`}>{count}</span>
               <span className="text-xs font-bold opacity-80">{g.champion.squares}</span>
