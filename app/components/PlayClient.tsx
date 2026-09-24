@@ -350,7 +350,7 @@ export default function PlayClient({ roomId, playersNum: routePlayers }: PlayCli
     return state.currentPlayer === myPlayerKey;
   }, [isLock, isAiTurn, isOnline, myPlayerKey, state.currentPlayer]);
 
-  const { think, warmup: warmupAi } = useAiOpponent(
+  const { think, warmup: warmupAi, cancel: cancelAi } = useAiOpponent(
     useCallback((move) => {
       if (move.kind === 'opening') {
         dispatch({ type: 'placeOpening', row: move.cell.row, col: move.cell.col });
@@ -370,10 +370,19 @@ export default function PlayClient({ roomId, playersNum: routePlayers }: PlayCli
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [aiDifficulty, warmupAi]);
 
+  /*
+    對局一結束 AI 就停手，連還在算的那一手也丟掉。
+
+    少了 isLock 這一條，最後一手下完、回合輪到 AI，它照樣找得到自己領地裡的
+    合法手 —— 在結算視窗已經打開的時候再蓋一道牆，可能把一塊空地切成
+    誰都不算的區域，比分就在結果畫面底下被改掉。投降時 AI 正在算也一樣：
+    它那一手會在你投降之後落下。
+  */
   useEffect(() => {
+    if (isLock) { cancelAi(); return; }
     if (!isAiTurn || !aiDifficulty) return;
     think(wgf, aiDifficulty);
-  }, [isAiTurn, aiDifficulty, wgf, think]);
+  }, [isLock, isAiTurn, aiDifficulty, wgf, think, cancelAi]);
 
   // ─── Firebase 初始化（online only）──────────────────────────────────────────
   useEffect(() => {

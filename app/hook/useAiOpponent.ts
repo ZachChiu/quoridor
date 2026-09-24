@@ -1,6 +1,7 @@
 'use client'
 import { useCallback, useEffect, useRef } from 'react';
-import type { Difficulty } from '@/game/ai';
+import { fallbackMove, type Difficulty } from '@/game/ai';
+import { replay } from '@/game/engine';
 import type { AiMove, AiRequest, AiResponse } from '@/workers/ai.worker';
 
 /**
@@ -29,6 +30,8 @@ export function useAiOpponent(onMove: (move: AiMove) => void) {
   const onMoveRef = useRef(onMove);
   const askedAtRef = useRef(0);
   const holdRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // 最新一次請求的棋譜 —— Worker 失敗時拿它算保底的一手
+  const pendingWgfRef = useRef('');
 
   // 在 effect 中同步而非 render 期間寫入 —— render 期間讀寫 ref
   // 會讓 React Compiler 無法正確推導，並在 concurrent 渲染下產生非預期結果。
@@ -44,9 +47,11 @@ export function useAiOpponent(onMove: (move: AiMove) => void) {
       const data = event.data;
       if (data.id !== latestIdRef.current) return; // 過期結果，丟棄
       if (!data.ok) {
-        console.error('[ai] worker 失敗：', data.error);
+        console.error('[ai] worker 失敗，改下保底的一手：', data.error);
+        playFallback();
         return;
       }
+      pendingWgfRef.current = ''; // 這一手有答案了，之後的錯誤與它無關
       const move = data.move;
       if (!move) return;
       const wait = Math.max(0, MIN_THINK_MS - (performance.now() - askedAtRef.current));
@@ -57,6 +62,24 @@ export function useAiOpponent(onMove: (move: AiMove) => void) {
         holdRef.current = null;
         if (id === latestIdRef.current) onMoveRef.current(move);
       }, wait);
+    };
+
+    /*
+      Worker 失敗時，不能只記 log 就算了 —— AI 會永遠停在「輪到它」，
+      玩家只能重新整理。改在主執行緒下一手確定性的保底棋，對局繼續。
+      onerror 管的是 Worker 本身載不起來（chunk 下載失敗之類），
+      那種情況 onmessage 永遠不會來。
+    */
+    function playFallback() {
+      const wgf = pendingWgfRef.current;
+      if (!wgf) return;
+      pendingWgfRef.current = '';
+      const move = fallbackMove(replay(wgf));
+      if (move) onMoveRef.current(move);
+    }
+    worker.onerror = (event) => {
+      console.error('[ai] worker 無法執行，改下保底的一手：', event.message);
+      playFallback();
     };
 
     return () => {
@@ -72,6 +95,7 @@ export function useAiOpponent(onMove: (move: AiMove) => void) {
       const id = ++latestIdRef.current;
       if (holdRef.current) { clearTimeout(holdRef.current); holdRef.current = null; }
       askedAtRef.current = performance.now();
+      pendingWgfRef.current = wgf;
       const request: AiRequest = { id, wgf, difficulty, ...options };
       workerRef.current?.postMessage(request);
     },
@@ -91,6 +115,7 @@ export function useAiOpponent(onMove: (move: AiMove) => void) {
   /** 讓目前進行中的思考結果失效（例如重新開始）。 */
   const cancel = useCallback(() => {
     latestIdRef.current++;
+    pendingWgfRef.current = '';
     if (holdRef.current) { clearTimeout(holdRef.current); holdRef.current = null; }
   }, []);
 
