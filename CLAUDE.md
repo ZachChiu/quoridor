@@ -30,11 +30,23 @@ npm run release -- "版本標題"  # 把目前分支併進 main、打 tag、推�
 
 ### 路由
 
+zh-TW 不加前綴（`app/(default)/`），en / ja / ko 加前綴（`app/(intl)/[locale]/`）。
+兩邊的 page 都是薄殼，畫面實作在 `app/views/`。
+
 | 路由 | 說明 |
 |---|---|
-| `/` | 首頁（`HomeClient.tsx`）— 選擇本機或連線對戰、建立房間 |
-| `/local` | 本機對戰（`local/page.tsx` → `components/PlayClient`，無 `roomId`） |
-| `/match#roomId=…` | 連線對戰（`MatchClient` → `components/PlayClient`，帶 `roomId`）。roomId 放在 hash 而非 query |
+| `/` | 首頁（`HomeView` → `HomeClient`）— 選模式、建立連線房間 |
+| `/rules` | 規則頁，SEO 主力落地頁 |
+| `/solo#easy\|normal\|hard` | 單人對戰。難度放 hash，由 `SoloClient` 以 prop 交給 `PlayClient` |
+| `/local`、`/local/3` | 本機對戰，人數走路由（建置時就定了）。noindex |
+| `/online#roomId=…` | 連線對戰（`OnlineClient` → `PlayClient`，帶 `roomId`）。roomId 放 hash 而非 query。noindex |
+| `/match#roomId=…` | 舊網址，只做 client 端轉址到 `/online`（保留 hash）。只有 zh-TW 有 |
+| `/replay#wgf=…` | 棋譜回放。**開發者工具，不是給玩家的功能** —— 見下 |
+
+**`/replay` 是用來看玩家回饋的。** 每則回饋都附帶那一局的 WGF（`feedback/*/wgf`），
+在 Firebase Console 讀到回饋時，把棋譜貼到 `/replay#wgf=…` 就能一手一手重看玩家遇到的狀況。
+刻意**沒有任何 UI 入口**、不進 sitemap、noindex —— 這個站不做「個人棋譜」。
+不要替它補分享按鈕或入口；它沒被連到不是漏做，是設計。
 
 ### 狀態管理（React Context，全包在 `app/layout.tsx`）
 
@@ -80,8 +92,8 @@ players/{ A?, B?, C? }/{ uid, displayName, joinedAt }
 - `app/utils/firebase.ts` — Firebase **惰性**初始化。匯出 `getFirebaseAuth()` / `getFirebaseDb()` 兩個 async 函式，內部以動態 import 載入 SDK 並用 Promise 記憶化。首頁與 `/local` 不會下載 Firebase（約 75 KB gzip）
 - `app/utils/gameService.ts` — `createRoom`, `joinRoom`, `getRoom`, `subscribeRoom`, `updateGameState`, `setRoomWinner`
 - `app/types/room.ts` — `Room`, `RoomPlayer`, `RoomStatus` 型別
-- `HomeClient.tsx` — 建立房間（`createRoom`，含初始 WGF）並跳轉 `/match#roomId=…`。展開「連線對戰」選單時即呼叫 `ensureUser()` 預熱登入
-- `MatchClient.tsx` — 薄層，只讀 `useSearchParams` 拿 `roomId` 後渲染 `<PlayClient roomId={roomId} />`
+- `HomeClient.tsx` — 建立房間（`createRoom`，含初始 WGF）並跳轉 `/online#roomId=…`（`localePath` 保留目前語系）。展開「連線對戰」選單時即呼叫 `ensureUser()` 預熱登入
+- `app/(default)/online/OnlineClient.tsx` — 薄層，從 hash 讀 `roomId` 後渲染 `<PlayClient roomId={roomId} />`；沒有 roomId 就顯示「連結不完整」，不會退化成本機對戰
 
 ### WGF（Wall Go Format）棋譜
 
