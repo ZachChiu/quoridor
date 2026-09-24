@@ -12,8 +12,10 @@ import { LOCALES as ALL_LOCALES } from '@/i18n/locales';
   看得見 —— 路由沒產生、sitemap 收了不該收的網址、hash 不會送到伺服器
   所以靜態 HTML 是錯的人數。這些東西在單元測試層級完全看不到。
 
-  out/ 不存在就整組跳過（本機沒建置過很正常）。CI 在 build 之後會再跑
-  一次這個檔案，那時它一定存在 —— 見 .github/workflows/deploy.yml。
+  out/ 不存在就整組跳過（本機沒建置過很正常）。CI 在 build 之後、上傳之前
+  另有一步「檢查建置產物」專門跑這個檔案 —— 見 .github/workflows/deploy.yml。
+  （先前註解這樣寫，workflow 卻沒有那一步：npm test 跑在 build 之前，
+  這整組在 CI 上從來沒有執行過。）
 */
 const OUT = 'out';
 const built = existsSync(OUT);

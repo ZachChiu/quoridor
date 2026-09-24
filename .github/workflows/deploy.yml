@@ -74,6 +74,16 @@ jobs:
           NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID }}
           NEXT_PUBLIC_FIREBASE_APP_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_APP_ID }}
 
+      # 驗建置產物（out/）：路由、sitemap、hreflang、分享圖、source map 沒外洩。
+      # 上面那道 npm test 跑在 build 之前，那時 out/ 還不存在，這個檔案整組
+      # skipIf 掉了 —— 等於從來沒在 CI 跑過。必須在 build 之後、上傳之前再跑一次。
+      #
+      # 其中「沒有 .map 檔」這一條特別要緊：Sentry 上傳失敗不會讓 build 失敗
+      # （next.config.ts 的 errorHandler），而沒上傳成功的 source map
+      # 可能留在 out/ 裡，下一步 s3 sync 就把原始碼公開了。
+      - name: 檢查建置產物
+        run: npx vitest run tests/build
+
       - name: 配置 AWS 憑證
         uses: aws-actions/configure-aws-credentials@v4
         with:
