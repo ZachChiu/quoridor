@@ -1,6 +1,6 @@
 {
   "name": "quoridor",
-  "version": "26.9.8",
+  "version": "26.9.9",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -23,7 +23,6 @@
   "dependencies": {
     "@next/third-parties": "^16.3.5",
     "@sentry/nextjs": "^10.75.0",
-    "animejs": "^4.5.0",
     "firebase": "^12.11.0",
     "next": "^16.3.5",
     "next-sitemap": "^4.2.3",

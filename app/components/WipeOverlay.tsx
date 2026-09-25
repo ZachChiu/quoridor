@@ -1,6 +1,7 @@
 'use client'
 import React, { useEffect, useRef } from 'react';
 import { useIsoLayoutEffect } from '@/hook/useIsoLayoutEffect';
+import { CSS_IN_OUT_CUBIC, inOutCubic, outCubic, scaleKeyframes } from './wipeKeyframes';
 import type { IconType } from 'react-icons';
 
 export type WipePhase = 'cover' | 'uncover';
@@ -92,7 +93,6 @@ function coverScale(wipe: Wipe): number {
  * 中間的路由切換由呼叫端負責，所以這個元件必須掛在 layout ——
  * 放在頁面裡換頁時會跟著被卸載，動畫只會播一半。
  *
- * anime.js 走動態 import：tree-shake 後約 15 KB gzip，只在換頁時用得到。
  */
 const WipeOverlay: React.FC<Props> = ({ phase, wipe, onDone }) => {
   const rootRef = useRef<HTMLDivElement>(null);
@@ -120,81 +120,73 @@ const WipeOverlay: React.FC<Props> = ({ phase, wipe, onDone }) => {
   useEffect(() => {
     const root = rootRef.current;
     if (!root) return;
+    const shape = root.querySelector<HTMLElement>('[data-shape]');
+    if (!shape || typeof shape.animate !== 'function') { doneRef.current(); return; }
+    const face = root.querySelector<HTMLElement>('[data-face]');
+    const big = root.querySelector<HTMLElement>('[data-big]');
+
+    const s = coverScale(wipe);
+    const { radius } = boxOf(wipe);
+    const round = `${Math.max(boxOf(wipe).width, boxOf(wipe).height)}px`;
+
+    /*
+      圖示是色塊的**子元素**，色塊 overflow: hidden ——
+      所以圖示永遠被色塊當下的實際形狀裁切，包含圓角。
+
+      但子元素會跟著父層一起縮放，所以反向補償：父層 scale(s)、子層 scale(1/s)，
+      相乘等於 1，圖示的視覺大小不變。效果上就是：色塊收小的時候圖示不跟著縮，
+      而是**被色塊從外緣吃掉**。1/s 夾在 20 倍（見 wipeKeyframes）。
+
+      用瀏覽器原生的 element.animate()（Web Animations API）而不是每格用 JS 寫
+      style：transform 的動畫由合成執行緒（GPU）跑，換頁時 React 在主執行緒
+      渲染新頁面也不會拖到它。先前用 anime.js，手機上從大改版起就一直卡。
+      反向縮放沒辦法每格算，所以事先取樣成關鍵影格（wipeKeyframes）。
+    */
+    const opts = (duration: number, delay = 0, easing = 'linear'): KeyframeAnimationOptions =>
+      ({ duration, delay, easing, fill: 'both' });
+    const anims: Animation[] = [];
+    const run = (el: Element | null, frames: Keyframe[], o: KeyframeAnimationOptions) => {
+      if (el) anims.push(el.animate(frames, o));
+    };
+
+    if (phase === 'cover') {
+      const k = scaleKeyframes(1, s, inOutCubic);
+      run(shape, [{ borderRadius: `${radius}px` }, { borderRadius: round }], opts(200, 0, CSS_IN_OUT_CUBIC));
+      run(shape, k.shape, opts(540, 60));
+      run(face, k.face, opts(540, 60));
+      // 大標在色塊快蓋滿時才淡入 —— 早了會疊在還看得見的舊畫面上
+      run(big, [{ opacity: 0 }, { opacity: 1 }], opts(260, 360, CSS_IN_OUT_CUBIC));
+    } else {
+      /*
+        一段連續的縮小，不拆段。
+
+        先前拆成「先收回磁磚大小、再收到 0」兩段，是為了讓「圖示被吃掉」
+        有時間看見。但兩段的緩動都在接點收到速度 0 —— 於是它會在原本
+        按鈕的大小上明顯停一下，再重新啟動。那個停頓比它想解決的問題還礙眼。
+
+        改成單一段配 out 緩動就同時滿足兩件事：開頭快、結尾慢。
+        以 out(3) 計算，大約後 30% 的時間色塊都小於原本的按鈕 ——
+        也就是圖示被吃掉的那段自然就慢下來了，不需要切成兩段。
+
+        圓角在前半段收回方塊，所以吃掉的過程是方塊在吃，不是圓在吃。
+      */
+      const k = scaleKeyframes(s, 0, outCubic);
+      run(shape, k.shape, opts(700));
+      run(face, k.face, opts(700));
+      run(shape, [{ borderRadius: round }, { borderRadius: `${radius}px` }], opts(220, 60, CSS_IN_OUT_CUBIC));
+      // 先把字收掉再讓色塊縮 —— 不然字會浮在越縮越小的色塊外面
+      run(big, [{ opacity: 1 }, { opacity: 0 }], opts(180, 0, CSS_IN_OUT_CUBIC));
+    }
 
     let cancelled = false;
-    let timeline: { pause: () => void } | null = null;
-
-    (async () => {
-      const { createTimeline } = await import('animejs');
-      if (cancelled) return;
-
-      const shape = root.querySelector<HTMLElement>('[data-shape]');
-      if (!shape) { doneRef.current(); return; }
-      const face = root.querySelector<HTMLElement>('[data-face]');
-      const big = root.querySelector<HTMLElement>('[data-big]');
-
-      const s = coverScale(wipe);
-      const { radius } = boxOf(wipe);
-      const round = `${Math.max(boxOf(wipe).width, boxOf(wipe).height)}px`;
-
-      const tl = createTimeline({
-        defaults: { ease: 'inOut(3)' },
-        onComplete: () => { if (!cancelled) doneRef.current(); },
-      });
-
-      /*
-        圖示是色塊的**子元素**，色塊 overflow: hidden ——
-        所以圖示永遠被色塊當下的實際形狀裁切，包含圓角。
-
-        但子元素會跟著父層一起縮放，所以每一幀反向補償：
-        父層 scale(s)、子層 scale(1/s)，相乘等於 1，圖示的視覺大小不變。
-
-        效果上就是：色塊收小的時候圖示不跟著縮，而是**被色塊從外緣吃掉**。
-        用 overflow 而不是自己算 clip-path，是因為圓角在收尾時會從圓變回
-        方塊 —— 自己算就得跟著換形狀，用 overflow 則是瀏覽器直接照著
-        border-radius 裁，永遠一致。
-
-        1/s 在 s 趨近 0 時會爆掉，所以夾在 20 倍。那時色塊只剩原本的 5%
-        （約 8px），圖示本來就幾乎看不見了。
-      */
-      const drive = { s: phase === 'cover' ? 1 : s };
-      const apply = () => {
-        shape.style.transform = `scale(${drive.s})`;
-        if (face) face.style.transform = `scale(${Math.min(1 / Math.max(drive.s, 1e-4), 20)})`;
-      };
-      apply();
-
-      if (phase === 'cover') {
-        tl.add(shape, { borderRadius: [`${radius}px`, round], duration: 200 }, 0);
-        tl.add(drive, { s: [1, s], duration: 540, onUpdate: apply }, 60);
-        // 大標在色塊快蓋滿時才淡入 —— 早了會疊在還看得見的舊畫面上
-        if (big) tl.add(big, { opacity: [0, 1], duration: 260 }, 360);
-      } else {
-        /*
-          一段連續的縮小，不拆段。
-
-          先前拆成「先收回磁磚大小、再收到 0」兩段，是為了讓「圖示被吃掉」
-          有時間看見。但兩段的緩動都在接點收到速度 0 —— 於是它會在原本
-          按鈕的大小上明顯停一下，再重新啟動。那個停頓比它想解決的問題還礙眼。
-
-          改成單一 tween 配 out 緩動就同時滿足兩件事：開頭快、結尾慢。
-          以 out(3) 計算，大約後 30% 的時間色塊都小於原本的按鈕 ——
-          也就是圖示被吃掉的那段自然就慢下來了，不需要切成兩段。
-
-          圓角在前半段收回方塊，所以吃掉的過程是方塊在吃，不是圓在吃。
-        */
-        tl.add(drive, { s: [s, 0], duration: 700, ease: 'out(3)', onUpdate: apply }, 0);
-        tl.add(shape, { borderRadius: [round, `${radius}px`], duration: 220 }, 60);
-        // 先把字收掉再讓色塊縮 —— 不然字會浮在越縮越小的色塊外面
-        if (big) tl.add(big, { opacity: [1, 0], duration: 180 }, 0);
-      }
-
-      timeline = tl;
-    })();
+    Promise.all(anims.map((a) => a.finished))
+      .then(() => { if (!cancelled) doneRef.current(); })
+      // cancel() 會讓 finished 以 AbortError 結束 —— 那是卸載時的正常路徑
+      .catch(() => {});
 
     return () => {
       cancelled = true;
-      timeline?.pause();
+      anims.forEach((a) => a.cancel());
     };
   }, [phase, wipe]);
 
