@@ -1,5 +1,5 @@
-import { GiHut } from 'react-icons/gi';
-import { LuPlay } from 'react-icons/lu';
+import type { CSSProperties } from 'react';
+import { GiHut, GiTabletopPlayers } from 'react-icons/gi';
 import TutorialBoard from '@/components/TutorialBoard';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import TransitionLink from '@/components/TransitionLink';
@@ -130,20 +130,32 @@ export default function RulesView({ locale }: { locale: Locale }) {
           href={home}
           color="rgb(var(--tile-orange))"
           radius={16}
-          className="mt-10 flex w-full items-center justify-center rounded-2xl bg-tile-orange px-6 py-5 text-lg font-black text-tile-ink transition hover:brightness-95 active:scale-[0.99]"
+          className="group mt-10 flex w-full items-center justify-center gap-3 rounded-2xl bg-tile-orange px-6 py-4 text-lg font-black text-tile-ink transition hover:brightness-95 active:scale-[0.99]"
         >
-          {/* 一般人認得的「播放」三角形（Lucide，已在署名裡）。原本的 GiPlayButton
-              不是常見的播放符號，看不出是「開始」。填滿成實心，跟全站實心圖示一致。 */}
-          <LuPlay className="mr-2 size-5" fill="currentColor" aria-hidden="true" />
+          {/* 跟首頁的寬磁磚同一種做法：game-icons 的實心剪影、陶橘底配靛藍圖示、
+              滑過時輕晃一下（Zach 要「跟首頁一樣比較特別的 icon」）。
+              圖示用首頁第一塊磁磚與 favicon 的那兩個人 —— 這顆鈕回首頁開一局，
+              它就是這個遊戲的招牌圖。 */}
+          <GiTabletopPlayers
+            className="tile-icon tile-icon-anim shrink-0 text-4xl"
+            style={{ '--tile-icon-fill': 'rgb(var(--tile-blue))' } as CSSProperties}
+            aria-hidden="true"
+          />
           {t.rules.ctaPlay}
         </TransitionLink>
 
-        <p className="mt-8 text-[11px] leading-relaxed text-ink-soft">
+        <p className="mt-8 text-center text-[11px] leading-relaxed text-ink-soft">
           {t.credits.prefix}{' '}
           <a className="underline" href="https://game-icons.net" target="_blank" rel="noopener noreferrer">game-icons.net</a>
           {t.credits.middle}{' '}
           <a className="underline" href="https://lucide.dev" target="_blank" rel="noopener noreferrer">Lucide</a>
           {t.credits.suffix}
+        </p>
+
+        {/* 版本號跟 Sentry 的 release 同一個來源（package.json，由 npm run release 維護，
+            next.config 注入）—— 使用者回報問題時說得出是哪一版，對得上錯誤紀錄。 */}
+        <p className="mt-2 text-center text-[11px] tabular-nums text-ink-soft">
+          {t.rules.version} {process.env.NEXT_PUBLIC_SENTRY_RELEASE}
         </p>
 
         <script {...ldScript(pageGraph(locale, 'rules'))} />

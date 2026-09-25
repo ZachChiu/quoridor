@@ -37,6 +37,7 @@ const ko: Messages = {
     ogDescription: '한 수씩 그림으로: 배치, 이동, 벽, 영역, 점수.',
     faqHeading: '자주 묻는 질문',
     ctaPlay: '게임 시작',
+    version: '버전',
     ctaSolo: '혼자 하기',
   },
   solo: {
