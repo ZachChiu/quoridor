@@ -112,6 +112,8 @@ export const TransitionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   // 最新的 state：給 navigate 擋連點、給 2 秒保險判斷（兩者都不該因 state 改變而重建）
   const stateRef = useRef(state);
+  // 點下去到動畫真正開始之間（兩格）也算忙碌 —— 那段時間 phase 還是 idle
+  const busyRef = useRef(false);
   useEffect(() => { stateRef.current = state; });
 
   const navigate = useCallback(
@@ -139,17 +141,25 @@ export const TransitionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         上一頁時需要它。
       */
       // 轉場進行中又點了一次：不要再多建一筆紀錄（連點兩下會留下兩筆重複的上一頁）
-      if (stateRef.current.phase !== 'idle') return;
+      if (stateRef.current.phase !== 'idle' || busyRef.current) return;
       window.history.pushState(window.history.state, '', window.location.href);
-      setState({
-        phase: 'cover', pushed: false, target: href,
+      const wipe = options?.wipe ?? {
         // 沒指定起點就從畫面中心擴散 —— 任何未來的呼叫端都不會壞
-        wipe: options?.wipe ?? {
-          x: window.innerWidth / 2,
-          y: window.innerHeight / 2,
-          color: 'rgb(var(--tile-ink))',
-        },
-      });
+        x: window.innerWidth / 2,
+        y: window.innerHeight / 2,
+        color: 'rgb(var(--tile-ink))',
+      };
+      /*
+        動畫晚兩格才開始。新增歷史紀錄時 Safari 會替當下的畫面截一張快照
+        （左滑返回的預覽圖），那會佔掉接下來幾格。動畫若同時開始，
+        就是脹到一半卡一下（Zach 回報「動畫變很卡」；模擬器量到第一格
+        固定多出 10–15ms，手機上更久）。先讓快照截完再動，看起來只是
+        按下去晚了約 30ms 才開始，不會卡在半路。
+      */
+      busyRef.current = true;
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        setState({ phase: 'cover', pushed: false, target: href, wipe });
+      }));
     },
     [router]
   );
@@ -225,7 +235,7 @@ export const TransitionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     return () => clearTimeout(timer);
   }, [state.phase, fireCovered, router]);
 
-  const handleUncovered = useCallback(() => setState({ phase: 'idle' }), []);
+  const handleUncovered = useCallback(() => { busyRef.current = false; setState({ phase: 'idle' }); }, []);
 
   return (
     <TransitionContext.Provider value={{ navigate, flash, busy: state.phase !== 'idle' }}>
