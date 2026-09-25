@@ -1,5 +1,6 @@
 'use client'
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useScrollLock } from '@/hook/useScrollLock';
 import { useMessages } from '@/i18n/LocaleProvider';
 import { GiCancel } from 'react-icons/gi';
@@ -48,6 +49,22 @@ const Modal: React.FC<Props> = ({
   useScrollLock(isOpen);
   const t = useMessages();
 
+  /*
+    一律傳送到 <body> 底下渲染（portal）。
+
+    fixed 定位只在「沒有祖先建立新的包含區塊」時才相對於視窗。只要某個祖先有
+    backdrop-filter、filter、transform 之類的屬性，fixed 就改成相對那個祖先 ——
+    規則頁的頂部列是毛玻璃（backdrop-blur），語言選單放在它裡面，
+    整個 Modal 就被塞進那一條 60px 高的列裡（Zach 回報）。
+    傳送到 body 之後，不管 Modal 被寫在哪個元件裡都不受祖先影響。
+
+    第一次 render 仍然就地輸出，掛載後才換到 body：靜態 HTML 沒有 document，
+    而且 hydration 時兩邊的結構必須一致。Modal 在那時都是關著的，換位置看不出來。
+  */
+  const [portalReady, setPortalReady] = useState(false);
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- 只在掛載時切一次，hydration 之後才有 document.body
+  useEffect(() => setPortalReady(true), []);
+
   useEffect(() => {
     if (!isOpen) return;
     const handler = (e: KeyboardEvent) => {
@@ -85,7 +102,7 @@ const Modal: React.FC<Props> = ({
     }
   }, [isOpen]);
 
-  return (
+  const node = (
     <div
       /*
         上下一定留距離，而且不小於系統安全區（瀏海、底部橫條）。
@@ -168,6 +185,8 @@ const Modal: React.FC<Props> = ({
       </div>
     </div>
   );
+
+  return portalReady ? createPortal(node, document.body) : node;
 };
 
 export default Modal;

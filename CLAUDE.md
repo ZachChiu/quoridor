@@ -166,7 +166,7 @@ players/{ A?, B?, C? }/{ uid, displayName, joinedAt }
   所以關著的 Modal 遮罩要 `display:none`；換頁轉場（`WipeOverlay`）的根節點用 `absolute` 定位在目前的捲動位置而不是 `fixed` ——
   fixed 的話工具列會慢一拍染成磁磚色，畫面都換好了才變回來。上下各內縮 1px 沒有用，實測過。
 - **換語言是整頁跳轉**，瀏覽器的 back-forward cache 會把離開時的畫面凍結起來；會在整頁跳轉前打開的東西（語言選單）要在點下去時關掉，並在 `pageshow`（persisted）時再關一次。
-- **Modal** 共用 `app/components/Modal.tsx`。關閉時務必保留 `inert` ——
+- **Modal** 共用 `app/components/Modal.tsx`，掛載後一律用 portal 渲染到 `<body>`：祖先只要有 `backdrop-filter`／`filter`／`transform`，裡面的 `fixed` 就會改成相對那個祖先（規則頁毛玻璃頂部列裡的語言選單就這樣被壓成一條）。關閉時務必保留 `inert` ——
   只用 `opacity-0` 不會把內容移出無障礙樹。
 - **分享圖**（og:image）**每頁每語系各一張**，共 24 張，由
   `scripts/build-og-images.mjs` 產生到 `public/og/{page}-{locale}.png`，
