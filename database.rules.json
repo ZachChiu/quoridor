@@ -1,106 +1,104 @@
 {
   /*
-    Firebase Realtime Database 安全規則。
+    Firebase Realtime Database 安全規則 —— 線上跑的就是這一份。
 
-    在此之前這份規則不在版控裡，線上跑的是預設的「任何登入者都能寫任意
-    房間」—— 也就是知道 roomId 就能改別人對局的棋譜。這份檔案把它收斂成
-    「只有坐在這個房間裡的人能動這個房間」。
+    部署：Firebase Console → Realtime Database → 規則，整份貼上後按「發布」。
+    或 npx firebase-tools deploy --only database --project <project id>。
 
-    部署（需要你的 Firebase 帳號，我沒有憑證）：
-        npx firebase-tools login
-        npx firebase-tools deploy --only database --project <你的 project id>
-    或直接把內容貼進 Firebase Console → Realtime Database → 規則。
+    以線上原本那份為底（2026-09 由 Zach 提供），加上 feedback。
+    改之前先想清楚「線上正在跑的是哪一版程式」：規則一發布就生效，
+    程式要等下一次發版 —— 兩邊必須同時相容。
 
-    ── 為什麼不收得更緊 ─────────────────────────────────────────────
-    看起來「寫 wgf 的人必須是當前玩家」才對，也寫得出來：
-        root.child('rooms/'+$roomId+'/players/'
-                   + data.parent().child('currentPlayer').val() + '/uid')
+    ── 房間 ─────────────────────────────────────────────────────────
+    - 建房：只能建不存在的房，而且房主（A）必須是自己
+    - 座位：空位只能坐自己；已坐的位子只有本人能重寫（重整時程式不會重寫，
+      但留著不擋）。每個座位的欄位都驗證，多的一律拒絕
+    - 棋譜 wgf：**只有輪到的人**能寫。這可以做到，因為程式只有一個地方寫棋譜
+      （PlayClient 的同步 effect），寫入的 currentPlayer 已經是 engine 跳過
+      無事可做的玩家之後的下一位 —— 資料庫的 currentPlayer 不會落後。
+      （先前的註解說「自動跳過不寫回，所以不能這樣限制」，那是舊程式的事。）
+      **將來做回合倒數時要改這條**：逾時代打是別人替輪到的人寫。
+    - currentPlayer / status / winners：任一在座玩家。winners 必須能由投降的人
+      自己寫 —— 投降是唯一不能從棋譜推導的結束方式
+    - 房間多出來的欄位一律拒絕（$other）。新增欄位要先改這裡
 
-    但**不能這樣做**。自動跳過（某玩家所有棋子領地已定且無破牆機會）
-    是各客戶端從同一份 WGF 各自算出來、只推進本地 currentPlayer，
-    刻意不寫回 Firebase。因此 DB 裡的 currentPlayer 會落後一手，
-    被跳過的下一位玩家送出的合法回合會被這條規則擋掉 ——
-    畫面上只會看到「對手不動了」，而且很難查。
-
-    所以判斷停在「是不是這個房間的座上玩家」這一級。要再往上收，
-    得先讓自動跳過也寫回 Firebase，那是另一件事。
+    ── 回饋 ─────────────────────────────────────────────────────────
+    只能新增、沒有人讀得到（裡面可能有選填的聯絡方式）；我從 Console 讀，
+    Console 不受規則限制。uid 必須是本人、每個欄位有上限、多的欄位拒絕 ——
+    不然任何人都能用一段腳本塞進任意大小的資料、冒用別人的 uid。
   */
   "rules": {
     ".read": false,
     ".write": false,
-
     "rooms": {
       "$roomId": {
-        // 房間 ID 是 20 字元的 push key，猜不到；登入者可讀是觀戰的前提。
         ".read": "auth != null",
-
-        // 只允許「建立一個還不存在的房間」。已存在的房間落到下面各欄位的規則，
-        // 沒被列到的欄位就寫不了（規則不繼承拒絕，但也不會憑空授權）。
-        ".write": "auth != null && !data.exists()",
-
-        "id":         { ".validate": "newData.isString()" },
-        "playersNum": { ".validate": "newData.isNumber() && (newData.val() === 2 || newData.val() === 3)" },
-        "createdAt":  { ".validate": "newData.isNumber()" },
-
-        "wgf": {
-          ".write": "auth != null && (root.child('rooms/' + $roomId + '/players/A/uid').val() === auth.uid || root.child('rooms/' + $roomId + '/players/B/uid').val() === auth.uid || root.child('rooms/' + $roomId + '/players/C/uid').val() === auth.uid)",
-          // 實測 2 人局最長 561 字元、3 人局 477（見 app/game/wgfSize.test.ts，
-          // 各隨機打完 40 整局）。4096 留了七倍餘裕。
-          ".validate": "newData.isString() && newData.val().length < 4096"
-        },
-
-        "currentPlayer": {
-          ".write": "auth != null && (root.child('rooms/' + $roomId + '/players/A/uid').val() === auth.uid || root.child('rooms/' + $roomId + '/players/B/uid').val() === auth.uid || root.child('rooms/' + $roomId + '/players/C/uid').val() === auth.uid)",
-          ".validate": "newData.isString() && newData.val().matches(/^[ABC]$/)"
-        },
-
-        "status": {
-          ".write": "auth != null && (root.child('rooms/' + $roomId + '/players/A/uid').val() === auth.uid || root.child('rooms/' + $roomId + '/players/B/uid').val() === auth.uid || root.child('rooms/' + $roomId + '/players/C/uid').val() === auth.uid)",
-          ".validate": "newData.isString() && newData.val().matches(/^(waiting|opening|playing|finished)$/)"
-        },
-
-        /*
-          任何在座的玩家都寫得了。
-
-          原本只允許房主（A）—— 因為當時「遊戲自然結束」的確只有 A 會寫。
-          但投降是**投降的人自己寫**：那是唯一無法從棋譜推導出來的結束方式，
-          B 或 C 投降時若寫不進來，對手永遠不會知道這局結束了。
-          而且 update() 是原子的，winners 被擋會連同 status 一起失敗。
-
-          安全性上沒有放寬什麼：在座玩家本來就能寫任意 wgf，
-          而勝負完全由 wgf 決定 —— 能改棋譜的人本來就能決定結果。
-        */
-        "winners": {
-          ".write": "auth != null && (root.child('rooms/' + $roomId + '/players/A/uid').val() === auth.uid || root.child('rooms/' + $roomId + '/players/B/uid').val() === auth.uid || root.child('rooms/' + $roomId + '/players/C/uid').val() === auth.uid)"
-        },
-
+        ".write": "auth != null && !data.exists() && newData.child('players/A/uid').val() === auth.uid",
+        "id": { ".validate": "newData.isString()" },
+        "playersNum": { ".validate": "newData.val() === 2 || newData.val() === 3" },
+        "createdAt": { ".validate": "newData.isNumber()" },
         "players": {
-          "$slot": {
-            // 只能佔用空位，而且只能把自己放進去 —— 不能踢人，也不能冒名。
-            ".write": "auth != null && !data.exists() && newData.child('uid').val() === auth.uid",
-            ".validate": "newData.hasChildren(['uid', 'displayName', 'joinedAt']) && $slot.matches(/^[ABC]$/)"
-          }
-        }
+          "A": {
+            ".write": "auth != null && (!data.exists() ? newData.child('uid').val() === auth.uid : data.child('uid').val() === auth.uid)",
+            "uid": { ".validate": "newData.isString() && newData.val().length > 0" },
+            "displayName": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 40" },
+            "joinedAt": { ".validate": "newData.isNumber()" },
+            "$other": { ".validate": false }
+          },
+          "B": {
+            ".write": "auth != null && (!data.exists() ? newData.child('uid').val() === auth.uid : data.child('uid').val() === auth.uid)",
+            "uid": { ".validate": "newData.isString() && newData.val().length > 0" },
+            "displayName": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 40" },
+            "joinedAt": { ".validate": "newData.isNumber()" },
+            "$other": { ".validate": false }
+          },
+          "C": {
+            ".write": "auth != null && (!data.exists() ? newData.child('uid').val() === auth.uid : data.child('uid').val() === auth.uid)",
+            "uid": { ".validate": "newData.isString() && newData.val().length > 0" },
+            "displayName": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 40" },
+            "joinedAt": { ".validate": "newData.isNumber()" },
+            "$other": { ".validate": false }
+          },
+          "$other": { ".validate": false }
+        },
+        "wgf": {
+          ".write": "auth != null && ((data.parent().child('currentPlayer').val() === 'A' && data.parent().child('players/A/uid').val() === auth.uid) || (data.parent().child('currentPlayer').val() === 'B' && data.parent().child('players/B/uid').val() === auth.uid) || (data.parent().child('currentPlayer').val() === 'C' && data.parent().child('players/C/uid').val() === auth.uid))",
+          ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 20000"
+        },
+        "currentPlayer": {
+          ".write": "auth != null && (data.parent().child('players/A/uid').val() === auth.uid || data.parent().child('players/B/uid').val() === auth.uid || data.parent().child('players/C/uid').val() === auth.uid)",
+          ".validate": "newData.val() === 'A' || newData.val() === 'B' || newData.val() === 'C'"
+        },
+        "status": {
+          ".write": "auth != null && (data.parent().child('players/A/uid').val() === auth.uid || data.parent().child('players/B/uid').val() === auth.uid || data.parent().child('players/C/uid').val() === auth.uid)",
+          ".validate": "newData.val() === 'waiting' || newData.val() === 'opening' || newData.val() === 'playing' || newData.val() === 'finished'"
+        },
+        "winners": {
+          ".write": "auth != null && (data.parent().child('players/A/uid').val() === auth.uid || data.parent().child('players/B/uid').val() === auth.uid || data.parent().child('players/C/uid').val() === auth.uid)",
+          "$index": { ".validate": "newData.val() === 'A' || newData.val() === 'B' || newData.val() === 'C' || newData.val() === 'draw'" }
+        },
+        "$other": { ".validate": false }
       }
     },
-
-    /*
-      玩家回饋。**唯寫**：任何人都送得出來，但沒有人讀得到 ——
-      裡面會有選填的聯絡方式，那是個人資料，不能讓別的玩家撈走。
-      （我自己從 Firebase Console 讀，Console 不受規則限制。）
-
-      只允許新增不允許覆寫：$entryId 是 push key，永遠是新的；
-      加上 !data.exists() 之後，即使有人猜到既有的 key 也改不了內容。
-    */
     "feedback": {
       ".read": false,
       "$entryId": {
         ".write": "auth != null && !data.exists()",
-        ".validate": "newData.hasChildren(['createdAt', 'rating', 'mode']) && newData.child('rating').isNumber() && newData.child('rating').val() >= 1 && newData.child('rating').val() <= 3",
+        ".validate": "newData.hasChildren(['uid', 'createdAt', 'rating', 'mode', 'wgf'])",
+        "uid": { ".validate": "newData.val() === auth.uid" },
+        "createdAt": { ".validate": "newData.isNumber()" },
+        "rating": { ".validate": "newData.val() === 1 || newData.val() === 2 || newData.val() === 3" },
         "message": { ".validate": "newData.isString() && newData.val().length <= 800" },
         "contact": { ".validate": "newData.isString() && newData.val().length <= 120" },
-        "wgf":     { ".validate": "newData.isString() && newData.val().length < 4096" },
-        "ua":      { ".validate": "newData.isString() && newData.val().length <= 400" }
+        "wgf": { ".validate": "newData.isString() && newData.val().length <= 20000" },
+        "mode": { ".validate": "newData.val() === 'local' || newData.val() === 'online' || newData.val() === 'ai'" },
+        "playersNum": { ".validate": "newData.val() === 2 || newData.val() === 3" },
+        "result": { ".validate": "newData.isString() && newData.val().length <= 40" },
+        "ended": { ".validate": "newData.val() === 'natural' || newData.val() === 'resign' || newData.val() === 'unfinished'" },
+        "ua": { ".validate": "newData.isString() && newData.val().length <= 400" },
+        "viewport": { ".validate": "newData.isString() && newData.val().length <= 40" },
+        "locale": { ".validate": "newData.isString() && newData.val().length <= 35" },
+        "$other": { ".validate": false }
       }
     }
   }
