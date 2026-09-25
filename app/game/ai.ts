@@ -25,6 +25,9 @@ const SETTINGS: Record<
   hard: { maxDepth: 3, budgetMs: 2500, noise: 0, beam: 10 },
 };
 
+/** 各難度的思考時間上限。測試用它驗「有沒有守住預算」，而不是另寫一個數字。 */
+export const aiBudgetMs = (difficulty: Difficulty): number => SETTINGS[difficulty].budgetMs;
+
 /** 評估函式的權重。 */
 const W = {
   /** 已確定（封閉且獨佔）的領地差距 —— 這是最終真正計分的東西。 */

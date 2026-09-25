@@ -5,6 +5,15 @@ import {
 } from '@/game/engine';
 import { computeTerritories } from '@/game/territory';
 
+/*
+  這幾項是整局整局地模擬，在 GitHub 的免費機器上會比 Mac 慢 2–3 倍。
+  vitest 預設單項 5 秒 —— 本機 2.5 秒的 400 場在 CI 上就會逾時，
+  而那不是程式壞了。（v26.9.2 第一次部署就是這樣失敗的；在本機同時跑
+  7 份把 CPU 塞滿可以重現。）
+*/
+const HEAVY_TIMEOUT_MS = 60_000;
+
+
 function rng(seed: number) { let s = seed >>> 0;
   return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 0x100000000); }
 
@@ -80,6 +89,6 @@ describe('隨機對局的不變量掃描', () => {
         for (const v of out.slice(0, 5)) console.log(`   seed ${v.seed} 第 ${v.turn} 回合 [${v.kind}] ${v.detail}`);
       }
       expect(out).toEqual([]);
-    });
+    }, HEAVY_TIMEOUT_MS);
   }
 });

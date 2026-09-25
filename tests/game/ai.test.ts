@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { chooseTurn, evaluateFor } from '@/game/ai';
+import { aiBudgetMs, chooseTurn, evaluateFor } from '@/game/ai';
 import { applyTurn, createGame, legalTurns, placeOpeningPiece } from '@/game/engine';
 import { computeTerritories } from '@/game/territory';
 import type { GameState, PlayerKey } from '@/game/types';
@@ -85,12 +85,20 @@ describe('chooseTurn', () => {
     ).toBe(true);
   });
 
-  it('困難難度每手在 2 秒內完成', () => {
+  /*
+    驗的是「守住自己的時間預算」，不是一個比預算還嚴的固定秒數。
+
+    先前寫死 < 2000ms，但困難的預算是 2500ms：Mac 夠快，1.3 秒就算完最深一層，
+    所以一直過；GitHub 的機器慢，會一路算到預算用完（實測 2501ms）—— 測試失敗，
+    程式卻完全照設計在跑（v26.9.2 第一次部署就是這樣失敗的）。
+    疊代加深只在節點之間檢查時間，會多出一點點，給 500ms。
+  */
+  it('困難難度守住時間預算，而且至少搜完一層', () => {
     const s = opened2P();
     const { elapsedMs, depth } = chooseTurn(s, { difficulty: 'hard' });
-    expect(elapsedMs).toBeLessThan(2000);
+    expect(elapsedMs).toBeLessThan(aiBudgetMs('hard') + 500);
     expect(depth).toBeGreaterThanOrEqual(1);
-  });
+  }, 30_000);
 
   it('三人局也能選出合法回合', () => {
     const s = runOpening(createGame(3), [[1, 1], [1, 5], [5, 3], [5, 1], [3, 5], [3, 1]]);
