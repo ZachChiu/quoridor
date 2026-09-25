@@ -65,14 +65,6 @@ const zhTW = {
     一句話超過十來個字，在 1200×630 上就得縮到看不清。
     改這裡要跑 npm run og:build 重建圖，CI 有 og:check 擋著。
   */
-  ogImage: {
-    home: '圍出最大的地盤 · 2–3 人對戰',
-    rules: '擺子、移動、築牆、圈地、計分',
-    local: '同一台裝置，2–3 人輪流下',
-    online: '把連結傳給朋友，點開就能一起下',
-    solo: '電腦對手分三級',
-    replay: '一手一手重看整局',
-  },
 
   ui: { next: '下一步', prev: '上一步', startGame: '開始遊戲', close: '關閉', pickLevel: '選擇難度' },
   error: { title: '出了點問題', body: '畫面執行時出錯了，重新整理通常就能恢復。連線對局的每一手都存在房間裡，重新整理後會接著下。', retry: '重新整理', home: '回首頁' },

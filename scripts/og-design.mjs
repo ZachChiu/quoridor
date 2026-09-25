@@ -108,11 +108,11 @@ export function poster({ tone, copy }) {
         borderRadius: 999, padding: '10px 24px', fontSize: 26, fontWeight: 700,
         marginBottom: 26,
       }, copy.kicker),
+      // 標題下面不放描述句（Zach：「描述我不喜歡，全部拔掉」）—— 圖只講是哪一頁
       ...copy.title.map((line, i) => div({
         fontSize: line.length > 9 ? 76 : 92, fontWeight: 900, lineHeight: 1.08,
-        marginBottom: i === copy.title.length - 1 ? 22 : 0,
+        marginBottom: i === copy.title.length - 1 ? 34 : 0,
       }, line)),
-      div({ fontSize: 30, fontWeight: 700, opacity: 0.82, marginBottom: 34 }, copy.line),
       div({ fontSize: 26, fontWeight: 900, opacity: 0.55 }, 'quoridorgame.com'),
     ]),
     board(),

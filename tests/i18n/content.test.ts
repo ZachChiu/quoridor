@@ -124,40 +124,6 @@ describe('站名', () => {
   });
 });
 
-describe('分享圖文案', () => {
-  const PAGES = ['home', 'rules', 'local', 'online', 'solo', 'replay'] as const;
-
-  it('六頁四語都有，而且不是空的', () => {
-    for (const l of LOCALES) {
-      const og = getMessages(l).ogImage;
-      for (const p of PAGES) {
-        expect(og[p], `${l}.ogImage.${p}`).toBeTruthy();
-        expect(og[p].trim().length, `${l}.ogImage.${p}`).toBeGreaterThan(0);
-      }
-    }
-  });
-
-  /*
-    1200×630 上這行字是 30px。超過四十個字元就得縮到看不清 ——
-    而那只有在別人把連結貼進聊天室時才看得到。
-  */
-  it('每一句都短得放得下（≤ 42 字元）', () => {
-    for (const l of LOCALES) {
-      const og = getMessages(l).ogImage;
-      for (const p of PAGES) {
-        expect(og[p].length, `${l}.ogImage.${p} = 「${og[p]}」`).toBeLessThanOrEqual(42);
-      }
-    }
-  });
-
-  it('同一個語系裡六句各不相同 —— 六頁共用一句就等於沒分頁', () => {
-    for (const l of LOCALES) {
-      const og = getMessages(l).ogImage;
-      expect(new Set(PAGES.map((p) => og[p])).size, l).toBe(PAGES.length);
-    }
-  });
-});
-
 describe('網址組合', () => {
   it('預設語系不加前綴，其餘加', () => {
     expect(localePath('zh-TW', '/')).toBe('/');

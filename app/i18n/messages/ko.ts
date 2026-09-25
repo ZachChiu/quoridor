@@ -54,14 +54,6 @@ const ko: Messages = {
   local: { metaTitle: '로컬 대전', srHeading: '로컬 대전 | 벽바둑 Wall Go' },
   online: { metaTitle: '온라인 대전', srHeading: '온라인 대전 | 벽바둑 Wall Go' },
   replay: { metaTitle: '기보 다시보기', metaDescription: '한 수씩 대국을 다시 볼 수 있습니다. 앞뒤로 이동도 자유롭습니다.', srHeading: '기보 다시보기 | 벽바둑 Wall Go', empty: '이 링크에는 기보가 없습니다', emptyBody: '다시보기 링크에는 기보가 필요합니다. 전체 링크를 다시 받아 주세요.', turn: '{total}수 중 {n}수', first: '처음으로', prev: '이전 수', play: '재생', pause: '일시정지', next: '다음 수', last: '마지막으로' },
-  ogImage: {
-    home: '가장 넓은 영역 차지하기 · 2~3인 대전',
-    rules: '배치 · 이동 · 벽 · 둘러싸기 · 점수',
-    local: '한 기기에서 2~3명이 번갈아',
-    online: '링크만 보내면 바로 같이',
-    solo: '컴퓨터 상대는 3단계',
-    replay: '한 수씩 처음부터 다시보기',
-  },
 
   ui: { next: '다음', prev: '이전', startGame: '게임 시작', close: '닫기', pickLevel: '난이도 선택' },
   error: { title: '문제가 발생했습니다', body: '화면을 처리하는 중 오류가 났습니다. 새로고침하면 대부분 복구됩니다. 온라인 대전은 방에 모든 수가 남아 있어 이어서 둘 수 있습니다.', retry: '새로고침', home: '홈으로' },

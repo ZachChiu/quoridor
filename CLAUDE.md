@@ -157,7 +157,8 @@ players/{ A?, B?, C? }/{ uid, displayName, joinedAt }
   只用 `opacity-0` 不會把內容移出無障礙樹。
 - **分享圖**（og:image）**每頁每語系各一張**，共 24 張，由
   `scripts/build-og-images.mjs` 產生到 `public/og/{page}-{locale}.png`，
-  版面在 `scripts/og-design.mjs`。改了 `ogImage.*` 文案要跑 `npm run og:build`，
+  版面在 `scripts/og-design.mjs`。圖上只有節目名與標題、**不放描述句**（Zach 拔掉的）。
+  改了標題相關文案（`metaTitle`、`titleLine1/2`、`showName`）要跑 `npm run og:build`，
   CI 有 `og:check` 擋著。
   **不要改用 Next 的 `opengraph-image.tsx`** —— 那個慣例產出的檔案沒有副檔名
   （`out/rules/opengraph-image-1mfdno`），`aws s3 sync` 推不出 Content-Type，
