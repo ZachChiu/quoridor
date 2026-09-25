@@ -39,6 +39,8 @@ export type GameText = {
     matchOver: string; winner: string; feedback: string;
     seeBoard: string; playAgain: string; squares: string; seeResult: string;
   };
+  /** 首頁右上角的「聯絡我們」：同一個回饋視窗，但不綁某一局（沒有棋譜、評分選填）。 */
+  contact: { button: string; heading: string; kicker: string; ratingLabel: string; placeholder: string; note: string; sentBody: string };
   feedback: {
     bad: string; ok: string; good: string; sent: string; heading: string; kicker: string;
     sending: string; submit: string; ratingLabel: string; placeholder: string;
@@ -90,6 +92,12 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       draw: '平局', win: '{names}勝利',
       matchOver: '對局結束', winner: '勝方', feedback: '給點意見',
       seeBoard: '看看棋盤', playAgain: '再來一局', squares: '格', seeResult: '看結算',
+    },
+    contact: {
+      button: '聯絡我們', heading: '聯絡我們', kicker: '給開發者的話',
+      ratingLabel: '玩起來的感覺（選填）', placeholder: '想說什麼都可以：哪裡怪怪的、想要什麼功能，或單純打個招呼',
+      note: '會一併送出你的裝置資訊（瀏覽器、螢幕大小），方便我重現問題。',
+      sentBody: '每一則我都會讀。有留聯絡方式的話，我會回覆你。',
     },
     feedback: {
       bad: '很卡', ok: '還行', good: '很好玩', sent: '收到了，謝謝',
@@ -158,6 +166,12 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       matchOver: 'Match over', winner: 'Winner', feedback: 'Send feedback',
       seeBoard: 'Look at the board', playAgain: 'Play again', squares: 'squares', seeResult: 'See the result',
     },
+    contact: {
+      button: 'Contact', heading: 'Get in touch', kicker: 'A note to the developer',
+      ratingLabel: 'How it feels to play (optional)', placeholder: 'Anything goes: something that looks off, a feature you want, or just hello',
+      note: 'Your device details (browser, screen size) are sent along so I can reproduce problems.',
+      sentBody: 'I read every message. If you left a way to reach you, I will reply.',
+    },
     feedback: {
       bad: 'Rough', ok: 'Fine', good: 'Great fun', sent: 'Got it — thank you',
       heading: 'How was that game?', kicker: 'A note to the developer', sending: 'Sending…', submit: 'Send',
@@ -225,6 +239,12 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       matchOver: '対局終了', winner: '勝者', feedback: '意見を送る',
       seeBoard: '盤面を見る', playAgain: 'もう一局', squares: 'マス', seeResult: '結果を見る',
     },
+    contact: {
+      button: 'お問い合わせ', heading: 'お問い合わせ', kicker: '開発者へのひとこと',
+      ratingLabel: '遊んでみた感想（任意）', placeholder: '何でもどうぞ：おかしな所、ほしい機能、ひとことのあいさつでも',
+      note: '問題を再現できるよう、端末の情報（ブラウザ、画面サイズ）も一緒に送られます。',
+      sentBody: 'すべて目を通します。連絡先を書いてくれた方には返信します。',
+    },
     feedback: {
       bad: 'いまいち', ok: 'まあまあ', good: 'とても面白い', sent: '受け取りました。ありがとう',
       heading: '今の一局はどうでしたか？', kicker: '開発者へのひとこと', sending: '送信中…', submit: '送信',
@@ -291,6 +311,12 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       draw: '무승부', win: '{names} 승리',
       matchOver: '대국 종료', winner: '승자', feedback: '의견 보내기',
       seeBoard: '판 보기', playAgain: '다시 한 판', squares: '칸', seeResult: '결과 보기',
+    },
+    contact: {
+      button: '문의하기', heading: '문의하기', kicker: '개발자에게 한마디',
+      ratingLabel: '플레이해 본 느낌 (선택)', placeholder: '무엇이든 좋아요: 이상한 점, 원하는 기능, 간단한 인사도',
+      note: '문제를 재현할 수 있도록 기기 정보(브라우저, 화면 크기)도 함께 보내집니다.',
+      sentBody: '모든 메시지를 읽습니다. 연락처를 남겨 주시면 답장드릴게요.',
     },
     feedback: {
       bad: '답답함', ok: '괜찮음', good: '아주 재밌음', sent: '잘 받았습니다. 고맙습니다',

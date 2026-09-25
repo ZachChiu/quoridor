@@ -21,16 +21,17 @@ const SEATS: PlayerKey[] = ['A', 'B', 'C'];
  *
  * ── 配色 ──────────────────────────────────────────────────────────
  * 整塊是紙色面板，不是浮在頁面底色上的一堆文字 —— 後者沒有邊界，
- * 看起來像還沒載完。小字用靛藍（首頁「連線」磁磚的顏色），一眼知道
- * 自己在連線這條線上；按鈕用深墨。
+ * 看起來像還沒載完。小字用紫色，跟「邀請朋友加入」的 Modal 同色（Zach 指定）；
+ * 按鈕用深墨。
  *
  * 按鈕原本是琥珀，那是首頁「本機」磁磚的顏色 —— 擺在連線的畫面上是
  * 第二個不相干的色相，而且座位圓點本來就已經帶著玩家色了。
  * 深墨不屬於任何色相，放在哪裡都不會跟誰打架。
  *
  * ── 等待感 ────────────────────────────────────────────────────────
- * 空位的虛線圈**依序**呼吸（每個晚 0.35 秒），而不是一起閃。
+ * 空位的虛線圈慢慢轉、**依序**呼吸（每個晚 0.35 秒），而不是一起閃。
  * 一起閃是「這裡有東西在動」，依序才讀得出「下一個是這個位子」。
+ * 已入座的球：朋友坐下那一刻彈一下，之後輕輕浮動（動畫見 globals.css）。
  */
 const WaitingRoom: React.FC<Props> = ({ joinedCount, totalCount, onShare }) => {
   const g = useGameText();
@@ -41,7 +42,7 @@ const WaitingRoom: React.FC<Props> = ({ joinedCount, totalCount, onShare }) => {
   return (
     <div className="flex w-[min(22rem,90vw)] flex-col items-center gap-7 rounded-3xl bg-primary-50 px-8 py-10 text-center">
       <div>
-        <p className="text-xs font-bold tracking-widest text-tile-blue">{g.waiting.kicker}</p>
+        <p className="text-xs font-bold tracking-widest text-tile-purple">{g.waiting.kicker}</p>
         <h2 className="mt-1 text-3xl font-black">{g.waiting.heading}</h2>
       </div>
 
@@ -50,15 +51,18 @@ const WaitingRoom: React.FC<Props> = ({ joinedCount, totalCount, onShare }) => {
           const joined = i < joinedCount;
           return (
             <div key={p} className="flex w-16 flex-col items-center gap-2">
-              <div
-                className={`size-12 rounded-full ${
-                  joined ? '' : 'animate-seat-wait border-ink-soft/50 border-2 border-dashed'
-                }`}
-                style={joined
-                  ? { backgroundColor: playerVar(p) }
+              {joined ? (
+                // 外層浮動、內層彈跳：兩個都動 transform，分開才不會互相蓋掉
+                <div className="animate-seat-idle" style={{ animationDelay: `${i * 0.3}s` }}>
+                  <div className="animate-seat-join size-12 rounded-full" style={{ backgroundColor: playerVar(p) }} />
+                </div>
+              ) : (
+                <div
+                  className="animate-seat-wait size-12 rounded-full border-[3px] border-dashed border-tile-ink/35"
                   // 依座位順序錯開，讀起來是「一個一個在等」
-                  : { animationDelay: `${i * 0.35}s` }}
-              />
+                  style={{ animationDelay: `${i * 0.35}s` }}
+                />
+              )}
               <span className={`text-xs font-bold ${joined ? '' : 'text-ink-soft'}`}>
                 {joined ? g.players[p] : g.share.waiting}
               </span>

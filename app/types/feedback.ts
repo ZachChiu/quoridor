@@ -26,3 +26,15 @@ export type Feedback = {
   ua: string;
   viewport: string;
 };
+
+/**
+ * 首頁「聯絡我們」送出的留言。跟對局回饋存在同一個 feedback 底下，
+ * 以 mode: 'contact' 區分 —— 沒有棋譜、沒有結果，評分選填。
+ */
+export type ContactMessage = {
+  rating?: 1 | 2 | 3;
+  message: string;
+  contact?: string;
+  ua: string;
+  viewport: string;
+};

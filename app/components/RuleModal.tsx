@@ -108,6 +108,14 @@ const RuleModal: React.FC = () => {
       icon={GiRuleBook}
       band={{ className: 'bg-tile-forest', fg: 'text-tile-cream' }}
       onKeyDown={onKeyDown}
+      /*
+        不要捲軸（Zach 說的）。放不下的時候縮的是盤面，不是讓內容捲：
+        盤面寬度跟著可視高度走（見下方軌道裡的 clamp）。
+        手機橫放那種矮到連最小盤面都塞不下的，改成盤面在左、文字在右，
+        面板順勢加寬。真的還是超出一點時仍可以滑，只是不畫出捲軸。
+      */
+      panelClassName="short:max-w-2xl"
+      bodyClassName="short:py-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       footer={
         <>
           {step > 0 && (
@@ -150,14 +158,18 @@ const RuleModal: React.FC = () => {
           }}
         >
           {STEPS.map((st, i) => (
-            <div key={i} className="w-full shrink-0 px-0.5">
-              <div className="mx-auto w-full max-w-[240px]">
+            <div key={i} className="w-full shrink-0 px-0.5 short:flex short:items-start short:gap-5">
+              {/* 盤面寬度 = 可視高度扣掉色帶、文字、按鈕約 33rem，夾在 120–200px。
+                  矮螢幕並排時改扣色帶與按鈕就好。 */}
+              <div className="mx-auto w-[clamp(6rem,calc(100dvh-33rem),12.5rem)] short:mx-0 short:w-[clamp(6rem,calc(100dvh-16rem),10rem)] short:shrink-0">
                 <TutorialBoard {...st.board} />
               </div>
               {/* 標題搬進軌道裡 —— 留在色帶上的話，滑動時內容在移動、
                   標題卻是瞬間換掉，兩者對不起來。 */}
-              <h3 className="mt-4 text-base font-black leading-snug">{text[i].title}</h3>
-              <p className="mt-1.5 min-h-28 whitespace-pre-line text-sm leading-relaxed">{text[i].body}</p>
+              <div className="short:min-w-0 short:flex-1">
+                <h3 className="mt-4 text-base font-black leading-snug short:mt-0">{text[i].title}</h3>
+                <p className="mt-1.5 min-h-28 whitespace-pre-line text-sm leading-relaxed short:min-h-0">{text[i].body}</p>
+              </div>
             </div>
           ))}
         </div>

@@ -25,6 +25,8 @@ export default {
         'coarse-port': {'raw': '(pointer: coarse) and (orientation: portrait)'},
         'coarse-land': {'raw': '(pointer: coarse) and (orientation: landscape)'},
         'fine': {'raw': '(pointer: fine)'},
+        // 矮到直向排版放不下的橫向畫面（手機橫放）。遊玩方式 Modal 改成左右並排
+        'short': {'raw': '(orientation: landscape) and (max-height: 32rem)'},
       },
       colors: {
         // Tailwind 預設的 gray-900 是帶藍的 #111827，壓在奶油底上偏冷。

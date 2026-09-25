@@ -51,3 +51,19 @@ describe('sendFeedback', () => {
     expect(payload.uid).toBe('uid-from-ensureUser');
   });
 });
+
+describe('sendContact（首頁「聯絡我們」）', () => {
+  beforeEach(() => set.mockClear());
+
+  it('mode 是 contact、不帶棋譜，沒填的選填欄位不出現', async () => {
+    const { sendContact } = await import('@/utils/gameService');
+    await sendContact({ message: '想要四人局', rating: undefined, contact: undefined, ua: 'x', viewport: '1x1@1' }, 'uid-9');
+    const payload = (set.mock.calls[0] as unknown[])[1] as Record<string, unknown>;
+    expect(payload.mode).toBe('contact');
+    expect(payload.uid).toBe('uid-9');
+    expect(payload.message).toBe('想要四人局');
+    expect('wgf' in payload).toBe(false);
+    expect('rating' in payload).toBe(false);
+    expect('contact' in payload).toBe(false);
+  });
+});

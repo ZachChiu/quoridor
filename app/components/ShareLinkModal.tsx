@@ -112,8 +112,9 @@ const ShareLinkModal: React.FC<Props> = ({ isOpen, shareUrl, joinedCount, totalC
           return (
             <div key={p} className="flex items-center gap-2">
               <div
-                className={`size-6 rounded-full ${joined ? '' : 'border-ink-soft/50 border-2 border-dashed'}`}
-                style={joined ? { backgroundColor: playerVar(p) } : undefined}
+                // 跟等待畫面同一套：空位是會轉的虛線圈、入座時彈一下
+                className={`size-6 rounded-full ${joined ? 'animate-seat-join' : 'animate-seat-wait border-2 border-dashed border-tile-ink/35'}`}
+                style={joined ? { backgroundColor: playerVar(p) } : { animationDelay: `${i * 0.35}s` }}
               />
               <span className={`text-xs font-bold ${joined ? '' : 'text-ink-soft'}`}>
                 {joined ? g.players[p] : g.share.waiting}
