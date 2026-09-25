@@ -28,7 +28,8 @@ import SurrenderConfirmModal from "@/components/SurrenderConfirmModal";
 
 import type { Direction } from "@/types/chessboard";
 
-import { joinRoom, getRoom, subscribeRoom, updateGameState, setRoomWinner, sendFeedback } from '@/utils/gameService';
+import { joinRoom, getRoom, subscribeRoom, updateGameState, setRoomWinner, sendFeedback, releaseConnection } from '@/utils/gameService';
+import { withTimeout } from '@/utils/withTimeout';
 import { useUser } from '@/contexts/UserContext';
 import type { Room, RoomPlayer } from '@/types/room';
 
@@ -348,6 +349,9 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
 
   // 避免自己寫入 Firebase 的內容又觸發自己重播
   const lastAppliedWgf = useRef<string>('');
+  // 最後一次送出棋譜的寫入。結束後要等它真的送到才能斷線 ——
+  // 斷線時沒送出的寫入會被 SDK 存著等重連，對手就永遠看不到最後一手。
+  const lastWrite = useRef<Promise<void>>(Promise.resolve());
   /*
     有沒有先讀到房間的棋譜。
 
@@ -427,10 +431,10 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
       try {
         // Firebase 的載入與匿名登入延後到這裡才觸發，
         // 因此本機對戰（無 roomId）完全不會下載 Firebase SDK。
-        const uid = await ensureUser();
+        const uid = await withTimeout(ensureUser());
         if (cancelled) return;
 
-        const existing = await getRoom(roomId!);
+        const existing = await withTimeout(getRoom(roomId!));
         if (cancelled) return;
         if (!existing) {
           setError('noRoom');
@@ -457,7 +461,7 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
             displayName: fmt(g.play.playerName, { id: uid.slice(0, 4).toUpperCase() }),
             joinedAt: Date.now(),
           };
-          await joinRoom(roomId!, next, player);
+          await withTimeout(joinRoom(roomId!, next, player));
           assignedKey = next;
         }
 
@@ -559,15 +563,22 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
       localWgf: wgf, lastApplied: lastAppliedWgf.current,
     })) return;
     lastAppliedWgf.current = wgf;
-    updateGameState(roomId, wgf, state.currentPlayer);
+    lastWrite.current = updateGameState(roomId, wgf, state.currentPlayer).catch(() => {});
   }, [state, isOnline, roomId]);
 
   // 遊戲結束時寫入勝者資訊。平常由房主（A）負責；投降的人不論是誰都要寫 ——
   // 投降是唯一不能從棋譜推導的結束方式，不寫的話對手永遠不會知道。
+  //
+  // 寫完（或輪不到自己寫）就把資料庫連線還回去：這局已經結束，房間不會再變，
+  // 而免費方案同時只有 100 條連線 —— 停在結算畫面的人不該佔著名額。
+  // 之後若要送回饋，gameService 會自己再連上。
   useEffect(() => {
     if (!isOnline || !roomId || outcome.length === 0) return;
-    if (myPlayerKey !== 'A' && !resigned) return;
-    setRoomWinner(roomId, outcome);
+    const writer = myPlayerKey === 'A' || resigned;
+    void Promise.all([
+      lastWrite.current,
+      writer ? setRoomWinner(roomId, outcome).catch(() => {}) : undefined,
+    ]).finally(() => { void releaseConnection(); });
   }, [isOnline, roomId, myPlayerKey, outcome, resigned]);
 
   // ─── 操作 ────────────────────────────────────────────────────────────────────
@@ -871,7 +882,7 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
                 ua: typeof navigator !== 'undefined' ? navigator.userAgent.slice(0, 400) : '',
                 viewport: typeof window !== 'undefined'
                   ? `${window.innerWidth}x${window.innerHeight}@${window.devicePixelRatio}` : '',
-              }, await ensureUser())
+              }, await ensureUser()).finally(() => { void releaseConnection(); })
             }
           />
 

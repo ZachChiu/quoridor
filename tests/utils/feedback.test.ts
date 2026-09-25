@@ -14,6 +14,8 @@ vi.mock('firebase/database', () => ({
   ref: vi.fn(() => ({})),
   push: vi.fn(() => ({})),
   set: (...args: unknown[]) => set(...(args as [])),
+  goOnline: vi.fn(),
+  goOffline: vi.fn(),
 }));
 vi.mock('@/utils/firebase', () => ({
   getFirebaseDb: vi.fn(async () => ({})),

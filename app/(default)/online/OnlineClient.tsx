@@ -14,6 +14,7 @@ import { useUser } from '@/contexts/UserContext';
 import { createRoom } from '@/utils/gameService';
 import { parseOnlineHash, type OnlineTarget } from '@/utils/gameMode';
 import { createGame, toWgf } from '@/game/engine';
+import { withTimeout } from '@/utils/withTimeout';
 
 export default function OnlineClient() {
   const g = useGameText();
@@ -48,12 +49,12 @@ export default function OnlineClient() {
     creating.current = true;
     void (async () => {
       try {
-        const uid = await ensureUser();
-        const roomId = await createRoom(createCount, 'A', {
+        const uid = await withTimeout(ensureUser());
+        const roomId = await withTimeout(createRoom(createCount, 'A', {
           uid,
           displayName: fmt(g.play.playerName, { id: uid.slice(0, 4).toUpperCase() }),
           joinedAt: Date.now(),
-        }, toWgf(createGame(createCount)));
+        }, toWgf(createGame(createCount))));
         history.replaceState(null, '', `${location.pathname}#roomId=${roomId}`);
         setTarget({ roomId });
       } catch (err) {

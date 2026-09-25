@@ -31,7 +31,22 @@ export type { Feedback } from '@/types/feedback';
 /** 同時取得 RTDB 實例與所需的 database 函式。 */
 async function rtdb() {
   const [mod, db] = await Promise.all([import('firebase/database'), getFirebaseDb()]);
+  // 可能先前被 releaseConnection 斷開過（例如結算後又送回饋）—— 用之前接回來。
+  // goOnline 本來就連著時什麼都不做。
+  mod.goOnline(db);
   return { ...mod, db };
+}
+
+/**
+ * 把資料庫連線還回去。
+ *
+ * 免費方案（Spark）同時只有 100 條連線，一個分頁佔一條，而且 SDK 預設
+ * 會一直連著直到關掉分頁。對局結束停在結算畫面、送完回饋還在看的人，
+ * 都在佔名額卻用不到。之後任何 gameService 的操作會自己再接上（見 rtdb）。
+ */
+export async function releaseConnection(): Promise<void> {
+  const [{ goOffline }, db] = await Promise.all([import('firebase/database'), getFirebaseDb()]);
+  goOffline(db);
 }
 
 // ─── Create / Join ────────────────────────────────────────────────────────────
