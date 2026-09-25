@@ -3,7 +3,7 @@ import { useState } from "react";
 import { GiBrain, GiMeshNetwork, GiRuleBook, GiTabletopPlayers, GiThreeFriends, GiWireframeGlobe } from "react-icons/gi";
 import { useTransition } from "@/contexts/TransitionContext";
 import { gameHash, newRoomHash } from '@/utils/gameMode';
-import { trackButtonClick } from "@/utils/analytics";
+import { track } from "@/utils/analytics";
 // Game Icons（game-icons.net，CC BY 3.0）—— react-icons 已內建，不需另外安裝。
 // 選它而不是線條圖示：參考稿的圖示是實心剪影壓在色塊上，
 // Lucide 的細線在大尺寸的彩色磁磚上會顯得單薄。
@@ -57,16 +57,16 @@ export default function HomeClient() {
     // 人數寫在路由裡 —— 不寫的話重整就掉回兩人，而且靜態 HTML 也會先
     // 畫一次兩人盤（見 (default)/local/[players]/page.tsx）
     navigate(localePath(locale, playersNum === 3 ? '/local/3' : '/local'), { wipe: wipeFrom(origin) });
-    trackButtonClick(`start_local_game_${playersNum}p`);
+    track('mode_select', { mode: 'local', players: playersNum === 3 ? 3 : 2, source: 'home' });
   };
 
   const startSolo = (aiDifficulty: Difficulty, at: { x: number; y: number }) => {
     setSoloOpen(false);
     setGameState({ ...gameState, playersNum: 2, aiDifficulty });
-    // 難度選單的按鈕是白底（bg-primary-50），擴散就該是白的 ——
+    // 難度選單的按鈕是奶油底上的淡灰卡片，擴散用奶油色才接得上 ——
     // 用陶橘會變成「按了白鈕卻噴出橘色」，對不上自己按的東西。
     navigate(localePath(locale, '/solo') + gameHash({ aiDifficulty }), { wipe: { ...at, color: 'rgb(var(--tile-cream))' } });
-    trackButtonClick(`start_solo_game_${aiDifficulty}`);
+    track('mode_select', { mode: 'solo', players: 2, difficulty: aiDifficulty, source: 'home' });
   };
 
   // 滑過或 focus 到連線磁磚就先把 Firebase 載起來並匿名登入。
@@ -82,7 +82,7 @@ export default function HomeClient() {
   */
   const startConnect = (playersNum: 2 | 3, origin: TileOrigin) => {
     navigate(localePath(locale, '/online') + newRoomHash(playersNum), { wipe: wipeFrom(origin) });
-    trackButtonClick(`start_connect_game_${playersNum}p`);
+    track('mode_select', { mode: 'online', players: playersNum, source: 'home' });
   };
 
   /*

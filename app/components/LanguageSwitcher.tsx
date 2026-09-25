@@ -5,6 +5,7 @@ import { LuGlobe, LuCheck } from 'react-icons/lu';
 import Modal from './Modal';
 import { LOCALES, LOCALE_NAME, localeFromPath, localePath, stripLocale } from '@/i18n/locales';
 import { useMessages } from '@/i18n/LocaleProvider';
+import { track } from '@/utils/analytics';
 
 /**
  * 語言切換。
@@ -98,6 +99,8 @@ export default function LanguageSwitcher({ onDark = false }: { onDark?: boolean 
                 <a
                   href={localePath(l, bare)}
                   hrefLang={l}
+                  // gtag 預設走 sendBeacon，整頁跳走也送得出去
+                  onClick={() => track('locale_switch', { from: current, to: l })}
                   className={`${row} bg-primary-50 text-tile-ink hover:brightness-95`}
                 >
                   {LOCALE_NAME[l]}
