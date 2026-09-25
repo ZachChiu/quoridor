@@ -46,7 +46,31 @@ CloudFront → Distribution → **Error pages** → Create custom error response
 CloudFront Function 上線之後，那一頁實際上就不會再被執行（301 發生在更前面），
 留著是為了萬一 function 沒部署時連結還是能用。
 
-部署指令見該檔案開頭的註解。
+**第一次手動建立並綁定**（Console：CloudFront → Functions → Create function，
+名稱 `wallgo-redirects`、Runtime `cloudfront-js-2.0`，貼上檔案內容 → Publish；
+再到 distribution 的 Behaviors → Default (*) → Viewer request 綁上它）。
+
+**之後由部署自動更新**：`deploy.yml` 在 main 部署時會跑
+`scripts/deploy-cloudfront-function.sh` —— 更新到 DEVELOPMENT、用 test-function
+實際測幾個網址（/match 要 301、/rules/ 要補 index.html、圖片原樣放行），
+**全過才 publish 到 LIVE**。還沒建立就跳過；缺權限或測試沒過會出黃色警告，
+但不擋網站部署，線上維持舊版。
+
+部署用的 IAM 要多這五個權限（針對這支 function 即可）：
+
+```json
+{
+  "Effect": "Allow",
+  "Action": [
+    "cloudfront:DescribeFunction",
+    "cloudfront:GetFunction",
+    "cloudfront:UpdateFunction",
+    "cloudfront:TestFunction",
+    "cloudfront:PublishFunction"
+  ],
+  "Resource": "arn:aws:cloudfront::<帳號 ID>:function/wallgo-redirects"
+}
+```
 
 **綁上去之前先看 Default (*) behavior 的 Viewer request 有沒有已經綁著別的 function。**
 每個 behavior 只能綁一個，綁新的會把舊的換掉。這支已經把常見的那件事

@@ -108,6 +108,15 @@ jobs:
         run: |
           aws cloudfront create-invalidation --distribution-id ${{ env.PROD_CLOUDFRONT_DISTRIBUTION_ID }} --paths "/*"
 
+      # 301 轉址＋目錄網址補 index.html（infra/cloudfront-redirects.js）。
+      # 只在 main 跑：function 是整個帳號共用的，dev 部署時更新會直接影響正式站。
+      # continue-on-error：這一步出問題（還沒建立、缺權限、測試沒過）不該擋住網站部署；
+      # 測試沒過時腳本不會發布，線上維持舊版，GitHub 上會出現黃色警告。
+      - name: 更新 CloudFront Function（轉址）
+        if: github.ref == 'refs/heads/main'
+        continue-on-error: true
+        run: bash scripts/deploy-cloudfront-function.sh
+
       - name: 清除 CloudFront 快取 - 開發環境
         env:
           DEV_CLOUDFRONT_DISTRIBUTION_ID: ${{ secrets.DEV_CLOUDFRONT_DISTRIBUTION_ID }}
