@@ -88,7 +88,8 @@ export const TransitionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   /*
     閒置時先把動畫用的 chunk 載起來。
 
-    WipeOverlay 與 anime.js 都是動態載入的（約 15 KB gzip，不該進首包）。
+    WipeOverlay 是動態載入的（不該進首包）。動畫本身已改用瀏覽器原生的
+    Web Animations API，不再需要下載 anime.js。
     但那表示第一次按下磁磚時要先下載才會動 —— 實測開頭約 330ms 畫面
     完全沒反應，按起來像沒按到。
 
@@ -98,7 +99,6 @@ export const TransitionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   useEffect(() => {
     const warm = () => {
       void import('@/components/WipeOverlay').catch(() => {});
-      void import('animejs').catch(() => {});
     };
     if (typeof window === 'undefined') return;
     // 必須用 window.requestIdleCallback(...) 而不是先取出函式再呼叫 ——
