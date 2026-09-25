@@ -162,13 +162,16 @@ players/{ A?, B?, C? }/{ uid, displayName, joinedAt }
 - **字型子集**由 `scripts/build-font-subset.mjs` 從原始碼推導（註解會先剝掉）。
   改文案後要跑 `npm run font:subset`，否則新字會**安靜地**掉到系統備援字體；
   CI 有 `font:check` 擋著。
+- **蓋滿畫面的東西不要剛好等於畫面高度**。手機工具列會隨捲動展開／收起，`inset:0`、`100lvh`、`100dvh` 各在某個瀏覽器／狀態下露底（Safari 與 iPhone 上的 Chrome 各被咬過）。
+  Modal 遮罩（`.cover-viewport`）上下各往外多蓋 `max(25vh, 12rem)`，fixed 超出畫面會被裁掉、不產生捲軸；手機控制盤用 `::after` 往下延伸同色底；
+  換頁轉場是 absolute（多蓋會撐長頁面），改由 JS 量 `innerHeight`／`visualViewport` 設高度。模擬器裡沒辦法用手指把工具列收起來，這類問題以「不依賴任何單位」的寫法處理，不要再換單位。
 - **iOS 26 Safari 的工具列顏色**取自「貼著畫面上下緣的 fixed 元素」（不看 theme-color、不管祖先的 opacity），而且反應慢半秒。
   所以關著的 Modal 遮罩要 `display:none`；換頁轉場（`WipeOverlay`）的根節點用 `absolute` 定位在目前的捲動位置而不是 `fixed` ——
   fixed 的話工具列會慢一拍染成磁磚色，畫面都換好了才變回來。上下各內縮 1px 沒有用，實測過。
 - **換頁轉場用瀏覽器原生的 Web Animations API**（`element.animate()`），不用 JS 每格寫 style。transform 由合成執行緒（GPU）跑，換頁時 React 佔住主執行緒也不會凍住動畫 —— 先前用 anime.js，主執行緒卡住的 400ms 內畫面 0 格，手機上一直卡。圖示的反向縮放（色塊 s、圖示 1/s）事先取樣成關鍵影格（`components/wipeKeyframes.ts`，自適應取樣、誤差 <1% 由測試鎖住）。**不要再加回每格由 JS 驅動的動畫。**
 - **站內換頁的歷史紀錄要在點擊當下建立**（`TransitionContext.navigate` 先 `pushState` 複製目前紀錄，動畫播完才 `router.replace`）。WebKit（Safari 與 iPhone 上的 Chrome）會把「沒有使用者手勢時 JS 新增過紀錄」的那一頁在返回時跳過；動畫播完才 push 就沒有手勢了，從規則頁按返回會越過首頁。沒有手勢的 `replaceState` 不受影響（實測）。**驗證這類問題要用瀏覽器真正的返回（WebDriver `/back`），`history.back()` 不會跳過，測不出來。**
 - **換語言是整頁跳轉**，瀏覽器的 back-forward cache 會把離開時的畫面凍結起來；會在整頁跳轉前打開的東西（語言選單）要在點下去時關掉，並在 `pageshow`（persisted）時再關一次。
-- **Modal** 共用 `app/components/Modal.tsx`，掛載後一律用 portal 渲染到 `<body>`：祖先只要有 `backdrop-filter`／`filter`／`transform`，裡面的 `fixed` 就會改成相對那個祖先（規則頁毛玻璃頂部列裡的語言選單就這樣被壓成一條）。關閉時務必保留 `inert` ——
+- **Modal** 共用 `app/components/Modal.tsx`，掛載後一律用 portal 渲染到 `<body>`，層級固定 `z-[55]`（頁面元件最高 z-50、換頁轉場 z-[60]；不能與頁面同層級，站內換頁後新頁面會排到 portal 後面蓋過 Modal）：祖先只要有 `backdrop-filter`／`filter`／`transform`，裡面的 `fixed` 就會改成相對那個祖先（規則頁毛玻璃頂部列裡的語言選單就這樣被壓成一條）。關閉時務必保留 `inert` ——
   只用 `opacity-0` 不會把內容移出無障礙樹。
 - **分享圖**（og:image）**每頁每語系各一張**，共 24 張，由
   `scripts/build-og-images.mjs` 產生到 `public/og/{page}-{locale}.png`，
@@ -181,6 +184,13 @@ players/{ A?, B?, C? }/{ uid, displayName, joinedAt }
   字型必須是 TTF/OTF/WOFF，satori 不吃 woff2；Google Fonts 只有在
   **不送 User-Agent** 時才回 TrueType。
   盤面上不放任何灰點 —— 那不代表任何規則，只會讓人以為那些格子有什麼特別。
+
+### 離開前確認與重整接回
+
+- **瀏覽器自己的「確定要離開嗎？」（`beforeunload`）只在電腦版有用**：它只管整頁跳轉，站內換頁不觸發；iPhone 的 Safari 與 Chrome 完全不顯示。保留它給電腦版，但不能只靠它。
+- **房子鈕**：對局還沒結束就先開 `LeaveConfirmModal`。
+- **瀏覽器返回鍵**：對局頁第一次點擊時，在歷史紀錄最上面放一筆同網址的「守門」（`__wallgoGuard`）。按返回只是從守門退回真正那筆、頁面不換，`popstate` 裡攔下來問；離開就再退一步，不離開就把守門放回去。沒東西會丟（還沒下、已下完、連線還在等人）就自動替使用者再退一步。守門**必須在點擊當下 push**（WebKit 規則，見上方〈站內換頁〉那條），所以不等「有進度」才放。確認視窗開著時的點擊不放守門；重整後若停在守門上要先認出來。從房子鈕離開時用 `navigate(..., { replace: true })` 取代守門。
+- **重整接回**（本機、單人）：每一步把 WGF 寫進 sessionStorage（`utils/savedGame.ts`，只活在這個分頁），掛載時 `replay` 回來；分出勝負、重新開始、確認離開就清掉。從首頁磁磚或 `/solo` 選難度進來是新的一局（會清）。進行到一半的那一手不會保留。連線局本來就從 Firebase 接回。接回的那一下不送 GA 的 `game_start`。
 
 ## 單人對戰
 

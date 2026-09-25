@@ -143,11 +143,18 @@ export default function WallDirectionPad({
         false，於是手機一重整就會先畫出一次沒有控制盤的桌機版面、
         接著整個版面再跳一次。改成 media query 就沒有「之前」——
         第一幀就已經是對的。
+
+        底下那段 ::after 是往下延伸的同色底：手機瀏覽器工具列收起來時，
+        有些瀏覽器（iPhone 上的 Chrome）的 bottom-0 會停在工具列還在的位置，
+        控制盤底下就露出一截頁面。多往下蓋一段，超出畫面的部分本來就看不到。
+        理由跟 .cover-viewport 往外多蓋一樣（見 globals.css）。
       */
       className="bg-primary-50/95 fixed inset-x-0 bottom-0 z-40 hidden
                  h-[var(--wall-pad-h)] border-t-2 border-tile-ink/10 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2.5 backdrop-blur
                  coarse:block
-                 coarse-land:inset-y-0 coarse-land:left-auto coarse-land:right-0 coarse-land:flex coarse-land:h-auto
+                 coarse-port:after:pointer-events-none coarse-port:after:absolute coarse-port:after:inset-x-0 coarse-port:after:top-full coarse-port:after:h-[max(25vh,12rem)]
+                 coarse-port:after:bg-primary-50 coarse-port:after:content-[''] coarse-land:inset-y-0 coarse-land:left-auto
+                 coarse-land:right-0 coarse-land:flex coarse-land:h-auto
                  coarse-land:w-[var(--wall-pad-w)] coarse-land:flex-col coarse-land:justify-center coarse-land:border-l-2
                  coarse-land:border-t-0 coarse-land:pb-2 coarse-land:pr-[max(0.5rem,env(safe-area-inset-right))]"
     >

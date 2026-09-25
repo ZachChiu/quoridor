@@ -114,7 +114,18 @@ const WipeOverlay: React.FC<Props> = ({ phase, wipe, onDone }) => {
     每個階段開始時量一次（離場時 Next 已經把新頁面捲回頂端）。
   */
   useIsoLayoutEffect(() => {
-    if (rootRef.current) rootRef.current.style.top = `${window.scrollY}px`;
+    const root = rootRef.current;
+    if (!root) return;
+    /*
+      高度也用量的，不用 CSS 單位：工具列收起來時 dvh 在 iPhone 的 Chrome 上
+      不會跟著變大（Zach 回報 Modal 遮罩露底，同一個原因）。innerHeight 與
+      visualViewport 是瀏覽器「現在」回報的可視高度，取大的那個。
+      不能像 Modal 遮罩那樣往外多蓋 —— 這層是 absolute，多蓋會把頁面撐長。
+    */
+    const h = Math.max(window.innerHeight, window.visualViewport?.height ?? 0);
+    root.style.top = `${window.scrollY}px`;
+    root.style.bottom = 'auto';
+    root.style.height = `${Math.ceil(h)}px`;
   }, [phase, wipe]);
 
   useEffect(() => {

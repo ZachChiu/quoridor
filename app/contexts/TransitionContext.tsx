@@ -22,6 +22,11 @@ interface NavOptions {
   /** 蓋滿時顯示的字，例如進入對局時的「遊戲開始」。省略則只掃場不停留。 */
   /** 轉場形式。省略時用色帶。 */
   wipe?: Wipe;
+  /**
+   * 取代目前這筆歷史紀錄，不新增。對局頁有一筆「守門」紀錄（按返回時先問要不要離開，
+   * 見 PlayClient）；從房子鈕離開時要把它換掉，否則回首頁後按返回會先回到那筆守門。
+   */
+  replace?: boolean;
 }
 
 interface TransitionContextValue {
@@ -124,7 +129,7 @@ export const TransitionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         typeof window !== 'undefined' &&
         window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       if (reduce) {
-        router.push(href);
+        if (options?.replace) router.replace(href); else router.push(href);
         return;
       }
       /*
@@ -142,7 +147,7 @@ export const TransitionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       */
       // 轉場進行中又點了一次：不要再多建一筆紀錄（連點兩下會留下兩筆重複的上一頁）
       if (stateRef.current.phase !== 'idle' || busyRef.current) return;
-      window.history.pushState(window.history.state, '', window.location.href);
+      if (!options?.replace) window.history.pushState(window.history.state, '', window.location.href);
       const wipe = options?.wipe ?? {
         // 沒指定起點就從畫面中心擴散 —— 任何未來的呼叫端都不會壞
         x: window.innerWidth / 2,
