@@ -1,5 +1,6 @@
 'use client'
 import React, { useEffect, useRef } from 'react';
+import { useIsoLayoutEffect } from '@/hook/useIsoLayoutEffect';
 import type { IconType } from 'react-icons';
 
 export type WipePhase = 'cover' | 'uncover';
@@ -100,6 +101,22 @@ const WipeOverlay: React.FC<Props> = ({ phase, wipe, onDone }) => {
     doneRef.current = onDone;
   });
 
+  /*
+    根節點是 absolute、不是 fixed —— 為了 iOS 26 的 Safari。
+
+    Safari 會拿「貼著畫面上下緣的 fixed 元素」的顏色去染網址列與工具列，
+    但它的反應慢大約半秒：色塊蓋滿時工具列還是奶油色，色塊退開、棋盤都
+    出來了，工具列才變成磁磚色，再過一下才變回來（Zach 回報；模擬器上逐格截圖
+    量到）。上下緣各內縮 1px 沒用，改成 absolute 之後工具列從頭到尾都是奶油色。
+
+    absolute 是相對整份文件定位的，所以要自己放到目前的捲動位置 ——
+    頁面捲到一半時換頁，色塊才會蓋在看得到的地方，不是蓋在文件最上面。
+    每個階段開始時量一次（離場時 Next 已經把新頁面捲回頂端）。
+  */
+  useIsoLayoutEffect(() => {
+    if (rootRef.current) rootRef.current.style.top = `${window.scrollY}px`;
+  }, [phase, wipe]);
+
   useEffect(() => {
     const root = rootRef.current;
     if (!root) return;
@@ -197,6 +214,7 @@ const WipeOverlay: React.FC<Props> = ({ phase, wipe, onDone }) => {
     <div
       ref={rootRef}
       className="cover-viewport z-[60] overflow-hidden"
+      style={{ position: 'absolute' }}
       // 純裝飾，而且它蓋住整個畫面 —— 讀屏不該念它，焦點也不該跑進來
       aria-hidden="true"
     >

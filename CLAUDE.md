@@ -162,6 +162,10 @@ players/{ A?, B?, C? }/{ uid, displayName, joinedAt }
 - **字型子集**由 `scripts/build-font-subset.mjs` 從原始碼推導（註解會先剝掉）。
   改文案後要跑 `npm run font:subset`，否則新字會**安靜地**掉到系統備援字體；
   CI 有 `font:check` 擋著。
+- **iOS 26 Safari 的工具列顏色**取自「貼著畫面上下緣的 fixed 元素」（不看 theme-color、不管祖先的 opacity），而且反應慢半秒。
+  所以關著的 Modal 遮罩要 `display:none`；換頁轉場（`WipeOverlay`）的根節點用 `absolute` 定位在目前的捲動位置而不是 `fixed` ——
+  fixed 的話工具列會慢一拍染成磁磚色，畫面都換好了才變回來。上下各內縮 1px 沒有用，實測過。
+- **換語言是整頁跳轉**，瀏覽器的 back-forward cache 會把離開時的畫面凍結起來；會在整頁跳轉前打開的東西（語言選單）要在點下去時關掉，並在 `pageshow`（persisted）時再關一次。
 - **Modal** 共用 `app/components/Modal.tsx`。關閉時務必保留 `inert` ——
   只用 `opacity-0` 不會把內容移出無障礙樹。
 - **分享圖**（og:image）**每頁每語系各一張**，共 24 張，由
