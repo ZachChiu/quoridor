@@ -83,7 +83,12 @@ const Modal: React.FC<Props> = ({
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex items-center justify-center px-4 ${
+      /*
+        上下一定留距離，而且不小於系統安全區（瀏海、底部橫條）。
+        先前只有左右 px-4：手機瀏覽器底部有工具列時可視高度變小，
+        高的 Modal（遊玩方式）會貼齊上下兩端、按鈕壓到工具列（Zach 回報）。
+      */
+      className={`fixed inset-0 z-50 flex items-center justify-center px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] ${
         isOpen ? 'opacity-100' : 'pointer-events-none opacity-0'
       } transition-opacity duration-300`}
       role="dialog"
@@ -97,17 +102,28 @@ const Modal: React.FC<Props> = ({
       */
       {...(isOpen ? {} : { inert: true, 'aria-hidden': true })}
     >
-      <div className="fixed inset-0 bg-black/50" onClick={onClose}></div>
+      {/*
+        遮罩撐到最大可視高度（見 globals.css 的 .cover-viewport）；面板仍置中在看得到的範圍。
+
+        關閉時一定要 display: none（hidden），不能只靠外層的 opacity-0：
+        iOS 26 的 Safari 不看 theme-color，改拿「貼著畫面邊緣的 fixed 元素」的
+        background-color 染上下列 —— 而且**不管祖先的 opacity**。每頁都常駐好幾個
+        關著的 Modal，於是 Safari 的上下列永遠被染成米色疊 50% 黑的 #73706b
+        （Zach 回報「Safari 上下變灰色」，模擬器上量到）。開著的時候變暗是對的，
+        跟整個畫面一起被遮住。
+      */}
+      <div className={`cover-viewport bg-black/50 ${isOpen ? '' : 'hidden'}`} onClick={onClose}></div>
 
       <div
         ref={panelRef}
         tabIndex={-1}
-        className="relative w-full max-w-md overflow-hidden rounded-2xl bg-primary font-[family-name:var(--font-app)] outline-none"
+        // 最高就是可視高度；放不下時色帶與按鈕固定，只有中間的內容捲動
+        className="relative flex max-h-full w-full max-w-md flex-col overflow-hidden rounded-2xl bg-primary font-[family-name:var(--font-app)] outline-none"
       >
         {/* 色帶做成滿版（面板 overflow-hidden 負責切圓角），
             留白會讓它退化成一條「有底色的標題」，力道差很多。 */}
         <div
-          className={`flex items-start justify-between gap-3 px-6 py-5 ${band.className ?? ''} ${band.fg}`}
+          className={`flex shrink-0 items-start justify-between gap-3 px-6 py-5 ${band.className ?? ''} ${band.fg}`}
           style={band.style}
         >
           <div className="flex items-center gap-3">
@@ -128,7 +144,7 @@ const Modal: React.FC<Props> = ({
           </button>
         </div>
 
-        <div className="p-6">{children}</div>
+        <div className="min-h-0 overflow-y-auto overscroll-contain p-6">{children}</div>
 
         {/*
           按鈕尺寸由這一列決定，不由 Button 自己。
@@ -141,7 +157,7 @@ const Modal: React.FC<Props> = ({
           面板寬度是固定的，所以這裡不跟著斷點放大。
         */}
         {footer && (
-          <div className="flex gap-3 px-6 pb-6 [&_button]:p-3.5 [&_button]:text-base [&_button]:tracking-normal [&_button]:lg:p-4 [&_button]:lg:text-base">
+          <div className="flex shrink-0 gap-3 px-6 pb-6 [&_button]:p-3.5 [&_button]:text-base [&_button]:tracking-normal [&_button]:lg:p-4 [&_button]:lg:text-base">
             {footer}
           </div>
         )}
