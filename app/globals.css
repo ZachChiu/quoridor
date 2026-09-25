@@ -171,13 +171,33 @@ body {
 }
 .animate-active-bar { animation: bar-breathe 1.6s ease-in-out infinite; }
 
-/* 連線等待畫面的空位。縮放幅度刻意小（0.92）—— 這是背景狀態不是提示，
-   跳太大會讓人以為那是可以按的東西。 */
+/* 連線等待畫面的座位。
+
+   空位：虛線圈慢慢轉、同時輕輕呼吸 —— 轉動讀起來是「還在等」。縮放幅度刻意小
+   （0.92），這是背景狀態不是提示，跳太大會讓人以為那是可以按的東西。
+   最低不透明度 0.7：先前 0.55 配半透明的虛線，手機上幾乎看不到（Zach 回報）。
+
+   已入座：有人坐下那一刻彈一下（seat-join），之後輕輕上下浮動（seat-idle）。
+   兩個動畫都動 transform，所以浮動放在外層、彈跳放在內層，不會互相蓋掉。 */
 @keyframes seat-wait {
-  0%, 100% { transform: scale(1); opacity: 0.55; }
-  50%      { transform: scale(0.92); opacity: 1; }
+  0%   { transform: rotate(0deg) scale(1); opacity: 0.7; }
+  50%  { transform: rotate(180deg) scale(0.92); opacity: 1; }
+  100% { transform: rotate(360deg) scale(1); opacity: 0.7; }
 }
-.animate-seat-wait { animation: seat-wait 1.8s ease-in-out infinite; }
+.animate-seat-wait { animation: seat-wait 3.6s linear infinite; }
+
+@keyframes seat-join {
+  0%   { transform: scale(0.3); }
+  60%  { transform: scale(1.14); }
+  100% { transform: scale(1); }
+}
+.animate-seat-join { animation: seat-join 520ms var(--mo-snap, cubic-bezier(0.2, 0.9, 0.3, 1.2)) both; }
+
+@keyframes seat-idle {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-4px); }
+}
+.animate-seat-idle { animation: seat-idle 2.4s ease-in-out infinite; }
 
 .animate-pulse-shine {
   animation: breathe 1.5s ease-in-out infinite, shine 1s ease-in-out infinite;
@@ -311,6 +331,9 @@ body {
   .animate-wall-v,
   .animate-territory,
   .animate-dot-pop,
+  .animate-seat-wait,
+  .animate-seat-join,
+  .animate-seat-idle,
   .tile-icon-anim {
     animation: none !important;
     transition: none !important;
