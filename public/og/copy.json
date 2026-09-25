@@ -5,43 +5,37 @@
       "title": [
         "牆壁圍棋",
         "Wall Go"
-      ],
-      "line": "圍出最大的地盤 · 2–3 人對戰"
+      ]
     },
     "rules": {
       "kicker": "牆壁圍棋 Wall Go",
       "title": [
         "遊戲規則"
-      ],
-      "line": "擺子、移動、築牆、圈地、計分"
+      ]
     },
     "local": {
       "kicker": "牆壁圍棋 Wall Go",
       "title": [
         "本機對戰"
-      ],
-      "line": "同一台裝置，2–3 人輪流下"
+      ]
     },
     "online": {
       "kicker": "牆壁圍棋 Wall Go",
       "title": [
         "連線對戰"
-      ],
-      "line": "把連結傳給朋友，點開就能一起下"
+      ]
     },
     "solo": {
       "kicker": "牆壁圍棋 Wall Go",
       "title": [
         "單人對戰"
-      ],
-      "line": "電腦對手分三級"
+      ]
     },
     "replay": {
       "kicker": "牆壁圍棋 Wall Go",
       "title": [
         "棋譜回放"
-      ],
-      "line": "一手一手重看整局"
+      ]
     }
   },
   "en": {
@@ -49,43 +43,37 @@
       "kicker": "The Devil's Plan: Death Room",
       "title": [
         "Wall Go"
-      ],
-      "line": "Claim the biggest territory · 2–3 players"
+      ]
     },
     "rules": {
       "kicker": "Wall Go",
       "title": [
         "Rules"
-      ],
-      "line": "Place, move, wall, enclose, score"
+      ]
     },
     "local": {
       "kicker": "Wall Go",
       "title": [
         "Local play"
-      ],
-      "line": "One device, 2–3 players taking turns"
+      ]
     },
     "online": {
       "kicker": "Wall Go",
       "title": [
         "Online play"
-      ],
-      "line": "Send a friend the link and play together"
+      ]
     },
     "solo": {
       "kicker": "Wall Go",
       "title": [
         "Solo play"
-      ],
-      "line": "Three levels of computer opponent"
+      ]
     },
     "replay": {
       "kicker": "Wall Go",
       "title": [
         "Replay"
-      ],
-      "line": "Step back through a whole game"
+      ]
     }
   },
   "ja": {
@@ -94,43 +82,37 @@
       "title": [
         "壁囲碁",
         "Wall Go"
-      ],
-      "line": "いちばん広い陣地を取る · 2〜3人対戦"
+      ]
     },
     "rules": {
       "kicker": "壁囲碁 Wall Go",
       "title": [
         "ルール"
-      ],
-      "line": "配置・移動・壁・囲い・得点"
+      ]
     },
     "local": {
       "kicker": "壁囲碁 Wall Go",
       "title": [
         "ローカル対戦"
-      ],
-      "line": "1台の端末で2〜3人が交代"
+      ]
     },
     "online": {
       "kicker": "壁囲碁 Wall Go",
       "title": [
         "オンライン対戦"
-      ],
-      "line": "リンクを送ればそのまま一緒に"
+      ]
     },
     "solo": {
       "kicker": "壁囲碁 Wall Go",
       "title": [
         "ひとりで遊ぶ"
-      ],
-      "line": "コンピュータ対戦は3段階"
+      ]
     },
     "replay": {
       "kicker": "壁囲碁 Wall Go",
       "title": [
         "棋譜再生"
-      ],
-      "line": "一手ずつ最初から見直す"
+      ]
     }
   },
   "ko": {
@@ -139,43 +121,37 @@
       "title": [
         "벽바둑",
         "Wall Go"
-      ],
-      "line": "가장 넓은 영역 차지하기 · 2~3인 대전"
+      ]
     },
     "rules": {
       "kicker": "벽바둑 Wall Go",
       "title": [
         "게임 규칙"
-      ],
-      "line": "배치 · 이동 · 벽 · 둘러싸기 · 점수"
+      ]
     },
     "local": {
       "kicker": "벽바둑 Wall Go",
       "title": [
         "로컬 대전"
-      ],
-      "line": "한 기기에서 2~3명이 번갈아"
+      ]
     },
     "online": {
       "kicker": "벽바둑 Wall Go",
       "title": [
         "온라인 대전"
-      ],
-      "line": "링크만 보내면 바로 같이"
+      ]
     },
     "solo": {
       "kicker": "벽바둑 Wall Go",
       "title": [
         "혼자 하기"
-      ],
-      "line": "컴퓨터 상대는 3단계"
+      ]
     },
     "replay": {
       "kicker": "벽바둑 Wall Go",
       "title": [
         "기보 다시보기"
-      ],
-      "line": "한 수씩 처음부터 다시보기"
+      ]
     }
   }
 }

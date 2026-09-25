@@ -1,4 +1,7 @@
 import type { Metadata } from 'next';
+import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { getMessages, siteName } from './index';
 import { LOCALES, DEFAULT_LOCALE, localePath, type Locale } from './locales';
 
@@ -20,9 +23,26 @@ export type PagePath = keyof typeof PAGE_KEY;
  */
 export const OG_SIZE = { width: 1200, height: 630 } as const;
 
-/** 那一頁那個語系的分享圖網址。JSON-LD 也吃這個，兩邊才不會各指一張。 */
+/**
+ * 那一頁那個語系的分享圖網址。JSON-LD 也吃這個，兩邊才不會各指一張。
+ *
+ * 網址帶圖片內容的雜湊（`?v=…`）：LINE、Facebook 這類平台依網址快取預覽圖，
+ * 一放就是好幾天。檔名不變的話，改了圖聊天室裡還是舊的（Zach 在 LINE 上看到）。
+ * 用內容雜湊而不是版號 —— 圖真的變了網址才變，沒變的圖不必讓平台重抓。
+ * 只在建置時執行（metadata 與 JSON-LD 都是 server 端），可以直接讀檔。
+ */
+const ogHashes = new Map<string, string>();
+function ogHash(file: string): string {
+  let h = ogHashes.get(file);
+  if (!h) {
+    h = createHash('sha256').update(readFileSync(join(process.cwd(), 'public', 'og', file))).digest('hex').slice(0, 10);
+    ogHashes.set(file, h);
+  }
+  return h;
+}
 export function ogImageUrl(locale: Locale, path: PagePath): string {
-  return `${SITE}/og/${PAGE_KEY[path]}-${locale}.png`;
+  const file = `${PAGE_KEY[path]}-${locale}.png`;
+  return `${SITE}/og/${file}?v=${ogHash(file)}`;
 }
 
 function shareImage(locale: Locale, path: PagePath) {
@@ -44,9 +64,9 @@ function copy(locale: Locale, path: PagePath) {
     case '/replay':
       return { title: t.replay.metaTitle, description: t.replay.metaDescription, ogTitle: t.replay.metaTitle, ogDescription: t.replay.metaDescription };
     case '/local':
-      return { title: t.local.metaTitle, description: t.meta.description, ogTitle: t.local.metaTitle, ogDescription: t.ogImage.local };
+      return { title: t.local.metaTitle, description: t.meta.description, ogTitle: t.local.metaTitle, ogDescription: t.meta.ogDescription };
     case '/online':
-      return { title: t.online.metaTitle, description: t.meta.description, ogTitle: t.online.metaTitle, ogDescription: t.ogImage.online };
+      return { title: t.online.metaTitle, description: t.meta.description, ogTitle: t.online.metaTitle, ogDescription: t.meta.ogDescription };
     default:
       return { title: undefined, description: t.meta.description, ogTitle: t.meta.ogTitle, ogDescription: t.meta.ogDescription };
   }

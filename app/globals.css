@@ -317,7 +317,35 @@ body {
   }
 }
 
-/* 手指裝置：把牆的觸控熱區加厚，視覺仍維持 9px。
+/* 蓋滿整個畫面的遮罩。
+   不用 inset-0：iOS Safari 往下滑、上下工具列收起來之後，可視區域變高，
+   inset-0 的高度卻停在工具列還在時 —— 底部露出一截頁面（Zach 用手機截圖回報，
+   連線的邀請 Modal 底下露出米色）。改用 100lvh（工具列收起時的最大高度）；
+   不支援 lvh 的瀏覽器退回 100vh，而 iOS 的 100vh 本來就等於最大高度。 */
+.cover-viewport {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100vh;
+  height: 100lvh;
+}
+
+/* 棋盤的牆與格線粗細。
+   外框就是「棋盤邊緣那道牆」，所以 --board-wall 同時是外框與盤內每道牆的粗細，
+   兩者必須一樣（見 Chessboard 的註解）。
+   棋盤小的時候兩者一起變細：手機上棋盤只有 330px 上下，9px 的外框與 4px 的
+   格線佔掉太多畫面，看起來很粗（Zach 回報）。先前試過讓外框單獨按比例縮，
+   結果比盤內的牆細一半、變回裝飾框 —— 所以是「一起」縮，而且仍比格線粗。
+   判斷看棋盤本身的寬度（container query），不看螢幕：手機橫放時螢幕寬、
+   棋盤卻一樣小。 */
+.board-frame { --board-wall: 9px; --board-gap: 4px; }
+.chessboard-container { container-type: inline-size; }
+@container (max-width: 480px) {
+  .board-frame { --board-wall: 7px; --board-gap: 3px; }
+}
+
+/* 手指裝置：把牆的觸控熱區加厚，視覺粗細不變（--board-wall）。
    實測原本是 29x9 / 9x29 —— WCAG 2.5.8 的最低觸控目標是 24px，
    差得很遠。用 ::after 撐開熱區而不是改按鈕本身的尺寸，
    牆的粗細與位置就完全不受影響。

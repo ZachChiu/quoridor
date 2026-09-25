@@ -196,7 +196,7 @@ const WipeOverlay: React.FC<Props> = ({ phase, wipe, onDone }) => {
   return (
     <div
       ref={rootRef}
-      className="fixed inset-0 z-[60] overflow-hidden"
+      className="cover-viewport z-[60] overflow-hidden"
       // 純裝飾，而且它蓋住整個畫面 —— 讀屏不該念它，焦點也不該跑進來
       aria-hidden="true"
     >

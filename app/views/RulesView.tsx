@@ -1,4 +1,5 @@
-import { GiHut, GiPlayButton } from 'react-icons/gi';
+import { GiHut } from 'react-icons/gi';
+import { LuPlay } from 'react-icons/lu';
 import TutorialBoard from '@/components/TutorialBoard';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import TransitionLink from '@/components/TransitionLink';
@@ -131,7 +132,9 @@ export default function RulesView({ locale }: { locale: Locale }) {
           radius={16}
           className="mt-10 flex w-full items-center justify-center rounded-2xl bg-tile-orange px-6 py-5 text-lg font-black text-tile-ink transition hover:brightness-95 active:scale-[0.99]"
         >
-          <GiPlayButton className="mr-2 text-base" aria-hidden="true" />
+          {/* 一般人認得的「播放」三角形（Lucide，已在署名裡）。原本的 GiPlayButton
+              不是常見的播放符號，看不出是「開始」。填滿成實心，跟全站實心圖示一致。 */}
+          <LuPlay className="mr-2 size-5" fill="currentColor" aria-hidden="true" />
           {t.rules.ctaPlay}
         </TransitionLink>
 

@@ -28,7 +28,7 @@ export const TONES = {
   home:   { bg: C.ground, fg: C.ink,   pill: C.ink,    pillFg: C.cream },
   rules:  { bg: C.forest, fg: C.cream, pill: C.cream,  pillFg: C.forest },
   local:  { bg: C.amber,  fg: C.ink,   pill: C.ink,    pillFg: C.amber },
-  online: { bg: C.blue,   fg: C.cream, pill: C.cream,  pillFg: C.blue },
+  online: { bg: C.purple, fg: C.cream, pill: C.cream,  pillFg: C.purple },
   solo:   { bg: C.orange, fg: C.ink,   pill: C.ink,    pillFg: C.orange },
   replay: { bg: C.ink,    fg: C.cream, pill: C.cream,  pillFg: C.ink },
 };
@@ -95,24 +95,36 @@ function board() {
 }
 
 /** 一張圖。`copy` 是已經挑好語系的字串。 */
+/** 膠囊字級：寬度估計 = 字數 × 字級（全形字算 1、半形字算 0.58）。文字欄可用約 480px。 */
+function pillSize(text, max = 36, min = 26, room = 480) {
+  const units = [...text].reduce((n, ch) => n + (/[\u2E80-\uFFEF]/.test(ch) ? 1 : 0.58), 0);
+  return Math.max(min, Math.min(max, Math.floor(room / units)));
+}
+
 export function poster({ tone, copy }) {
   const t = TONES[tone];
   return div({
     width: 1200, height: 630, background: t.bg, color: t.fg,
-    alignItems: 'center', padding: '0 70px',
+    // 文字與棋盤當成一組置中，中間固定 72px。先前文字欄撐滿左半邊、標題又短，
+    // 文字結束到棋盤之間永遠空一大塊，看起來是兩個不相干的東西（Zach 回報）。
+    alignItems: 'center', justifyContent: 'center', gap: 72, padding: '0 70px',
     fontFamily: 'OG',
   }, [
-    div({ flexDirection: 'column', flex: 1, paddingRight: 48 }, [
+    div({ flexDirection: 'column', flexShrink: 1 }, [
       div({
         alignSelf: 'flex-start', background: t.pill, color: t.pillFg,
-        borderRadius: 999, padding: '10px 24px', fontSize: 26, fontWeight: 700,
-        marginBottom: 26,
+        // 站名／節目名是品牌 —— 聊天室縮圖只有原圖一半大，26px 縮下來約 13px，
+        // 幾乎看不到「Wall Go」（Zach 回報）。放大到 36px、900 字重。
+        // 但不能換行：英文節目名「The Devil's Plan: Death Room」36px 會折成兩行。
+        // 照字寬估計，放得下就 36px，放不下就縮，最小 26px。
+        borderRadius: 999, padding: '12px 30px', fontSize: pillSize(copy.kicker), fontWeight: 900,
+        whiteSpace: 'nowrap', marginBottom: 30,
       }, copy.kicker),
+      // 標題下面不放描述句（Zach：「描述我不喜歡，全部拔掉」）—— 圖只講是哪一頁
       ...copy.title.map((line, i) => div({
         fontSize: line.length > 9 ? 76 : 92, fontWeight: 900, lineHeight: 1.08,
-        marginBottom: i === copy.title.length - 1 ? 22 : 0,
+        marginBottom: i === copy.title.length - 1 ? 34 : 0,
       }, line)),
-      div({ fontSize: 30, fontWeight: 700, opacity: 0.82, marginBottom: 34 }, copy.line),
       div({ fontSize: 26, fontWeight: 900, opacity: 0.55 }, 'quoridorgame.com'),
     ]),
     board(),

@@ -34,7 +34,7 @@ const messages = Object.fromEntries(await Promise.all(
   LOCALES.map(async (l) => [l, (await import(`../app/i18n/messages/${l}.ts`)).default])
 ));
 
-/** 一張圖上的三行字。全部取自既有的 message，只有 `ogImage.*` 是專為圖寫的短句。 */
+/** 一張圖上的字：節目名（或站名）與標題，全部取自既有的 message。圖上不放描述句。 */
 function copyFor(locale, page) {
   const t = messages[locale];
   // 英文的 titleLine2 整個不給 —— 用模板拼會變成字面上的 "undefined"（見 app/i18n/index.ts 的 siteName）
@@ -45,7 +45,6 @@ function copyFor(locale, page) {
   return {
     kicker: page === 'home' ? t.meta.showName : site,
     title,
-    line: t.ogImage[page],
   };
 }
 

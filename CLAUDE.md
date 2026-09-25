@@ -128,7 +128,8 @@ players/{ A?, B?, C? }/{ uid, displayName, joinedAt }
   想讓某個色更跳是加彩度，不是提亮。
 - **一個面板只放一個色相＋中性**。Modal 的標題色帶已經是那個色相，
   主要按鈕就不能再帶一個（改用深墨）。色帶對應首頁磁磚：
-  規則森綠、連線靛藍、破牆磚紅、單人陶橘、結算用勝方的顏色。
+  規則森綠、連線靛藍、邀請朋友紫（Zach 指定）、破牆磚紅、單人陶橘、
+  結算用勝方的顏色、投降用投降那一方的顏色。
 - **按鈕只有兩種：主要深墨、次要中性灰**（`bg-tile-ink/[0.07]`）。不用琥珀、
   不用森綠當按鈕色 —— 黃配黑、黃配綠並排都很難看（Zach 明確說過）。
   一組並列的選項也不要各帶一個色相（單人難度、回饋表情原本是紅黃綠），
@@ -157,7 +158,8 @@ players/{ A?, B?, C? }/{ uid, displayName, joinedAt }
   只用 `opacity-0` 不會把內容移出無障礙樹。
 - **分享圖**（og:image）**每頁每語系各一張**，共 24 張，由
   `scripts/build-og-images.mjs` 產生到 `public/og/{page}-{locale}.png`，
-  版面在 `scripts/og-design.mjs`。改了 `ogImage.*` 文案要跑 `npm run og:build`，
+  版面在 `scripts/og-design.mjs`。圖上只有節目名與標題、**不放描述句**（Zach 拔掉的）。
+  改了標題相關文案（`metaTitle`、`titleLine1/2`、`showName`）要跑 `npm run og:build`，
   CI 有 `og:check` 擋著。
   **不要改用 Next 的 `opengraph-image.tsx`** —— 那個慣例產出的檔案沒有副檔名
   （`out/rules/opengraph-image-1mfdno`），`aws s3 sync` 推不出 Content-Type，

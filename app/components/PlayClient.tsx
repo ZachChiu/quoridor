@@ -629,13 +629,16 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
     trackButtonClick(`restart_local_game_${playersNum}p`);
   }, [playersNum]);
 
+  // 誰會是投降的人：確認視窗的配色與最後判負都用同一個答案
+  const resigner: PlayerKey | null = isOnline ? myPlayerKey : aiDifficulty ? 'A' : state.currentPlayer;
+
   const confirmSurrender = useCallback(() => {
     setSurrenderOpen(false);
-    const who: PlayerKey | null = isOnline ? myPlayerKey : aiDifficulty ? 'A' : state.currentPlayer;
+    const who = resigner;
     if (!who) return;
     setResignedBy(who);
     trackButtonClick(`surrender_${isOnline ? 'online' : 'local'}_${playersNum}p`);
-  }, [isOnline, myPlayerKey, aiDifficulty, state.currentPlayer, playersNum]);
+  }, [resigner, isOnline, playersNum]);
 
   /*
     離開頁面前確認 —— 但只在「真的有東西會被丟掉」的時候。
@@ -897,6 +900,7 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
             onClose={() => setSurrenderOpen(false)}
             onConfirm={confirmSurrender}
             playersNum={playersNum}
+            player={resigner ?? state.currentPlayer}
           />
         </>
       )}
