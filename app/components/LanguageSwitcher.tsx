@@ -1,5 +1,6 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { flushSync } from 'react-dom';
 import { usePathname } from 'next/navigation';
 import { LuGlobe, LuCheck } from 'react-icons/lu';
 import Modal from './Modal';
@@ -45,6 +46,21 @@ export default function LanguageSwitcher({ onDark = false }: { onDark?: boolean 
   const t = useMessages();
   const [open, setOpen] = useState(false);
 
+  /*
+    換語言是整頁跳轉，而瀏覽器會把離開的那一頁連同當下的畫面整個凍結起來
+    （back-forward cache，Safari 特別積極）。按上一頁回來時不重新載入，
+    直接解凍 —— 於是選單還開著，而且停在剛才選的語言上（Zach 回報：
+    從規則頁按上一頁跑出日文首頁加語言選單）。
+
+    兩道保險：點下去的當下就同步關掉（flushSync，確保凍結前已經畫成關的），
+    以及從快取還原時（pageshow 帶 persisted）再關一次。
+  */
+  useEffect(() => {
+    const onShow = (e: PageTransitionEvent) => { if (e.persisted) setOpen(false); };
+    window.addEventListener('pageshow', onShow);
+    return () => window.removeEventListener('pageshow', onShow);
+  }, []);
+
   return (
     <>
       <button
@@ -52,7 +68,7 @@ export default function LanguageSwitcher({ onDark = false }: { onDark?: boolean 
         onClick={() => setOpen(true)}
         aria-label={t.nav.language}
         aria-haspopup="dialog"
-        className={`relative grid size-10 place-items-center rounded-full after:absolute after:-inset-0.5 after:content-[''] text-xl transition active:scale-95 ${
+        className={`relative grid size-10 place-items-center rounded-full text-xl transition after:absolute after:-inset-0.5 after:content-[''] active:scale-95 ${
           onDark
             ? 'bg-tile-cream/[0.16] text-tile-cream hover:bg-tile-cream/[0.26]'
             : 'bg-tile-ink/[0.06] text-ink-soft hover:bg-tile-ink/[0.12]'
@@ -100,7 +116,10 @@ export default function LanguageSwitcher({ onDark = false }: { onDark?: boolean 
                   href={localePath(l, bare)}
                   hrefLang={l}
                   // gtag 預設走 sendBeacon，整頁跳走也送得出去
-                  onClick={() => track('locale_switch', { from: current, to: l })}
+                  onClick={() => {
+                    track('locale_switch', { from: current, to: l });
+                    flushSync(() => setOpen(false));
+                  }}
                   className={`${row} bg-primary-50 text-tile-ink hover:brightness-95`}
                 >
                   {LOCALE_NAME[l]}
