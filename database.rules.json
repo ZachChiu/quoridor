@@ -26,6 +26,10 @@
     只能新增、沒有人讀得到（裡面可能有選填的聯絡方式）；我從 Console 讀，
     Console 不受規則限制。uid 必須是本人、每個欄位有上限、多的欄位拒絕 ——
     不然任何人都能用一段腳本塞進任意大小的資料、冒用別人的 uid。
+
+    兩種來源：對局結束的回饋（mode = local / online / ai，必有評分與棋譜），
+    與首頁右上角的「聯絡我們」（mode = contact，不綁某一局：沒有棋譜、評分選填，
+    但一定要有留言）。
   */
   "rules": {
     ".read": false,
@@ -84,14 +88,14 @@
       ".read": false,
       "$entryId": {
         ".write": "auth != null && !data.exists()",
-        ".validate": "newData.hasChildren(['uid', 'createdAt', 'rating', 'mode', 'wgf'])",
+        ".validate": "newData.hasChildren(['uid', 'createdAt', 'mode']) && (newData.child('mode').val() === 'contact' ? newData.hasChild('message') : newData.hasChildren(['rating', 'wgf']))",
         "uid": { ".validate": "newData.val() === auth.uid" },
         "createdAt": { ".validate": "newData.isNumber()" },
         "rating": { ".validate": "newData.val() === 1 || newData.val() === 2 || newData.val() === 3" },
         "message": { ".validate": "newData.isString() && newData.val().length <= 800" },
         "contact": { ".validate": "newData.isString() && newData.val().length <= 120" },
         "wgf": { ".validate": "newData.isString() && newData.val().length <= 20000" },
-        "mode": { ".validate": "newData.val() === 'local' || newData.val() === 'online' || newData.val() === 'ai'" },
+        "mode": { ".validate": "newData.val() === 'local' || newData.val() === 'online' || newData.val() === 'ai' || newData.val() === 'contact'" },
         "playersNum": { ".validate": "newData.val() === 2 || newData.val() === 3" },
         "result": { ".validate": "newData.isString() && newData.val().length <= 40" },
         "ended": { ".validate": "newData.val() === 'natural' || newData.val() === 'resign' || newData.val() === 'unfinished'" },

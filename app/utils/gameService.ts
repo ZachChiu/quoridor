@@ -20,13 +20,13 @@
 
 import { getFirebaseDb } from '@/utils/firebase';
 import type { Room, RoomPlayer } from '@/types/room';
-import type { Feedback } from '@/types/feedback';
+import type { ContactMessage, Feedback } from '@/types/feedback';
 
 /**
  * 重新導出房間相關型別，方便其他模組直接從 service 取得共用定義。
  */
 export type { Room, RoomStatus, RoomPlayer } from '@/types/room';
-export type { Feedback } from '@/types/feedback';
+export type { ContactMessage, Feedback } from '@/types/feedback';
 
 /** 同時取得 RTDB 實例與所需的 database 函式。 */
 async function rtdb() {
@@ -209,6 +209,24 @@ export async function sendFeedback(data: Feedback, uid: string): Promise<void> {
   );
   await set(push(ref(db, 'feedback')), {
     ...payload,
+    uid,
+    createdAt: Date.now(),
+    locale: typeof navigator !== 'undefined' ? navigator.language : 'unknown',
+  });
+}
+
+/**
+ * 首頁「聯絡我們」。跟 sendFeedback 同一條路徑、同一套規則，
+ * 只是 mode 是 'contact'、沒有棋譜（不綁某一局）。
+ */
+export async function sendContact(data: ContactMessage, uid: string): Promise<void> {
+  const { ref, push, set, db } = await rtdb();
+  const payload = Object.fromEntries(
+    Object.entries(data).filter(([, value]) => value !== undefined)
+  );
+  await set(push(ref(db, 'feedback')), {
+    ...payload,
+    mode: 'contact',
     uid,
     createdAt: Date.now(),
     locale: typeof navigator !== 'undefined' ? navigator.language : 'unknown',

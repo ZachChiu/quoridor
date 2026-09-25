@@ -1,5 +1,6 @@
 import HomeClient from '@/HomeClient';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
+import ContactButton from '@/components/ContactButton';
 import { getMessages } from '@/i18n';
 import type { Locale } from '@/i18n/locales';
 import { pageGraph, ldScript } from '@/i18n/jsonld';
@@ -19,7 +20,9 @@ export default function HomeView({ locale }: { locale: Locale }) {
         {/* 地球鈕放右上角而不是磁磚底下 —— 它在流程裡會多吃掉一列高度，
             而首頁的目標是「整頁塞得進一個螢幕」。實測 iPhone 14 Pro
             在網址列展開時（393x659）就是被這一列擠到溢出 46px。 */}
-        <div className="fixed right-5 top-5 z-40">
+        {/* 右上角：聯絡我們＋語言切換，同一種圓鈕。 */}
+        <div className="fixed right-5 top-5 z-40 flex gap-2">
+          <ContactButton />
           <LanguageSwitcher />
         </div>
         <main className="home-main flex w-full max-w-[420px] flex-col items-center">

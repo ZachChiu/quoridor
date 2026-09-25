@@ -46,6 +46,8 @@ zh-TW 不加前綴（`app/(default)/`），en / ja / ko 加前綴（`app/(intl)/
 
 **`/replay` 是用來看玩家回饋的。** 每則回饋都附帶那一局的 WGF（`feedback/*/wgf`），
 在 Firebase Console 讀到回饋時，把棋譜貼到 `/replay#wgf=…` 就能一手一手重看玩家遇到的狀況。
+首頁右上角的「聯絡我們」也寫進同一個 `feedback/`，但 `mode: 'contact'`、**沒有 WGF**（不在對局裡）；
+它必填的是 `message`，評分選填。規則在 `database.rules.json` 依 `mode` 分流驗證，改表單欄位時兩邊要一起動。
 刻意**沒有任何 UI 入口**、不進 sitemap、noindex —— 這個站不做「個人棋譜」。
 不要替它補分享按鈕或入口；它沒被連到不是漏做，是設計。
 

@@ -15,11 +15,15 @@ import { useGameText, useMessages } from '@/i18n/LocaleProvider';
  * 表單刻意只有三格心情＋一段文字，聯絡方式選填。多要一個欄位就少一批人送出，
  * 而我們要的是「哪裡怪怪的」，不是完整的問題報告 —— 完整的部分由
  * 自動附上的棋譜補足（見 sendFeedback）。
+ *
+ * variant="contact" 是首頁右上角的「聯絡我們」：同一個視窗，但不綁某一局 ——
+ * 標題、提示與說明換成一般留言用的；評分選填，改成「有寫字才能送」。
  */
 type Props = {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (rating: 1 | 2 | 3, message: string, contact: string) => Promise<void>;
+  onSubmit: (rating: 1 | 2 | 3 | null, message: string, contact: string) => Promise<void>;
+  variant?: 'game' | 'contact';
 };
 
 /*
@@ -32,7 +36,7 @@ const FACES: { value: 1 | 2 | 3; emoji: string }[] = [
   { value: 3, emoji: '🤩' },
 ];
 
-const FeedbackModal: React.FC<Props> = ({ isOpen, onClose, onSubmit }) => {
+const FeedbackModal: React.FC<Props> = ({ isOpen, onClose, onSubmit, variant = 'game' }) => {
   const g = useGameText();
   const t = useMessages();
   const closeLabel = t.ui.close;
@@ -49,10 +53,19 @@ const FeedbackModal: React.FC<Props> = ({ isOpen, onClose, onSubmit }) => {
     if (isOpen) { setRating(null); setMessage(''); setContact(''); setState('idle'); }
   }
 
+  const isContact = variant === 'contact';
+  // 對局回饋要選評分；聯絡我們評分選填，但至少要寫點什麼
+  const canSend = isContact ? message.trim().length > 0 : rating !== null;
+  const copy = isContact
+    ? { heading: g.contact.heading, kicker: g.contact.kicker, ratingLabel: g.contact.ratingLabel,
+        placeholder: g.contact.placeholder, note: g.contact.note, sentBody: g.contact.sentBody }
+    : { heading: g.feedback.heading, kicker: g.feedback.kicker, ratingLabel: g.feedback.ratingLabel,
+        placeholder: g.feedback.placeholder, note: g.feedback.note, sentBody: g.feedback.sentBody };
+
   const submit = async () => {
-    if (!rating || state === 'sending') return;
+    if (!canSend || state === 'sending') return;
     setState('sending');
-    trackButtonClick('send_feedback');
+    trackButtonClick(isContact ? 'send_contact' : 'send_feedback');
     try {
       await onSubmit(rating, message.trim(), contact.trim());
       setState('sent');
@@ -67,8 +80,8 @@ const FeedbackModal: React.FC<Props> = ({ isOpen, onClose, onSubmit }) => {
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={state === 'sent' ? g.feedback.sent : g.feedback.heading}
-      kicker={g.feedback.kicker}
+      title={state === 'sent' ? g.feedback.sent : copy.heading}
+      kicker={copy.kicker}
       icon={GiChatBubble}
       band={{ className: 'bg-tile-purple', fg: 'text-tile-cream' }}
       footer={
@@ -80,7 +93,7 @@ const FeedbackModal: React.FC<Props> = ({ isOpen, onClose, onSubmit }) => {
               {g.feedback.later}
             </Button>
             <Button
-              color={rating ? 'bg-tile-ink text-tile-cream' : 'bg-tile-ink/20 text-tile-ink/40'}
+              color={canSend ? 'bg-tile-ink text-tile-cream' : 'bg-tile-ink/20 text-tile-ink/40'}
               handleClickEvent={submit}
             >
               {state === 'sending' ? g.feedback.sending : g.feedback.submit}
@@ -91,18 +104,20 @@ const FeedbackModal: React.FC<Props> = ({ isOpen, onClose, onSubmit }) => {
     >
       {state === 'sent' ? (
         <p className="text-sm leading-relaxed">
-          {g.feedback.sentBody}
+          {copy.sentBody}
         </p>
       ) : (
         <>
-          <div className="flex gap-2" role="radiogroup" aria-label={g.feedback.ratingLabel}>
+          {isContact && <p className="mb-2 text-sm font-bold text-ink-soft">{copy.ratingLabel}</p>}
+          <div className="flex gap-2" role="radiogroup" aria-label={copy.ratingLabel}>
             {FACES.map((f) => (
               <button
                 key={f.value}
                 type="button"
                 role="radio"
                 aria-checked={rating === f.value}
-                onClick={() => setRating(f.value)}
+                // 聯絡我們的評分是選填：再點一次同一個可以取消
+                onClick={() => setRating(isContact && rating === f.value ? null : f.value)}
                 className={`flex flex-1 flex-col items-center gap-1 rounded-xl py-3 text-sm font-black transition ${
                   rating === f.value ? 'bg-tile-ink text-tile-cream' : 'bg-tile-ink/[0.06] text-ink-soft'
                 }`}
@@ -120,7 +135,7 @@ const FeedbackModal: React.FC<Props> = ({ isOpen, onClose, onSubmit }) => {
               onChange={(e) => setMessage(e.target.value.slice(0, 800))}
               rows={3}
               className="mt-1.5 w-full resize-none rounded-xl bg-primary-50 p-3 text-sm outline-none ring-tile-ink/30 focus:ring-2"
-              placeholder={g.feedback.placeholder}
+              placeholder={copy.placeholder}
             />
           </label>
 
@@ -135,7 +150,7 @@ const FeedbackModal: React.FC<Props> = ({ isOpen, onClose, onSubmit }) => {
           </label>
 
           <p className="mt-3 text-xs leading-relaxed text-ink-soft">
-            {g.feedback.note}
+            {copy.note}
           </p>
 
           {state === 'failed' && (

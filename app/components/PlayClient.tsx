@@ -866,7 +866,8 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
           <FeedbackModal
             isOpen={feedbackOpen}
             onClose={() => setFeedbackOpen(false)}
-            onSubmit={async (rating, message, contact) =>
+            // 對局回饋的評分是必選（視窗沒選不給送），這裡的 null 只是型別上的可能
+            onSubmit={async (rating, message, contact) => rating === null ? undefined :
               sendFeedback({
                 rating, message, contact: contact || undefined,
                 wgf: toWgf(state),
