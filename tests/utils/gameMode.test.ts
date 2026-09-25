@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { gameHash, parseGameHash, readGameHash, toPlayersNum, roomShareUrl } from '@/utils/gameMode';
+import { gameHash, parseGameHash, readGameHash, toPlayersNum, roomShareUrl, parseOnlineHash, newRoomHash } from '@/utils/gameMode';
 import { LOCALES } from '@/i18n/locales';
 
 /*
@@ -108,5 +108,36 @@ describe('roomShareUrl', () => {
 
   it('roomId 原樣帶過去（Firebase push key 含 - 與 _）', () => {
     expect(roomShareUrl(ORIGIN, 'zh-TW', '-OaB_c12XyZ')).toContain('#roomId=-OaB_c12XyZ');
+  });
+});
+
+describe('連線頁的 hash', () => {
+  /*
+    首頁連線磁磚現在帶 `#new=2` 過去，由連線頁開房。
+    這裡解析錯的症狀是「按了連線卻顯示連結不完整」或「進了別人的房」，
+    在元件裡看不出來。
+  */
+  it('#roomId=… 是進既有的房', () => {
+    expect(parseOnlineHash('#roomId=-Abc123')).toEqual({ roomId: '-Abc123' });
+  });
+
+  it('#new=2 / #new=3 是開新房', () => {
+    expect(parseOnlineHash('#new=2')).toEqual({ create: 2 });
+    expect(parseOnlineHash('#new=3')).toEqual({ create: 3 });
+  });
+
+  it('roomId 優先於 new（開完房換網址時兩個不會同時出現，但就算有也不能再開一間）', () => {
+    expect(parseOnlineHash('#new=2&roomId=-X')).toEqual({ roomId: '-X' });
+  });
+
+  it('看不懂的一律 invalid：空的、被截斷的、人數不合法的', () => {
+    for (const h of ['', '#', '#roomId=', '#new=4', '#new=', '#hello']) {
+      expect(parseOnlineHash(h)).toEqual({ invalid: true });
+    }
+  });
+
+  it('newRoomHash 產出的東西 parseOnlineHash 認得', () => {
+    expect(parseOnlineHash(newRoomHash(2))).toEqual({ create: 2 });
+    expect(parseOnlineHash(newRoomHash(3))).toEqual({ create: 3 });
   });
 });

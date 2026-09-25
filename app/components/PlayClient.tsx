@@ -20,6 +20,7 @@ import { canPlaceWallNow, hasStarted, legalBreaks, legalMoves, selectablePieces 
 import type { Difficulty } from "@/game/ai";
 import ShareLinkModal from "@/components/ShareLinkModal";
 import StatusScreen, { BTN_PRIMARY, BTN_SECONDARY } from "@/components/StatusScreen";
+import Connecting from "@/components/Connecting";
 import { GiDoor, GiSpyglass, GiUnplugged } from "react-icons/gi";
 import FeedbackModal from "@/components/FeedbackModal";
 import BreakWallConfirmModal from "@/components/BreakWallConfirmModal";
@@ -650,12 +651,7 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
 
   // ─── 連線模式：初始化中 / 錯誤 ─────────────────────────────────────────────
   if (isOnline && phase === 'initializing') {
-    return (
-      <div className="flex items-center gap-3 text-lg">
-        <div className="size-4 animate-spin rounded-full border-2 border-gray-900 border-t-transparent"></div>
-        {g.play.connecting}
-      </div>
-    );
+    return <Connecting label={g.play.connecting} />;
   }
 
   if (isOnline && phase === 'error' && error) {

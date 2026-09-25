@@ -40,6 +40,7 @@ zh-TW 不加前綴（`app/(default)/`），en / ja / ko 加前綴（`app/(intl)/
 | `/solo#easy\|normal\|hard` | 單人對戰。難度放 hash，由 `SoloClient` 以 prop 交給 `PlayClient` |
 | `/local`、`/local/3` | 本機對戰，人數走路由（建置時就定了）。noindex |
 | `/online#roomId=…` | 連線對戰（`OnlineClient` → `PlayClient`，帶 `roomId`）。roomId 放 hash 而非 query。noindex |
+| `/online#new=2\|3` | 首頁連線磁磚的目的地：連線頁自己開房，開好後 `replaceState` 換成 `#roomId=…` |
 | `/match#roomId=…` | 舊網址，只做 client 端轉址到 `/online`（保留 hash）。只有 zh-TW 有 |
 | `/replay#wgf=…` | 棋譜回放。**開發者工具，不是給玩家的功能** —— 見下 |
 
@@ -92,8 +93,8 @@ players/{ A?, B?, C? }/{ uid, displayName, joinedAt }
 - `app/utils/firebase.ts` — Firebase **惰性**初始化。匯出 `getFirebaseAuth()` / `getFirebaseDb()` 兩個 async 函式，內部以動態 import 載入 SDK 並用 Promise 記憶化。首頁與 `/local` 不會下載 Firebase（約 75 KB gzip）
 - `app/utils/gameService.ts` — `createRoom`, `joinRoom`, `getRoom`, `subscribeRoom`, `updateGameState`, `setRoomWinner`
 - `app/types/room.ts` — `Room`, `RoomPlayer`, `RoomStatus` 型別
-- `HomeClient.tsx` — 建立房間（`createRoom`，含初始 WGF）並跳轉 `/online#roomId=…`（`localePath` 保留目前語系）。展開「連線對戰」選單時即呼叫 `ensureUser()` 預熱登入
-- `app/(default)/online/OnlineClient.tsx` — 薄層，從 hash 讀 `roomId` 後渲染 `<PlayClient roomId={roomId} />`；沒有 roomId 就顯示「連結不完整」，不會退化成本機對戰
+- `HomeClient.tsx` — 連線磁磚**按下去立刻**跳轉 `/online#new=2|3`，不在首頁等建房（手機沒有滑過磁磚的預熱，先前會有 2 秒多畫面不動）。滑過或 focus 磁磚時仍呼叫 `ensureUser()` 預熱登入
+- `app/(default)/online/OnlineClient.tsx` — 解析 hash（`parseOnlineHash`）：`#roomId=` 進房；`#new=` 就地開房（初始棋譜用 `toWgf(createGame(n))`），開好後 `replaceState` 換網址 —— 重新整理才不會再開一間；都不是就顯示「連結不完整」，不會退化成本機對戰
 
 ### WGF（Wall Go Format）棋譜
 

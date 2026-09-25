@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { GiBrain, GiMeshNetwork, GiRuleBook, GiTabletopPlayers, GiThreeFriends, GiWireframeGlobe } from "react-icons/gi";
 import { useTransition } from "@/contexts/TransitionContext";
-import { gameHash } from '@/utils/gameMode';
+import { gameHash, newRoomHash } from '@/utils/gameMode';
 import { trackButtonClick } from "@/utils/analytics";
 // Game Icons（game-icons.net，CC BY 3.0）—— react-icons 已內建，不需另外安裝。
 // 選它而不是線條圖示：參考稿的圖示是實心剪影壓在色塊上，
@@ -25,16 +25,10 @@ const wipeFrom = ({ rect, color, icon, iconSize, label, kicker, row, iconColor, 
   from: { width: rect.width, height: rect.height, radius: 16 },
   icon, iconSize, label, kicker, row, iconColor, fg,
 });
-import { useMessages, useGameText, useLocale } from "@/i18n/LocaleProvider";
+import { useMessages, useLocale } from "@/i18n/LocaleProvider";
 import { localePath } from "@/i18n/locales";
-import { fmt } from "@/i18n/content/game";
 import { useGame } from "@/contexts/GameContext";
 import { useUser } from "@/contexts/UserContext";
-import { createRoom } from "@/utils/gameService";
-import type { RoomPlayer } from "@/types/room";
-import { serializeWGF, buildPieceIndex } from "@/utils/wgf";
-import playerTemplates from "@/config/playerTemplates";
-import type { PiecePlacement } from "@/types/wgf";
 
 /**
  * 首頁的遊戲選擇。
@@ -46,13 +40,11 @@ import type { PiecePlacement } from "@/types/wgf";
 export default function HomeClient() {
   const { navigate } = useTransition();
   const t = useMessages();
-  const g = useGameText();
   // 導航要帶語系：/en 按下磁磚必須進 /en/local，不是 /local ——
   // 否則整個遊戲畫面會掉回中文。
   const locale = useLocale();
   const { gameState, setGameState } = useGame();
   const { ensureUser } = useUser();
-  const [isCreating, setIsCreating] = useState(false);
   const [soloOpen, setSoloOpen] = useState(false);
 
   /*
@@ -81,35 +73,16 @@ export default function HomeClient() {
   // 失敗不處理 —— 這只是預熱，真的按下去時 startConnect 會再試一次並回報。
   const prewarm = () => { void ensureUser().catch(() => {}); };
 
-  const startConnect = async (playersNum: number, origin: TileOrigin) => {
-    if (isCreating) return;
-    setIsCreating(true);
-    try {
-      const uid = await ensureUser();
-      const player: RoomPlayer = {
-        uid,
-        displayName: fmt(g.play.playerName, { id: uid.slice(0, 4).toUpperCase() }),
-        joinedAt: Date.now(),
-      };
+  /*
+    按下去立刻換頁，房間由連線頁開（`#new=2`）。
 
-      let initialWgf: string;
-      if (playersNum === 2) {
-        const index = buildPieceIndex(playerTemplates.templateBoardTwo);
-        const initPositions: PiecePlacement[] = (['A', 'B', 'C'] as const).flatMap(p =>
-          index[p].map(({ row, col }, i) => ({ player: p, piece: i + 1, row, col }))
-        );
-        initialWgf = serializeWGF({ playersNum: 2, initPositions, openingPlacements: [], turns: [] });
-      } else {
-        initialWgf = serializeWGF({ playersNum: 3, initPositions: [], openingPlacements: [], turns: [] });
-      }
-
-      const roomId = await createRoom(playersNum as 2 | 3, 'A', player, initialWgf);
-      setGameState({ ...gameState, playersNum, aiDifficulty: null });
-      navigate(`${localePath(locale, '/online')}#roomId=${roomId}`, { wipe: wipeFrom(origin) });
-      trackButtonClick(`start_connect_game_${playersNum}p`);
-    } finally {
-      setIsCreating(false);
-    }
+    先前是在這裡等 Firebase 載入、匿名登入、寫進資料庫都完成才換頁 ——
+    手機沒有「滑過磁磚」的預熱，按下去有 2 秒多畫面完全不動，
+    使用者以為沒按到。現在等待發生在寫著「連線中」的畫面上。
+  */
+  const startConnect = (playersNum: 2 | 3, origin: TileOrigin) => {
+    navigate(localePath(locale, '/online') + newRoomHash(playersNum), { wipe: wipeFrom(origin) });
+    trackButtonClick(`start_connect_game_${playersNum}p`);
   };
 
   /*
@@ -119,10 +92,9 @@ export default function HomeClient() {
     按任何一塊磁磚（包括本機雙人）都會讓連線那兩塊反白，而那時候
     根本沒有東西在載，看起來像壞了。
 
-    真正要擋的只有「同一塊被連按兩下建出兩間房」，那件事由 startConnect
-    開頭的 isCreating 判斷處理就夠了，不需要在畫面上表現出來 ——
-    何況滑過磁磚時 onPrefetch 已經先把 Firebase SDK 載好、匿名登入做完，
-    真正的等待通常趨近於零。
+    開房現在在連線頁做（一次進頁只開一間），首頁這裡沒有東西需要擋。
+    滑過磁磚時 onPrefetch 仍會先把 Firebase SDK 載好、匿名登入做完，
+    到了連線頁「連線中」那一下就更短。
   */
 
   return (

@@ -1,8 +1,8 @@
 import type { Difficulty } from '@/game/ai';
 import type { GameMode } from '@/types/gameMode';
+import { localePath, type Locale } from '@/i18n/locales';
 
 export type { GameMode };
-import { localePath, type Locale } from '@/i18n/locales';
 
 /**
  * 對局模式放在網址的 hash 裡。
@@ -72,4 +72,28 @@ export function readGameHash(): GameMode {
  */
 export function roomShareUrl(origin: string, locale: Locale, roomId: string): string {
   return `${origin}${localePath(locale, '/online')}#roomId=${roomId}`;
+}
+
+/**
+ * `/online` 的 hash 要做什麼：進既有的房間、開一間新的，或是看不懂。
+ *
+ * `#new=2` 是首頁連線磁磚帶過來的「幫我開一間兩人房」。建房放在連線頁
+ * 而不是首頁：首頁若要等 Firebase 載入、匿名登入、寫入資料庫都完成才換頁，
+ * 手機上（沒有滑過磁磚的預熱）按下去會有 2 秒多什麼都沒發生 ——
+ * 使用者以為沒按到。現在按下去立刻換頁，等待發生在有「連線中」字樣的畫面上。
+ */
+export type OnlineTarget = { roomId: string } | { create: 2 | 3 } | { invalid: true };
+
+export function parseOnlineHash(hash: string): OnlineTarget {
+  const params = new URLSearchParams(hash.replace(/^#/, ''));
+  const roomId = params.get('roomId');
+  if (roomId) return { roomId };
+  const n = params.get('new');
+  if (n === '2' || n === '3') return { create: Number(n) as 2 | 3 };
+  return { invalid: true };
+}
+
+/** 首頁連線磁磚的目的地：`#new=2`。 */
+export function newRoomHash(playersNum: 2 | 3): string {
+  return `#new=${playersNum}`;
 }
