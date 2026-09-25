@@ -37,6 +37,7 @@ const ja: Messages = {
     ogDescription: '一手ずつ図でわかる：配置、移動、壁、陣地、得点。',
     faqHeading: 'よくある質問',
     ctaPlay: 'ゲームを始める',
+    version: 'バージョン',
     ctaSolo: 'ひとりで遊ぶ',
   },
   solo: {

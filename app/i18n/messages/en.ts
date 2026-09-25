@@ -38,6 +38,7 @@ const en: Messages = {
     ogDescription: 'One step, one diagram: placement, movement, walls, territory and scoring.',
     faqHeading: 'Common questions',
     ctaPlay: 'Start playing',
+    version: 'Version',
     ctaSolo: 'Play solo',
   },
   solo: {

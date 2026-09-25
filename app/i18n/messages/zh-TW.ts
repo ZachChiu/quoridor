@@ -43,6 +43,7 @@ const zhTW = {
     ogDescription: '一步一圖看懂牆壁圍棋怎麼玩：擺子、移動、築牆、圈地、計分。',
     faqHeading: '常見問題',
     ctaPlay: '開始遊戲',
+    version: '版本',
     ctaSolo: '單人對戰',
   },
   solo: {
