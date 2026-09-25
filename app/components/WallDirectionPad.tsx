@@ -63,6 +63,10 @@ type Props = {
   onToggleBreak: () => void;
   /** 移動已經結束，只剩蓋牆。同樣由 PlayClient 算（它手上有 pending 與 legalMoves）。 */
   onWallStep: boolean;
+  /** 中央那顆棋子可不可以按（有沒有別顆可換） */
+  canSwitch: boolean;
+  /** 換到下一顆能選的棋子。沒選的時候就是選第一顆 */
+  onSwitchPiece: () => void;
 };
 
 const ARROW: Record<Direction, string> = {
@@ -108,7 +112,7 @@ const DIRS: Direction[] = ['top', 'bottom', 'left', 'right'];
 export default function WallDirectionPad({
   placing, selected, movable, buildable, breakable, breaksLeft,
   pending, onPick, onMove, onBreak, onConfirm, onRedo, onSurrender, dirty, color, myTurn, remainSteps,
-  breakMode, onToggleBreak, onWallStep,
+  breakMode, onToggleBreak, onWallStep, canSwitch, onSwitchPiece,
 }: Props) {
   const g = useGameText();
 
@@ -265,12 +269,36 @@ export default function WallDirectionPad({
             </button>
           )}
 
-          <span className="col-start-3 row-start-3 grid place-items-center" aria-hidden="true">
+          {/*
+            中央這顆棋子可以按：按一下選第一顆，再按就換下一顆（依棋子編號輪流）。
+            手機上不必再去點盤面上那顆小小的棋子 —— 整個回合都可以在控制盤上完成。
+            點盤面的方式照舊保留。
+
+            規則跟點盤面一樣：走過之後就不能換（要換請按重來）、被圍死的棋子跳過。
+            沒得換的時候停用，外觀退回原本那顆只是指示顏色的點。
+            可以按的時候外面多一圈同色的淡環 —— 平塗語彙裡「這是個按鈕」的暗示，
+            不加陰影也不加描邊；已經選了一顆的時候外圈深一點。
+          */}
+          <button
+            type="button"
+            disabled={!canSwitch}
+            aria-label={selected ? g.pad.switchPiece : g.pad.pickPiece}
+            onClick={onSwitchPiece}
+            className="col-start-3 row-start-3 grid place-items-center rounded-full transition enabled:active:scale-90"
+          >
             <span
-              className="block size-6 rounded-full transition-opacity"
-              style={{ backgroundColor: color, opacity: selected ? 1 : 0.25 }}
-            />
-          </span>
+              className="grid size-10 place-items-center rounded-full transition-colors"
+              style={{ backgroundColor: canSwitch ? `color-mix(in srgb, ${color} ${selected ? 28 : 16}%, transparent)` : 'transparent' }}
+            >
+              {/* 開局擺子時不畫：那時控制盤整組停用，中央浮一顆淡色棋子
+                  看起來像在暗示「要把棋子放在這裡」（Zach 回報，不要）。
+                  其餘時候一律實色，不再用淡色表示「還沒選」—— 淡色棋子
+                  讀起來就是預覽／提示。選了沒選改由外圈的深淺表示。 */}
+              {!placing && (
+                <span className="block size-6 rounded-full" style={{ backgroundColor: color }} />
+              )}
+            </span>
+          </button>
         </div>
 
       </div>

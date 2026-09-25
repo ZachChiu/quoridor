@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { GiChatBubble } from 'react-icons/gi';
 import Modal from './Modal';
 import Button from './Button';
-import { trackButtonClick } from '@/utils/analytics';
+import { track } from '@/utils/analytics';
 import { useGameText, useMessages } from '@/i18n/LocaleProvider';
 
 /**
@@ -65,7 +65,7 @@ const FeedbackModal: React.FC<Props> = ({ isOpen, onClose, onSubmit, variant = '
   const submit = async () => {
     if (!canSend || state === 'sending') return;
     setState('sending');
-    trackButtonClick(isContact ? 'send_contact' : 'send_feedback');
+    track('feedback_send', { source: isContact ? 'contact' : 'game', rating: rating ?? undefined });
     try {
       await onSubmit(rating, message.trim(), contact.trim());
       setState('sent');

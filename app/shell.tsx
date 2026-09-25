@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
-import { Suspense } from 'react'
 import { GoogleAnalytics } from '@next/third-parties/google'
 import "./globals.css";
-import AnalyticsProvider from "./providers/analytics-provider";
 import { GameProvider } from "./contexts/GameContext";
 import { RuleModalProvider } from "./contexts/RuleModalContext";
 import { TransitionProvider } from "./contexts/TransitionContext";
@@ -40,18 +38,18 @@ export function Shell({ locale, children }: { locale: Locale; children: React.Re
               <GameProvider>
                 {children}
                 <RuleModal />
-                {/* Suspense 只包住 analytics 本身。它用了 useSearchParams()，
-                    若連同內容一起包住，整棵子樹在靜態產生時會退回 client 渲染，
-                    靜態 HTML 只剩 fallback（null）—— 爬蟲拿到空殼。 */}
-                <Suspense fallback={null}>
-                  <AnalyticsProvider />
-                </Suspense>
               </GameProvider>
             </TransitionProvider>
           </RuleModalProvider>
         </UserProvider>
         </LocaleProvider>
       </body>
+      {/*
+        頁面瀏覽（page_view）全交給 GA 自己算：首次載入由 config 送，站內換頁
+        由「加強型評估」的「依瀏覽器記錄事件判斷網頁變更」送（GA 後台預設開啟）。
+        先前另外有一個 AnalyticsProvider 手動送 page_view，於是每次瀏覽都算兩次
+        —— Next 的文件明寫兩者只能擇一（third-party-libraries.md〈Tracking Pageviews〉）。
+      */}
       {process.env.NEXT_PUBLIC_APP_ENV === "production" && (
         <GoogleAnalytics gaId="G-1CTRTGRPFF" />
       )}

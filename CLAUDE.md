@@ -81,6 +81,11 @@ zh-TW 不加前綴（`app/(default)/`），en / ja / ko 加前綴（`app/(intl)/
 
 棋盤渲染：`app/components/Chessboard.tsx`（2D，目前使用中）。
 
+手機（`coarse`）底部是 `WallDirectionPad` 控制盤：內圈箭頭移動、外圈長條蓋牆、四角是投降／破牆／重來／完成。
+**中央那顆棋子可以按**：按一下選第一顆，再按依棋子編號換下一顆（engine 的 `nextSelectablePiece`），
+整個回合不必點盤面；點盤面的方式照舊保留。規則同 `selectPiece`：走過就不能換（要換請按重來）、
+被圍死的棋子跳過。開局擺子時中央不畫任何東西 —— 淡色棋子會被讀成「放這裡」的提示。
+
 ### 連線對戰（Firebase）
 
 **Firebase RTDB 路徑：`rooms/{roomId}/`**
@@ -95,6 +100,7 @@ players/{ A?, B?, C? }/{ uid, displayName, joinedAt }
 - `app/utils/firebase.ts` — Firebase **惰性**初始化。匯出 `getFirebaseAuth()` / `getFirebaseDb()` 兩個 async 函式，內部以動態 import 載入 SDK 並用 Promise 記憶化。首頁與 `/local` 不會下載 Firebase（約 75 KB gzip）
 - `app/utils/gameService.ts` — `createRoom`, `joinRoom`, `getRoom`, `subscribeRoom`, `updateGameState`, `setRoomWinner`
 - `app/types/room.ts` — `Room`, `RoomPlayer`, `RoomStatus` 型別
+- 首頁右上角水平並排「聯絡我們」與語言切換（40px、離邊 10px）。標題上方有一塊直式才有、可收縮（flex-shrink）的留白：畫面夠高時把標題推到圓鈕下面，不夠高時自己縮掉，不會多出捲軸；640–680 高的舊手機再把標題縮到 6.5dvh。直排、拆到左上都試過，Zach 覺得不好看
 - `HomeClient.tsx` — 連線磁磚**按下去立刻**跳轉 `/online#new=2|3`，不在首頁等建房（手機沒有滑過磁磚的預熱，先前會有 2 秒多畫面不動）。滑過或 focus 磁磚時仍呼叫 `ensureUser()` 預熱登入
 - `app/(default)/online/OnlineClient.tsx` — 解析 hash（`parseOnlineHash`）：`#roomId=` 進房；`#new=` 就地開房（初始棋譜用 `toWgf(createGame(n))`），開好後 `replaceState` 換網址 —— 重新整理才不會再開一間；都不是就顯示「連結不完整」，不會退化成本機對戰
 
@@ -177,6 +183,11 @@ players/{ A?, B?, C? }/{ uid, displayName, joinedAt }
 交給 `PlayClient`** —— 直接讀 context 的話，玩過單人後的殘留難度會讓 `/local` 變成 AI 局。
 設定後除了 A 以外都交給 AI；連線模式沒有 AI。
 
+重整 `/solo#easy` 不能先閃出難度選單：靜態 HTML 裡本來就有選單，layout effect 擋不住
+（那時 JS 都還沒下載）。`SoloClient` 在選單裡放一段內嵌 script，解析到就讀 hash、
+往 `<head>` 塞一段把 `.solo-picker` 設成隱形的樣式；hydrate 後由 layout effect 移除。
+難度鈕是 `components/DifficultyButtons.tsx`，首頁的難度 Modal 與 `/solo` 共用。
+
 AI 的一個回合是**單一 reducer 轉換**（`type: 'aiTurn'`）。分三次 dispatch 會讓
 中間狀態存在於 React 裡，而驅動 AI 的 effect 依賴 state —— 它會在同一回合內
 重複去問 Worker，最後那次的回覆可能在回合已交出去之後才套用。
@@ -191,10 +202,33 @@ AI 的一個回合是**單一 reducer 轉換**（`type: 'aiTurn'`）。分三次
 - **狀態變更**：engine 的每個操作都回傳全新 state，禁止就地修改傳入的物件。（已移除 lodash-es，不再使用 `cloneDeep()`。）
 - **型別定義**：統一放 `app/types/`；`app/utils/` 只放邏輯函式。
 - **玩家顏色**：定義為 CSS 變數 `--player-A/B/C`，位於 `app/globals.css` 第 5–45 行；透過 Tailwind 自訂色彩 `player-A`、`player-B`、`player-C` 引用。
-- **響應式斷點**：`portrait`、`landscape`、`md`、`lg`（見 `tailwind.config.ts`）。
-- **數據分析**：使用者觸發的操作請以 `trackButtonClick()` 包裹，來源為 `app/utils/analytics.ts`。
+- **響應式斷點**：`portrait`、`landscape`、`coarse`／`fine`（手指／滑鼠）、`short`（矮的橫向畫面，手機橫放）、`md`、`lg`（見 `tailwind.config.ts`）。觸控裝置沒有真的 hover，點過的元素會一直停在 `:hover` —— 只該給滑鼠看的 hover 效果用 `fine:group-hover:`。
+- **數據分析**：一律用 `app/utils/analytics.ts` 的 `track(事件, 參數)`，事件與參數由那裡的型別表鎖住。詳見〈數據分析〉。
 - **Import 別名**：使用 `@/*` 代表 `app/*`（例如 `@/components/Button`）。
 - **Context hooks**：在 Provider 外使用時必須拋出錯誤（參考 `GameContext.tsx` 中的模式）。
+
+## 數據分析（GA4）
+
+GA 由 `app/shell.tsx` 的 `<GoogleAnalytics>` 載入（只有 `NEXT_PUBLIC_APP_ENV=production` 才載），
+事件由 `track()` 送。**一件事一個事件名稱，差異放參數** —— 不要再把變數塞進事件名稱
+（舊的 `start_local_game_2p` 那種），GA 的事件名稱有 500 種上限，而且報表無法加總。
+
+| 事件 | 什麼時候 | 參數 |
+|---|---|---|
+| `mode_select` | 首頁磁磚或 `/solo` 頁選了模式（想玩） | mode、players、difficulty、source |
+| `room_created` | 連線房開好 | players |
+| `game_start` | 本機／單人擺下第一顆棋；連線人到齊開始擺棋 | mode、players、difficulty |
+| `game_end` | 分出勝負 | mode、players、difficulty、result、winner、ended、turns、duration_sec |
+| `game_restart` | 結算按再來一局 | mode、players、difficulty |
+| `online_error` | 連線失敗 | reason |
+| `share_room_link` | 分享房間連結 | method |
+| `tutorial_close` | 關掉遊玩方式 | step、steps、finished |
+| `locale_switch` | 切語系 | from、to |
+| `contact_open` / `feedback_send` | 聯絡我們、送出回饋 | source、rating |
+
+- `game_start` / `game_end` 看**狀態轉變**而不是按鈕；第一次觀察到的狀態不送（重整後從棋譜重建的「已開始／已結束」不是這次發生的），連線另用 sessionStorage 去重。連線局每位玩家各送一次，所以是「人次」不是「局數」。投降不另外送，會以 `game_end` 的 `ended: 'resign'` 出現。
+- **`page_view` 交給 GA 自己算**（首次載入由 config、站內換頁由加強型評估的「依瀏覽器記錄事件」）。不要再手動送 —— 以前的 `AnalyticsProvider` 就是這樣讓每次瀏覽都算兩次。
+- 參數要在 GA 後台「管理 → 自訂定義」註冊才看得到：維度 `mode`、`players`、`difficulty`、`source`、`result`、`winner`、`ended`、`reason`、`method`、`from`、`to`、`finished`；指標 `turns`、`duration_sec`、`step`、`rating`。
 
 ## 打版（`npm run release`）
 

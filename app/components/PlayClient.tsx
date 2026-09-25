@@ -16,7 +16,7 @@ import { playerKeys } from "@/game/territory";
 import { playerVar } from "@/config/players";
 import { shouldPushWgf } from "@/utils/wgfSync";
 import TurnGuide from "@/components/TurnGuide";
-import { canPlaceWallNow, hasStarted, legalBreaks, legalMoves, selectablePieces } from "@/game/engine";
+import { canPlaceWallNow, hasStarted, legalBreaks, legalMoves, nextSelectablePiece, selectablePieces } from "@/game/engine";
 import type { Difficulty } from "@/game/ai";
 import ShareLinkModal from "@/components/ShareLinkModal";
 import StatusScreen, { BTN_PRIMARY, BTN_SECONDARY } from "@/components/StatusScreen";
@@ -33,7 +33,7 @@ import { withTimeout } from '@/utils/withTimeout';
 import { useUser } from '@/contexts/UserContext';
 import type { Room, RoomPlayer } from '@/types/room';
 
-import { trackButtonClick } from "@/utils/analytics";
+import { track, type GameModeParam } from "@/utils/analytics";
 import { useRuleModal } from "@/contexts/RuleModalContext";
 import { useTransition } from "@/contexts/TransitionContext";
 import { useGame } from "@/contexts/GameContext";
@@ -384,6 +384,71 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
     return state.currentPlayer === myPlayerKey;
   }, [isLock, isAiTurn, isOnline, myPlayerKey, state.currentPlayer]);
 
+  // ─── 數據分析 ───────────────────────────────────────────────────────────────
+  /*
+    game_start / game_end 看的是「狀態的轉變」，不是按鈕：
+    開始＝盤面從沒有進度變成有進度（擺下第一顆棋），結束＝從沒有勝負變成有勝負。
+
+    第一次觀察到的狀態只記下來、不送：重新整理或重新進入連線房時，
+    盤面是從棋譜重建出來的，那時「已經開始／已經結束」不是這次發生的事。
+    連線還多一層 sessionStorage 去重 —— 連線頁的狀態要等房間資料到了才重建，
+    第一次觀察可能落在重建之前。
+
+    連線局每位玩家各送一次（每台裝置都看到開始與結束），
+    所以連線的 game_start 次數是「玩家人次」而不是「局數」。
+  */
+  const gaMode: GameModeParam = isOnline ? 'online' : aiDifficulty ? 'solo' : 'local';
+  const gaBase = useMemo(
+    () => ({ mode: gaMode, players: (playersNum === 3 ? 3 : 2) as 2 | 3, difficulty: aiDifficulty ?? undefined }),
+    [gaMode, playersNum, aiDifficulty],
+  );
+  const started = hasStarted(state);
+  const gaSeenRef = useRef<{ started: boolean; ended: boolean } | null>(null);
+  const startedAtRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (isOnline && phase !== 'playing') return;
+    const prev = gaSeenRef.current;
+    gaSeenRef.current = { started, ended: isLock };
+    if (!prev) return;
+
+    // 同一個連線房在這個分頁裡只送一次（重新整理不會重送）
+    const once = (what: string) => {
+      if (!isOnline || !roomId) return true;
+      const key = `ga:${roomId}:${what}`;
+      try {
+        if (sessionStorage.getItem(key)) return false;
+        sessionStorage.setItem(key, '1');
+      } catch { /* 無痕模式等存取失敗時照送，寧可多一筆也不要整個壞掉 */ }
+      return true;
+    };
+
+    if (started && !prev.started && once('start')) {
+      startedAtRef.current = Date.now();
+      track('game_start', gaBase);
+    }
+    if (isLock && !prev.ended && once('end')) {
+      const me = isOnline ? myPlayerKey : aiDifficulty ? 'A' : null;
+      const tie = outcome.length > 1;
+      track('game_end', {
+        ...gaBase,
+        result: me ? (outcome.includes(me) ? (tie ? 'tie' : 'win') : 'lose') : (tie ? 'tie' : 'decided'),
+        winner: outcome.join('/'),
+        ended: naturalOutcome.length ? 'natural' : 'resign',
+        turns: state.turns.length,
+        duration_sec: startedAtRef.current ? Math.round((Date.now() - startedAtRef.current) / 1000) : undefined,
+      });
+    }
+    // 只在「開始／結束」翻轉時才需要重跑；其餘值是送出當下讀的
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [started, isLock, phase]);
+
+  // 手機控制盤中央那顆「換下一顆」的目標。useMemo 是為了 Chessboard 的 React.memo ——
+  // 每次 render 都給新物件的話 memo 就失效了。
+  const nextPiece = useMemo(
+    () => (isMyTurn && !isPlacing ? nextSelectablePiece(state) : null),
+    [isMyTurn, isPlacing, state],
+  );
+
   const { think, warmup: warmupAi, cancel: cancelAi } = useAiOpponent(
     useCallback((move) => {
       if (move.kind === 'opening') {
@@ -438,6 +503,7 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
         if (cancelled) return;
         if (!existing) {
           setError('noRoom');
+          track('online_error', { reason: 'noRoom' });
           setPhase('error');
           return;
         }
@@ -453,6 +519,7 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
           const next = slots.find(s => !existing.players[s]);
           if (!next) {
             setError('roomFull');
+            track('online_error', { reason: 'roomFull' });
             setPhase('error');
             return;
           }
@@ -517,6 +584,7 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
       } catch (e) {
         console.error(e);
         setError('connectFail');
+        track('online_error', { reason: 'connectFail' });
         setPhase('error');
       }
     })();
@@ -626,8 +694,8 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
     dispatch({ type: 'reset', playersNum });
     setChampionDismissed(false);
     setResignedBy(null);
-    trackButtonClick(`restart_local_game_${playersNum}p`);
-  }, [playersNum]);
+    track('game_restart', gaBase);
+  }, [playersNum, gaBase]);
 
   // 誰會是投降的人：確認視窗的配色與最後判負都用同一個答案
   const resigner: PlayerKey | null = isOnline ? myPlayerKey : aiDifficulty ? 'A' : state.currentPlayer;
@@ -636,9 +704,9 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
     setSurrenderOpen(false);
     const who = resigner;
     if (!who) return;
+    // 投降不另外送事件 —— 它會以 game_end（ended: 'resign'）出現
     setResignedBy(who);
-    trackButtonClick(`surrender_${isOnline ? 'online' : 'local'}_${playersNum}p`);
-  }, [resigner, isOnline, playersNum]);
+  }, [resigner]);
 
   /*
     離開頁面前確認 —— 但只在「真的有東西會被丟掉」的時候。
@@ -807,6 +875,7 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
               canWall={canPlaceWallNow(state)}
               myTurn={isMyTurn}
               selectable={selectableKeys}
+              nextPiece={nextPiece}
               breakSlots={breakSlots}
               flattenTerritoriesObj={territories.ownerByCell}
               breakWallCountObj={state.breakWallCount}

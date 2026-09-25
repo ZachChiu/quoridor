@@ -70,6 +70,11 @@ type Props = {
    * 沒給就退回「旁邊有牆就能破」。被圍死的棋子只能破「破了走得出去」的那幾道。
    */
   breakSlots?: Set<string>;
+  /**
+   * 手機控制盤中央那顆棋子按下去要換到哪一顆（engine 的 nextSelectablePiece）。
+   * null＝沒得換（不是我的回合、已經走過、只剩這一顆）。
+   */
+  nextPiece?: Move | null;
 };
 
 export default React.memo(function Chessboard({
@@ -102,6 +107,7 @@ export default React.memo(function Chessboard({
   myTurn,
   selectable,
   breakSlots,
+  nextPiece = null,
 }: Props) {
   const canBreakAt = (row: number, col: number, dir: 'H' | 'V') =>
     !breakSlots || breakSlots.has(`${row},${col},${dir}`);
@@ -608,10 +614,12 @@ export default React.memo(function Chessboard({
                     );
                   })()}
 
-                  {/* 放置時的預覽棋子 */}
+                  {/* 放置時的預覽棋子。只給滑鼠（fine）：觸控沒有真正的 hover，
+                      手機點過的格子會一直停在 :hover，一進對局就在手指剛才的位置
+                      浮一顆淡色棋子（Zach 回報）。手機上有灰點就夠了。 */}
                   {!cellPlayer && isPlacingChess && currentPlayer && (
                     <div
-                      className="absolute z-20 hidden size-3/5 rounded-full opacity-55 group-hover:block"
+                      className="absolute z-20 hidden size-3/5 rounded-full opacity-55 fine:group-hover:block"
                       style={{ backgroundColor: PLAYER_VAR[currentPlayer] }}
                     />
                   )}
@@ -635,7 +643,7 @@ export default React.memo(function Chessboard({
                       條件刻意與上面 cursor-pointer 那條一字不差：能點的就有點，
                       兩者分開寫遲早會不一致。游標移上去時讓位給預覽棋子。 */}
                   {!isLock && isPlacingChess && !cellPlayer && (
-                    <div className="absolute z-10 size-1/4 rounded-full bg-tile-ink/20 transition-opacity group-hover:opacity-0" />
+                    <div className="absolute z-10 size-1/4 rounded-full bg-tile-ink/20 transition-opacity fine:group-hover:opacity-0" />
                   )}
 
                   {/*
@@ -810,6 +818,13 @@ export default React.memo(function Chessboard({
             onToggleBreak={onToggleBreak}
             onWallStep={onWallStep}
             onSurrender={() => onSurrender?.()}
+            canSwitch={!!nextPiece}
+            onSwitchPiece={() => {
+              if (!nextPiece) return;
+              selectChess(nextPiece.row, nextPiece.col);
+              // 換了棋子，原本選的牆位置是另一顆的，清掉
+              setPendingWall(null);
+            }}
             dirty={turnDirty}
             myTurn={myTurn ?? (!isLock && !!currentPlayer)}
             remainSteps={remainSteps}

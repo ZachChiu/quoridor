@@ -4,10 +4,10 @@ import { GiBrain } from 'react-icons/gi';
 import PlayClient from '@/components/PlayClient';
 import { useGame } from '@/contexts/GameContext';
 import { useMessages } from '@/i18n/LocaleProvider';
-import { trackButtonClick } from '@/utils/analytics';
+import { track } from '@/utils/analytics';
 import { gameHash, readGameHash } from '@/utils/gameMode';
 import { useIsoLayoutEffect } from '@/hook/useIsoLayoutEffect';
-import type { Difficulty } from '@/game/ai';
+import DifficultyButtons from '@/components/DifficultyButtons';
 
 /**
  * 單人對戰。
@@ -20,16 +20,24 @@ import type { Difficulty } from '@/game/ai';
  * 難度同時也寫在網址的 hash 裡（`/solo#hard`）—— 重整之後不必再問一次，
  * 而且那個連結分享出去是「直接開困難」，不是「開一個選單」。
  */
+
 /*
-  三個難度原本各一個色相（森綠、琥珀、磚紅），並排起來配色過雜。
-  改成同一種中性卡片，強度用陶橘的點數表示 —— 陶橘是單人對戰這塊磁磚的顏色，
-  整個畫面只有它一個色相。點數也比顏色好懂：一顆到三顆，不必猜綠色代表什麼。
+  重整 /solo#easy 時不要先閃出難度選單（Zach 回報）。
+
+  layout effect 擋不住這一下：靜態匯出的 HTML 裡本來就有選單，瀏覽器
+  一收到就畫出來，那時 JS 都還沒下載，更別說 hydrate。能在第一次繪製
+  之前讀到 hash 的只有「跟著 HTML 一起到、解析到就同步執行」的內嵌 script。
+
+  它往 <head> 塞一段把選單設成 visibility:hidden 的樣式，而不是直接改
+  選單的 style —— 後者會讓 hydration 對不上屬性。React 19 會略過
+  head 裡不是它放的節點，所以這段樣式不會造成 mismatch。
+  選單仍然佔位（hidden 不是 none），hydrate 之後直接換成棋盤。
 */
-const LEVELS: Difficulty[] = ['easy', 'normal', 'hard'];
+const HIDE_STYLE_ID = 'solo-picker-hide';
+const HIDE_PICKER = `if(/(^#|-)(easy|normal|hard)$/.test(location.hash)&&!document.getElementById('${HIDE_STYLE_ID}')){var s=document.createElement('style');s.id='${HIDE_STYLE_ID}';s.textContent='.solo-picker{visibility:hidden}';document.head.appendChild(s)}`;
 export default function SoloClient() {
   const { gameState, setGameState } = useGame();
   const t = useMessages();
-  const LABELS = [t.solo.level1, t.solo.level2, t.solo.level3];
   const [picked, setPicked] = useState(!!gameState.aiDifficulty);
 
   /*
@@ -37,6 +45,9 @@ export default function SoloClient() {
     後者在 paint 之後才跑，會先閃一次難度選單再跳進對局。
   */
   useIsoLayoutEffect(() => {
+    // 下面那段內嵌 script 加的樣式到這裡就完成任務了 —— 留著的話，之後在站內
+    // 換頁回到沒有 hash 的 /solo，選單會一直是隱形的。
+    document.getElementById(HIDE_STYLE_ID)?.remove();
     if (gameState.aiDifficulty) return;
     const d = readGameHash().aiDifficulty;
     if (!d) return;
@@ -48,34 +59,21 @@ export default function SoloClient() {
   if (picked && gameState.aiDifficulty) return <PlayClient aiDifficulty={gameState.aiDifficulty} />;
 
   return (
-    <div className="flex w-full max-w-[380px] flex-col items-center gap-6 px-5">
+    <div className="solo-picker flex w-full max-w-[380px] flex-col items-center gap-6 px-5">
+      <script dangerouslySetInnerHTML={{ __html: HIDE_PICKER }} />
       <div className="flex flex-col items-center gap-3 text-center">
         <GiBrain className="text-6xl text-tile-orange" aria-hidden="true" />
         <h2 className="text-3xl font-black tracking-tight">{t.solo.pickLevel}</h2>
       </div>
-      <div className="grid w-full grid-cols-3 gap-3">
-        {LEVELS.map((key, i) => (
-          <button
-            key={key}
-            type="button"
-            onClick={() => {
-              setGameState({ ...gameState, playersNum: 2, aiDifficulty: key });
-              setPicked(true);
-              // 在這裡選的也要進網址，之後重整才回得來
-              history.replaceState(null, '', location.pathname + gameHash({ aiDifficulty: key }));
-              trackButtonClick(`start_solo_game_${key}`);
-            }}
-            className="flex flex-col items-center gap-3 rounded-2xl bg-tile-ink/[0.07] py-5 text-xl font-black text-tile-ink transition hover:bg-tile-ink/[0.12] active:scale-[0.97]"
-          >
-            <span className="flex gap-1.5" aria-hidden="true">
-              {LEVELS.map((_, dot) => (
-                <span key={dot} className={`size-2.5 rounded-full ${dot <= i ? 'bg-tile-orange' : 'bg-tile-ink/15'}`} />
-              ))}
-            </span>
-            {LABELS[i]}
-          </button>
-        ))}
-      </div>
+      <DifficultyButtons
+        onPick={(key) => {
+          setGameState({ ...gameState, playersNum: 2, aiDifficulty: key });
+          setPicked(true);
+          // 在這裡選的也要進網址，之後重整才回得來
+          history.replaceState(null, '', location.pathname + gameHash({ aiDifficulty: key }));
+          track('mode_select', { mode: 'solo', players: 2, difficulty: key, source: 'solo_page' });
+        }}
+      />
     </div>
   );
 }

@@ -23,7 +23,7 @@ const zhTW = {
   home: {
     titleLine1: '牆壁圍棋',
     titleLine2: 'Wall Go',
-    tagline: '圍出最大的地盤 · 2–3 人對戰',
+    tagline: '圍出最大的地盤',
     localKicker: '本機',
     onlineKicker: '連線',
     twoPlayers: '雙人',

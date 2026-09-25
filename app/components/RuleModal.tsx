@@ -8,6 +8,7 @@ import { STEPS } from './tutorialSteps';
 import { useRuleModal } from '@/contexts/RuleModalContext';
 import { useLocale, useMessages } from '@/i18n/LocaleProvider';
 import { STEP_TEXT } from '@/i18n/content/steps';
+import { track } from '@/utils/analytics';
 
 /**
  * 逐步教學。
@@ -29,7 +30,11 @@ const RuleModal: React.FC = () => {
   const isOpen = ruleModalState.isOpen;
   const last = step === STEPS.length - 1;
 
-  const close = () => setRuleModalState({ ...ruleModalState, isOpen: false });
+  const close = () => {
+    // 讀到第幾步就關掉 —— 看得出規則是在哪一步把人勸退的
+    track('tutorial_close', { step: step + 1, steps: STEPS.length, finished: last });
+    setRuleModalState({ ...ruleModalState, isOpen: false });
+  };
 
   // 每次重新打開都從第一步開始 —— 上次讀到哪裡對下一次沒有意義，
   // 而停在中間會讓人以為前面幾步已經看過了。

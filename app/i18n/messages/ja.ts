@@ -17,7 +17,7 @@ const ja: Messages = {
   home: {
     titleLine1: '壁囲碁',
     titleLine2: 'Wall Go',
-    tagline: 'いちばん広い陣地を囲む · 2〜3人対戦',
+    tagline: 'いちばん広い陣地を囲む',
     localKicker: 'ローカル',
     onlineKicker: 'オンライン',
     twoPlayers: '2人',

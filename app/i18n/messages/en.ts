@@ -18,7 +18,7 @@ const en: Messages = {
     // 英文版只有一行 —— 中文名對英文讀者不是資訊，是雜訊。
     // titleLine2 整個不給（型別上是選填），HomeView 會連換行一起省掉。
     titleLine1: 'Wall Go',
-    tagline: 'Enclose the most ground · 2–3 players',
+    tagline: 'Enclose the most ground',
     localKicker: 'Local',
     onlineKicker: 'Online',
     twoPlayers: '2 players',

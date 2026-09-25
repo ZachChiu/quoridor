@@ -5,7 +5,7 @@ import { LuCopy, LuShare2 } from "react-icons/lu";
 import Modal from './Modal';
 import { playerVar, type PlayerKey } from '@/config/players';
 import { useWebShare, share } from '@/hook/useWebShare';
-import { trackButtonClick } from '@/utils/analytics';
+import { track } from '@/utils/analytics';
 import { useGameText } from '@/i18n/LocaleProvider';
 
 interface Props {
@@ -44,7 +44,7 @@ const ShareLinkModal: React.FC<Props> = ({ isOpen, shareUrl, joinedCount, totalC
     桌機沒有 navigator.share，就只留複製。
   */
   const handleShare = async () => {
-    trackButtonClick('share_room_link_native');
+    track('share_room_link', { method: 'native' });
     // 網址只放 url，不要在 text 裡再寫一次 —— 有些平台會把兩者串起來，
     // 於是同一個連結出現兩次。
     await share({
@@ -55,7 +55,7 @@ const ShareLinkModal: React.FC<Props> = ({ isOpen, shareUrl, joinedCount, totalC
   };
 
   const handleCopy = async () => {
-    trackButtonClick('share_room_link_copy');
+    track('share_room_link', { method: 'copy' });
     try {
       await navigator.clipboard.writeText(shareUrl);
     } catch {

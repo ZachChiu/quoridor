@@ -12,6 +12,7 @@ import { fmt } from '@/i18n/content/game';
 import { localePath } from '@/i18n/locales';
 import { useUser } from '@/contexts/UserContext';
 import { createRoom } from '@/utils/gameService';
+import { track } from '@/utils/analytics';
 import { parseOnlineHash, type OnlineTarget } from '@/utils/gameMode';
 import { createGame, toWgf } from '@/game/engine';
 import { withTimeout } from '@/utils/withTimeout';
@@ -56,10 +57,12 @@ export default function OnlineClient() {
           joinedAt: Date.now(),
         }, toWgf(createGame(createCount))));
         history.replaceState(null, '', `${location.pathname}#roomId=${roomId}`);
+        track('room_created', { players: createCount });
         setTarget({ roomId });
       } catch (err) {
         console.error('[online] 開房失敗：', err);
         setCreateFailed(true);
+        track('online_error', { reason: 'createFail' });
       }
     })();
   }, [createCount, ensureUser, g]);
