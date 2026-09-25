@@ -95,6 +95,12 @@ function board() {
 }
 
 /** 一張圖。`copy` 是已經挑好語系的字串。 */
+/** 膠囊字級：寬度估計 = 字數 × 字級（全形字算 1、半形字算 0.58）。文字欄可用約 480px。 */
+function pillSize(text, max = 36, min = 26, room = 480) {
+  const units = [...text].reduce((n, ch) => n + (/[\u2E80-\uFFEF]/.test(ch) ? 1 : 0.58), 0);
+  return Math.max(min, Math.min(max, Math.floor(room / units)));
+}
+
 export function poster({ tone, copy }) {
   const t = TONES[tone];
   return div({
@@ -102,11 +108,16 @@ export function poster({ tone, copy }) {
     alignItems: 'center', padding: '0 70px',
     fontFamily: 'OG',
   }, [
-    div({ flexDirection: 'column', flex: 1, paddingRight: 48 }, [
+    // 文字欄與棋盤之間留 110px：48px 時在聊天室的縮圖裡文字看起來貼著棋盤（Zach 回報）
+    div({ flexDirection: 'column', flex: 1, paddingRight: 110 }, [
       div({
         alignSelf: 'flex-start', background: t.pill, color: t.pillFg,
-        borderRadius: 999, padding: '10px 24px', fontSize: 26, fontWeight: 700,
-        marginBottom: 26,
+        // 站名／節目名是品牌 —— 聊天室縮圖只有原圖一半大，26px 縮下來約 13px，
+        // 幾乎看不到「Wall Go」（Zach 回報）。放大到 36px、900 字重。
+        // 但不能換行：英文節目名「The Devil's Plan: Death Room」36px 會折成兩行。
+        // 照字寬估計，放得下就 36px，放不下就縮，最小 26px。
+        borderRadius: 999, padding: '12px 30px', fontSize: pillSize(copy.kicker), fontWeight: 900,
+        whiteSpace: 'nowrap', marginBottom: 30,
       }, copy.kicker),
       // 標題下面不放描述句（Zach：「描述我不喜歡，全部拔掉」）—— 圖只講是哪一頁
       ...copy.title.map((line, i) => div({
