@@ -102,6 +102,14 @@ const Modal: React.FC<Props> = ({
     }
   }, [isOpen]);
 
+  /*
+    層級：頁面上的東西最高到 z-50（對局頁左上的按鈕、回放頁的控制列），
+    換頁轉場是 z-[60]。Modal 夾在中間的 z-[55]。
+
+    不能跟頁面元件同為 z-50：層級相同時看 DOM 順序，而 Modal 是 portal 到
+    body 的 —— 站內換頁後 React 會把新頁面插到 body 最後面，排在 Modal 之後，
+    於是對局頁左上那兩顆鈕蓋到了「遊玩方式」上面（Zach 截圖）。
+  */
   const node = (
     <div
       /*
@@ -109,7 +117,7 @@ const Modal: React.FC<Props> = ({
         先前只有左右 px-4：手機瀏覽器底部有工具列時可視高度變小，
         高的 Modal（遊玩方式）會貼齊上下兩端、按鈕壓到工具列（Zach 回報）。
       */
-      className={`fixed inset-0 z-50 flex items-center justify-center px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] ${
+      className={`fixed inset-0 z-[55] flex items-center justify-center px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] ${
         isOpen ? 'opacity-100' : 'pointer-events-none opacity-0'
       } transition-opacity duration-300`}
       role="dialog"
