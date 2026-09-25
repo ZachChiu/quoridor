@@ -25,6 +25,9 @@ import { GiDoor, GiSpyglass, GiUnplugged } from "react-icons/gi";
 import FeedbackModal from "@/components/FeedbackModal";
 import BreakWallConfirmModal from "@/components/BreakWallConfirmModal";
 import SurrenderConfirmModal from "@/components/SurrenderConfirmModal";
+import LeaveConfirmModal from "@/components/LeaveConfirmModal";
+import { clearSavedGame, loadSavedGame, saveGame, savedGameKey } from "@/utils/savedGame";
+import { useIsoLayoutEffect } from "@/hook/useIsoLayoutEffect";
 
 import type { Direction } from "@/types/chessboard";
 
@@ -170,6 +173,28 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
     isOnline ? 2 : (routePlayers ?? ((gameState.playersNum === 3 ? 3 : 2) as 2 | 3)),
     createGame
   );
+  // ─── 重整後接回棋局（本機、單人）──────────────────────────────────────────────
+  // 暫存的寫入在下方（isLock 定義之後）；做法與理由見 utils/savedGame.ts
+  const saveKey = isOnline ? null : savedGameKey(
+    routePlayers ?? (gameState.playersNum === 3 ? 3 : 2),
+    soloDifficulty ?? null,
+  );
+  // 接回來的「已經開始」不是這次發生的事 —— 給 GA 的開局判斷看（見數據分析那段）
+  const restoredRef = useRef(false);
+  useIsoLayoutEffect(() => {
+    if (!saveKey) return;
+    const saved = loadSavedGame(saveKey);
+    if (!saved) return;
+    try {
+      replay(saved); // 先試一次，壞掉的棋譜不要讓 reducer 丟錯
+      restoredRef.current = true;
+      dispatch({ type: 'replay', wgf: saved });
+    } catch {
+      clearSavedGame(saveKey);
+    }
+    // 只在掛載時接一次
+  }, []);
+
   // 冠軍 Modal 的開啟與否完全由「是否已分出勝負」推導，只額外記錄使用者
   // 是否手動關閉過，避免用 effect 去同步一個本來就能算出來的狀態。
   const [championDismissed, setChampionDismissed] = useState(false);
@@ -410,6 +435,8 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
     const prev = gaSeenRef.current;
     gaSeenRef.current = { started, ended: isLock };
     if (!prev) return;
+    // 重整後從暫存接回的那一下，不是新開一局
+    if (restoredRef.current) { restoredRef.current = false; return; }
 
     // 同一個連線房在這個分頁裡只送一次（重新整理不會重送）
     const once = (what: string) => {
@@ -728,6 +755,83 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [isLock, hasProgress]);
 
+  // 每一步都寫進暫存；還沒開始或已經分出勝負就清掉（下次進來是新的一局）
+  useEffect(() => {
+    if (!saveKey) return;
+    if (isLock || !hasStarted(state)) clearSavedGame(saveKey);
+    else saveGame(saveKey, toWgf(state));
+  }, [saveKey, state, isLock]);
+
+  /*
+    ─── 離開前確認：瀏覽器返回鍵 ───────────────────────────────────────────────
+
+    beforeunload 只管整頁跳轉，站內按返回不會觸發；iPhone 上的 Safari 與
+    Chrome 更是完全不顯示它。所以對局進行中，在歷史紀錄最上面多放一筆
+    「守門」（同一個網址）：按返回時只是從守門退到真正那筆，頁面不會換，
+    我們在 popstate 裡攔下來問一聲。要離開就再退一步；不離開就把守門放回去。
+
+    守門一定要在使用者點擊的當下 push —— WebKit 會跳過「沒有手勢時 JS
+    新增過紀錄」的頁面（見 TransitionContext.navigate 的註解，返回鍵越過首頁
+    那次就是這個原因）。所以是在對局頁的第一次點擊時放，而且不等「有進度」：
+    下第一顆棋的那次點擊，發生在「有進度」成立之前，等它成立就沒有手勢了。
+    按返回時如果其實沒東西會丟（還沒下、已經下完），就自動再退一步，
+    使用者感覺起來仍然是按一下就回去。
+
+    連線局只在真的開打後才問：等待朋友加入時離開沒有人在等你。
+  */
+  const guardWanted = !isLock && (isOnline ? phase === 'playing' : hasStarted(state));
+  const guardWantedRef = useRef(guardWanted);
+  useEffect(() => { guardWantedRef.current = guardWanted; });
+  // 重整時瀏覽器停在哪一筆就重新載入哪一筆 —— 若停在守門上，一開始就要知道，
+  // 否則下一次點擊又疊一筆，要按兩次返回才問得到
+  const guardOnTopRef = useRef(typeof window !== 'undefined' && !!window.history.state?.__wallgoGuard);
+  const [leaveVia, setLeaveVia] = useState<null | 'back' | 'home'>(null);
+  const leaveOpenRef = useRef(false);
+  useEffect(() => { leaveOpenRef.current = leaveVia !== null; });
+  const pendingHomeRef = useRef<(() => void) | null>(null);
+
+  const pushGuard = useCallback(() => {
+    if (guardOnTopRef.current) return;
+    window.history.pushState({ ...window.history.state, __wallgoGuard: true }, '', window.location.href);
+    guardOnTopRef.current = true;
+  }, []);
+
+  useEffect(() => {
+    if (isLock) return;
+    // capture：比任何元件的 onClick 都早，仍在同一個手勢裡。
+    // 確認視窗開著時不放 —— 按「離開」那一下若先放了守門，接著的退一步只會
+    // 退掉它，視窗又跳出來；按「繼續下」則由 cancelLeave 自己放回去
+    const onClick = () => { if (!leaveOpenRef.current) pushGuard(); };
+    document.addEventListener('click', onClick, true);
+    return () => document.removeEventListener('click', onClick, true);
+  }, [isLock, pushGuard]);
+
+  useEffect(() => {
+    const onPop = (e: PopStateEvent) => {
+      if (!guardOnTopRef.current || e.state?.__wallgoGuard) return;
+      guardOnTopRef.current = false;
+      if (guardWantedRef.current) setLeaveVia('back');
+      else window.history.back(); // 沒東西會丟：替使用者把這一步退完
+    };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
+
+  const cancelLeave = useCallback(() => {
+    if (leaveVia === 'back') pushGuard(); // 按返回被攔下來的：把守門放回去
+    pendingHomeRef.current = null;
+    setLeaveVia(null);
+  }, [leaveVia, pushGuard]);
+
+  const confirmLeave = useCallback(() => {
+    const via = leaveVia;
+    setLeaveVia(null);
+    if (saveKey) clearSavedGame(saveKey);
+    if (via === 'back') { window.history.back(); return; }
+    pendingHomeRef.current?.();
+    pendingHomeRef.current = null;
+  }, [leaveVia, saveKey]);
+
   const { ruleModalState, setRuleModalState } = useRuleModal();
   const handleRuleBtnOpen = () => setRuleModalState({ ...ruleModalState, isOpen: true });
 
@@ -777,7 +881,10 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
             // 而且終點是首頁的奶油底，色調連得上。試過深墨，整片黑太重 ——
             // 進場的顏色代表「你選了什麼」，離場不該比進場還搶戲。
             const r = e.currentTarget.getBoundingClientRect();
-            navigate(localePath(locale, '/'), {
+            const iconH = e.currentTarget.querySelector('svg')?.getBoundingClientRect().height;
+            // replace：守門那筆還在最上面就取代它，否則回首頁後按返回會先回到守門
+            const goHome = (replace: boolean) => navigate(localePath(locale, '/'), {
+              replace,
               wipe: {
                 x: r.left + r.width / 2,
                 y: r.top + r.height / 2,
@@ -788,11 +895,23 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
                 icon: GiHut,
                 // 這顆鈕的圖示只有 24px，寫死 text-7xl 會變成一顆比按鈕
                 // 還大的房子憑空冒出來 —— 量它真正的尺寸。
-                iconSize: e.currentTarget.querySelector('svg')?.getBoundingClientRect().height,
+                iconSize: iconH,
                 iconColor: 'rgb(var(--tile-ink))',
                 fg: 'rgb(var(--tile-ink))',
               },
             });
+            // 對局還沒結束就先問一聲（見上方「離開前確認」）
+            if (guardWanted) {
+              pendingHomeRef.current = () => {
+                const replace = guardOnTopRef.current;
+                guardOnTopRef.current = false;
+                goHome(replace);
+              };
+              setLeaveVia('home');
+              return;
+            }
+            if (saveKey) clearSavedGame(saveKey);
+            goHome(guardOnTopRef.current);
           }}
           className="rounded-full bg-primary-50 p-3.5 text-2xl text-tile-ink transition hover:brightness-95 active:scale-95">
           <GiHut />
@@ -963,6 +1082,13 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
             isOpen={isBreakWallModalOpen}
             onClose={handleBreakWallCancel}
             onCheck={handleBreakWallConfirm}
+          />
+
+          <LeaveConfirmModal
+            isOpen={leaveVia !== null}
+            onClose={cancelLeave}
+            onConfirm={confirmLeave}
+            online={isOnline}
           />
 
           <SurrenderConfirmModal

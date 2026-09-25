@@ -6,6 +6,7 @@ import { useGame } from '@/contexts/GameContext';
 import { useMessages } from '@/i18n/LocaleProvider';
 import { track } from '@/utils/analytics';
 import { gameHash, readGameHash } from '@/utils/gameMode';
+import { clearSavedGame, savedGameKey } from '@/utils/savedGame';
 import { useIsoLayoutEffect } from '@/hook/useIsoLayoutEffect';
 import DifficultyButtons from '@/components/DifficultyButtons';
 
@@ -68,6 +69,7 @@ export default function SoloClient() {
       <DifficultyButtons
         onPick={(key) => {
           setGameState({ ...gameState, playersNum: 2, aiDifficulty: key });
+          clearSavedGame(savedGameKey(2, key)); // 在這裡選的是新的一局
           setPicked(true);
           // 在這裡選的也要進網址，之後重整才回得來
           history.replaceState(null, '', location.pathname + gameHash({ aiDifficulty: key }));

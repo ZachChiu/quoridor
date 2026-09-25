@@ -54,6 +54,7 @@ export type GameText = {
   waiting: { kicker: string; heading: string; invite: string };
   breakWall: { heading: string; kicker: string; cancel: string; confirm: string; body: string };
   surrender: { label: string; heading: string; kicker: string; cancel: string; confirm: string; body: string; bodyThree: string };
+  leave: { heading: string; kicker: string; body: string; bodyOnline: string; cancel: string; confirm: string };
   status: { claimed: string };
   play: {
     noRoom: string; roomFull: string; playerName: string; connectFail: string;
@@ -120,6 +121,10 @@ export const GAME_TEXT: Record<Locale, GameText> = {
     breakWall: {
       heading: '要打破這面牆嗎', kicker: '每人只有一次', cancel: '取消', confirm: '破牆',
       body: '打破後這顆棋子可以繼續移動，但你的破牆機會會歸零 —— 這一局不會再有第二次。',
+    },
+    leave: {
+      heading: '要離開這一局嗎', kicker: '還沒下完', body: '離開之後，這一局不會保留。',
+      bodyOnline: '你離開之後，對手會停在這一局等你。', cancel: '繼續下', confirm: '離開',
     },
     surrender: {
       label: '投降', heading: '確定要投降嗎', kicker: '投降就算輸',
@@ -194,6 +199,10 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       heading: 'Break this wall?', kicker: 'Once per game', cancel: 'Cancel', confirm: 'Break it',
       body: 'This piece can keep moving afterwards, but your wall break is then gone — there is no second one this game.',
     },
+    leave: {
+      heading: 'Leave this game?', kicker: 'Not finished yet', body: "This game won't be kept once you leave.",
+      bodyOnline: 'Your opponent will be left waiting in this game.', cancel: 'Keep playing', confirm: 'Leave',
+    },
     surrender: {
       label: 'Resign', heading: 'Resign this game?', kicker: 'Resigning is a loss',
       cancel: 'Keep playing', confirm: 'Resign',
@@ -267,6 +276,10 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       heading: 'この壁を壊しますか？', kicker: '1ゲームに1回だけ', cancel: 'やめる', confirm: '壊す',
       body: '壊したあともこの駒は動かせますが、壁を壊せる回数は0になります。この一局でもう一度は使えません。',
     },
+    leave: {
+      heading: 'この対局を抜けますか？', kicker: 'まだ終わっていません', body: '抜けると、この対局は残りません。',
+      bodyOnline: 'あなたが抜けると、相手はこの対局で待ち続けることになります。', cancel: '続ける', confirm: '抜ける',
+    },
     surrender: {
       label: '投了', heading: '投了しますか？', kicker: '投了は負けです',
       cancel: '続ける', confirm: '投了する',
@@ -339,6 +352,10 @@ export const GAME_TEXT: Record<Locale, GameText> = {
     breakWall: {
       heading: '이 벽을 부술까요?', kicker: '한 게임에 한 번만', cancel: '취소', confirm: '부수기',
       body: '부순 뒤에도 이 말은 계속 움직일 수 있지만, 벽 부수기 기회는 사라집니다. 이번 판에 다시는 쓸 수 없습니다.',
+    },
+    leave: {
+      heading: '이 대국을 나갈까요?', kicker: '아직 끝나지 않았어요', body: '나가면 이 대국은 남지 않습니다.',
+      bodyOnline: '나가면 상대는 이 대국에서 계속 기다리게 됩니다.', cancel: '계속하기', confirm: '나가기',
     },
     surrender: {
       label: '기권', heading: '기권할까요?', kicker: '기권하면 패배입니다',
