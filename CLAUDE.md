@@ -162,6 +162,9 @@ players/{ A?, B?, C? }/{ uid, displayName, joinedAt }
 - **字型子集**由 `scripts/build-font-subset.mjs` 從原始碼推導（註解會先剝掉）。
   改文案後要跑 `npm run font:subset`，否則新字會**安靜地**掉到系統備援字體；
   CI 有 `font:check` 擋著。
+- **蓋滿畫面的東西不要剛好等於畫面高度**。手機工具列會隨捲動展開／收起，`inset:0`、`100lvh`、`100dvh` 各在某個瀏覽器／狀態下露底（Safari 與 iPhone 上的 Chrome 各被咬過）。
+  Modal 遮罩（`.cover-viewport`）上下各往外多蓋 `max(25vh, 12rem)`，fixed 超出畫面會被裁掉、不產生捲軸；手機控制盤用 `::after` 往下延伸同色底；
+  換頁轉場是 absolute（多蓋會撐長頁面），改由 JS 量 `innerHeight`／`visualViewport` 設高度。模擬器裡沒辦法用手指把工具列收起來，這類問題以「不依賴任何單位」的寫法處理，不要再換單位。
 - **iOS 26 Safari 的工具列顏色**取自「貼著畫面上下緣的 fixed 元素」（不看 theme-color、不管祖先的 opacity），而且反應慢半秒。
   所以關著的 Modal 遮罩要 `display:none`；換頁轉場（`WipeOverlay`）的根節點用 `absolute` 定位在目前的捲動位置而不是 `fixed` ——
   fixed 的話工具列會慢一拍染成磁磚色，畫面都換好了才變回來。上下各內縮 1px 沒有用，實測過。
