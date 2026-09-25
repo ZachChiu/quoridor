@@ -55,6 +55,7 @@ export type GameText = {
   status: { claimed: string };
   play: {
     noRoom: string; roomFull: string; playerName: string; connectFail: string;
+    noRoomBody: string; roomFullBody: string; connectFailBody: string; reload: string;
     home: string; howToPlay: string; unfinished: string; connecting: string; backHome: string;
     badLink: string; badLinkBody: string; gameStart: string;
   };
@@ -121,7 +122,11 @@ export const GAME_TEXT: Record<Locale, GameText> = {
     status: { claimed: '已佔領' },
     play: {
       noRoom: '不存在的對局', roomFull: '房間已滿，無法加入', playerName: '玩家 {id}',
-      connectFail: '連線失敗，請重新整理後再試', home: '回首頁', howToPlay: '遊玩方式',
+      connectFail: '連不上房間',
+      noRoomBody: '這個房間不存在，可能是連結少了幾個字。跟對方要一次完整的連結，或回首頁開一間新的。',
+      roomFullBody: '這一局的座位都坐滿了。回首頁開一間新的，再把連結傳給朋友。',
+      connectFailBody: '可能是網路不穩。重新整理再試一次——已經下的每一手都存在房間裡。',
+      reload: '重新整理', home: '回首頁', howToPlay: '遊玩方式',
       unfinished: '未結束', connecting: '正在連線…', backHome: '返回首頁',
       badLink: '這個連結沒有指向任何對局', gameStart: '遊戲開始',
       badLinkBody: '邀請連結可能被截斷了。跟對方要一次完整的連結，或回首頁開一間新的。',
@@ -184,7 +189,11 @@ export const GAME_TEXT: Record<Locale, GameText> = {
     status: { claimed: 'Territory' },
     play: {
       noRoom: 'No such game', roomFull: 'This room is full', playerName: 'Player {id}',
-      connectFail: 'Could not connect — refresh and try again', home: 'Home', howToPlay: 'How to play',
+      connectFail: 'Could not reach the room',
+      noRoomBody: 'This room does not exist — the link may be missing a few characters. Ask for the full link again, or go home and open a new room.',
+      roomFullBody: 'Every seat in this game is taken. Go home, open a new room and send your friends the link.',
+      connectFailBody: 'Your connection may be unstable. Reload and try again — every move so far is saved in the room.',
+      reload: 'Reload', home: 'Home', howToPlay: 'How to play',
       unfinished: 'unfinished', connecting: 'Connecting…', backHome: 'Back to home',
       badLink: 'This link does not point to a game', gameStart: 'Game start',
       badLinkBody: 'The invite link may have been cut short. Ask for the full link again, or go home and open a new room.',
@@ -247,7 +256,11 @@ export const GAME_TEXT: Record<Locale, GameText> = {
     status: { claimed: '陣地' },
     play: {
       noRoom: 'その対局は存在しません', roomFull: 'この部屋は満員です', playerName: 'プレイヤー {id}',
-      connectFail: '接続できませんでした。再読み込みしてお試しください', home: 'ホーム', howToPlay: '遊び方',
+      connectFail: '部屋に接続できませんでした',
+      noRoomBody: 'この部屋は存在しません。リンクの一部が欠けている可能性があります。完全なリンクをもう一度もらうか、ホームから新しい部屋を作ってください。',
+      roomFullBody: 'この対局の席はすべて埋まっています。ホームから新しい部屋を作って、友だちにリンクを送ってください。',
+      connectFailBody: '通信が不安定な可能性があります。再読み込みしてもう一度お試しください。これまでの手はすべて部屋に保存されています。',
+      reload: '再読み込み', home: 'ホーム', howToPlay: '遊び方',
       unfinished: '未完了', connecting: '接続中…', backHome: 'ホームに戻る',
       badLink: 'このリンクはどの対局も指していません', gameStart: 'ゲームスタート',
       badLinkBody: '招待リンクが途中で切れている可能性があります。完全なリンクをもう一度もらうか、ホームから新しい部屋を作ってください。',
@@ -310,7 +323,11 @@ export const GAME_TEXT: Record<Locale, GameText> = {
     status: { claimed: '영역' },
     play: {
       noRoom: '존재하지 않는 대국입니다', roomFull: '방이 가득 찼습니다', playerName: '플레이어 {id}',
-      connectFail: '연결하지 못했습니다. 새로고침 후 다시 시도해 주세요', home: '홈', howToPlay: '플레이 방법',
+      connectFail: '방에 연결하지 못했습니다',
+      noRoomBody: '이 방은 존재하지 않습니다. 링크 일부가 잘렸을 수 있습니다. 전체 링크를 다시 받거나 홈에서 새 방을 만드세요.',
+      roomFullBody: '이 대국의 자리가 모두 찼습니다. 홈에서 새 방을 만들고 친구에게 링크를 보내세요.',
+      connectFailBody: '네트워크가 불안정할 수 있습니다. 새로고침 후 다시 시도해 주세요. 지금까지의 수는 모두 방에 저장되어 있습니다.',
+      reload: '새로고침', home: '홈', howToPlay: '플레이 방법',
       unfinished: '미완료', connecting: '연결 중…', backHome: '홈으로',
       badLink: '이 링크는 어떤 대국도 가리키지 않습니다', gameStart: '게임 시작',
       badLinkBody: '초대 링크가 중간에 잘렸을 수 있습니다. 전체 링크를 다시 받거나, 홈에서 새 방을 만들어 주세요.',

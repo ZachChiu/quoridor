@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import PlayClient from '@/components/PlayClient';
+import StatusScreen, { BTN_PRIMARY } from '@/components/StatusScreen';
+import { GiBreakingChain } from 'react-icons/gi';
 import { useGameText, useLocale } from '@/i18n/LocaleProvider';
 import { localePath } from '@/i18n/locales';
 
@@ -40,21 +42,14 @@ export default function OnlineClient() {
   */
   if (!roomId) {
     return (
-      <div className="flex flex-col items-center gap-5 px-6 text-center">
-        <div>
-          <p className="text-xs font-bold tracking-widest text-ink-soft">{g.share.kicker}</p>
-          <h2 className="mt-1 text-3xl font-black">{g.play.badLink}</h2>
-        </div>
-        <p className="text-sm leading-relaxed text-ink-soft">
-          {g.play.badLinkBody}
-        </p>
-        <Link
-          href={localePath(locale, '/')}
-          className="rounded-2xl bg-tile-ink px-6 py-4 text-lg font-black text-tile-cream transition hover:brightness-110 active:scale-[0.98]"
-        >
-          {g.play.backHome}
-        </Link>
-      </div>
+      <StatusScreen
+        icon={GiBreakingChain}
+        iconClass="text-tile-blue"
+        title={g.play.badLink}
+        body={g.play.badLinkBody}
+        actions={<Link href={localePath(locale, '/')} className={BTN_PRIMARY}>{g.play.backHome}</Link>}
+        embedded
+      />
     );
   }
 

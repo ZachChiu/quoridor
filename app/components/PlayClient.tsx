@@ -19,6 +19,8 @@ import TurnGuide from "@/components/TurnGuide";
 import { canPlaceWallNow, hasStarted, legalBreaks, legalMoves, selectablePieces } from "@/game/engine";
 import type { Difficulty } from "@/game/ai";
 import ShareLinkModal from "@/components/ShareLinkModal";
+import StatusScreen, { BTN_PRIMARY, BTN_SECONDARY } from "@/components/StatusScreen";
+import { GiDoor, GiSpyglass, GiUnplugged } from "react-icons/gi";
 import FeedbackModal from "@/components/FeedbackModal";
 import BreakWallConfirmModal from "@/components/BreakWallConfirmModal";
 import SurrenderConfirmModal from "@/components/SurrenderConfirmModal";
@@ -143,7 +145,8 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
   const [room, setRoom] = useState<Room | null>(null);
   const [myPlayerKey, setMyPlayerKey] = useState<PlayerKey | null>(null);
   const [shareModalOpen, setShareModalOpen] = useState(false);
-  const [error, setError] = useState('');
+  // 哪一種錯誤（不是訊息字串）：每一種的圖示、說明與出口都不一樣
+  const [error, setError] = useState<'noRoom' | 'roomFull' | 'connectFail' | null>(null);
   const initialized = useRef(false);
 
   // 邀請連結留在邀請者自己的語系（理由見 roomShareUrl）
@@ -429,7 +432,7 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
         const existing = await getRoom(roomId!);
         if (cancelled) return;
         if (!existing) {
-          setError(g.play.noRoom);
+          setError('noRoom');
           setPhase('error');
           return;
         }
@@ -444,7 +447,7 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
         } else {
           const next = slots.find(s => !existing.players[s]);
           if (!next) {
-            setError(g.play.roomFull);
+            setError('roomFull');
             setPhase('error');
             return;
           }
@@ -508,7 +511,7 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
         if (assignedKey === 'A') setShareModalOpen(true);
       } catch (e) {
         console.error(e);
-        setError(g.play.connectFail);
+        setError('connectFail');
         setPhase('error');
       }
     })();
@@ -655,13 +658,21 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
     );
   }
 
-  if (isOnline && phase === 'error') {
-    return (
-      <div className="flex flex-col items-center gap-6">
-        <p className="text-lg text-red-500">{error}</p>
-        <Link href={localePath(locale, "/")} className="underline hover:opacity-70">{g.play.backHome}</Link>
-      </div>
-    );
+  if (isOnline && phase === 'error' && error) {
+    const home = <Link href={localePath(locale, '/')} className={error === 'connectFail' ? BTN_SECONDARY : BTN_PRIMARY}>{g.play.backHome}</Link>;
+    const screens = {
+      noRoom: { icon: GiSpyglass, title: g.play.noRoom, body: g.play.noRoomBody, actions: home },
+      roomFull: { icon: GiDoor, title: g.play.roomFull, body: g.play.roomFullBody, actions: home },
+      connectFail: {
+        icon: GiUnplugged, title: g.play.connectFail, body: g.play.connectFailBody,
+        actions: <>
+          <button type="button" onClick={() => window.location.reload()} className={BTN_PRIMARY}>{g.play.reload}</button>
+          {home}
+        </>,
+      },
+    } as const;
+    const sc = screens[error];
+    return <StatusScreen icon={sc.icon} iconClass="text-tile-blue" title={sc.title} body={sc.body} actions={sc.actions} embedded />;
   }
 
   const joinedCount = Object.keys(room?.players ?? {}).length;

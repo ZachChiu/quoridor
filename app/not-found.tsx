@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Shell } from './shell';
 import { getMessages } from '@/i18n';
+import StatusScreen, { BTN_PRIMARY, BTN_SECONDARY } from '@/components/StatusScreen';
 
 /**
  * 404。
@@ -30,25 +31,15 @@ export default function NotFound() {
   const t = getMessages('zh-TW');
   return (
     <Shell locale="zh-TW">
-      <div className="flex min-h-dvh items-center justify-center px-6 font-[family-name:var(--font-app)]">
-        <main className="flex max-w-[26rem] flex-col items-center gap-5 text-center">
-          <p className="text-[clamp(4rem,18vw,7rem)] font-black leading-none tracking-tight text-tile-ink/15">404</p>
-          <h1 className="text-[clamp(1.5rem,6vw,2.25rem)] font-black leading-tight tracking-tight">
-            {t.notFound.title}
-          </h1>
-          <p className="text-base leading-relaxed text-ink-soft">{t.notFound.body}</p>
-          <div className="mt-2 flex flex-wrap justify-center gap-3">
-            <Link href="/"
-                  className="rounded-2xl bg-tile-ink px-6 py-4 text-lg font-black text-tile-cream transition hover:brightness-110">
-              {t.notFound.home}
-            </Link>
-            <Link href="/rules"
-                  className="rounded-2xl bg-tile-ink/[0.07] px-6 py-4 text-lg font-black text-tile-ink transition hover:bg-tile-ink/[0.12]">
-              {t.notFound.rules}
-            </Link>
-          </div>
-        </main>
-      </div>
+      <StatusScreen
+        mark="404"
+        title={t.notFound.title}
+        body={t.notFound.body}
+        actions={<>
+          <Link href="/" className={BTN_PRIMARY}>{t.notFound.home}</Link>
+          <Link href="/rules" className={BTN_SECONDARY}>{t.notFound.rules}</Link>
+        </>}
+      />
     </Shell>
   );
 }
