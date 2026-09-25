@@ -87,7 +87,18 @@ export default React.memo(function GameTips({
     return breakWallCountObj?.[p] > 0 ? g.tips.breakLeft : g.tips.breakNone;
   }, [isPlacingChess, over, playersNum, breakWallCountObj, p, g]);
 
-  const shell = `fixed bottom-5 right-5 flex flex-col items-end gap-2 rounded-2xl px-5 py-4 font-black lg:bottom-[5dvh] ${hideOnTouch} ${
+  /*
+    橫式時寬度不能超過「棋盤右邊剩下的空間」。
+
+    棋盤置中、邊長 min(90dvw, 90dvh)（見 PlayClient 的 BOARD_FREE），右邊剩
+    (100dvw - 棋盤) / 2；扣掉 right-5 與同樣寬的呼吸空間就是上限。
+    沒有這條的話，手機橫放（667×375）對局結束時這塊會壓在棋盤最右欄上；
+    桌機把視窗拉成矮寬時更糟，整局的步驟提示都蓋著棋盤。
+    直式不需要：那邊棋盤上下有空，這塊落在棋盤下方。
+  */
+  const fitGutter = 'landscape:max-w-[calc((100dvw_-_min(90dvw,90dvh))/2_-_2.5rem)]';
+
+  const shell = `fixed bottom-5 right-5 flex flex-col items-end gap-2 rounded-2xl px-5 py-4 font-black lg:bottom-[5dvh] ${fitGutter} ${hideOnTouch} ${
     over || !p ? 'bg-tile-ink text-tile-cream' : PLAYER_ON[p]
   }`;
 
