@@ -4,12 +4,13 @@ import {
   legalTurns, applyTurn, isGameOver, skipUnplayable, toWgf, replay,
 } from '@/game/engine';
 import type { GameState } from '@/game/types';
+import { readFileSync } from 'node:fs';
 
 /**
  * WGF 字串長度的上界。
  *
- * 這不是為了測序列化 —— 是為了替 `database.rules.json` 的
- * `wgf.length < 4096` 訂一個有依據的數字。訂太小的後果特別惡劣：
+ * 這不是為了測序列化 —— 是為了確認 `database.rules.json` 的
+ * `wgf.length` 上限有依據。訂太小的後果特別惡劣：
  * 前面幾十手都同步正常，直到某一局下得夠長才突然寫入被拒，
  * 而畫面上只會看到「對手不動了」。
  *
@@ -52,7 +53,13 @@ function playRandomGame(playersNum: 2 | 3, seed: number): GameState {
 }
 
 describe('WGF 長度上界', () => {
-  const LIMIT = 4096; // database.rules.json 的 wgf .validate
+  /*
+    上限直接從規則檔讀，不在這裡另寫一個數字 —— 先前寫死 4096，
+    規則換成線上那份（20000）之後，兩邊就悄悄對不上了。
+  */
+  const rules = JSON.parse(readFileSync('database.rules.json', 'utf8').replace(/\/\*[\s\S]*?\*\//g, ''));
+  const LIMIT = Number(/length <= (\d+)/.exec(rules.rules.rooms.$roomId.wgf['.validate'])?.[1]);
+  it('讀得到規則裡的上限', () => expect(LIMIT).toBeGreaterThan(0));
 
   for (const playersNum of [2, 3] as const) {
     it(`${playersNum} 人局隨機打完 40 局，WGF 都遠小於 rules 上限`, () => {
