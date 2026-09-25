@@ -243,6 +243,25 @@ export function selectablePieces(state: GameState): Move[] {
 }
 
 /**
+ * 「換一顆」要換到哪一顆：目前選的那顆的下一顆（依棋子編號、繞回開頭），
+ * 沒選的話就是第一顆。
+ *
+ * 手機控制盤中央那顆棋子按下去用的 —— 讓人不必點盤面就能輪流挑棋子。
+ * 規則跟點盤面完全一樣：已經走過就不能換（`selectPiece` 也擋這個）、
+ * 不能選的棋子跳過。沒有別顆可換（已經走了、或只剩目前這一顆）時回傳 null。
+ */
+export function nextSelectablePiece(state: GameState): Move | null {
+  if (state.remainSteps < 2) return null;
+  const list = selectablePieces(state);
+  if (list.length === 0) return null;
+  const cur = state.selected;
+  if (!cur) return list[0];
+  const at = list.findIndex(({ row, col }) => row === cur.row && col === cur.col);
+  const next = list[(at + 1) % list.length];
+  return next.row === cur.row && next.col === cur.col ? null : next;
+}
+
+/**
  * 當前玩家這回合還有沒有事可做：有合法的完整回合，或能靠破牆脫困。
  *
  * 跳過與終局都要用這個，不能只看 legalTurns —— legalTurns 不展開破牆，

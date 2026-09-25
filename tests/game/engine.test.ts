@@ -9,6 +9,7 @@ import {
   isPlacingPhase,
   legalWalls,
   movePiece,
+  nextSelectablePiece,
   openingOrder,
   placeOpeningPiece,
   placeWall,
@@ -398,5 +399,38 @@ describe('自動跳過與勝負', () => {
     expect(isPlacingPhase(s)).toBe(false);
     // 全盤仍是一個連通區塊、而且兩方都有棋子 —— 中立，誰都不得分
     expect(evaluate(s).scores).toEqual({ A: 0, B: 0 });
+  });
+});
+
+describe('nextSelectablePiece（手機控制盤中央的「換下一顆」）', () => {
+  const opened = () => runOpening(createGame(2), [[3, 3], [0, 0], [0, 6], [6, 3]]);
+
+  it('沒選的時候給第一顆，之後依編號輪流並繞回開頭', () => {
+    let s = opened();
+    const order = s.pieceIndex.A!.map(({ row, col }) => `${row},${col}`);
+    const seen: string[] = [];
+    for (let i = 0; i < order.length + 1; i++) {
+      const n = nextSelectablePiece(s)!;
+      seen.push(`${n.row},${n.col}`);
+      s = selectPiece(s, n.row, n.col);
+    }
+    expect(seen).toEqual([...order, order[0]]);
+  });
+
+  it('走過之後不能換（跟點盤面同一條規則）', () => {
+    let s = opened();
+    s = selectPiece(s, 3, 3);
+    s = movePiece(s, 3, 4);
+    expect(nextSelectablePiece(s)).toBeNull();
+  });
+
+  it('只剩目前選的這一顆可選時回傳 null，不會把它取消選取', () => {
+    let s = opened();
+    const [first, ...rest] = s.pieceIndex.A!;
+    // 把其餘棋子從可選名單拿掉：直接改 pieceIndex 模擬「只剩一顆能動」
+    s = { ...s, pieceIndex: { ...s.pieceIndex, A: [first] } };
+    s = selectPiece(s, first.row, first.col);
+    expect(rest.length).toBeGreaterThan(0);
+    expect(nextSelectablePiece(s)).toBeNull();
   });
 });
