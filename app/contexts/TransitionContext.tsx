@@ -110,6 +110,10 @@ export const TransitionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     return () => window.clearTimeout(id);
   }, []);
 
+  // 最新的 state：給 navigate 擋連點、給 2 秒保險判斷（兩者都不該因 state 改變而重建）
+  const stateRef = useRef(state);
+  useEffect(() => { stateRef.current = state; });
+
   const navigate = useCallback(
     (href: string, options?: NavOptions) => {
       // 開了 prefers-reduced-motion 就直接換頁。不是把動畫放慢 ——
@@ -121,6 +125,22 @@ export const TransitionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         router.push(href);
         return;
       }
+      /*
+        歷史紀錄要在「點下去的當下」建立，不能等動畫播完才 push。
+
+        Safari（以及 iPhone 上的 Chrome，底層同樣是 WebKit）會把「沒有使用者
+        手勢時由 JS 新增的歷史紀錄」標成可跳過：按返回鍵時直接略過。
+        先前是動畫播完（約 0.6 秒、經過動態載入與 requestAnimationFrame）才
+        router.push，那時手勢早就不算數了 —— 於是從規則頁按返回，會越過首頁
+        直接回到更前面那一頁（Zach 回報；模擬器上用真正的返回重現）。
+
+        所以在這裡（仍在點擊的手勢裡）先複製一份目前的紀錄，動畫播完再用
+        router.replace 把它換成目標頁。history.state 原樣帶過去，Next 還原
+        上一頁時需要它。
+      */
+      // 轉場進行中又點了一次：不要再多建一筆紀錄（連點兩下會留下兩筆重複的上一頁）
+      if (stateRef.current.phase !== 'idle') return;
+      window.history.pushState(window.history.state, '', window.location.href);
       setState({
         phase: 'cover', pushed: false, target: href,
         // 沒指定起點就從畫面中心擴散 —— 任何未來的呼叫端都不會壞
@@ -176,7 +196,8 @@ export const TransitionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       return;
     }
     if (state.pushed) return;
-    router.push(state.target);
+    // 紀錄已經在點擊時建好了（見 navigate），這裡只換內容
+    router.replace(state.target);
     setState({ ...state, pushed: true });
   }, [state, router, fireCovered]);
 
@@ -192,12 +213,17 @@ export const TransitionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     if (state.phase !== 'cover') return;
     const timer = setTimeout(() => {
       fireCovered();
+      // 動畫卡住（分頁在背景時 requestAnimationFrame 不跑、動畫模組載入失敗）
+      // 也要把頁面換過去 —— 先前這裡只把遮罩收掉，導航就這樣被吞了，
+      // 而且點擊時多建的那筆紀錄會變成一筆重複的首頁
+      const cur = stateRef.current;
+      if (cur.phase === 'cover' && !cur.flash && !cur.pushed && cur.target) router.replace(cur.target);
       setState((s) =>
         s.phase === 'cover' ? { phase: 'uncover', target: s.target, wipe: s.wipe } : s
       );
     }, 2000 + holdRef.current);
     return () => clearTimeout(timer);
-  }, [state.phase, fireCovered]);
+  }, [state.phase, fireCovered, router]);
 
   const handleUncovered = useCallback(() => setState({ phase: 'idle' }), []);
 
