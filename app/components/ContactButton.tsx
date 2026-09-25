@@ -26,7 +26,7 @@ export default function ContactButton() {
         onClick={() => { setOpen(true); track('contact_open', {}); }}
         aria-label={g.contact.button}
         aria-haspopup="dialog"
-        className="grid size-11 place-items-center rounded-full bg-tile-ink/[0.06] text-xl text-ink-soft transition hover:bg-tile-ink/[0.12] active:scale-95"
+        className="relative grid size-10 place-items-center rounded-full after:absolute after:-inset-0.5 after:content-[''] bg-tile-ink/[0.06] text-xl text-ink-soft transition hover:bg-tile-ink/[0.12] active:scale-95"
       >
         <LuMessageCircle aria-hidden="true" />
       </button>

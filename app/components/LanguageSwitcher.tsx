@@ -52,7 +52,7 @@ export default function LanguageSwitcher({ onDark = false }: { onDark?: boolean 
         onClick={() => setOpen(true)}
         aria-label={t.nav.language}
         aria-haspopup="dialog"
-        className={`grid size-11 place-items-center rounded-full text-xl transition active:scale-95 ${
+        className={`relative grid size-10 place-items-center rounded-full after:absolute after:-inset-0.5 after:content-[''] text-xl transition active:scale-95 ${
           onDark
             ? 'bg-tile-cream/[0.16] text-tile-cream hover:bg-tile-cream/[0.26]'
             : 'bg-tile-ink/[0.06] text-ink-soft hover:bg-tile-ink/[0.12]'
