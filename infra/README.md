@@ -48,6 +48,11 @@ CloudFront Function 上線之後，那一頁實際上就不會再被執行（301
 
 部署指令見該檔案開頭的註解。
 
+**綁上去之前先看 Default (*) behavior 的 Viewer request 有沒有已經綁著別的 function。**
+每個 behavior 只能綁一個，綁新的會把舊的換掉。這支已經把常見的那件事
+（`/rules/` → `/rules/index.html`、`/rules` → 301 到 `/rules/`）一起做了，
+所以舊的若只是在做這個，直接換掉即可；若舊的還做了別的事，要先合併進來。
+
 ---
 
 ## 3. 順帶一提：invalidation 目前是 `/*`
