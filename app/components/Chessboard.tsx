@@ -422,20 +422,18 @@ export default React.memo(function Chessboard({
             就算一道牆，之前它在畫面上完全不存在，格線直接切掉。厚度取 9px
             與盤內的牆一致，不是隨便挑的邊框寬度。
             順帶讓棋盤終於像一個物件：原本格線切邊，看起來像沒畫完。
-            厚度必須**等於盤內的牆**（固定 9px），因為它就是一道牆。
+            厚度必須**等於盤內的牆**（同一個 --board-wall：大棋盤 9px、小棋盤 7px），因為它就是一道牆。
             原本用 1.25% 讓它跟著棋盤縮放，結果手機上只有 4.4px ——
             比盤內的牆細一半，讀起來就變回「裝飾外框」了。
 
             圓角也跟著算：巢狀圓角要同心，內圓角 = 外圓角 − 內距。
             原本外 22.4px、內 12px、內距 4.4px，內圓角少了 6px，
             白格子就從那個缺口擠進外框的弧線裡 —— 手機上特別明顯。 */}
+        {/* --board-wall 與 --board-gap 由 .board-frame 決定（globals.css）：
+            棋盤小（手機）時外框與盤內的牆一起變細，兩者永遠一樣粗。 */}
         <div
-          className="relative size-full rounded-[var(--board-frame-r)] bg-board-line p-[var(--board-wall)]"
-          style={{
-            '--board-wall': '9px',
-            '--board-gap': '4px',
-            '--board-frame-r': '1.4rem',
-          } as React.CSSProperties}
+          className="board-frame relative size-full rounded-[var(--board-frame-r)] bg-board-line p-[var(--board-wall)]"
+          style={{ '--board-frame-r': '1.4rem' } as React.CSSProperties}
         >
         {/* 欄數走 inline style 而不是 `grid-cols-${size}`：
             動態拼出來的 class 名稱 Tailwind 的靜態掃描看不到，之前是靠 safelist
@@ -649,7 +647,7 @@ export default React.memo(function Chessboard({
                   */}
                   {hasHorizontalWallPlayer && (
                     <div
-                      className={`absolute inset-x-[-3px] bottom-[calc(var(--board-gap)*-0.5)] z-20 h-[9px] translate-y-1/2 rounded-full ${
+                      className={`absolute inset-x-[-3px] bottom-[calc(var(--board-gap)*-0.5)] z-20 h-[var(--board-wall)] translate-y-1/2 rounded-full ${
                         walls.fresh === `h:${rowIndex * size + colIndex}` ? 'animate-wall-h' : ''
                       }`}
                       style={{ backgroundColor: PLAYER_VAR[hasHorizontalWallPlayer] }}
@@ -668,7 +666,7 @@ export default React.memo(function Chessboard({
                   )}
                   {hasVerticalWall && (
                     <div
-                      className={`absolute inset-y-[-3px] right-[calc(var(--board-gap)*-0.5)] z-20 w-[9px] translate-x-1/2 rounded-full ${
+                      className={`absolute inset-y-[-3px] right-[calc(var(--board-gap)*-0.5)] z-20 w-[var(--board-wall)] translate-x-1/2 rounded-full ${
                         walls.fresh === `v:${rowIndex * size + colIndex}` ? 'animate-wall-v' : ''
                       }`}
                       style={{ backgroundColor: PLAYER_VAR[hasVerticalWall] }}
@@ -714,7 +712,7 @@ export default React.memo(function Chessboard({
                         <button
                           type="button"
                           aria-label={g.board.buildTop}
-                          className={`wall-hit-h absolute top-[calc(var(--board-gap)*-0.5)] z-20 h-[9px] -translate-y-1/2 rounded-full transition hover:inset-x-[-3px] hover:opacity-100 ${bar('top', 'x')}`}
+                          className={`wall-hit-h absolute top-[calc(var(--board-gap)*-0.5)] z-20 h-[var(--board-wall)] -translate-y-1/2 rounded-full transition hover:inset-x-[-3px] hover:opacity-100 ${bar('top', 'x')}`}
                           style={{ backgroundColor: PLAYER_VAR[currentPlayer] }}
                           onClick={(e) => { e.stopPropagation(); onWallEdge(rowIndex, colIndex, 'top'); }}
                         />
@@ -723,7 +721,7 @@ export default React.memo(function Chessboard({
                         <button
                           type="button"
                           aria-label={g.board.buildBottom}
-                          className={`wall-hit-h absolute bottom-[calc(var(--board-gap)*-0.5)] z-20 h-[9px] translate-y-1/2 rounded-full transition hover:inset-x-[-3px] hover:opacity-100 ${bar('bottom', 'x')}`}
+                          className={`wall-hit-h absolute bottom-[calc(var(--board-gap)*-0.5)] z-20 h-[var(--board-wall)] translate-y-1/2 rounded-full transition hover:inset-x-[-3px] hover:opacity-100 ${bar('bottom', 'x')}`}
                           style={{ backgroundColor: PLAYER_VAR[currentPlayer] }}
                           onClick={(e) => { e.stopPropagation(); onWallEdge(rowIndex, colIndex, 'bottom'); }}
                         />
@@ -732,7 +730,7 @@ export default React.memo(function Chessboard({
                         <button
                           type="button"
                           aria-label={g.board.buildLeft}
-                          className={`wall-hit-v absolute left-[calc(var(--board-gap)*-0.5)] z-20 w-[9px] -translate-x-1/2 rounded-full transition hover:inset-y-[-3px] hover:opacity-100 ${bar('left', 'y')}`}
+                          className={`wall-hit-v absolute left-[calc(var(--board-gap)*-0.5)] z-20 w-[var(--board-wall)] -translate-x-1/2 rounded-full transition hover:inset-y-[-3px] hover:opacity-100 ${bar('left', 'y')}`}
                           style={{ backgroundColor: PLAYER_VAR[currentPlayer] }}
                           onClick={(e) => { e.stopPropagation(); onWallEdge(rowIndex, colIndex, 'left'); }}
                         />
@@ -741,7 +739,7 @@ export default React.memo(function Chessboard({
                         <button
                           type="button"
                           aria-label={g.board.buildRight}
-                          className={`wall-hit-v absolute right-[calc(var(--board-gap)*-0.5)] z-20 w-[9px] translate-x-1/2 rounded-full transition hover:inset-y-[-3px] hover:opacity-100 ${bar('right', 'y')}`}
+                          className={`wall-hit-v absolute right-[calc(var(--board-gap)*-0.5)] z-20 w-[var(--board-wall)] translate-x-1/2 rounded-full transition hover:inset-y-[-3px] hover:opacity-100 ${bar('right', 'y')}`}
                           style={{ backgroundColor: PLAYER_VAR[currentPlayer] }}
                           onClick={(e) => { e.stopPropagation(); onWallEdge(rowIndex, colIndex, 'right'); }}
                         />
