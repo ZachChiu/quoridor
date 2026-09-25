@@ -30,12 +30,16 @@ interface Props {
   footer?: React.ReactNode;
   /** 額外的鍵盤處理，例如教學的左右方向鍵。 */
   onKeyDown?: (e: KeyboardEvent) => void;
+  /** 面板額外的 class，例如矮螢幕上加寬 */
+  panelClassName?: string;
+  /** 內容區額外的 class */
+  bodyClassName?: string;
 }
 
 const FOCUSABLE = 'a[href],button:not([disabled]),input,select,textarea,[tabindex]:not([tabindex="-1"])';
 
 const Modal: React.FC<Props> = ({
-  isOpen, onClose, title, icon: Icon, kicker, band, children, footer, onKeyDown,
+  isOpen, onClose, title, icon: Icon, kicker, band, children, footer, onKeyDown, panelClassName = '', bodyClassName = '',
 }) => {
   const panelRef = useRef<HTMLDivElement>(null);
   const restoreRef = useRef<HTMLElement | null>(null);
@@ -118,7 +122,7 @@ const Modal: React.FC<Props> = ({
         ref={panelRef}
         tabIndex={-1}
         // 最高就是可視高度；放不下時色帶與按鈕固定，只有中間的內容捲動
-        className="relative flex max-h-full w-full max-w-md flex-col overflow-hidden rounded-2xl bg-primary font-[family-name:var(--font-app)] outline-none"
+        className={`relative flex max-h-full w-full max-w-md flex-col overflow-hidden rounded-2xl bg-primary font-[family-name:var(--font-app)] outline-none ${panelClassName}`}
       >
         {/* 色帶做成滿版（面板 overflow-hidden 負責切圓角），
             留白會讓它退化成一條「有底色的標題」，力道差很多。 */}
@@ -144,7 +148,7 @@ const Modal: React.FC<Props> = ({
           </button>
         </div>
 
-        <div className="min-h-0 overflow-y-auto overscroll-contain p-6">{children}</div>
+        <div className={`min-h-0 overflow-y-auto overscroll-contain p-6 ${bodyClassName}`}>{children}</div>
 
         {/*
           按鈕尺寸由這一列決定，不由 Button 自己。
