@@ -28,7 +28,7 @@ export const TONES = {
   home:   { bg: C.ground, fg: C.ink,   pill: C.ink,    pillFg: C.cream },
   rules:  { bg: C.forest, fg: C.cream, pill: C.cream,  pillFg: C.forest },
   local:  { bg: C.amber,  fg: C.ink,   pill: C.ink,    pillFg: C.amber },
-  online: { bg: C.blue,   fg: C.cream, pill: C.cream,  pillFg: C.blue },
+  online: { bg: C.purple, fg: C.cream, pill: C.cream,  pillFg: C.purple },
   solo:   { bg: C.orange, fg: C.ink,   pill: C.ink,    pillFg: C.orange },
   replay: { bg: C.ink,    fg: C.cream, pill: C.cream,  pillFg: C.ink },
 };

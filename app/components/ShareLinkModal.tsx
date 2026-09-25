@@ -75,7 +75,7 @@ const ShareLinkModal: React.FC<Props> = ({ isOpen, shareUrl, joinedCount, totalC
       title={g.share.heading}
       kicker={g.share.kicker}
       icon={GiShare}
-      band={{ className: 'bg-tile-blue', fg: 'text-tile-cream' }}
+      band={{ className: 'bg-tile-purple', fg: 'text-tile-cream' }}
     >
       <p className="text-sm leading-relaxed">{g.share.body}</p>
 
