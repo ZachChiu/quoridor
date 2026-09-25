@@ -105,11 +105,12 @@ export function poster({ tone, copy }) {
   const t = TONES[tone];
   return div({
     width: 1200, height: 630, background: t.bg, color: t.fg,
-    alignItems: 'center', padding: '0 70px',
+    // 文字與棋盤當成一組置中，中間固定 72px。先前文字欄撐滿左半邊、標題又短，
+    // 文字結束到棋盤之間永遠空一大塊，看起來是兩個不相干的東西（Zach 回報）。
+    alignItems: 'center', justifyContent: 'center', gap: 72, padding: '0 70px',
     fontFamily: 'OG',
   }, [
-    // 文字欄與棋盤之間留 110px：48px 時在聊天室的縮圖裡文字看起來貼著棋盤（Zach 回報）
-    div({ flexDirection: 'column', flex: 1, paddingRight: 110 }, [
+    div({ flexDirection: 'column', flexShrink: 1 }, [
       div({
         alignSelf: 'flex-start', background: t.pill, color: t.pillFg,
         // 站名／節目名是品牌 —— 聊天室縮圖只有原圖一半大，26px 縮下來約 13px，
