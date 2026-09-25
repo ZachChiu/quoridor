@@ -91,8 +91,7 @@ const ChampionModal: React.FC<ChampionModalProps> = ({
               {g.champion.seeBoard}
             </Button>
           </div>
-          {/* 深墨而非琥珀：三人局的黃方比分條就是琥珀，緊鄰著放會被讀成同一件事。
-              深墨不屬於任何玩家，在這面彩色的板子上永遠不會撞色。 */}
+          {/* 深墨：不屬於任何玩家，放在勝方色帶與比分條旁邊永遠不會撞色。 */}
           {onRestart && (
             <Button color="bg-tile-ink text-tile-cream" handleClickEvent={onRestart}>{g.champion.playAgain}</Button>
           )}

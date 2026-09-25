@@ -14,7 +14,7 @@ export const C = {
   line: '#3a322c',
   A: '#cd4642', A100: '#f0c8c6',
   B: '#2478b7', B100: '#cadfee',
-  C3: '#a06400',
+  C3: '#0e8142',
   amber: '#e9af4c', orange: '#df6c3f', blue: '#2478b7',
   red: '#cd4642', forest: '#006944', purple: '#83519c',
 };

@@ -67,7 +67,7 @@ export const fmt = (s: string, vars: Record<string, string | number>): string =>
 
 export const GAME_TEXT: Record<Locale, GameText> = {
   'zh-TW': {
-    players: { A: '紅方', B: '藍方', C: '黃方' },
+    players: { A: '紅方', B: '藍方', C: '綠方' },
     board: {
       label: '棋盤', cell: '第 {row} 列第 {col} 行', piece: '{player}棋子',
       territory: '{player}領地', empty: '空格', canMove: '可移動到這裡', canPlace: '可放置棋子',
@@ -133,7 +133,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
     },
   },
   en: {
-    players: { A: 'Red', B: 'Blue', C: 'Yellow' },
+    players: { A: 'Red', B: 'Blue', C: 'Green' },
     board: {
       label: 'Board', cell: 'Row {row}, column {col}', piece: '{player} piece',
       territory: '{player} territory', empty: 'empty', canMove: 'can move here', canPlace: 'can place a piece',
@@ -200,7 +200,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
     },
   },
   ja: {
-    players: { A: '赤', B: '青', C: '黄' },
+    players: { A: '赤', B: '青', C: '緑' },
     board: {
       label: '盤面', cell: '{row}行 {col}列', piece: '{player}の駒',
       territory: '{player}の陣地', empty: '空きマス', canMove: 'ここへ動かせる', canPlace: '駒を置ける',
@@ -267,7 +267,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
     },
   },
   ko: {
-    players: { A: '빨강', B: '파랑', C: '노랑' },
+    players: { A: '빨강', B: '파랑', C: '초록' },
     board: {
       label: '판', cell: '{row}행 {col}열', piece: '{player} 말',
       territory: '{player} 영역', empty: '빈 칸', canMove: '여기로 이동 가능', canPlace: '말을 놓을 수 있음',
