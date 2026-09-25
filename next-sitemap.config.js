@@ -14,8 +14,16 @@ module.exports = {
   exclude: [
     // robots.txt 是路由不是頁面，收進 sitemap 會變成 /robots.txt/ 這種垃圾 URL
     '/robots.txt',
-    // 沒有 roomId 就是空頁，不該被索引
+    // 對局畫面：沒有可讀內容，收錄了也只是空殼。四個語系一起排除 ——
+    // sitemap 與頁面的 robots 必須說同一件事，不然 Search Console 會報錯。
+    // /local/2 與 /local/3 也一起排除 —— 跟 /local 是同一個空殼畫面
+    '/local', '/*/local', '/local/*', '/*/local/*',
+    '/online', '/*/online',
+    // 舊網址，只做轉址
     '/match',
+    // 每個回放網址都是某一局的棋譜（內容在 hash），對搜尋引擎是
+    // 無限多個「同一頁」
+    '/replay', '/*/replay',
     '/404',
   ],
 };

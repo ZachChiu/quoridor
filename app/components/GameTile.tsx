@@ -13,6 +13,19 @@ import type { IconType } from 'react-icons';
  */
 export type TileTone = 'amber' | 'orange' | 'red' | 'blue' | 'purple' | 'forest';
 
+export type TileOrigin = {
+  rect: DOMRect;
+  color: string;
+  icon: IconType;
+  /** 圖示在這塊磁磚上的實際像素高度 —— 轉場照這個畫，才不會大小對不上 */
+  iconSize?: number;
+  label: string;
+  kicker?: string;
+  row?: boolean;
+  iconColor: string;
+  fg: string;
+};
+
 const TONE: Record<TileTone, string> = {
   amber: 'bg-tile-amber text-tile-ink',
   orange: 'bg-tile-orange text-tile-ink',
@@ -36,6 +49,16 @@ export const TONE_COLOR: Record<TileTone, string> = {
   forest: 'rgb(var(--tile-forest))',
 };
 
+/** 磁磚上文字的色值。TONE 用的是 Tailwind class，轉場層需要實際顏色。 */
+const TEXT_COLOR: Record<TileTone, string> = {
+  amber: 'rgb(var(--tile-ink))',
+  orange: 'rgb(var(--tile-ink))',
+  red: 'rgb(var(--tile-cream))',
+  blue: 'rgb(var(--tile-cream))',
+  purple: 'rgb(var(--tile-cream))',
+  forest: 'rgb(var(--tile-cream))',
+};
+
 const ICON_FILL: Record<TileTone, string> = {
   amber: 'rgb(var(--tile-blue))',
   orange: 'rgb(var(--tile-blue))',
@@ -51,11 +74,32 @@ interface Props {
   kicker?: string;
   label: string;
   tone: TileTone;
-  /** 收到這塊磁磚在視窗中的位置與底色 —— 轉場用它當起點。 */
-  onClick: (origin: { rect: DOMRect; color: string }) => void;
+  /**
+   * 收到這塊磁磚的位置、底色、圖示與文字 —— 轉場用它當起點。
+   *
+   * 不只給座標，是因為轉場的第一格要和這塊磁磚長得一模一樣：
+   * 同樣的矩形、同樣的圓角、同樣的圖示與字。看起來才是「這塊打開了」，
+   * 而不是「有一個圓從這附近冒出來」。
+   */
+  onClick: (origin: TileOrigin) => void;
   disabled?: boolean;
   /** 橫跨整列的寬磁磚（不強制正方形）。 */
   wide?: boolean;
+  /**
+   * 這塊磁磚會去到哪一頁。
+   *
+   * 給了就渲染成真的 `<a href>`，沒給才是 `<button>`。
+   *
+   * 首頁的每一個入口原本都是 button —— 對使用者沒差，對爬蟲是「首頁沒有
+   * 連到任何地方」。`/rules` 是整站的 SEO 主力落地頁，卻沒有任何一條
+   * 站內連結指向它，只靠 sitemap 撐著。
+   *
+   * 點擊行為完全不變（照樣跑換場動畫），但 cmd／ctrl／中鍵一律放行給
+   * 瀏覽器 —— 攔截那些等於把「在新分頁開啟」弄壞。
+   *
+   * 連線那兩塊沒有 href：房間要先建出來才知道網址，沒有靜態目標可指。
+   */
+  href?: string;
   /**
    * 滑鼠移入或取得焦點時觸發，用來預熱。
    * 連線那兩塊會在這裡先把 Firebase SDK 載起來並匿名登入 ——
@@ -65,29 +109,71 @@ interface Props {
 }
 
 export default function GameTile({
-  icon: Icon, kicker, label, tone, onClick, disabled, wide, onPrefetch,
+  icon: Icon, kicker, label, tone, onClick, disabled, wide, onPrefetch, href,
 }: Props) {
-  return (
-    <button
-      type="button"
-      onClick={disabled ? undefined : (e) =>
-        onClick({ rect: e.currentTarget.getBoundingClientRect(), color: TONE_COLOR[tone] })}
-      onPointerEnter={onPrefetch}
-      onFocus={onPrefetch}
-      disabled={disabled}
-      style={{ '--tile-icon-fill': ICON_FILL[tone] } as React.CSSProperties}
-      className={`${TONE[tone]} ${wide ? 'col-span-2 flex-row gap-3 py-4' : 'aspect-square flex-col gap-2'}
-        flex items-center justify-center rounded-2xl p-3
-        transition enabled:hover:brightness-95 enabled:active:scale-[0.97]
-        disabled:cursor-not-allowed disabled:opacity-45`}
-    >
-      <Icon className={`tile-icon ${wide ? 'shrink-0 text-4xl' : 'text-7xl md:text-8xl'}`} aria-hidden="true" />
+  const fire = (e: React.MouseEvent<HTMLElement>) => onClick({
+    rect: e.currentTarget.getBoundingClientRect(),
+    color: TONE_COLOR[tone],
+    icon: Icon, label, kicker, row: wide,
+    // 直接量畫面上那顆圖示，而不是把 text-7xl / md:text-8xl 的斷點
+    // 邏輯在轉場那邊再推一次 —— 推錯了就是大小對不上。
+    iconSize: e.currentTarget.querySelector('svg')?.getBoundingClientRect().height,
+    iconColor: ICON_FILL[tone], fg: TEXT_COLOR[tone],
+  });
+
+  const shared = {
+    onPointerEnter: onPrefetch,
+    onFocus: onPrefetch,
+    style: { '--tile-icon-fill': ICON_FILL[tone] } as React.CSSProperties,
+    /*
+      停用狀態自己寫，不用 enabled:/disabled: 變體 —— `<a>` 沒有 :disabled，
+      同一份 class 要能給兩種標籤用。
+    */
+    className: `${TONE[tone]} ${wide ? 'col-span-2 flex-row gap-3 py-4' : 'aspect-square flex-col gap-2'}
+      group flex items-center justify-center rounded-2xl p-3 transition ${
+        disabled ? 'cursor-not-allowed opacity-45' : 'hover:brightness-95 active:scale-[0.97]'
+      }`,
+  };
+
+  const inner = (
+    <>
+      {/* tile-icon 管填色，tile-icon-anim 管 hover 時那下輕晃。
+          晃動只在有 hover 的裝置上啟用（見 globals.css）—— 手機沒有 hover，
+          而這個效果不承擔任何說明責任，看不到也不會少懂什麼。 */}
+      <Icon
+        className={`tile-icon tile-icon-anim ${wide ? 'shrink-0 text-4xl' : 'text-7xl md:text-8xl'}`}
+        aria-hidden="true"
+      />
       <span className={wide ? 'text-lg font-black' : 'flex flex-col items-center'}>
         {!wide && kicker && (
           <span className="text-xs font-bold opacity-75 md:text-sm">{kicker}</span>
         )}
         <span className={wide ? '' : 'text-lg font-black leading-tight md:text-xl'}>{label}</span>
       </span>
+    </>
+  );
+
+  if (href) {
+    return (
+      <a
+        href={href}
+        {...shared}
+        onClick={(e) => {
+          if (disabled) { e.preventDefault(); return; }
+          // 修飾鍵與中鍵放行給瀏覽器，「在新分頁開啟」才不會壞掉
+          if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+          e.preventDefault();
+          fire(e);
+        }}
+      >
+        {inner}
+      </a>
+    );
+  }
+
+  return (
+    <button type="button" disabled={disabled} {...shared} onClick={disabled ? undefined : fire}>
+      {inner}
     </button>
   );
 }

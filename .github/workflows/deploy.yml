@@ -32,6 +32,23 @@ jobs:
       - name: 檢查字型子集
         run: npm run font:check
 
+      # 分享圖也是預先產生、產物進版控的。文案改了卻忘記重建，圖上就會是
+      # 舊句子 —— 而那只有在別人把連結貼進聊天室時才看得到，站上永遠正常。
+      - name: 檢查分享圖
+        run: npm run og:check
+
+      # 這三道原本只在本機跑 —— 也就是「忘了跑」跟「跑了沒過」對 CI 來說
+      # 長得一模一樣，壞掉的規則邏輯照樣會被部署上去。放在 build 之前：
+      # 型別或測試沒過就不該浪費時間建置，更不該上線。
+      - name: 檢查型別
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: 測試
+        run: npm test
+
       - name: 構建專案
         run: npm run build
         env:
@@ -57,6 +74,16 @@ jobs:
           NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID }}
           NEXT_PUBLIC_FIREBASE_APP_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_APP_ID }}
 
+      # 驗建置產物（out/）：路由、sitemap、hreflang、分享圖、source map 沒外洩。
+      # 上面那道 npm test 跑在 build 之前，那時 out/ 還不存在，這個檔案整組
+      # skipIf 掉了 —— 等於從來沒在 CI 跑過。必須在 build 之後、上傳之前再跑一次。
+      #
+      # 其中「沒有 .map 檔」這一條特別要緊：Sentry 上傳失敗不會讓 build 失敗
+      # （next.config.ts 的 errorHandler），而沒上傳成功的 source map
+      # 可能留在 out/ 裡，下一步 s3 sync 就把原始碼公開了。
+      - name: 檢查建置產物
+        run: npx vitest run tests/build
+
       - name: 配置 AWS 憑證
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -80,6 +107,15 @@ jobs:
         if: github.ref == 'refs/heads/main' && env.PROD_CLOUDFRONT_DISTRIBUTION_ID != ''
         run: |
           aws cloudfront create-invalidation --distribution-id ${{ env.PROD_CLOUDFRONT_DISTRIBUTION_ID }} --paths "/*"
+
+      # 301 轉址＋目錄網址補 index.html（infra/cloudfront-redirects.js）。
+      # 只在 main 跑：function 是整個帳號共用的，dev 部署時更新會直接影響正式站。
+      # continue-on-error：這一步出問題（還沒建立、缺權限、測試沒過）不該擋住網站部署；
+      # 測試沒過時腳本不會發布，線上維持舊版，GitHub 上會出現黃色警告。
+      - name: 更新 CloudFront Function（轉址）
+        if: github.ref == 'refs/heads/main'
+        continue-on-error: true
+        run: bash scripts/deploy-cloudfront-function.sh
 
       - name: 清除 CloudFront 快取 - 開發環境
         env:

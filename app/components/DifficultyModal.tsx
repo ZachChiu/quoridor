@@ -3,6 +3,7 @@ import React from 'react';
 import { GiBrain } from 'react-icons/gi';
 import Modal from './Modal';
 import type { Difficulty } from '@/game/ai';
+import { useMessages } from '@/i18n/LocaleProvider';
 
 interface Props {
   isOpen: boolean;
@@ -27,23 +28,26 @@ interface Props {
   不附說明文字 —— 級距本身已經表達了順序，再寫「僅評估當前一手」這類描述
   只是要玩家在選之前先讀三行字。真正的差別打一局就知道。
 */
-const LEVELS: { key: Difficulty; label: string }[] = [
-  { key: 'easy', label: '一級' },
-  { key: 'normal', label: '二級' },
-  { key: 'hard', label: '三級' },
+const LEVELS: { key: Difficulty }[] = [
+  { key: 'easy' },
+  { key: 'normal' },
+  { key: 'hard' },
 ];
 
-const DifficultyModal: React.FC<Props> = ({ isOpen, onClose, onPick }) => (
+const DifficultyModal: React.FC<Props> = ({ isOpen, onClose, onPick }) => {
+  const t = useMessages();
+  const labels = [t.solo.level1, t.solo.level2, t.solo.level3];
+  return (
   <Modal
     isOpen={isOpen}
     onClose={onClose}
-    title="選擇難度"
-    kicker="單人對戰"
+    title={t.ui.pickLevel}
+    kicker={t.home.solo}
     icon={GiBrain}
     band={{ className: 'bg-tile-orange', fg: 'text-tile-ink' }}
   >
     <div className="flex flex-col gap-3">
-      {LEVELS.map(({ key, label }) => (
+      {LEVELS.map(({ key }, i) => (
         <button
           key={key}
           type="button"
@@ -53,11 +57,12 @@ const DifficultyModal: React.FC<Props> = ({ isOpen, onClose, onPick }) => (
           }}
           className="rounded-xl bg-primary-50 px-5 py-4 text-lg font-black transition hover:brightness-95 active:scale-[0.99]"
         >
-          {label}
+          {labels[i]}
         </button>
       ))}
     </div>
   </Modal>
-);
+  );
+};
 
 export default DifficultyModal;

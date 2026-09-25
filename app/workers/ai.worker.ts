@@ -1,32 +1,74 @@
 /// <reference lib="webworker" />
-import { chooseOpeningCell, chooseTurn, type AiTurn, type Difficulty } from '@/game/ai';
-import type { GameState, Move, PlayerKey } from '@/game/types';
+import { chooseOpeningPlacement, chooseTurn, type Difficulty } from '@/game/ai';
+import { isPlacingPhase, replay, type Turn } from '@/game/engine';
 
 /**
- * AI 對手跑在 Worker 裡。
+ * AI 思考 Worker。
  *
- * 困難難度每手要想 1.2 秒 —— 放在主執行緒會整整凍住畫面一秒多，
- * 連「AI 思考中」的動畫都不會動。GameState 是純資料（陣列與物件），
- * 可以直接走 structured clone，不需要自己序列化。
+ * 跑在獨立執行緒，讓困難難度的深層搜尋不會凍住 UI。
+ *
+ * 訊息傳的是 WGF 棋譜字串而非整個 GameState —— 棋譜小得多，
+ * 且 Worker 端用同一份 engine 重播即可得到完全一致的盤面，
+ * 不必為了跨執行緒傳輸而另外序列化狀態。
  */
-/** 請求本體。id 另外交集上去 —— Omit<聯集, 'id'> 不會逐支分配，會把欄位取成交集。 */
-export type AiRequestBody =
-  | { kind: 'turn'; state: GameState; me: PlayerKey; difficulty: Difficulty }
-  | { kind: 'opening'; state: GameState; me: PlayerKey };
 
-export type AiRequest = AiRequestBody & { id: number };
+export type AiRequest = {
+  /** 對應回覆用的識別碼，避免使用者快速重開新局時收到過期結果。 */
+  id: number;
+  wgf: string;
+  difficulty: Difficulty;
+  /**
+   * 預熱請求：只為了把模組載入並讓 JIT 先跑過一遍，結果會被丟棄。
+   *
+   * 首次思考實測約 5 秒，其中大半是 Worker 模組載入與 JIT 暖身的一次性成本。
+   * 在玩家思考第一手時先預熱，就能把這段時間移出關鍵路徑。
+   */
+  warmup?: boolean;
+  /** 覆寫搜尋深度；用於需要確定性結果的場合（例如測試）。 */
+  maxDepth?: number;
+  budgetMs?: number;
+};
+
+/** AI 的決策：開局階段是落子位置，對弈階段是一個完整回合。 */
+export type AiMove =
+  | { kind: 'opening'; cell: { row: number; col: number } }
+  | { kind: 'turn'; turn: Turn };
 
 export type AiResponse =
-  | { id: number; kind: 'turn'; turn: AiTurn | null }
-  | { id: number; kind: 'opening'; cell: Move | null };
+  | { id: number; ok: true; move: AiMove | null; elapsedMs: number }
+  | { id: number; ok: false; error: string };
 
 self.onmessage = (event: MessageEvent<AiRequest>) => {
-  const req = event.data;
-  if (req.kind === 'turn') {
-    const turn = chooseTurn(req.state, req.me, req.difficulty);
-    self.postMessage({ id: req.id, kind: 'turn', turn } satisfies AiResponse);
-  } else {
-    const cell = chooseOpeningCell(req.state, req.me);
-    self.postMessage({ id: req.id, kind: 'opening', cell } satisfies AiResponse);
+  const { id, wgf, difficulty, maxDepth, budgetMs, warmup } = event.data;
+  const started = Date.now();
+
+  try {
+    const state = replay(wgf);
+
+    if (warmup) {
+      // 跑一次最淺的搜尋讓程式碼路徑都被執行過，結果不回傳
+      chooseTurn(state, { difficulty, maxDepth: 1, budgetMs: 1000 });
+      self.postMessage({ id, ok: true, move: null, elapsedMs: Date.now() - started } as AiResponse);
+      return;
+    }
+
+    let move: AiMove | null = null;
+    if (isPlacingPhase(state)) {
+      const cell = chooseOpeningPlacement(state, { difficulty });
+      if (cell) move = { kind: 'opening', cell };
+    } else {
+      const { turn } = chooseTurn(state, { difficulty, maxDepth, budgetMs });
+      if (turn) move = { kind: 'turn', turn };
+    }
+
+    const response: AiResponse = { id, ok: true, move, elapsedMs: Date.now() - started };
+    self.postMessage(response);
+  } catch (error) {
+    const response: AiResponse = {
+      id,
+      ok: false,
+      error: error instanceof Error ? error.message : String(error),
+    };
+    self.postMessage(response);
   }
 };

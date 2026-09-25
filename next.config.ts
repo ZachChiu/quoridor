@@ -49,6 +49,24 @@ export default withSentryConfig(nextConfig, {
   // 看到 "Uploaded files to Sentry" 才算成功。
   silent: !process.env.CI,
 
+  /*
+    上傳失敗只警告，不讓 build 失敗。
+
+    沒有這個 handler 時，一個壞掉的 auth token 會整個擋住部署 —— 實際發生過：
+    CI 的 secret 值被貼歪，`sentry-cli releases new` 回 401 Invalid org token，
+    然後整條 deploy 就停在那裡。**監控工具不該有能力擋住出貨。**
+
+    但也不能讓它安靜 —— 這裡印到 stderr，CI log 一定看得到。
+    上一版的問題正好相反：silent 把訊息吃掉，壞了也沒人知道。
+  */
+  errorHandler: (err: Error) => {
+    console.warn('\n[Sentry] source map 上傳失敗，build 繼續。線上堆疊會是壓縮後的亂碼。');
+    console.warn(`[Sentry] ${err.message.split('\n')[0]}`);
+    if (/401|Invalid org token/.test(err.message)) {
+      console.warn('[Sentry] 401 代表 token 字串不被接受 —— 多半是貼進 GitHub secret 時被截斷或混進換行。');
+    }
+  },
+
   // 不要把 build 的使用資料回報給 Sentry
   telemetry: false,
 

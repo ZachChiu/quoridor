@@ -18,7 +18,7 @@ const Button: React.FC<ChampionModalProps> = ({ type = 'button', handleClickEven
       <button
         type={type}
         disabled={disabled}
-        className={`${color ?? 'bg-tile-amber text-tile-ink'} ${roundedFull ? 'rounded-full' : 'rounded-2xl'} relative w-full p-4 text-base font-black tracking-wide transition group-hover:brightness-95 group-active:scale-[0.985] lg:p-5 lg:text-2xl`}
+        className={`${color ?? 'bg-tile-ink text-tile-cream'} ${roundedFull ? 'rounded-full' : 'rounded-2xl'} relative w-full p-4 text-base font-black tracking-wide transition group-hover:brightness-95 group-active:scale-[0.985] lg:p-5 lg:text-2xl`}
       >
         {children}
       </button>

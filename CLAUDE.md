@@ -10,16 +10,19 @@ npm run build           # 產生靜態輸出至 /out（同時執行 next-sitemap
 npm run lint            # 執行 ESLint（Next 16 已移除 next lint，改用 ESLint CLI）
 npm run typecheck       # tsc --noEmit
 npm test                # 執行 Vitest（app/game 的規則與 AI 測試）
-RUN_AI_BENCH=1 npm test # 連 AI 對局強度與難度階梯一起跑（約 5 分鐘）
 npm run font:subset     # 依原始碼實際用字重建字型子集
 npm run font:check      # 只檢查子集有沒有落後（CI 用）
+npm run og:build        # 重建每頁每語系的分享圖至 public/og/（要連網）
+npm run og:check        # 只檢查文案有沒有落後（CI 用）
 npm start               # 以 serve 提供 /out 靜態檔案（next start 不支援 output: export）
 
 npm run release:preview       # 先看會打成什麼版號、併哪條分支
 npm run release -- "版本標題"  # 把目前分支併進 main、打 tag、推出去（詳見〈打版〉）
 ```
 
-測試以 Vitest 執行，集中於 `app/game/*.test.ts`。
+測試以 Vitest 執行，全部集中在 **`tests/`**，不與原始碼混放（`app/` 底下只留會被打包的東西）。
+目錄對應 `app/`：`tests/game/` 對 `app/game/`、`tests/components/` 對 `app/components/`。
+測試一律用 `@/` 別名 import，不用相對路徑。
 
 ## 架構
 
@@ -27,11 +30,24 @@ npm run release -- "版本標題"  # 把目前分支併進 main、打 tag、推�
 
 ### 路由
 
+zh-TW 不加前綴（`app/(default)/`），en / ja / ko 加前綴（`app/(intl)/[locale]/`）。
+兩邊的 page 都是薄殼，畫面實作在 `app/views/`。
+
 | 路由 | 說明 |
 |---|---|
-| `/` | 首頁（`HomeClient.tsx`）— 選擇本機或連線對戰、建立房間 |
-| `/local` | 本機對戰（`local/page.tsx` → `components/PlayClient`，無 `roomId`） |
-| `/match#roomId=…` | 連線對戰（`MatchClient` → `components/PlayClient`，帶 `roomId`）。roomId 放在 hash 而非 query |
+| `/` | 首頁（`HomeView` → `HomeClient`）— 選模式、建立連線房間 |
+| `/rules` | 規則頁，SEO 主力落地頁 |
+| `/solo#easy\|normal\|hard` | 單人對戰。難度放 hash，由 `SoloClient` 以 prop 交給 `PlayClient` |
+| `/local`、`/local/3` | 本機對戰，人數走路由（建置時就定了）。noindex |
+| `/online#roomId=…` | 連線對戰（`OnlineClient` → `PlayClient`，帶 `roomId`）。roomId 放 hash 而非 query。noindex |
+| `/online#new=2\|3` | 首頁連線磁磚的目的地：連線頁自己開房，開好後 `replaceState` 換成 `#roomId=…` |
+| `/match#roomId=…` | 舊網址，只做 client 端轉址到 `/online`（保留 hash）。只有 zh-TW 有 |
+| `/replay#wgf=…` | 棋譜回放。**開發者工具，不是給玩家的功能** —— 見下 |
+
+**`/replay` 是用來看玩家回饋的。** 每則回饋都附帶那一局的 WGF（`feedback/*/wgf`），
+在 Firebase Console 讀到回饋時，把棋譜貼到 `/replay#wgf=…` 就能一手一手重看玩家遇到的狀況。
+刻意**沒有任何 UI 入口**、不進 sitemap、noindex —— 這個站不做「個人棋譜」。
+不要替它補分享按鈕或入口；它沒被連到不是漏做，是設計。
 
 ### 狀態管理（React Context，全包在 `app/layout.tsx`）
 
@@ -77,8 +93,8 @@ players/{ A?, B?, C? }/{ uid, displayName, joinedAt }
 - `app/utils/firebase.ts` — Firebase **惰性**初始化。匯出 `getFirebaseAuth()` / `getFirebaseDb()` 兩個 async 函式，內部以動態 import 載入 SDK 並用 Promise 記憶化。首頁與 `/local` 不會下載 Firebase（約 75 KB gzip）
 - `app/utils/gameService.ts` — `createRoom`, `joinRoom`, `getRoom`, `subscribeRoom`, `updateGameState`, `setRoomWinner`
 - `app/types/room.ts` — `Room`, `RoomPlayer`, `RoomStatus` 型別
-- `HomeClient.tsx` — 建立房間（`createRoom`，含初始 WGF）並跳轉 `/match#roomId=…`。展開「連線對戰」選單時即呼叫 `ensureUser()` 預熱登入
-- `MatchClient.tsx` — 薄層，只讀 `useSearchParams` 拿 `roomId` 後渲染 `<PlayClient roomId={roomId} />`
+- `HomeClient.tsx` — 連線磁磚**按下去立刻**跳轉 `/online#new=2|3`，不在首頁等建房（手機沒有滑過磁磚的預熱，先前會有 2 秒多畫面不動）。滑過或 focus 磁磚時仍呼叫 `ensureUser()` 預熱登入
+- `app/(default)/online/OnlineClient.tsx` — 解析 hash（`parseOnlineHash`）：`#roomId=` 進房；`#new=` 就地開房（初始棋譜用 `toWgf(createGame(n))`），開好後 `replaceState` 換網址 —— 重新整理才不會再開一間；都不是就顯示「連結不完整」，不會退化成本機對戰
 
 ### WGF（Wall Go Format）棋譜
 
@@ -113,8 +129,22 @@ players/{ A?, B?, C? }/{ uid, displayName, joinedAt }
 - **一個面板只放一個色相＋中性**。Modal 的標題色帶已經是那個色相，
   主要按鈕就不能再帶一個（改用深墨）。色帶對應首頁磁磚：
   規則森綠、連線靛藍、破牆磚紅、單人陶橘、結算用勝方的顏色。
-- **玩家色受棋盤格底的對比限制**：棋子與牆疊在 `#faf7f0` 上需 ≥3:1（WCAG 圖形元件）。
-  黃方因此比紅藍暗一階（`#c0821d`）—— 黃本質上亮，同明度只有 1.83:1。
+- **按鈕只有兩種：主要深墨、次要中性灰**（`bg-tile-ink/[0.07]`）。不用琥珀、
+  不用森綠當按鈕色 —— 黃配黑、黃配綠並排都很難看（Zach 明確說過）。
+  一組並列的選項也不要各帶一個色相（單人難度、回饋表情原本是紅黃綠），
+  差異用別的方式講：點數、表情、文字。首頁磁磚是模式的識別色，不在此限。
+- **結算的勝方永遠排最上面**，就算是投降（投降的人地可能比較多，但他輸了）。
+  勝方滿色放大；輸家淡灰底、淡灰字，只留一顆淡掉的色點。
+- **玩家色：紅、藍、綠**（`--player-A/B/C`）。受兩個對比限制：棋子與牆疊在
+  `#faf7f0` 上需 ≥3:1（WCAG 圖形元件），三塊比分上的米白字需 ≥4.5:1。
+  第三方原本是黃（`#a06400`），被 Zach 嫌「屎黃」而換掉：黃本質上亮，要過米白字
+  4.5 就得壓成土黃，彩度還過不了 0.125；在紅／綠色盲眼裡也跟紅方幾乎同色。
+  現在是綠 `#0e8142`（L 0.53、彩度 0.135、米白字 4.63:1），理由與數據見 globals.css。
+  **紅綠在紅／綠色盲下仍然會混**：網站偵測不到色盲（沒有對應的 media feature），
+  解法是之後讓每方的棋子用不同圖示，而不是再換顏色。四方對戰也要靠圖示。
+  首頁「遊戲規則」磁磚的森綠 `#006944` 跟玩家綠不同色，是刻意的（2026-09 看過
+  B：玩家改用森綠、C：磁磚改用玩家綠，Zach 選維持兩種綠）。
+  已知例外：森綠磁磚彩度 0.103，低於 0.125 下限。
 - **圖示**用 game-icons.net 的實心剪影（`react-icons/gi` 已內建，CC BY 3.0）。
   線條圖示在大尺寸色塊上會顯得單薄。署名放在遊玩方式 Modal 裡。
 - **棋盤**：外圍那圈 9px 是「牆」不是裝飾邊框（規則裡棋盤外緣本身就算一道牆）。
@@ -125,11 +155,22 @@ players/{ A?, B?, C? }/{ uid, displayName, joinedAt }
   CI 有 `font:check` 擋著。
 - **Modal** 共用 `app/components/Modal.tsx`。關閉時務必保留 `inert` ——
   只用 `opacity-0` 不會把內容移出無障礙樹。
+- **分享圖**（og:image）**每頁每語系各一張**，共 24 張，由
+  `scripts/build-og-images.mjs` 產生到 `public/og/{page}-{locale}.png`，
+  版面在 `scripts/og-design.mjs`。改了 `ogImage.*` 文案要跑 `npm run og:build`，
+  CI 有 `og:check` 擋著。
+  **不要改用 Next 的 `opengraph-image.tsx`** —— 那個慣例產出的檔案沒有副檔名
+  （`out/rules/opengraph-image-1mfdno`），`aws s3 sync` 推不出 Content-Type，
+  抓取器拿到 `binary/octet-stream` 就不顯示圖。實測確認過。
+  字型必須是 TTF/OTF/WOFF，satori 不吃 woff2；Google Fonts 只有在
+  **不送 User-Agent** 時才回 TrueType。
+  盤面上不放任何灰點 —— 那不代表任何規則，只會讓人以為那些格子有什麼特別。
 
 ## 單人對戰
 
 `app/game/ai.ts` 是純函式，跑在 `app/workers/ai.worker.ts` 裡（困難每手約 1.2 秒，
-放主執行緒會凍住畫面）。難度存在 `GameContext.aiDifficulty`，
+放主執行緒會凍住畫面）。難度存在 `GameContext.aiDifficulty`，但**只由 `/solo` 以 prop
+交給 `PlayClient`** —— 直接讀 context 的話，玩過單人後的殘留難度會讓 `/local` 變成 AI 局。
 設定後除了 A 以外都交給 AI；連線模式沒有 AI。
 
 AI 的一個回合是**單一 reducer 轉換**（`type: 'aiTurn'`）。分三次 dispatch 會讓
@@ -137,11 +178,12 @@ AI 的一個回合是**單一 reducer 轉換**（`type: 'aiTurn'`）。分三次
 重複去問 Worker，最後那次的回覆可能在回合已交出去之後才套用。
 
 疊代加深**只能採用完整跑完的那一層**。逾時就用殘缺的深搜結果，會比完整的
-淺搜還弱（實測困難對普通 0 勝 8 敗）。`ai.test.ts` 有測試鎖住這個回歸。
+淺搜還弱（實測困難對普通 0 勝 8 敗）。原本鎖住這個回歸的對戰測試（`RUN_AI_BENCH`）
+已在 `e802f28` 移除，目前 `ai.test.ts` 只有「對隨機走子 10 局全勝」與每手時間上限。
 
 ## 主要慣例
 
-- **遊戲規則**：一律寫在 `app/game/`（純函式、無 React、無副作用），元件只負責 UI 與同步。規則變更必須同時補 `app/game/*.test.ts`。
+- **遊戲規則**：一律寫在 `app/game/`（純函式、無 React、無副作用），元件只負責 UI 與同步。規則變更必須同時補 `tests/game/*.test.ts`。
 - **狀態變更**：engine 的每個操作都回傳全新 state，禁止就地修改傳入的物件。（已移除 lodash-es，不再使用 `cloneDeep()`。）
 - **型別定義**：統一放 `app/types/`；`app/utils/` 只放邏輯函式。
 - **玩家顏色**：定義為 CSS 變數 `--player-A/B/C`，位於 `app/globals.css` 第 5–45 行；透過 Tailwind 自訂色彩 `player-A`、`player-B`、`player-C` 引用。

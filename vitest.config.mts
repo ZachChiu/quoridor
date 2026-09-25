@@ -5,6 +5,8 @@ export default defineConfig({
   resolve: { tsconfigPaths: true },
   test: {
     environment: 'node',
-    include: ['app/**/*.test.ts'],
+    // 測試集中在 tests/，不與原始碼混放 —— app/ 底下只留會被打包的東西。
+    // 目錄結構對應 app/：tests/game 對 app/game、tests/components 對 app/components。
+    include: ['tests/**/*.test.ts'],
   },
 });

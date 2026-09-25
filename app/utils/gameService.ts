@@ -20,16 +20,33 @@
 
 import { getFirebaseDb } from '@/utils/firebase';
 import type { Room, RoomPlayer } from '@/types/room';
+import type { Feedback } from '@/types/feedback';
 
 /**
  * 重新導出房間相關型別，方便其他模組直接從 service 取得共用定義。
  */
 export type { Room, RoomStatus, RoomPlayer } from '@/types/room';
+export type { Feedback } from '@/types/feedback';
 
 /** 同時取得 RTDB 實例與所需的 database 函式。 */
 async function rtdb() {
   const [mod, db] = await Promise.all([import('firebase/database'), getFirebaseDb()]);
+  // 可能先前被 releaseConnection 斷開過（例如結算後又送回饋）—— 用之前接回來。
+  // goOnline 本來就連著時什麼都不做。
+  mod.goOnline(db);
   return { ...mod, db };
+}
+
+/**
+ * 把資料庫連線還回去。
+ *
+ * 免費方案（Spark）同時只有 100 條連線，一個分頁佔一條，而且 SDK 預設
+ * 會一直連著直到關掉分頁。對局結束停在結算畫面、送完回饋還在看的人，
+ * 都在佔名額卻用不到。之後任何 gameService 的操作會自己再接上（見 rtdb）。
+ */
+export async function releaseConnection(): Promise<void> {
+  const [{ goOffline }, db] = await Promise.all([import('firebase/database'), getFirebaseDb()]);
+  goOffline(db);
 }
 
 // ─── Create / Join ────────────────────────────────────────────────────────────
@@ -160,4 +177,40 @@ export function subscribeRoom(
     cancelled = true;
     detach?.();
   };
+}
+
+// ─── 意見回饋 ─────────────────────────────────────────────────────────────────
+
+
+/**
+ * 送出回饋。
+ *
+ * **走 Firebase 而不是 Sentry**：靜態匯出無法使用 Sentry 的 tunnelRoute，
+ * 裝了廣告阻擋器的使用者送出後會靜默失敗 —— 他以為送出了、實際上消失。
+ * 那對「主動回饋」的傷害比對「錯誤回報」大得多，因為前者是使用者
+ * 特地花時間寫的。Firebase 走自己的網域，不受影響。
+ *
+ * 規則上只能新增、不能讀取（見 database.rules.json）。
+ */
+export async function sendFeedback(data: Feedback, uid: string): Promise<void> {
+  const { ref, push, set, db } = await rtdb();
+  /*
+    uid 由呼叫端先 ensureUser() 拿到再傳進來。
+
+    先前這裡讀 `auth.currentUser` —— 但本機與單人模式從頭到尾不會登入，
+    currentUser 是 null，而規則要求 `auth != null`，寫入被拒。
+    換句話說，除了連線模式之外回饋全部送不出去。
+
+    undefined 的欄位要剝掉：RTDB 的 set() 遇到 undefined 會直接丟例外
+    （不是略過），而聯絡方式沒填就是 undefined —— 大部分人都不會填。
+  */
+  const payload = Object.fromEntries(
+    Object.entries(data).filter(([, value]) => value !== undefined)
+  );
+  await set(push(ref(db, 'feedback')), {
+    ...payload,
+    uid,
+    createdAt: Date.now(),
+    locale: typeof navigator !== 'undefined' ? navigator.language : 'unknown',
+  });
 }

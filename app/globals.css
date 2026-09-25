@@ -64,24 +64,26 @@
   --player-B-800: #1e4e74;
   --player-B-900: #1b405d;
 
-  /* 黃方。
-     基色比紅藍暗一階是刻意的 —— 黃本質上亮，用與紅藍相同的明度時，
-     棋子與牆疊在奶油格（#faf7f0）上只有 1.83:1，遠低於紅 4.31、藍 4.41，
-     實測三人局時黃方的棋子明顯比另外兩方難找。壓到 #c0821d 後是 3.04:1，
-     過 WCAG 圖形元件的 3:1，配墨字 5.81:1 也過小字的 4.5:1。
-     介面用的 --tile-amber 維持原本的亮琥珀，不跟著改：那是大面積色塊配墨字，
-     不受這個限制，而且首頁磁磚的調子要留著。 */
-  --player-C: #c0821d;
-  --player-C-50: #f7f0e4;
-  --player-C-100: #f0e1c9;
-  --player-C-200: #e6cda5;
-  --player-C-300: #dcb980;
-  --player-C-400: #cfa053;
-  --player-C-500: #c0821d;
-  --player-C-600: #ab741b;
-  --player-C-700: #93641a;
-  --player-C-800: #7b5418;
-  --player-C-900: #634416;
+  /* 綠方（第三方）。
+     原本是黃（#a06400），換掉有兩個理由：
+     1. 黃本身很亮，比分色塊上的米白字要 ≥4.5:1 就得壓到很暗，暗黃就是土黃
+        （Zach：「屎黃」）；而且在那個色相上彩度過不了 0.125 的下限。
+     2. 那個黃在紅色盲、綠色盲眼裡跟紅方幾乎同色（OKLab 差距只剩 6、4）。
+     綠選 #0e8142：色相 152°（略偏藍，跟森綠磁磚同一家族）、OKLCH L 0.53 跟紅藍
+     同一個份量、彩度 0.135、米白字 4.63:1。一般視力下跟紅、藍的差距 28、19。
+     **紅配綠在紅／綠色盲下仍然會混** —— 這一點要靠之後「每方棋子不同圖示」補上，
+     不是靠顏色。色階照紅方色階的亮度比例，往米白與黑各自混出來。 */
+  --player-C: #0e8142;
+  --player-C-50: #dce6d6;
+  --player-C-100: #bfd6bd;
+  --player-C-200: #9ac09e;
+  --player-C-300: #74ac7f;
+  --player-C-400: #4b9660;
+  --player-C-500: #0e8142;
+  --player-C-600: #0b7239;
+  --player-C-700: #086030;
+  --player-C-800: #055027;
+  --player-C-900: #03401e;
 
   /* 輔色：只用在 Modal 的分節圖示與提示狀態。同樣取自參考圖，
      不用 Tailwind 預設的 red-500 / purple-500 —— 那些彩度比這套色票高一截，
@@ -126,6 +128,21 @@
 /* 不提供深色模式：這是一套明確走淺色（奶油底 + 飽和色塊）的設計，
    只翻轉背景會讓奶油色面板浮在黑底上，比不做更糟。 */
 
+/*
+  html 也要上底色，不能只給 body。
+
+  Safari 的橡皮筋回彈（捲過頭那一段）畫的是 html 的背景；body 撐不滿
+  視窗時露出來的也是它。只設 body 的話，捲到底或往上拉會閃出一塊白。
+
+  Modal 開啟時 body 會被設成 position: fixed（背景捲動鎖），那時
+  body 的背景更不保證鋪滿 —— html 這一層是保險。
+
+  這個值與 app/layout.tsx 的 themeColor 必須一致。
+*/
+html {
+  background-color: var(--background);
+}
+
 body {
   color: var(--foreground);
   background: var(--background);
@@ -154,6 +171,14 @@ body {
 }
 .animate-active-bar { animation: bar-breathe 1.6s ease-in-out infinite; }
 
+/* 連線等待畫面的空位。縮放幅度刻意小（0.92）—— 這是背景狀態不是提示，
+   跳太大會讓人以為那是可以按的東西。 */
+@keyframes seat-wait {
+  0%, 100% { transform: scale(1); opacity: 0.55; }
+  50%      { transform: scale(0.92); opacity: 1; }
+}
+.animate-seat-wait { animation: seat-wait 1.8s ease-in-out infinite; }
+
 .animate-pulse-shine {
   animation: breathe 1.5s ease-in-out infinite, shine 1s ease-in-out infinite;
 }
@@ -171,4 +196,178 @@ body {
 }
 .animate-rotate-scale {
   animation: rotateScale 25s cubic-bezier(0.1, -0.6, 0.2, 0) infinite;
+}
+/* ─── 盤面動態 ──────────────────────────────────────────────────────────────
+   整套的原則：只動 transform 與 opacity（其餘屬性會觸發 layout，
+   49 格同時跑會在手機上掉幀），而且每一段都短 —— 這是要下棋的介面，
+   不是片頭。動畫負責說明「發生了什麼」，不負責讓人等。
+
+   所有時間都集中在這裡，不散在元件裡。
+   ────────────────────────────────────────────────────────────────────────── */
+:root {
+  /* 手機控制盤的高度。棋盤與狀態膠囊都照這個值讓位 ——
+     三個地方各寫一個數字，遲早會有一個對不上，而症狀是東西被蓋住。 */
+  --wall-pad-h: 14rem;
+  /* 橫式時控制盤改放右側，吃的是寬度不是高度 —— 手機橫躺只剩約 390px 高，
+     底部那 272px 會吃掉七成畫面。 */
+  --wall-pad-w: 16rem;
+
+  --mo-snap: cubic-bezier(0.34, 1.12, 0.64, 1);   /* 帶一點點過衝的收尾 */
+  --mo-out: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* 棋子走到新位置。
+   位移量由元件以「格」為單位算好，換算成 CSS：外層包一個與格子等大的
+   容器（inset-0），所以 100% 恰好是一格寬，再補一道格縫。
+
+   分成兩支而不是一支帶中繼點：走一步是一次乾淨的彈跳，
+   走兩步必須看得到轉角。用同一支 keyframe 硬兼兩者的話，
+   一步會在半路多出一個沒有意義的頓點。 */
+@keyframes piece-slide {
+  from { transform: translate(var(--slide-x, 0), var(--slide-y, 0)); }
+  to   { transform: none; }
+}
+.animate-piece-slide { animation: piece-slide 175ms var(--mo-snap) both; }
+
+/* 兩步：先走到轉角再走到終點，轉角的位置由 BFS 算出的合法路徑決定
+   （慣用的那個角被牆擋住時會自動改走另一邊）。
+   斜線補間會讓人以為可以走斜線 —— 這個遊戲只能走上下左右，
+   動畫不該教錯規則。
+   整體 linear，讓每一段各自的 timing-function 說話：前半段收在轉角、
+   後半段帶一點過衝收在終點，讀起來就是「一格、一格」。 */
+@keyframes piece-step {
+  0% {
+    transform: translate(var(--slide-x, 0), var(--slide-y, 0));
+    animation-timing-function: cubic-bezier(0.32, 0, 0.3, 1);
+  }
+  52% {
+    transform: translate(var(--mid-x, 0), var(--mid-y, 0));
+    animation-timing-function: cubic-bezier(0.3, 0, 0.35, 1.25);
+  }
+  100% { transform: none; }
+}
+.animate-piece-step { animation: piece-step 300ms linear both; }
+
+/* 開局落子：沒有來源，所以用縮放而不是位移。 */
+@keyframes piece-drop {
+  from { transform: scale(0.35); opacity: 0; }
+  70%  { transform: scale(1.1);  opacity: 1; }
+  to   { transform: scale(1); }
+}
+.animate-piece-drop { animation: piece-drop 260ms var(--mo-snap) both; }
+
+/* 牆從中間往兩端長出來。
+   transform 是單一屬性，會蓋掉 Tailwind 的 translate-y-1/2 定位，
+   所以位移必須寫進 keyframe 裡一起帶著走。 */
+@keyframes wall-grow-h {
+  from { transform: translateY(50%) scaleX(0); }
+  to   { transform: translateY(50%) scaleX(1); }
+}
+@keyframes wall-grow-v {
+  from { transform: translateX(50%) scaleY(0); }
+  to   { transform: translateX(50%) scaleY(1); }
+}
+.animate-wall-h { animation: wall-grow-h 220ms cubic-bezier(0.2, 1.3, 0.5, 1) both; }
+.animate-wall-v { animation: wall-grow-v 220ms cubic-bezier(0.2, 1.3, 0.5, 1) both; }
+
+/* 領地填色。延遲由元件依「離擁有者棋子幾格」給，做出往外擴散的波。
+   這是整局的得分瞬間，給它最長的一段。 */
+@keyframes territory-fill {
+  from { transform: scale(0.2); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+.animate-territory { animation: territory-fill 300ms var(--mo-out) both; }
+
+/* 可移動範圍：離棋子越遠越晚出現，順便把「最多兩步」畫出來。 */
+@keyframes dot-pop {
+  from { transform: scale(0); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+.animate-dot-pop { animation: dot-pop 170ms var(--mo-snap) both; }
+
+/* 首頁磁磚的圖示。hover 只有桌機有，所以這裡純粹是額外的討喜，
+   不承擔任何說明責任 —— 手機上看不到也不會少懂什麼。 */
+@keyframes icon-nudge {
+  0%   { transform: rotate(0deg) scale(1); }
+  35%  { transform: rotate(-7deg) scale(1.12); }
+  70%  { transform: rotate(4deg) scale(1.06); }
+  100% { transform: rotate(0deg) scale(1.08); }
+}
+@media (hover: hover) {
+  .tile-icon-anim { transition: transform 260ms var(--mo-snap); }
+  .group:hover .tile-icon-anim,
+  .group:focus-visible .tile-icon-anim {
+    animation: icon-nudge 420ms var(--mo-snap) forwards;
+  }
+}
+
+/* 一次關掉全部。動態暈眩不是偏好問題，是無障礙問題 —— 這裡的動畫
+   沒有一個是資訊的唯一載體（顏色與位置本來就說得完整），所以可以整組拿掉。 */
+@media (prefers-reduced-motion: reduce) {
+  .animate-piece-slide,
+  .animate-piece-step,
+  .animate-piece-drop,
+  .animate-wall-h,
+  .animate-wall-v,
+  .animate-territory,
+  .animate-dot-pop,
+  .tile-icon-anim {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* 手指裝置：把牆的觸控熱區加厚，視覺仍維持 9px。
+   實測原本是 29x9 / 9x29 —— WCAG 2.5.8 的最低觸控目標是 24px，
+   差得很遠。用 ::after 撐開熱區而不是改按鈕本身的尺寸，
+   牆的粗細與位置就完全不受影響。
+
+   四個方向在 45px 的格子裡仍會在角落重疊，所以熱區只是「讓它點得到」，
+   真正解決誤觸的是 WallDirectionPad 的先預覽再確認。 */
+@media (pointer: coarse) {
+  .wall-hit-h::after,
+  .wall-hit-v::after {
+    content: '';
+    position: absolute;
+  }
+  .wall-hit-h::after { inset: -8px -10px; }
+  .wall-hit-v::after { inset: -10px -8px; }
+}
+
+
+/* 首頁磁磚的寬度上限。
+   磁磚是正方形，格線寬度直接決定整塊的高度：
+     高 = 2 x 磁磚 + 2 x 寬磁磚(約 68px) + 3 道間隙
+   所以「還剩多少高度」反推得出寬度。
+
+   直式扣 22rem（標題 + 留白）；**橫式手機**的高度只剩約 390px，
+   同一條式子會算出 38px 的格線 —— 整個首頁縮成一條。
+   那時改扣 12rem，並且版面轉成左右並排（標題在左、磁磚在右），
+   把橫式多出來的寬度用掉。
+
+   限定 max-height: 600px 才套，桌機（同樣是 landscape）不受影響。 */
+.home-grid { max-width: min(380px, calc(100dvh - 22rem)); }
+
+@media (orientation: landscape) and (max-height: 600px) {
+  .home-grid { max-width: min(320px, calc(100dvh - 12rem)); }
+  .home-main {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 2.5rem;
+    max-width: none;
+  }
+  .home-main > header { text-align: left; }
+
+  /*
+    磁磚一小，寫死的 72px 圖示就放不進去 —— aspect-square 只是
+    長寬比的建議，內容超過時盒子還是會被撐高。實測 91px 寬的磁磚
+    被撐成 176px 高，整排就溢出畫面。
+
+    所以橫式手機上把圖示與文字一起縮。這比改 aspect-square 好：
+    正方形是這套視覺的一部分，該讓的是內容不是形狀。
+  */
+  .home-grid .tile-icon { font-size: 1.75rem; }
+  .home-grid button { padding: 0.5rem; gap: 0.25rem; }
+  .home-grid button span { font-size: 0.75rem; line-height: 1.15; }
 }

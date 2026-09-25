@@ -18,13 +18,25 @@ interface UserContextValue {
 
 const UserContext = createContext<UserContextValue | null>(null);
 
-const COOKIE_KEY = 'quoridor_uid';
+const COOKIE_KEY = 'wallgo_uid';
+/**
+ * 舊的 cookie 名稱。
+ *
+ * 站台改名時**不能**直接換 key ——換了等於現有玩家的匿名身分全部作廢：
+ * 他們手上的房間連結一重連就會被當成另一個人，而房間的座位是綁 uid 的。
+ * 所以讀的時候兩個都看，寫的時候只寫新的，舊的自然過期。
+ */
+const LEGACY_COOKIE_KEY = 'quoridor_uid';
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 365; // 1 year in seconds
+
+function readCookie(name: string): string | null {
+  const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`));
+  return match ? decodeURIComponent(match[1]) : null;
+}
 
 function getUidFromCookie(): string | null {
   if (typeof document === 'undefined') return null;
-  const match = document.cookie.match(new RegExp(`(?:^|; )${COOKIE_KEY}=([^;]*)`));
-  return match ? decodeURIComponent(match[1]) : null;
+  return readCookie(COOKIE_KEY) ?? readCookie(LEGACY_COOKIE_KEY);
 }
 
 function setUidCookie(uid: string) {
