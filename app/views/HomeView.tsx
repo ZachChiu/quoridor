@@ -20,16 +20,13 @@ export default function HomeView({ locale }: { locale: Locale }) {
         {/* 地球鈕放右上角而不是磁磚底下 —— 它在流程裡會多吃掉一列高度，
             而首頁的目標是「整頁塞得進一個螢幕」。實測 iPhone 14 Pro
             在網址列展開時（393x659）就是被這一列擠到溢出 46px。 */}
-        {/* 聯絡我們放左上、語言切換放右上，同一種圓鈕。
-            原本兩顆並排在右上角，手機直式時會壓到標題（Zach 回報，
-            360–393 寬的手機四個語系都量到重疊）：標題置中、寬度約佔
-            螢幕六成，右上角並排的兩顆有一顆一定落在標題的範圍裡。
-            拆到左右兩角，每邊只佔 44px，標題左右都還有餘裕。 */}
-        <div className="fixed left-5 top-5 z-40">
-          <ContactButton />
-        </div>
-        <div className="fixed right-5 top-5 z-40">
+        {/* 右上角直排：語言切換在上、聯絡我們在下，同一種圓鈕。
+            並排（橫的）會壓到置中的標題 —— 第二顆落在標題的寬度範圍裡；
+            拆到左上角又不好看（Zach）。直排兩顆都在同一欄，那一欄在任何
+            手機寬度下都在標題右邊，不會重疊。 */}
+        <div className="fixed right-5 top-5 z-40 flex flex-col gap-2">
           <LanguageSwitcher />
+          <ContactButton />
         </div>
         <main className="home-main flex w-full max-w-[420px] flex-col items-center">
           <header className="text-center">

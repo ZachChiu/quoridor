@@ -100,7 +100,7 @@ players/{ A?, B?, C? }/{ uid, displayName, joinedAt }
 - `app/utils/firebase.ts` — Firebase **惰性**初始化。匯出 `getFirebaseAuth()` / `getFirebaseDb()` 兩個 async 函式，內部以動態 import 載入 SDK 並用 Promise 記憶化。首頁與 `/local` 不會下載 Firebase（約 75 KB gzip）
 - `app/utils/gameService.ts` — `createRoom`, `joinRoom`, `getRoom`, `subscribeRoom`, `updateGameState`, `setRoomWinner`
 - `app/types/room.ts` — `Room`, `RoomPlayer`, `RoomStatus` 型別
-- 首頁左上是「聯絡我們」、右上是語言切換。兩顆並排在右上時，手機直式會壓到置中的標題
+- 首頁右上角直排語言切換與「聯絡我們」。橫著並排會壓到置中的標題，拆到左上角不好看
 - `HomeClient.tsx` — 連線磁磚**按下去立刻**跳轉 `/online#new=2|3`，不在首頁等建房（手機沒有滑過磁磚的預熱，先前會有 2 秒多畫面不動）。滑過或 focus 磁磚時仍呼叫 `ensureUser()` 預熱登入
 - `app/(default)/online/OnlineClient.tsx` — 解析 hash（`parseOnlineHash`）：`#roomId=` 進房；`#new=` 就地開房（初始棋譜用 `toWgf(createGame(n))`），開好後 `replaceState` 換網址 —— 重新整理才不會再開一間；都不是就顯示「連結不完整」，不會退化成本機對戰
 

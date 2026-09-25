@@ -17,7 +17,7 @@ const ko: Messages = {
   home: {
     titleLine1: '벽바둑',
     titleLine2: 'Wall Go',
-    tagline: '가장 넓은 영역을 차지하세요 · 2~3인 대전',
+    tagline: '가장 넓은 영역을 차지하세요',
     localKicker: '로컬',
     onlineKicker: '온라인',
     twoPlayers: '2인',
