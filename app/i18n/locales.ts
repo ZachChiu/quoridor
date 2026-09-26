@@ -3,7 +3,7 @@
  *
  * zh-TW **不加前綴**：現有網址（/、/rules、/local…）一個都不動，
  * 已經被索引的連結與別人貼出去的連結全部保持有效。
- * 其餘語系走 /en、/ja、/ko、/zh-Hans、/th 前綴。
+ * 其餘語系走 /zh-Hans、/en、/ja、/ko、/th 前綴。
  *
  * 簡體中文與泰文是依節目的市場加的（2026-09 研究：第二季在新加坡、香港、
  * 台灣、泰國進過 Netflix 前十，兩季都進榜的是泰國與新加坡）。
@@ -16,7 +16,8 @@
  * 也因此 generateStaticParams 不含 zh-TW —— 產出 /zh-TW/ 會和 / 是
  * 一模一樣的內容，那是重複內容，只會稀釋自己。
  */
-export const LOCALES = ['zh-TW', 'en', 'ja', 'ko', 'zh-Hans', 'th'] as const;
+// 順序就是語言選單的順序：繁中、簡中在前（Zach 指定），其餘接著
+export const LOCALES = ['zh-TW', 'zh-Hans', 'en', 'ja', 'ko', 'th'] as const;
 export type Locale = (typeof LOCALES)[number];
 
 export const DEFAULT_LOCALE: Locale = 'zh-TW';
