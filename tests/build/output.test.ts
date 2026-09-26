@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { roomShareUrl } from '@/utils/gameMode';
-import { LOCALES as ALL_LOCALES } from '@/i18n/locales';
+import { LOCALES as ALL_LOCALES, HREFLANG, HTML_LANG } from '@/i18n/locales';
 
 /*
   對**建置產物**（out/）的檢查。
@@ -20,7 +20,8 @@ import { LOCALES as ALL_LOCALES } from '@/i18n/locales';
 const OUT = 'out';
 const built = existsSync(OUT);
 const html = (p: string) => readFileSync(join(OUT, p), 'utf8');
-const LOCALES = ['en', 'ja', 'ko'];
+const LOCALES = ALL_LOCALES.filter((l) => l !== 'zh-TW');
+const HREFLANGS = [...ALL_LOCALES.map((l) => HREFLANG[l]), 'x-default'];
 
 describe.skipIf(!built)('建置產物', () => {
   describe('路由都有產生', () => {
@@ -174,9 +175,9 @@ describe.skipIf(!built)('建置產物', () => {
     const alternates = (file: string) =>
       [...html(file).matchAll(/hreflang="([^"]+)"/gi)].map(m => m[1]);
 
-    it('首頁四語互指，而且有 x-default', () => {
+    it('首頁各語系互指，而且有 x-default', () => {
       const alts = alternates('index.html');
-      for (const l of ['zh-TW', 'en', 'ja', 'ko', 'x-default']) {
+      for (const l of HREFLANGS) {
         expect(alts, l).toContain(l);
       }
     });
@@ -184,14 +185,14 @@ describe.skipIf(!built)('建置產物', () => {
     it('每個語系的首頁都指回同一組 alternate', () => {
       for (const l of LOCALES) {
         const alts = alternates(join(l, 'index.html'));
-        for (const x of ['zh-TW', 'en', 'ja', 'ko', 'x-default']) {
+        for (const x of HREFLANGS) {
           expect(alts, `${l} 少了 ${x}`).toContain(x);
         }
       }
     });
 
     it('<html lang> 用 HTML_LANG 的值（zh-TW 寫成更精確的 zh-Hant-TW）', () => {
-      const want: Record<string, string> = { '': 'zh-Hant-TW', en: 'en', ja: 'ja', ko: 'ko' };
+      const want: Record<string, string> = Object.fromEntries(ALL_LOCALES.map((l) => [l === 'zh-TW' ? '' : l, HTML_LANG[l]]));
       for (const [dir, lang] of Object.entries(want)) {
         expect(html(join(dir, 'index.html')), dir || '/').toMatch(new RegExp(`<html[^>]+lang="${lang}"`));
       }

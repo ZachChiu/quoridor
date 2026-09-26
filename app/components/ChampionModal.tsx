@@ -55,7 +55,7 @@ const ChampionModal: React.FC<ChampionModalProps> = ({
 
   const title = isDraw
     ? g.champion.draw
-    : fmt(g.champion.win, { names: winnerKeys.map((w) => g.players[w]).join('、') });
+    : fmt(g.champion.win, { names: winnerKeys.map((w) => g.players[w]).join(g.players.and) });
 
   // 單一勝方才用他的顏色；並列或平局沒有代表色，回到深墨。
   const solo = !isDraw && winnerKeys.length === 1 ? winnerKeys[0] : null;

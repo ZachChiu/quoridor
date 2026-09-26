@@ -19,15 +19,16 @@
 import { ImageResponse } from 'next/og.js';
 import { mkdirSync, writeFileSync, readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { poster } from './og-design.mjs';
+import { poster, titleSize, TONES } from './og-design.mjs';
+import { openChrome } from './lib/chrome-text.mjs';
 
 const OUT = 'public/og';
 const MANIFEST = join(OUT, 'copy.json');
 const CHECK = process.argv.includes('--check');
 
 /** 語系 → 字型家族。TC 自己就帶拉丁字母，所以 en 跟著用同一套，字形才一致。 */
-const FAMILY = { 'zh-TW': 'Noto+Sans+TC', en: 'Noto+Sans+TC', ja: 'Noto+Sans+JP', ko: 'Noto+Sans+KR' };
-const LOCALES = ['zh-TW', 'en', 'ja', 'ko'];
+const FAMILY = { 'zh-TW': 'Noto+Sans+TC', en: 'Noto+Sans+TC', ja: 'Noto+Sans+JP', ko: 'Noto+Sans+KR', 'zh-Hans': 'Noto+Sans+SC', th: 'Noto+Sans+Thai' };
+const LOCALES = ['zh-TW', 'en', 'ja', 'ko', 'zh-Hans', 'th'];
 const PAGES = ['home', 'rules', 'local', 'online', 'solo', 'replay'];
 
 const messages = Object.fromEntries(await Promise.all(
@@ -87,6 +88,13 @@ async function subset(family, weight, text) {
 mkdirSync(OUT, { recursive: true });
 let total = 0;
 
+/*
+  需要完整文字排版的語系：標題交給 Chrome 畫（見 scripts/lib/chrome-text.mjs）。
+  字型用 build-font-subset 下載的完整 TTF（先跑過 npm run font:subset 才有）。
+*/
+const SHAPED = { th: 'node_modules/.cache/wallgo-fonts/NotoSansThai[wdth,wght].ttf' };
+const chrome = Object.keys(SHAPED).some((l) => LOCALES.includes(l)) ? await openChrome() : null;
+
 for (const locale of LOCALES) {
   // 這個語系所有圖會用到的字，一次要齊 —— 分開要會拿到好幾份重疊的子集
   const chars = PAGES.flatMap((p) => {
@@ -104,8 +112,14 @@ for (const locale of LOCALES) {
   ];
 
   for (const page of PAGES) {
+    const copy = copyAll[locale][page];
+    const titleImages = SHAPED[locale]
+      ? await Promise.all(copy.title.map((line) => chrome.render({
+          text: line, fontFile: SHAPED[locale], fontSize: titleSize(line), color: TONES[page].fg,
+        })))
+      : undefined;
     const png = Buffer.from(await new ImageResponse(
-      poster({ tone: page, copy: copyAll[locale][page] }),
+      poster({ tone: page, copy, titleImages }),
       { width: 1200, height: 630, fonts }
     ).arrayBuffer());
     const file = join(OUT, `${page}-${locale}.png`);
@@ -115,5 +129,6 @@ for (const locale of LOCALES) {
   }
 }
 
+await chrome?.close();
 writeFileSync(MANIFEST, JSON.stringify(copyAll, null, 2) + '\n');
 console.log(`\n✓ ${LOCALES.length * PAGES.length} 張，共 ${(total / 1024).toFixed(0)}KB`);

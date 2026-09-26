@@ -101,7 +101,14 @@ function pillSize(text, max = 36, min = 26, room = 480) {
   return Math.max(min, Math.min(max, Math.floor(room / units)));
 }
 
-export function poster({ tone, copy }) {
+/** 標題字級：長標題縮小一級。build-og-images 用 Chrome 畫泰文標題時也照這個尺寸。 */
+export const titleSize = (line) => (line.length > 9 ? 76 : 92);
+
+/**
+ * `titleImages`（選填）：與 copy.title 一一對應的去背圖片。有給的那一行畫圖、不畫字 ——
+ * 泰文的疊字 satori 排不對，改由 Chrome 畫好送進來（見 scripts/lib/chrome-text.mjs）。
+ */
+export function poster({ tone, copy, titleImages }) {
   const t = TONES[tone];
   return div({
     width: 1200, height: 630, background: t.bg, color: t.fg,
@@ -121,10 +128,14 @@ export function poster({ tone, copy }) {
         whiteSpace: 'nowrap', marginBottom: 30,
       }, copy.kicker),
       // 標題下面不放描述句（Zach：「描述我不喜歡，全部拔掉」）—— 圖只講是哪一頁
-      ...copy.title.map((line, i) => div({
-        fontSize: line.length > 9 ? 76 : 92, fontWeight: 900, lineHeight: 1.08,
-        marginBottom: i === copy.title.length - 1 ? 34 : 0,
-      }, line)),
+      ...copy.title.map((line, i) => {
+        const marginBottom = i === copy.title.length - 1 ? 34 : 0;
+        const img = titleImages?.[i];
+        if (img) {
+          return { type: 'img', props: { src: img.src, width: img.width, height: img.height, style: { marginTop: -img.pad, marginBottom: marginBottom - img.pad } } };
+        }
+        return div({ fontSize: titleSize(line), fontWeight: 900, lineHeight: 1.08, marginBottom }, line);
+      }),
       div({ fontSize: 26, fontWeight: 900, opacity: 0.55 }, 'quoridorgame.com'),
     ]),
     board(),

@@ -30,7 +30,9 @@ npm run release -- "版本標題"  # 把目前分支併進 main、打 tag、推�
 
 ### 路由
 
-zh-TW 不加前綴（`app/(default)/`），en / ja / ko 加前綴（`app/(intl)/[locale]/`）。
+zh-TW 不加前綴（`app/(default)/`），en / ja / ko / zh-Hans / th 加前綴（`app/(intl)/[locale]/`）。
+簡中的代號是 `zh-Hans` 不是 `zh-CN`（主要讀者在新馬，不該標成中國）；hreflang 用文字系統 `zh-Hant`／`zh-Hans`，不用地區。
+新增語系：`locales.ts` 加一行，`messages/` 一份，`content/` 三份檔各一個區塊，術語先寫進 `glossary.md`，再跑 `font:subset` 與 `og:build`。
 兩邊的 page 都是薄殼，畫面實作在 `app/views/`。
 
 | 路由 | 說明 |
@@ -159,8 +161,12 @@ players/{ A?, B?, C? }/{ uid, displayName, joinedAt }
 - **棋盤**：外圍那圈 9px 是「牆」不是裝飾邊框（規則裡棋盤外緣本身就算一道牆）。
   牆的位移一律 `calc(var(--board-gap) * -0.5)` —— 對齊的是格線中心而不是格子邊，
   兩者差半個格縫，寫死會漂掉。
-- **字型子集**由 `scripts/build-font-subset.mjs` 從原始碼推導（註解會先剝掉）。
-  改文案後要跑 `npm run font:subset`，否則新字會**安靜地**掉到系統備援字體；
+- **字型子集**由 `scripts/build-font-subset.mjs` 從原始碼推導（註解會先剝掉），**在本機用 harfbuzz（subset-font）切**：
+  繁中（zh-TW、en）、簡中、泰文各一份，依語系區塊分開收字；日文、韓文刻意用系統字型（用繁中字型顯示日文漢字字形不對）。
+  CSS 依 `<html lang>` 換 `--font-app`（`:root:lang(...)`），沒用到的 @font-face 不會下載。
+  **不要改回 Google Fonts 的 `text=` 子集**：字一多網址過長，Google 會默默忽略 text= 回傳整套切片，
+  先前腳本只抓到第一片（emoji），線上的中文字一直是系統字型而沒人發現（2026-09）。
+  改文案後要跑 `npm run font:subset`（會下載原始字型到 `node_modules/.cache`），否則新字會**安靜地**掉到系統備援字體；
   CI 有 `font:check` 擋著。
 - **蓋滿畫面的東西不要剛好等於畫面高度**。手機工具列會隨捲動展開／收起，`inset:0`、`100lvh`、`100dvh` 各在某個瀏覽器／狀態下露底（Safari 與 iPhone 上的 Chrome 各被咬過）。
   Modal 遮罩（`.cover-viewport`）上下各往外多蓋 `max(25vh, 12rem)`，fixed 超出畫面會被裁掉、不產生捲軸；手機控制盤用 `::after` 往下延伸同色底；
@@ -173,7 +179,7 @@ players/{ A?, B?, C? }/{ uid, displayName, joinedAt }
 - **換語言是整頁跳轉**，瀏覽器的 back-forward cache 會把離開時的畫面凍結起來；會在整頁跳轉前打開的東西（語言選單）要在點下去時關掉，並在 `pageshow`（persisted）時再關一次。
 - **Modal** 共用 `app/components/Modal.tsx`，掛載後一律用 portal 渲染到 `<body>`，層級固定 `z-[55]`（頁面元件最高 z-50、換頁轉場 z-[60]；不能與頁面同層級，站內換頁後新頁面會排到 portal 後面蓋過 Modal）：祖先只要有 `backdrop-filter`／`filter`／`transform`，裡面的 `fixed` 就會改成相對那個祖先（規則頁毛玻璃頂部列裡的語言選單就這樣被壓成一條）。關閉時務必保留 `inert` ——
   只用 `opacity-0` 不會把內容移出無障礙樹。
-- **分享圖**（og:image）**每頁每語系各一張**，共 24 張，由
+- **分享圖**（og:image）**每頁每語系各一張**，共 36 張，由
   `scripts/build-og-images.mjs` 產生到 `public/og/{page}-{locale}.png`，
   版面在 `scripts/og-design.mjs`。圖上只有節目名與標題、**不放描述句**（Zach 拔掉的）。
   改了標題相關文案（`metaTitle`、`titleLine1/2`、`showName`）要跑 `npm run og:build`，
@@ -183,6 +189,9 @@ players/{ A?, B?, C? }/{ uid, displayName, joinedAt }
   抓取器拿到 `binary/octet-stream` 就不顯示圖。實測確認過。
   字型必須是 TTF/OTF/WOFF，satori 不吃 woff2；Google Fonts 只有在
   **不送 User-Agent** 時才回 TrueType。
+  **泰文標題由無頭 Chrome 畫**（`scripts/lib/chrome-text.mjs`）再以圖片放進 satori：satori 不做複雜排版，
+  「上標母音＋聲調」疊在一起時聲調會被蓋掉（เครื่อง 的 รื่）。截圖時上下要多留空間，否則疊高的聲調被裁掉。
+  所以 `og:build` 需要本機有 Chrome（可用 `CHROME_PATH` 指定）與先跑過 `font:subset`。
   盤面上不放任何灰點 —— 那不代表任何規則，只會讓人以為那些格子有什麼特別。
 
 ### 離開前確認與重整接回

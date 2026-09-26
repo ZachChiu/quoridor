@@ -63,7 +63,7 @@ export default React.memo(function GameTips({
   const tipText = useMemo(() => {
     if (over) {
       const names = winingStatus.map(w => g.players[w as PlayerKey]).filter(Boolean);
-      return winingStatus[0] === 'draw' ? g.tips.over : fmt(g.tips.overWin, { names: names.join('、') });
+      return winingStatus[0] === 'draw' ? g.tips.over : fmt(g.tips.overWin, { names: names.join(g.players.and) });
     }
     const who = p ? g.players[p] : '';
     if (aiThinking) return fmt(g.tips.thinking, { who });
