@@ -153,5 +153,82 @@
         "기보 다시보기"
       ]
     }
+  },
+  "zh-Hans": {
+    "home": {
+      "kicker": "魔鬼的计谋：死亡密室",
+      "title": [
+        "墙壁围棋",
+        "Wall Go"
+      ]
+    },
+    "rules": {
+      "kicker": "墙壁围棋 Wall Go",
+      "title": [
+        "游戏规则"
+      ]
+    },
+    "local": {
+      "kicker": "墙壁围棋 Wall Go",
+      "title": [
+        "本地对战"
+      ]
+    },
+    "online": {
+      "kicker": "墙壁围棋 Wall Go",
+      "title": [
+        "联机对战"
+      ]
+    },
+    "solo": {
+      "kicker": "墙壁围棋 Wall Go",
+      "title": [
+        "人机对战"
+      ]
+    },
+    "replay": {
+      "kicker": "墙壁围棋 Wall Go",
+      "title": [
+        "棋谱回放"
+      ]
+    }
+  },
+  "th": {
+    "home": {
+      "kicker": "The Devil's Plan: Death Room",
+      "title": [
+        "Wall Go"
+      ]
+    },
+    "rules": {
+      "kicker": "Wall Go",
+      "title": [
+        "กติกา"
+      ]
+    },
+    "local": {
+      "kicker": "Wall Go",
+      "title": [
+        "เล่นเครื่องเดียว"
+      ]
+    },
+    "online": {
+      "kicker": "Wall Go",
+      "title": [
+        "เล่นออนไลน์"
+      ]
+    },
+    "solo": {
+      "kicker": "Wall Go",
+      "title": [
+        "เล่นกับคอมพิวเตอร์"
+      ]
+    },
+    "replay": {
+      "kicker": "Wall Go",
+      "title": [
+        "ดูย้อนหลัง"
+      ]
+    }
   }
 }
