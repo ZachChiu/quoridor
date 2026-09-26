@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { getMessages, siteName } from './index';
-import { LOCALES, DEFAULT_LOCALE, localePath, type Locale } from './locales';
+import { LOCALES, DEFAULT_LOCALE, HREFLANG, OG_LOCALE, localePath, type Locale } from './locales';
 
 const SITE = process.env.SITE_URL || 'https://quoridorgame.com';
 
@@ -78,7 +78,7 @@ function openGraph(locale: Locale, path: PagePath) {
   return {
     openGraph: {
       type: 'website' as const,
-      locale: locale.replace('-', '_'),
+      locale: OG_LOCALE[locale],
       url: SITE + localePath(locale, path),
       title: c.ogTitle,
       description: c.ogDescription,
@@ -107,7 +107,7 @@ function openGraph(locale: Locale, path: PagePath) {
 export function localeMetadata(locale: Locale, path: PagePath): Metadata {
   const t = getMessages(locale);
   const languages = Object.fromEntries(
-    LOCALES.map((l) => [l, SITE + localePath(l, path)])
+    LOCALES.map((l) => [HREFLANG[l], SITE + localePath(l, path)])
   ) as Record<string, string>;
   languages['x-default'] = SITE + localePath('en', path);
   const c = copy(locale, path);

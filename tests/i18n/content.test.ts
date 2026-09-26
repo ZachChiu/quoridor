@@ -72,6 +72,30 @@ describe('FAQ 四語一致', () => {
     }
   });
 
+  /*
+    簡中是人工翻譯，最容易漏的是「改了句子、留了幾個繁體字」。
+    這張表收的是這個站的文案實際會用到、而且繁簡字形不同的字 —— 出現任何一個就是漏改。
+  */
+  it('簡中版不該殘留繁體字', () => {
+    const re = /[牆圍計謀個這們對戰連線開關發說話設裝錄較點與從為會時選擇區擋離網頁載註冊鍵結復號碼]/;
+    const texts = [
+      ...FAQ_TEXT['zh-Hans'].flatMap((f) => [f.q, f.a]),
+      ...STEP_TEXT['zh-Hans'].flatMap((st) => [st.title, st.body]),
+      ...Object.values(getMessages('zh-Hans')).flatMap((g) => Object.values(g).flat().map(String)),
+    ];
+    for (const t of texts) expect(re.test(t), `zh-Hans: ${t.slice(0, 30)}  → ${t.match(re)?.[0]}`).toBe(false);
+  });
+
+  it('泰文版不該殘留中文字', () => {
+    const cjk = /[一-鿿]/;
+    const texts = [
+      ...FAQ_TEXT.th.flatMap((f) => [f.q, f.a]),
+      ...STEP_TEXT.th.flatMap((st) => [st.title, st.body]),
+      ...Object.values(getMessages('th')).flatMap((g) => Object.values(g).flat().map(String)),
+    ];
+    for (const t of texts) expect(cjk.test(t), `th: ${t.slice(0, 30)}`).toBe(false);
+  });
+
   it('韓文版不該殘留漢字或假名', () => {
     const han = /[一-鿿぀-ヿ]/;
     for (const f of FAQ_TEXT.ko) {
@@ -116,9 +140,11 @@ describe('站名', () => {
     }
   });
 
-  it('中日韓帶自己的譯名，英文只有 Wall Go', () => {
+  it('中日韓帶自己的譯名，英文與泰文只有 Wall Go', () => {
+    // 泰文查不到在地的遊戲名，照 Netflix 泰國保留英文（見 glossary.md）
     expect(siteName('en')).toBe('Wall Go');
-    for (const l of LOCALES.filter((x) => x !== 'en')) {
+    expect(siteName('th')).toBe('Wall Go');
+    for (const l of LOCALES.filter((x) => x !== 'en' && x !== 'th')) {
       expect(siteName(l).length, l).toBeGreaterThan('Wall Go'.length);
     }
   });
@@ -264,7 +290,7 @@ describe('教學的圖與文字要一一對應', () => {
     }
   });
 
-  it('兩人／三人規則不同的步驟，四語都要標出來', () => {
+  it('兩人／三人規則不同的步驟，每個語系都要標出來', () => {
     // 開局（index 1）與破牆（index 6）在兩人局與三人局不一樣。
     // 混在同一段裡讓讀者自己分辨適用於誰，是這份教學原本的問題。
     const marks: Record<string, [string, string]> = {
@@ -272,6 +298,8 @@ describe('教學的圖與文字要一一對應', () => {
       en: ['2 players:', '3 players:'],
       ja: ['2人：', '3人：'],
       ko: ['2인:', '3인:'],
+      'zh-Hans': ['两人：', '三人：'],
+      th: ['2 คน:', '3 คน:'],
     };
     for (const l of LOCALES) {
       for (const i of [1, 6]) {

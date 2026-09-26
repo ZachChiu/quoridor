@@ -11,7 +11,8 @@ import type { Locale } from '../locales';
  * 相接的寫法在某個語言一定會變成怪句子。
  */
 export type GameText = {
-  players: { A: string; B: string; C: string };
+  /** and：列出多位勝方時的連接詞（「紅方、藍方」vs「Red & Blue」vs「ฝ่ายแดง และ ฝ่ายน้ำเงิน」） */
+  players: { A: string; B: string; C: string; and: string };
   board: {
     label: string; cell: string; piece: string; territory: string; empty: string;
     canMove: string; canPlace: string; wallBelow: string; wallRight: string;
@@ -70,7 +71,7 @@ export const fmt = (s: string, vars: Record<string, string | number>): string =>
 
 export const GAME_TEXT: Record<Locale, GameText> = {
   'zh-TW': {
-    players: { A: '紅方', B: '藍方', C: '綠方' },
+    players: { A: '紅方', B: '藍方', C: '綠方', and: '、' },
     board: {
       label: '棋盤', cell: '第 {row} 列第 {col} 行', piece: '{player}棋子',
       territory: '{player}領地', empty: '空格', canMove: '可移動到這裡', canPlace: '可放置棋子',
@@ -146,7 +147,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
     },
   },
   en: {
-    players: { A: 'Red', B: 'Blue', C: 'Green' },
+    players: { A: 'Red', B: 'Blue', C: 'Green', and: ' & ' },
     board: {
       label: 'Board', cell: 'Row {row}, column {col}', piece: '{player} piece',
       territory: '{player} territory', empty: 'empty', canMove: 'can move here', canPlace: 'can place a piece',
@@ -223,7 +224,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
     },
   },
   ja: {
-    players: { A: '赤', B: '青', C: '緑' },
+    players: { A: '赤', B: '青', C: '緑', and: '・' },
     board: {
       label: '盤面', cell: '{row}行 {col}列', piece: '{player}の駒',
       territory: '{player}の陣地', empty: '空きマス', canMove: 'ここへ動かせる', canPlace: '駒を置ける',
@@ -300,7 +301,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
     },
   },
   ko: {
-    players: { A: '빨강', B: '파랑', C: '초록' },
+    players: { A: '빨강', B: '파랑', C: '초록', and: ', ' },
     board: {
       label: '판', cell: '{row}행 {col}열', piece: '{player} 말',
       territory: '{player} 영역', empty: '빈 칸', canMove: '여기로 이동 가능', canPlace: '말을 놓을 수 있음',
@@ -374,6 +375,169 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       unfinished: '미완료', connecting: '연결 중…', backHome: '홈으로',
       badLink: '이 링크는 어떤 대국도 가리키지 않습니다', gameStart: '게임 시작',
       badLinkBody: '초대 링크가 중간에 잘렸을 수 있습니다. 전체 링크를 다시 받거나, 홈에서 새 방을 만들어 주세요.',
+    },
+  },
+  'zh-Hans': {
+    players: { A: '红方', B: '蓝方', C: '绿方', and: '、' },
+    board: {
+      label: '棋盘', cell: '第 {row} 行第 {col} 列', piece: '{player}棋子',
+      territory: '{player}地盘', empty: '空格', canMove: '可以移动到这里', canPlace: '可以放棋子',
+      wallBelow: '下方有墙', wallRight: '右侧有墙',
+      breakBelow: '拆掉下方的墙', breakRight: '拆掉右侧的墙',
+      buildTop: '在上方筑墙', buildBottom: '在下方筑墙', buildLeft: '在左侧筑墙', buildRight: '在右侧筑墙',
+    },
+    pad: {
+      heading: '筑墙方向', top: '上方', bottom: '下方', left: '左侧', right: '右侧',
+      pick: '选一个方向筑墙', pending: '要在{side}筑墙', choose: '选择{side}', confirm: '确定筑墙',
+      step1: '① 移动', step2: '② 筑墙', stepPlace: '放棋子', remain: '还能走 {n} 格', noMove: '不移动也可以',
+      done: '完成这一步', pickPiece: '选一枚棋子', switchPiece: '换下一枚棋子', redo: '重来这一步',
+      moveUp: '向上移动', moveDown: '向下移动', moveLeft: '向左移动', moveRight: '向右移动',
+      wallUp: '在上方筑墙', wallDown: '在下方筑墙', wallLeft: '在左侧筑墙', wallRight: '在右侧筑墙',
+      hintMove: '先移动棋子（也可以不动）', hintWall: '再选一道墙', hintReady: '按 ✓ 完成这一步',
+      breakWall: '破墙', breakUp: '拆掉上方的墙', breakDown: '拆掉下方的墙', breakLeft: '拆掉左侧的墙', breakRight: '拆掉右侧的墙',
+      breakPick: '选一道要拆掉的墙', breakNone: '这一局的破墙机会已经用掉了', hintWait: '等对手下',
+    },
+    tips: {
+      over: '游戏结束！', overWin: '游戏结束！{names}获胜！', thinking: '{who} 思考中…',
+      placing: '{who} · 放棋子', moving: '{who} · 移动棋子',
+      breakLeft: '还有一次破墙机会', breakNone: '没有破墙机会',
+    },
+    champion: {
+      draw: '平局', win: '{names}获胜',
+      matchOver: '对局结束', winner: '胜方', feedback: '提点意见',
+      seeBoard: '看看棋盘', playAgain: '再来一局', squares: '格', seeResult: '看结果',
+    },
+    contact: {
+      button: '联系我们', heading: '联系我们', kicker: '给开发者的话',
+      ratingLabel: '玩起来感觉如何（选填）', placeholder: '想说什么都行：哪里不对劲、想要什么功能，或者只是打个招呼',
+      note: '会一并发送你的设备信息（浏览器、屏幕尺寸），方便复现问题。',
+      sentBody: '每一条都会看。留了联系方式的话，会回复你。',
+    },
+    feedback: {
+      bad: '很卡', ok: '还行', good: '很好玩', sent: '收到了，谢谢',
+      heading: '这局玩得怎么样？', kicker: '给开发者的话', sending: '发送中…', submit: '发送',
+      ratingLabel: '这局的感觉', placeholder: '比如：三人局有人不能动的时候画面卡住了',
+      contactPlaceholder: '邮箱或任何能找到你的方式', later: '先不了',
+      sentBody: '这局的棋谱也一起发过来了，能看到你当时的盘面，不用再描述一遍。',
+      messageLabel: '哪里不对劲？或者想说什么都行',
+      contactLabel: '想收到回复的话，留个联系方式（选填）',
+      note: '发送时会附上这局的棋谱和设备信息，这样才能复现你遇到的情况。',
+      failed: '发送失败，可能是网络断了。再点一次发送试试。',
+    },
+    share: {
+      shareTitle: '墙壁围棋 Wall Go', shareText: '我开了个房间，点链接直接加入对局！',
+      heading: '邀请朋友加入', kicker: '联机对战', copied: '已复制', copyAria: '复制链接',
+      copy: '复制', waiting: '等待中', body: '把链接发给朋友，对方点开就会直接进入这个房间。',
+      share: '分享链接',
+    },
+    waiting: { kicker: '联机对战', heading: '等朋友进来', invite: '邀请朋友加入' },
+    breakWall: {
+      heading: '要拆掉这道墙吗', kicker: '每人只有一次', cancel: '取消', confirm: '破墙',
+      body: '拆掉后这枚棋子可以继续移动，但你的破墙机会就用完了，这一局不会再有第二次。',
+    },
+    leave: {
+      heading: '要离开这一局吗', kicker: '还没下完', body: '离开之后，这一局不会保留。',
+      bodyOnline: '你离开之后，对手会停在这一局等你。', cancel: '继续下', confirm: '离开',
+    },
+    surrender: {
+      label: '认输', heading: '确定要认输吗', kicker: '认输就算输',
+      cancel: '继续下', confirm: '认输',
+      body: '这一局到此结束，判你输。',
+      bodyThree: '这一局到此结束，判你输。另外两位按目前的地盘决定胜负。',
+    },
+    status: { claimed: '已占领' },
+    play: {
+      noRoom: '对局不存在', roomFull: '房间已满，无法加入', playerName: '玩家 {id}',
+      connectFail: '连不上房间',
+      noRoomBody: '这个房间不存在，可能是链接少了几个字。请对方再发一次完整的链接，或者回首页新开一个房间。',
+      roomFullBody: '这一局的座位都坐满了。回首页新开一个房间，再把链接发给朋友。',
+      connectFailBody: '可能是网络不稳定。刷新再试一次，已经下过的每一步都保存在房间里。',
+      reload: '刷新', home: '返回首页', howToPlay: '玩法说明',
+      unfinished: '未结束', connecting: '正在连接…', backHome: '返回首页',
+      badLink: '这个链接没有指向任何对局', gameStart: '游戏开始',
+      badLinkBody: '邀请链接可能被截断了。请对方再发一次完整的链接，或者回首页新开一个房间。',
+    },
+  },
+  th: {
+    players: { A: 'ฝ่ายแดง', B: 'ฝ่ายน้ำเงิน', C: 'ฝ่ายเขียว', and: ' และ ' },
+    board: {
+      label: 'กระดาน', cell: 'แถว {row} คอลัมน์ {col}', piece: 'หมากของ{player}',
+      territory: 'พื้นที่ของ{player}', empty: 'ช่องว่าง', canMove: 'เดินมาที่นี่ได้', canPlace: 'วางหมากได้',
+      wallBelow: 'มีกำแพงด้านล่าง', wallRight: 'มีกำแพงด้านขวา',
+      breakBelow: 'ทำลายกำแพงด้านล่าง', breakRight: 'ทำลายกำแพงด้านขวา',
+      buildTop: 'สร้างกำแพงด้านบน', buildBottom: 'สร้างกำแพงด้านล่าง',
+      buildLeft: 'สร้างกำแพงด้านซ้าย', buildRight: 'สร้างกำแพงด้านขวา',
+    },
+    pad: {
+      heading: 'ทิศทางกำแพง', top: 'ด้านบน', bottom: 'ด้านล่าง', left: 'ด้านซ้าย', right: 'ด้านขวา',
+      pick: 'เลือกทิศที่จะสร้างกำแพง', pending: 'จะสร้างกำแพง{side}', choose: 'เลือก{side}', confirm: 'ยืนยันการสร้างกำแพง',
+      step1: '① เดิน', step2: '② สร้างกำแพง', stepPlace: 'วางหมาก', remain: 'เดินได้อีก {n} ช่อง', noMove: 'ไม่เดินก็ได้',
+      done: 'จบตานี้', pickPiece: 'เลือกหมาก', switchPiece: 'เปลี่ยนเป็นหมากตัวถัดไป', redo: 'เริ่มตานี้ใหม่',
+      moveUp: 'เดินขึ้น', moveDown: 'เดินลง', moveLeft: 'เดินไปทางซ้าย', moveRight: 'เดินไปทางขวา',
+      wallUp: 'สร้างกำแพงด้านบน', wallDown: 'สร้างกำแพงด้านล่าง', wallLeft: 'สร้างกำแพงด้านซ้าย', wallRight: 'สร้างกำแพงด้านขวา',
+      hintMove: 'เดินหมากก่อน (หรือไม่เดินก็ได้)', hintWall: 'แล้วเลือกกำแพงหนึ่งด้าน', hintReady: 'กด ✓ เพื่อจบตานี้',
+      breakWall: 'ทำลายกำแพง', breakUp: 'ทำลายกำแพงด้านบน', breakDown: 'ทำลายกำแพงด้านล่าง', breakLeft: 'ทำลายกำแพงด้านซ้าย', breakRight: 'ทำลายกำแพงด้านขวา',
+      breakPick: 'เลือกกำแพงที่จะทำลาย', breakNone: 'ใช้สิทธิ์ทำลายกำแพงของเกมนี้ไปแล้ว', hintWait: 'รออีกฝ่ายเดิน',
+    },
+    tips: {
+      over: 'จบเกม!', overWin: 'จบเกม! {names}ชนะ!', thinking: '{who} กำลังคิด…',
+      placing: '{who} · วางหมาก', moving: '{who} · เดินหมาก',
+      breakLeft: 'ยังทำลายกำแพงได้อีก 1 ครั้ง', breakNone: 'ไม่มีสิทธิ์ทำลายกำแพงแล้ว',
+    },
+    champion: {
+      draw: 'เสมอ', win: '{names}ชนะ',
+      matchOver: 'จบเกม', winner: 'ผู้ชนะ', feedback: 'ส่งความเห็น',
+      seeBoard: 'ดูกระดาน', playAgain: 'เล่นอีกรอบ', squares: 'ช่อง', seeResult: 'ดูผล',
+    },
+    contact: {
+      button: 'ติดต่อเรา', heading: 'ติดต่อเรา', kicker: 'ถึงผู้พัฒนา',
+      ratingLabel: 'รู้สึกอย่างไรตอนเล่น (ไม่บังคับ)', placeholder: 'พูดอะไรก็ได้ เช่น ตรงไหนแปลก ๆ อยากได้ฟีเจอร์อะไร หรือแค่ทักทาย',
+      note: 'ข้อมูลอุปกรณ์ของคุณ (เบราว์เซอร์ ขนาดหน้าจอ) จะถูกส่งไปด้วย เพื่อให้เราตรวจสอบปัญหาได้',
+      sentBody: 'เราอ่านทุกข้อความ ถ้าฝากช่องทางติดต่อไว้ เราจะตอบกลับ',
+    },
+    feedback: {
+      bad: 'แย่', ok: 'พอใช้', good: 'สนุกมาก', sent: 'ได้รับแล้ว ขอบคุณ',
+      heading: 'เกมนี้เป็นอย่างไรบ้าง', kicker: 'ถึงผู้พัฒนา', sending: 'กำลังส่ง…', submit: 'ส่ง',
+      ratingLabel: 'ความรู้สึกต่อเกมนี้', placeholder: 'เช่น ในเกม 3 คน หน้าจอค้างตอนที่มีคนเดินไม่ได้',
+      contactPlaceholder: 'อีเมล หรือช่องทางไหนก็ได้ที่ติดต่อคุณได้', later: 'ไว้ก่อน',
+      sentBody: 'บันทึกเกมนี้ถูกส่งมาด้วย เราจึงเห็นกระดานตอนนั้นได้ ไม่ต้องอธิบายซ้ำ',
+      messageLabel: 'ตรงไหนแปลก ๆ หรืออยากบอกอะไรก็ได้',
+      contactLabel: 'ถ้าอยากได้คำตอบ ฝากช่องทางติดต่อไว้ (ไม่บังคับ)',
+      note: 'เมื่อกดส่ง จะแนบบันทึกเกมนี้และข้อมูลอุปกรณ์ไปด้วย เพื่อให้เราตรวจสอบปัญหาที่คุณเจอได้',
+      failed: 'ส่งไม่สำเร็จ อาจเป็นเพราะอินเทอร์เน็ตหลุด ลองกดส่งอีกครั้ง',
+    },
+    share: {
+      shareTitle: 'Wall Go', shareText: 'สร้างห้องไว้แล้ว กดลิงก์เพื่อเข้าร่วมเกมได้เลย!',
+      heading: 'ชวนเพื่อนมาเล่น', kicker: 'เล่นออนไลน์', copied: 'คัดลอกแล้ว', copyAria: 'คัดลอกลิงก์',
+      copy: 'คัดลอก', waiting: 'กำลังรอ', body: 'ส่งลิงก์ให้เพื่อน เพื่อนกดเปิดแล้วจะเข้าห้องนี้ได้ทันที',
+      share: 'แชร์ลิงก์',
+    },
+    waiting: { kicker: 'เล่นออนไลน์', heading: 'รอเพื่อนเข้าห้อง', invite: 'ชวนเพื่อนมาเล่น' },
+    breakWall: {
+      heading: 'จะทำลายกำแพงนี้ไหม', kicker: 'ทำได้คนละครั้งเดียว', cancel: 'ยกเลิก', confirm: 'ทำลายกำแพง',
+      body: 'เมื่อทำลายแล้ว หมากตัวนี้จะเดินต่อได้ แต่สิทธิ์ทำลายกำแพงของคุณจะหมดไป และจะไม่มีครั้งที่สองในเกมนี้',
+    },
+    leave: {
+      heading: 'จะออกจากเกมนี้ไหม', kicker: 'ยังเล่นไม่จบ', body: 'ถ้าออกตอนนี้ เกมนี้จะไม่ถูกเก็บไว้',
+      bodyOnline: 'ถ้าคุณออก อีกฝ่ายจะต้องรออยู่ในเกมนี้', cancel: 'เล่นต่อ', confirm: 'ออก',
+    },
+    surrender: {
+      label: 'ยอมแพ้', heading: 'ยอมแพ้จริงไหม', kicker: 'ยอมแพ้ถือว่าแพ้',
+      cancel: 'เล่นต่อ', confirm: 'ยอมแพ้',
+      body: 'เกมนี้จบลงที่นี่ และคุณเป็นฝ่ายแพ้',
+      bodyThree: 'เกมนี้จบลงที่นี่ และคุณเป็นฝ่ายแพ้ ส่วนอีกสองคนจะตัดสินแพ้ชนะจากพื้นที่ที่มีอยู่ตอนนี้',
+    },
+    status: { claimed: 'พื้นที่' },
+    play: {
+      noRoom: 'ไม่พบเกมนี้', roomFull: 'ห้องเต็มแล้ว เข้าร่วมไม่ได้', playerName: 'ผู้เล่น {id}',
+      connectFail: 'เชื่อมต่อห้องไม่ได้',
+      noRoomBody: 'ไม่มีห้องนี้อยู่ ลิงก์อาจขาดไปบางส่วน ขอลิงก์ฉบับเต็มจากอีกฝ่ายอีกครั้ง หรือกลับหน้าแรกเพื่อสร้างห้องใหม่',
+      roomFullBody: 'ที่นั่งในเกมนี้เต็มแล้ว กลับหน้าแรกเพื่อสร้างห้องใหม่ แล้วส่งลิงก์ให้เพื่อน',
+      connectFailBody: 'อินเทอร์เน็ตอาจไม่เสถียร ลองรีเฟรชอีกครั้ง ทุกตาที่เล่นไปแล้วถูกบันทึกไว้ในห้อง',
+      reload: 'รีเฟรช', home: 'กลับหน้าแรก', howToPlay: 'วิธีเล่น',
+      unfinished: 'ยังไม่จบ', connecting: 'กำลังเชื่อมต่อ…', backHome: 'กลับหน้าแรก',
+      badLink: 'ลิงก์นี้ไม่ได้ชี้ไปยังเกมใด', gameStart: 'เริ่มเกม',
+      badLinkBody: 'ลิงก์เชิญอาจถูกตัด ขอลิงก์ฉบับเต็มจากอีกฝ่ายอีกครั้ง หรือกลับหน้าแรกเพื่อสร้างห้องใหม่',
     },
   },
 };
