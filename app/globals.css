@@ -16,16 +16,55 @@
   fill: var(--tile-icon-fill);
 }
 
-/* 思源黑體繁中，可變字重 400–900。
-   用 Google Fonts 的 text= 參數做子集：只含這個 App 實際用到的 599 個字元，
-   一支 174 KB 的檔涵蓋全部字重。完整的 Noto Sans TC 光一個字重就好幾 MB，
-   而這套視覺的力道有一半來自極粗的中文標題，沒有 900 就不成立。 */
+/* 思源黑體，可變字重 400–900，一支檔涵蓋全部字重。
+   完整的 Noto Sans TC 光一個字重就好幾 MB，而這套視覺的力道有一半來自極粗的
+   中文標題，沒有 900 就不成立。
+
+   子集由 scripts/build-font-subset.mjs 從原始碼推導、在本機用 harfbuzz 切出來
+   （見那支腳本的說明：先前透過 Google Fonts 的 text= 參數，字一多就默默失效，
+   線上的中文字其實一直是系統字型）。
+
+   三份各自只給對應語系用；@font-face 沒被頁面用到就不會下載，
+   所以繁中頁不會多載簡中或泰文。日文、韓文刻意用系統字型（字形才是當地的寫法）。 */
 @font-face {
   font-family: 'Noto Sans TC Subset';
   src: url('/fonts/noto-sans-tc-var.woff2') format('woff2');
   font-weight: 400 900;
   font-style: normal;
   font-display: swap;
+}
+@font-face {
+  font-family: 'Noto Sans SC Subset';
+  src: url('/fonts/noto-sans-sc-var.woff2') format('woff2');
+  font-weight: 400 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Noto Sans Thai Subset';
+  src: url('/fonts/noto-sans-thai-var.woff2') format('woff2');
+  font-weight: 400 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* 依 <html lang> 換字型（lang 由 Shell 依語系給，見 i18n/locales 的 HTML_LANG）。 */
+:root:lang(zh-Hans) {
+  --font-app: 'Noto Sans SC Subset', system-ui, -apple-system, 'PingFang SC',
+    'Microsoft YaHei', sans-serif;
+}
+/* 泰文字型裡沒有的符號（✓ · …）與英數，由繁中子集補上 */
+:root:lang(th) {
+  --font-app: 'Noto Sans Thai Subset', 'Noto Sans TC Subset', system-ui, -apple-system,
+    'Thonburi', 'Leelawadee UI', sans-serif;
+}
+:root:lang(ja) {
+  --font-app: system-ui, -apple-system, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN',
+    'Noto Sans JP', 'Yu Gothic', 'Meiryo', sans-serif;
+}
+:root:lang(ko) {
+  --font-app: system-ui, -apple-system, 'Apple SD Gothic Neo', 'Noto Sans KR',
+    'Malgun Gothic', sans-serif;
 }
 
 
