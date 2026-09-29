@@ -3,9 +3,14 @@ import path from "node:path";
 import { withSentryConfig } from "@sentry/nextjs/config";
 import type { NextConfig } from "next";
 
-// Sentry 的 release 識別碼＝打版的版號（npm run release 會把它寫進 package.json，
-// 並開一個同名的 git tag）。用版號而不是 commit SHA，Sentry 的 Releases 頁才會是
-// v26.9.1 這種看得懂的名字，跟 git tag 對得起來。
+// Sentry 的 release 識別碼＝專案名＋打版的版號，例如 quoridor@v26.9.13
+// （版號由 npm run release 寫進 package.json，並開一個 v26.9.13 的 git tag）。
+// 用版號而不是 commit SHA，Sentry 的 Releases 頁才是看得懂的名字。
+//
+// **一定要帶專案名**：Sentry 的 release 是整個組織共用的，不分專案。同一個組織裡的
+// corn-stock 也用 vYY.M.N 打版，兩邊的 v26.9.5～v26.9.13 撞名，被併成同一個
+// release，commit 與部署紀錄互相覆蓋、suspect commit 會指到另一個專案。
+// `專案名@版號` 是 Sentry 建議的格式：@ 前面顯示成 Package、後面是 Version。
 //
 // **source map 的比對不靠這個名字**：上傳時每個檔案都帶 debug id，Sentry 是用
 // debug id 配對的，所以同一個版號部署好幾次也不會對錯堆疊。release 真正影響的是
@@ -18,7 +23,7 @@ import type { NextConfig } from "next";
 const pkg = JSON.parse(
   readFileSync(path.join(process.cwd(), "package.json"), "utf8")
 ) as { version: string };
-const release = process.env.SENTRY_RELEASE || `v${pkg.version}`;
+const release = process.env.SENTRY_RELEASE || `quoridor@v${pkg.version}`;
 
 const nextConfig: NextConfig = {
   output: "export",
@@ -28,6 +33,9 @@ const nextConfig: NextConfig = {
     // release 要同時給建置期（上傳 source map）與 runtime（事件帶上同一個值）。
     // 定義在這裡，CI 就不必再重複設一次 —— 少一個會對不上的地方。
     NEXT_PUBLIC_SENTRY_RELEASE: release,
+    // 規則頁底下顯示給人看的版號，跟 git tag 同一個寫法。
+    // 不直接吃 Sentry 那顆：那個帶專案名，而且哪天拿掉 Sentry，版號不該跟著消失。
+    NEXT_PUBLIC_APP_VERSION: `v${pkg.version}`,
   },
 };
 
