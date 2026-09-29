@@ -280,7 +280,7 @@ GA 由 `app/shell.tsx` 的 `<GoogleAnalytics>` 載入（只有 `NEXT_PUBLIC_APP_
 
 - `instrumentation-client.ts` — 唯一會執行的 Sentry 設定。靜態匯出沒有 server / edge runtime，故 `sentry.server.config.ts`、`sentry.edge.config.ts`、`instrumentation.ts` 皆已移除
 - SDK 以動態 import 延後到瀏覽器閒置後才載入；載入前由原生 error / unhandledrejection 監聽器暫存錯誤，就緒後補送
-- **release ＝ `package.json` 的版號**（由 `npm run release` 維護）。`next.config.ts` 讀出來後透過 `env.NEXT_PUBLIC_SENTRY_RELEASE` **同時**餵給建置期（上傳 source map）與 runtime（事件帶上同一個值）—— 只有一個來源，就不會有「兩邊對不上」這種問題。CI 因此不需要也不應該再設 `SENTRY_RELEASE`（設了會覆蓋，僅供臨時除錯）
+- **release ＝ `quoridor@` ＋ `package.json` 的版號**（例如 `quoridor@v26.9.13`；版號由 `npm run release` 維護）。**前綴不能拿掉**：Sentry 的 release 是整個組織共用的，同組織的 corn-stock 也用 `vYY.M.N`，沒前綴時 v26.9.5～v26.9.13 兩邊撞成同一個 release、commit 互相覆蓋。規則頁顯示的版號另走 `NEXT_PUBLIC_APP_VERSION`（`v26.9.13`）。`next.config.ts` 讀出來後透過 `env.NEXT_PUBLIC_SENTRY_RELEASE` **同時**餵給建置期（上傳 source map）與 runtime（事件帶上同一個值）—— 只有一個來源，就不會有「兩邊對不上」這種問題。CI 因此不需要也不應該再設 `SENTRY_RELEASE`（設了會覆蓋，僅供臨時除錯）
 - **source map 的比對不靠 release 名稱**：上傳時每個檔案都帶 debug id，Sentry 用 debug id 配對，所以同一個版號部署好幾次也不會對錯堆疊。release 真正影響的是 **crash-free** —— Release Health 是「按 release 統計 session」，沒有 release 就算不出來
 - `finalize: true` 補上 `dateReleased`（Releases 頁才不會一直顯示「(unreleased)」）；`setCommits: { auto: true, ignoreMissing: true, ignoreEmpty: true }` 關聯 git commit，Sentry 才指得出 suspect commits。**兩個 ignore 旗標是必要的** —— 第一次打版（找不到上一個 release 的 commit）與同一個 commit 重複 build（沒有新 commit）都會讓 setCommits 失敗，進而讓 build 失敗。CI 的 checkout 也必須 `fetch-depth: 0`，淺層 clone 沒有歷史可關聯
 - **`SENTRY_ORG` 必須跟 auth token 綁定的組織一致**：`sntrys_` token 把組織寫死在自己裡面，CLI 會拿它覆蓋設定值，不一致就是 `error: Project not found`

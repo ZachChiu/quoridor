@@ -155,7 +155,7 @@ export default function RulesView({ locale }: { locale: Locale }) {
         {/* 版本號跟 Sentry 的 release 同一個來源（package.json，由 npm run release 維護，
             next.config 注入）—— 使用者回報問題時說得出是哪一版，對得上錯誤紀錄。 */}
         <p className="mt-2 text-center text-[11px] tabular-nums text-ink-soft">
-          {t.rules.version} {process.env.NEXT_PUBLIC_SENTRY_RELEASE}
+          {t.rules.version} {process.env.NEXT_PUBLIC_APP_VERSION}
         </p>
 
         <script {...ldScript(pageGraph(locale, 'rules'))} />
