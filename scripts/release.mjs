@@ -142,6 +142,6 @@ if (noPush) {
   // wrap 動到了 main 已推出的部分 → 要 force。用 --force-with-lease 而不是 --force：
   // 遠端在這期間被別人動過就會擋下來，不會無聲蓋掉
   run(wrap ? `git push --force-with-lease --follow-tags` : `git push --follow-tags`);
-  console.log(`\n  ✓ ${tag} 已推出（GitHub Actions 會建置並同步到 S3，Sentry 的 release 就叫 ${tag}）`);
+  console.log(`\n  ✓ ${tag} 已推出（GitHub Actions 會建置並同步到 S3，Sentry 的 release 是 quoridor@${tag}）`);
   console.log(`    分支 ${source} 已經併進 ${MAIN}，不需要了就 git branch -d ${source}\n`);
 }

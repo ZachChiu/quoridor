@@ -23,7 +23,16 @@ import type { NextConfig } from "next";
 const pkg = JSON.parse(
   readFileSync(path.join(process.cwd(), "package.json"), "utf8")
 ) as { version: string };
-const release = process.env.SENTRY_RELEASE || `quoridor@v${pkg.version}`;
+//
+// 只有 main 的部署用版號。dev 分支（部署到開發用的 bucket）用 commit SHA：
+// 它跑的是還沒打版的程式，掛在正式版號底下會把兩邊的錯誤與 crash-free 混在一起。
+// 跟公司專案的 staging 同一個做法（Releases 頁顯示 961c2de3 | staging）。
+const onCi = !!process.env.GITHUB_ACTIONS;
+const onMain = process.env.GITHUB_REF === 'refs/heads/main';
+const release = process.env.SENTRY_RELEASE
+  || (onCi && !onMain && process.env.GITHUB_SHA
+    ? `quoridor@${process.env.GITHUB_SHA.slice(0, 8)}`
+    : `quoridor@v${pkg.version}`);
 
 const nextConfig: NextConfig = {
   output: "export",
@@ -94,6 +103,18 @@ export default withSentryConfig(nextConfig, {
     // 進而讓整個 build 失敗。
     // 另外 CI 的 checkout 要 fetch-depth: 0，淺層 clone 沒有歷史可關聯。
     setCommits: { auto: true, ignoreMissing: true, ignoreEmpty: true },
+    // deploy：記一筆部署，Releases 頁的卡片才會寫「| production」或「| development」。
+    // 環境名必須跟事件的 environment（NEXT_PUBLIC_SENTRY_ENVIRONMENT，deploy.yml 依分支設）
+    // 同一個字，Releases 與 Issues 的環境篩選才對得起來。
+    // 只在 CI 記：本機 `CI=1 npm run build` 驗 source map 時不該多一筆假的部署。
+    // 記在 build 時（S3 sync 之前）：sync 失敗時這筆會是假的，但 sync 幾乎不會失敗，
+    // 而拆成 build 之後另一步要多一套 sentry-cli 的設定。
+    deploy: onCi
+      ? {
+          env: process.env.NEXT_PUBLIC_SENTRY_ENVIRONMENT ?? 'development',
+          url: onMain ? process.env.SITE_URL || 'https://quoridorgame.com' : undefined,
+        }
+      : undefined,
   },
 
   sourcemaps: {
