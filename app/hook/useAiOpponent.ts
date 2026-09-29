@@ -24,7 +24,12 @@ import type { AiMove, AiRequest, AiResponse } from '@/workers/ai.worker';
  * 困難難度本來每手就要一秒多，這個下限對它幾乎不會生效。
  */
 const MIN_THINK_MS = 550;
-export function useAiOpponent(onMove: (move: AiMove) => void) {
+/**
+ * `enabled`：只有單人對戰才建立 Worker。本機雙人與連線對戰沒有 AI，
+ * 先前卻一律在掛載時建立 —— 每一局都多下載、多啟動一份 AI 程式
+ * （Sentry QUORIDOR-D 就是在連線頁上建 AI Worker 時出錯才發現的）。
+ */
+export function useAiOpponent(onMove: (move: AiMove) => void, enabled: boolean) {
   const workerRef = useRef<Worker | null>(null);
   const latestIdRef = useRef(0);
   const onMoveRef = useRef(onMove);
@@ -44,6 +49,7 @@ export function useAiOpponent(onMove: (move: AiMove) => void) {
   }, [onMove]);
 
   useEffect(() => {
+    if (!enabled) return;
     const worker = new Worker(new URL('../workers/ai.worker.ts', import.meta.url));
     workerRef.current = worker;
 
@@ -93,7 +99,7 @@ export function useAiOpponent(onMove: (move: AiMove) => void) {
       worker.terminate();
       workerRef.current = null;
     };
-  }, []);
+  }, [enabled]);
 
   /** 請 AI 思考。呼叫此函式會讓先前尚未回覆的請求失效。 */
   const think = useCallback(

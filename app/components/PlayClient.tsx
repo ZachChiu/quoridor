@@ -483,7 +483,8 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
       } else {
         dispatch({ type: 'aiTurn', turn: move.turn });
       }
-    }, [])
+    }, []),
+    !!aiDifficulty,
   );
 
   const wgf = useMemo(() => toWgf(state), [state]);
