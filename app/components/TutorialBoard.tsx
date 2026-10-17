@@ -91,12 +91,12 @@ export default function TutorialBoard({
       style={{
         '--tb-wall': '7px',
         '--tb-frame-r': '0.85rem',
-        '--board-gap': '3px',
+        '--board-gap': '2px',
       } as React.CSSProperties}
       aria-hidden="true"
     >
     <div
-      className="grid size-full gap-[var(--board-gap)] overflow-hidden rounded-[calc(var(--tb-frame-r)-var(--tb-wall))] bg-board-line"
+      className="grid size-full gap-[var(--board-gap)] overflow-hidden rounded-[calc(var(--tb-frame-r)-var(--tb-wall))] bg-board-grid"
       style={{ gridTemplateColumns: `repeat(${size}, minmax(0, 1fr))` } as React.CSSProperties}
     >
       {Array.from({ length: size }, (_, r) =>
