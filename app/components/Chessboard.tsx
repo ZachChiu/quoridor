@@ -450,7 +450,7 @@ export default React.memo(function Chessboard({
           role="grid"
           aria-label={g.board.label}
           onKeyDown={onGridKeyDown}
-          className="grid size-full gap-[var(--board-gap)] overflow-hidden rounded-[calc(var(--board-frame-r)-var(--board-wall))] bg-board-line"
+          className="grid size-full gap-[var(--board-gap)] overflow-hidden rounded-[calc(var(--board-frame-r)-var(--board-wall))] bg-board-grid"
           style={
             {
               gridTemplateColumns: `repeat(${size}, minmax(0, 1fr))`,
@@ -648,7 +648,7 @@ export default React.memo(function Chessboard({
 
                   {/*
                     牆。
-                    格縫是 4px 的深墨線，牆原本也是 4px 且畫在同一個位置 ——
+                    格縫當時是 4px 的深墨線（現在是 2px 淺灰，見 globals.css 的 --board-grid），牆原本也是 4px 且畫在同一個位置 ——
                     一道牆和一條空格線的差別只有顏色，盤面一複雜就難掃視。
                     改成 9px、兩端圓角、並向左右各突出 3px：牆因此比格線厚、
                     也蓋過交叉點，讀起來是「放上去的東西」而不是「被上色的格線」。
