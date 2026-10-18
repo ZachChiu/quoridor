@@ -37,6 +37,8 @@ export const TONES = {
   replay: { bg: C.ink,    fg: C.cream, pill: C.cream,  pillFg: C.ink },
   // 平台首頁：深色外殼＋紅色膠囊（平台名）
   platform: { bg: C.ink, fg: C.cream, pill: C.brandRed, pillFg: '#ffffff' },
+  // Bagh Chal：陶橘（老虎）＋深墨（羊）
+  'bagh-chal': { bg: C.orange, fg: C.ink, pill: C.ink, pillFg: C.orange },
 };
 
 // 格線細、牆粗 —— 兩者同粗的話牆會被讀成格線，盤面就只剩一張網格
@@ -123,7 +125,10 @@ export function fitTitleSize(lines, max = 92, min = 56, room = 500) {
  * `titleImages`（選填）：與 copy.title 一一對應的去背圖片。有給的那一行畫圖、不畫字 ——
  * 泰文的疊字 satori 排不對，改由 Chrome 畫好送進來（見 scripts/lib/chrome-text.mjs）。
  */
-export function poster({ tone, copy, titleImages }) {
+/**
+ * `art`（選填）：右邊放這張圖（data URI），取代 Wall Go 的棋盤 —— 其他遊戲的分享圖用自己的主視覺。
+ */
+export function poster({ tone, copy, titleImages, art }) {
   const t = TONES[tone];
   return div({
     width: 1200, height: 630, background: t.bg, color: t.fg,
@@ -156,6 +161,6 @@ export function poster({ tone, copy, titleImages }) {
       }),
       div({ fontSize: 26, fontWeight: 900, opacity: 0.55 }, 'quoridorgame.com'),
     ]),
-    board(),
+    art ? { type: 'img', props: { src: art, width: 408, height: 408, style: { borderRadius: 24 } } } : board(),
   ]);
 }

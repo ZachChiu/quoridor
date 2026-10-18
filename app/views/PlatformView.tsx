@@ -6,7 +6,7 @@ import PlatformLanguageMenu from '@/components/platform/PlatformLanguageMenu';
 import PlatformContact from '@/components/platform/PlatformContact';
 import { BRAND } from '@/brand';
 import { SEASONS, gameName, type CatalogGame } from '@/games/catalog';
-import { getMessages, siteName } from '@/i18n';
+import { getMessages } from '@/i18n';
 import { localePath, type Locale } from '@/i18n/locales';
 import { wallGo } from '@/i18n/routes';
 import { pageGraph, ldScript } from '@/i18n/jsonld';
@@ -90,7 +90,7 @@ export default function PlatformView({ locale }: { locale: Locale }) {
               <ul className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-2">
                 {season.games.map((game) => (
                   <li key={game.name} className="shrink-0">
-                    <GameCard game={game} locale={locale} playable={p.playable} guide={p.guide} wallGoName={siteName(locale)} />
+                    <GameCard game={game} locale={locale} playable={p.playable} guide={p.guide} />
                   </li>
                 ))}
               </ul>
@@ -116,19 +116,21 @@ const WALL_GO_BLUE = 'rgb(var(--tile-blue))';
 /** 進規則頁的轉場顏色：規則頁頂部與 Wall Go 首頁「遊戲規則」磁磚的森綠 */
 const RULES_GREEN = 'rgb(var(--tile-forest))';
 
-function GameCard({ game, locale, playable, guide, wallGoName }: {
-  game: CatalogGame; locale: Locale; playable: string; guide: string; wallGoName: string;
+function GameCard({ game, locale, playable, guide }: {
+  game: CatalogGame; locale: Locale; playable: string; guide: string;
 }) {
   const name = gameName(game, locale);
 
-  if (game.playable) {
+  if (game.playable && game.look) {
+    // 能玩的遊戲用自己的識別（主色＋主視覺），點進去擴散自己的顏色
+    const { card, wipe, art } = game.look;
     return (
-      <WipeLink href={localePath(locale, game.playable)} color={WALL_GO_BLUE} aria-label={wallGoName} className={`${CARD} bg-tile-blue text-tile-cream`}>
+      <WipeLink href={localePath(locale, game.playable)} color={wipe} aria-label={name} className={`${CARD} ${card}`}>
         {/* eslint-disable-next-line @next/next/no-img-element -- 同上 */}
-        <img src="/games/wall-go/key-art.svg" alt="" className="pointer-events-none absolute right-[-70px] top-[-50px] w-[230px] rotate-[-14deg]" />
+        <img src={art} alt="" className="pointer-events-none absolute right-[-70px] top-[-50px] w-[230px] rotate-[-14deg]" />
         <span className="absolute left-3 top-3 rounded-md bg-brand-red px-2 py-0.5 text-xs font-black text-white">▶ {playable}</span>
-        {/* 名字壓在棋盤圖上會看不清楚，墊一塊藍底 */}
-        <span className="absolute bottom-2 left-2 rounded-md bg-tile-blue px-1.5 py-1 text-[22px] font-black leading-none">{name}</span>
+        {/* 名字壓在主視覺上會看不清楚，墊一塊卡片同色的底 */}
+        <span className={`absolute bottom-2 left-2 rounded-md px-1.5 py-1 text-[22px] font-black leading-none ${card}`}>{name}</span>
       </WipeLink>
     );
   }

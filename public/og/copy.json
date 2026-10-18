@@ -44,6 +44,14 @@
       "title": [
         "棋譜回放"
       ]
+    },
+    "bagh-chal": {
+      "kicker": "魔鬼的計謀：死亡密室",
+      "title": [
+        "Bagh Chal",
+        "虎羊棋"
+      ],
+      "titleSize": 92
     }
   },
   "en": {
@@ -90,6 +98,14 @@
       "title": [
         "Replay"
       ]
+    },
+    "bagh-chal": {
+      "kicker": "The Devil's Plan: Death Room",
+      "title": [
+        "Bagh Chal",
+        "Tigers and Goats"
+      ],
+      "titleSize": 56
     }
   },
   "ja": {
@@ -137,6 +153,14 @@
       "title": [
         "棋譜再生"
       ]
+    },
+    "bagh-chal": {
+      "kicker": "悪魔の計略 ～デビルズ・プラン～",
+      "title": [
+        "Bagh Chal",
+        "トラとヤギ"
+      ],
+      "titleSize": 92
     }
   },
   "ko": {
@@ -184,6 +208,14 @@
       "title": [
         "기보 다시보기"
       ]
+    },
+    "bagh-chal": {
+      "kicker": "데블스 플랜: 데스룸",
+      "title": [
+        "Bagh Chal",
+        "바그찰"
+      ],
+      "titleSize": 92
     }
   },
   "zh-Hans": {
@@ -231,6 +263,14 @@
       "title": [
         "棋谱回放"
       ]
+    },
+    "bagh-chal": {
+      "kicker": "魔鬼的计谋：死亡密室",
+      "title": [
+        "Bagh Chal",
+        "虎羊棋"
+      ],
+      "titleSize": 92
     }
   },
   "th": {
@@ -277,6 +317,14 @@
       "title": [
         "ดูย้อนหลัง"
       ]
+    },
+    "bagh-chal": {
+      "kicker": "The Devil's Plan: Death Room",
+      "title": [
+        "Bagh Chal",
+        "เสือกับแพะ"
+      ],
+      "titleSize": 86
     }
   }
 }

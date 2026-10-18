@@ -5,14 +5,24 @@
  * 各語系的譯名還沒查證，**不要自己翻**（韓文「벽바둑」那次的教訓）——
  * 查證後加進 app/i18n/glossary.md，再在這裡補 names。
  *
- * playable：已經做成線上版的遊戲，值是站內路徑。
+ * playable：已經做成線上版的遊戲，值是站內路徑；look 是它在平台上的卡片長相（各遊戲自己的識別）。
  */
+export type GameLook = {
+  /** 卡片底色與文字色（Tailwind class） */
+  card: string;
+  /** 從平台點進去時轉場擴散的顏色 */
+  wipe: string;
+  /** 主視覺（public/ 底下的 SVG） */
+  art: string;
+};
+
 export type CatalogGame = {
   /** 英文官方名稱 */
   name: string;
   /** 各語系查證過的名字；沒有就顯示英文 */
   names?: Partial<Record<string, string>>;
   playable?: string;
+  look?: GameLook;
 };
 
 export type Season = {
@@ -26,7 +36,11 @@ export const SEASONS: Season[] = [
   {
     id: 's2',
     games: [
-      { name: 'Wall Go', names: { 'zh-TW': '牆壁圍棋', 'zh-Hans': '墙壁围棋', ja: '壁囲碁', ko: '벽바둑' }, playable: '/wall-go' },
+      { name: 'Wall Go', names: { 'zh-TW': '牆壁圍棋', 'zh-Hans': '墙壁围棋', ja: '壁囲碁', ko: '벽바둑' }, playable: '/wall-go',
+        look: { card: 'bg-tile-blue text-tile-cream', wipe: 'rgb(var(--tile-blue))', art: '/games/wall-go/key-art.svg' } },
+      // 中文「虎羊棋」是描述性副名、韓文「바그찰」是節目 RULE 卡上的寫法（見 glossary）
+      { name: 'Bagh Chal', names: { 'zh-TW': '虎羊棋', 'zh-Hans': '虎羊棋', ko: '바그찰' }, playable: '/bagh-chal',
+        look: { card: 'bg-tile-orange text-tile-ink', wipe: 'rgb(var(--tile-orange))', art: '/games/bagh-chal/key-art.svg' } },
       { name: 'Crooked Cops' },
       { name: 'Remove One' },
       { name: 'Unknown' },
@@ -39,7 +53,6 @@ export const SEASONS: Season[] = [
       { name: 'Doubt and Bet' },
       { name: 'Equation Pyramid' },
       { name: 'Big Small' },
-      { name: 'Bagh Chal' },
       { name: 'Question and Truth' },
       { name: "Knight's Tour" },
     ],

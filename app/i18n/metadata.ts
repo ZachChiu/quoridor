@@ -16,6 +16,7 @@ const PAGE_KEY = {
   '/': 'platform',
   '/wall-go': 'home', '/wall-go/rules': 'rules', '/wall-go/solo': 'solo',
   '/wall-go/local': 'local', '/wall-go/online': 'online', '/wall-go/replay': 'replay',
+  '/bagh-chal': 'bagh-chal',
 } as const;
 export type PagePath = keyof typeof PAGE_KEY;
 
@@ -64,6 +65,8 @@ function copy(locale: Locale, path: PagePath) {
   switch (path) {
     case '/':
       return { title: undefined, description: t.platform.metaDescription, ogTitle: t.platform.ogTitle, ogDescription: t.platform.ogDescription };
+    case '/bagh-chal':
+      return { title: t.baghChal.metaTitle, description: t.baghChal.metaDescription, ogTitle: t.baghChal.ogTitle, ogDescription: t.baghChal.ogDescription };
     case '/wall-go/rules':
       return { title: t.rules.metaTitle, description: t.rules.metaDescription, ogTitle: t.rules.ogTitle, ogDescription: t.rules.ogDescription };
     case '/wall-go/solo':
@@ -128,6 +131,8 @@ export function localeMetadata(locale: Locale, path: PagePath): Metadata {
     // 平台首頁是「節目遊戲整理｜平台名」，Wall Go 首頁維持原本的標題
     ...(path === '/' ? { title: { absolute: `${t.platform.metaTitle} | ${BRAND}` } } : {}),
     ...(path === '/wall-go' ? { title: { absolute: t.meta.titleDefault } } : {}),
+    // 其他遊戲不套 Wall Go 的標題格式（「… | 牆壁圍棋 Wall Go」），接平台名
+    ...(path === '/bagh-chal' ? { title: { absolute: `${t.baghChal.metaTitle} | ${BRAND}` } } : {}),
     ...(locale === DEFAULT_LOCALE ? {} : {}),
   };
 }

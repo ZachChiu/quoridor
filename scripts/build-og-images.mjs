@@ -29,9 +29,13 @@ const CHECK = process.argv.includes('--check');
 /** 語系 → 字型家族。TC 自己就帶拉丁字母，所以 en 跟著用同一套，字形才一致。 */
 const FAMILY = { 'zh-TW': 'Noto+Sans+TC', en: 'Noto+Sans+TC', ja: 'Noto+Sans+JP', ko: 'Noto+Sans+KR', 'zh-Hans': 'Noto+Sans+SC', th: 'Noto+Sans+Thai' };
 const LOCALES = ['zh-TW', 'en', 'ja', 'ko', 'zh-Hans', 'th'];
-const PAGES = ['platform', 'home', 'rules', 'local', 'online', 'solo', 'replay'];
+const PAGES = ['platform', 'home', 'rules', 'local', 'online', 'solo', 'replay', 'bagh-chal'];
 
 const { BRAND } = await import('../app/brand.ts');
+/** 右邊放各遊戲自己的主視覺（沒有的頁面畫 Wall Go 的棋盤） */
+const ART = {
+  'bagh-chal': 'data:image/svg+xml;base64,' + readFileSync('public/games/bagh-chal/key-art.svg').toString('base64'),
+};
 const messages = Object.fromEntries(await Promise.all(
   LOCALES.map(async (l) => [l, (await import(`../app/i18n/messages/${l}.ts`)).default])
 ));
@@ -43,6 +47,8 @@ function copyFor(locale, page) {
   const site = [t.home.titleLine1, t.home.titleLine2].filter(Boolean).join(' ');
   // 平台首頁：膠囊放平台名，標題逐行指定（metaTitle 太長；自動斷行會把節目名拆開）
   if (page === 'platform') return { kicker: BRAND, title: t.platform.ogLines, titleSize: fitTitleSize(t.platform.ogLines) };
+  // Bagh Chal：膠囊放出自哪一季的節目名，標題是遊戲名＋副名
+  if (page === 'bagh-chal') { const lines = [t.baghChal.title, t.baghChal.subtitle]; return { kicker: t.meta.showName, title: lines, titleSize: fitTitleSize(lines) }; }
   const title = page === 'home'
     ? [t.home.titleLine1, t.home.titleLine2].filter(Boolean)
     : [t[page].metaTitle];
@@ -128,7 +134,7 @@ for (const locale of LOCALES) {
       }
     }
     const png = Buffer.from(await new ImageResponse(
-      poster({ tone: page, copy, titleImages }),
+      poster({ tone: page, copy, titleImages, art: ART[page] }),
       { width: 1200, height: 630, fonts }
     ).arrayBuffer());
     const file = join(OUT, `${page}-${locale}.png`);
