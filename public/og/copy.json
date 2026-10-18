@@ -126,7 +126,7 @@
     "rules": {
       "kicker": "벽바둑 Wall Go",
       "title": [
-        "게임 규칙"
+        "벽바둑 규칙과 하는 법"
       ]
     },
     "local": {
@@ -144,7 +144,7 @@
     "solo": {
       "kicker": "벽바둑 Wall Go",
       "title": [
-        "혼자 하기"
+        "벽바둑 혼자 하기"
       ]
     },
     "replay": {
