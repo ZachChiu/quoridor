@@ -2,15 +2,20 @@ import type { Metadata } from 'next';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { getMessages, siteName } from './index';
+import { getMessages } from './index';
+import { BRAND } from '@/brand';
 import { LOCALES, DEFAULT_LOCALE, HREFLANG, OG_LOCALE, localePath, type Locale } from './locales';
 
 const SITE = process.env.SITE_URL || 'https://quoridorgame.com';
 
-/** 網址 → 分享圖的頁面代號。多一頁要記得同時加進 scripts/build-og-images.mjs 的 PAGES。 */
+/**
+ * 網址 → 分享圖的頁面代號。多一頁要記得同時加進 scripts/build-og-images.mjs 的 PAGES。
+ * `/` 是平台首頁（platform）；Wall Go 首頁搬到 `/wall-go` 後沿用代號 home，分享圖檔名不必改。
+ */
 const PAGE_KEY = {
-  '/': 'home', '/rules': 'rules', '/solo': 'solo',
-  '/local': 'local', '/online': 'online', '/replay': 'replay',
+  '/': 'platform',
+  '/wall-go': 'home', '/wall-go/rules': 'rules', '/wall-go/solo': 'solo',
+  '/wall-go/local': 'local', '/wall-go/online': 'online', '/wall-go/replay': 'replay',
 } as const;
 export type PagePath = keyof typeof PAGE_KEY;
 
@@ -57,15 +62,17 @@ function shareImage(locale: Locale, path: PagePath) {
 function copy(locale: Locale, path: PagePath) {
   const t = getMessages(locale);
   switch (path) {
-    case '/rules':
+    case '/':
+      return { title: undefined, description: t.platform.metaDescription, ogTitle: t.platform.ogTitle, ogDescription: t.platform.ogDescription };
+    case '/wall-go/rules':
       return { title: t.rules.metaTitle, description: t.rules.metaDescription, ogTitle: t.rules.ogTitle, ogDescription: t.rules.ogDescription };
-    case '/solo':
+    case '/wall-go/solo':
       return { title: t.solo.metaTitle, description: t.solo.metaDescription, ogTitle: t.solo.ogTitle, ogDescription: t.solo.ogDescription };
-    case '/replay':
+    case '/wall-go/replay':
       return { title: t.replay.metaTitle, description: t.replay.metaDescription, ogTitle: t.replay.metaTitle, ogDescription: t.replay.metaDescription };
-    case '/local':
+    case '/wall-go/local':
       return { title: t.local.metaTitle, description: t.meta.description, ogTitle: t.local.metaTitle, ogDescription: t.meta.ogDescription };
-    case '/online':
+    case '/wall-go/online':
       return { title: t.online.metaTitle, description: t.meta.description, ogTitle: t.online.metaTitle, ogDescription: t.meta.ogDescription };
     default:
       return { title: undefined, description: t.meta.description, ogTitle: t.meta.ogTitle, ogDescription: t.meta.ogDescription };
@@ -82,7 +89,7 @@ function openGraph(locale: Locale, path: PagePath) {
       url: SITE + localePath(locale, path),
       title: c.ogTitle,
       description: c.ogDescription,
-      siteName: siteName(locale),
+      siteName: BRAND,
       images: img.og,
     },
     twitter: {
@@ -117,8 +124,10 @@ export function localeMetadata(locale: Locale, path: PagePath): Metadata {
     description: c.description,
     alternates: { canonical: SITE + localePath(locale, path), languages },
     ...openGraph(locale, path),
-    // 首頁在各語系用自己的完整標題，不套 template
-    ...(path === '/' ? { title: { absolute: t.meta.titleDefault } } : {}),
+    // 首頁在各語系用自己的完整標題，不套 template：
+    // 平台首頁是「節目遊戲整理｜平台名」，Wall Go 首頁維持原本的標題
+    ...(path === '/' ? { title: { absolute: `${t.platform.metaTitle} | ${BRAND}` } } : {}),
+    ...(path === '/wall-go' ? { title: { absolute: t.meta.titleDefault } } : {}),
     ...(locale === DEFAULT_LOCALE ? {} : {}),
   };
 }

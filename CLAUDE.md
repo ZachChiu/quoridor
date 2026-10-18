@@ -35,19 +35,23 @@ zh-TW 不加前綴（`app/(default)/`），en / ja / ko / zh-Hans / th 加前綴
 新增語系：`locales.ts` 加一行，`messages/` 一份，`content/` 三份檔各一個區塊，術語先寫進 `glossary.md`，再跑 `font:subset` 與 `og:build`。
 兩邊的 page 都是薄殼，畫面實作在 `app/views/`。
 
+**2026-10 平台化**：`/` 是《魔鬼的計謀》遊戲平台的首頁，Wall Go 全部搬進 `/wall-go/`（一款遊戲一個資料夾）。
+路徑集中在 `app/i18n/routes.ts`（`wallGo('/rules')`），**不要在元件裡寫死路徑字串**。平台名是 `app/brand.ts` 的 `BRAND`，**還沒定案，佔位字不能上線**。
+
 | 路由 | 說明 |
 |---|---|
-| `/` | 首頁（`HomeView` → `HomeClient`）— 選模式、建立連線房間 |
-| `/rules` | 規則頁，SEO 主力落地頁 |
-| `/solo#easy\|normal\|hard` | 單人對戰。難度放 hash，由 `SoloClient` 以 prop 交給 `PlayClient` |
-| `/local`、`/local/3` | 本機對戰，人數走路由（建置時就定了）。noindex |
-| `/online#roomId=…` | 連線對戰（`OnlineClient` → `PlayClient`，帶 `roomId`）。roomId 放 hash 而非 query。noindex |
-| `/online#new=2\|3` | 首頁連線磁磚的目的地：連線頁自己開房，開好後 `replaceState` 換成 `#roomId=…` |
-| `/match#roomId=…` | 舊網址，只做 client 端轉址到 `/online`（保留 hash）。只有 zh-TW 有 |
-| `/replay#wgf=…` | 棋譜回放。**開發者工具，不是給玩家的功能** —— 見下 |
+| `/` | 平台首頁（`PlatformView`）— Netflix 式深色外殼＋紅（`--brand-red`），推薦作品大區塊＋依季橫向捲動的遊戲卡；遊戲清單在 `app/games/catalog.ts`（英文官方名，譯名查證後才補） |
+| `/wall-go` | Wall Go 首頁（`HomeView` → `HomeClient`）— 選模式、建立連線房間 |
+| `/wall-go/rules` | 規則頁，SEO 主力落地頁 |
+| `/wall-go/solo#easy\|normal\|hard` | 單人對戰。難度放 hash，由 `SoloClient` 以 prop 交給 `PlayClient` |
+| `/wall-go/local`、`/wall-go/local/3` | 本機對戰，人數走路由（建置時就定了）。noindex |
+| `/wall-go/online#roomId=…` | 連線對戰（`OnlineClient` → `PlayClient`，帶 `roomId`）。roomId 放 hash 而非 query。noindex |
+| `/wall-go/online#new=2\|3` | Wall Go 首頁連線磁磚的目的地：連線頁自己開房，開好後 `replaceState` 換成 `#roomId=…` |
+| `/wall-go/replay#wgf=…` | 棋譜回放。**開發者工具，不是給玩家的功能** —— 見下 |
+| 舊網址 `/rules`、`/solo`、`/local`、`/online`、`/replay`、`/match`（各語系） | CloudFront 301 到 `/wall-go/…`（`infra/cloudfront-redirects.js`，表要跟 `routes.ts` 的 `MOVED` 一致，`tests/infra/redirects.test.ts` 會比對）；舊路徑上另有瀏覽器端轉址當備援（`components/LegacyRedirect.tsx`），noindex、不進 sitemap |
 
 **`/replay` 是用來看玩家回饋的。** 每則回饋都附帶那一局的 WGF（`feedback/*/wgf`），
-在 Firebase Console 讀到回饋時，把棋譜貼到 `/replay#wgf=…` 就能一手一手重看玩家遇到的狀況。
+在 Firebase Console 讀到回饋時，把棋譜貼到 `/wall-go/replay#wgf=…` 就能一手一手重看玩家遇到的狀況。
 首頁右上角的「聯絡我們」也寫進同一個 `feedback/`，但 `mode: 'contact'`、**沒有 WGF**（不在對局裡）；
 它必填的是 `message`，評分選填。規則在 `database.rules.json` 依 `mode` 分流驗證，改表單欄位時兩邊要一起動。
 刻意**沒有任何 UI 入口**、不進 sitemap、noindex —— 這個站不做「個人棋譜」。
@@ -103,8 +107,8 @@ players/{ A?, B?, C? }/{ uid, displayName, joinedAt }
 - `app/utils/gameService.ts` — `createRoom`, `joinRoom`, `getRoom`, `subscribeRoom`, `updateGameState`, `setRoomWinner`
 - `app/types/room.ts` — `Room`, `RoomPlayer`, `RoomStatus` 型別
 - 首頁右上角水平並排「聯絡我們」與語言切換（40px、離邊 10px）。標題上方有一塊直式才有、可收縮（flex-shrink）的留白：畫面夠高時把標題推到圓鈕下面，不夠高時自己縮掉，不會多出捲軸；640–680 高的舊手機再把標題縮到 6.5dvh。直排、拆到左上都試過，Zach 覺得不好看
-- `HomeClient.tsx` — 連線磁磚**按下去立刻**跳轉 `/online#new=2|3`，不在首頁等建房（手機沒有滑過磁磚的預熱，先前會有 2 秒多畫面不動）。滑過或 focus 磁磚時仍呼叫 `ensureUser()` 預熱登入
-- `app/(default)/online/OnlineClient.tsx` — 解析 hash（`parseOnlineHash`）：`#roomId=` 進房；`#new=` 就地開房（初始棋譜用 `toWgf(createGame(n))`），開好後 `replaceState` 換網址 —— 重新整理才不會再開一間；都不是就顯示「連結不完整」，不會退化成本機對戰
+- `HomeClient.tsx` — 連線磁磚**按下去立刻**跳轉 `/wall-go/online#new=2|3`，不在首頁等建房（手機沒有滑過磁磚的預熱，先前會有 2 秒多畫面不動）。滑過或 focus 磁磚時仍呼叫 `ensureUser()` 預熱登入
+- `app/(default)/wall-go/online/OnlineClient.tsx` — 解析 hash（`parseOnlineHash`）：`#roomId=` 進房；`#new=` 就地開房（初始棋譜用 `toWgf(createGame(n))`），開好後 `replaceState` 換網址 —— 重新整理才不會再開一間；都不是就顯示「連結不完整」，不會退化成本機對戰
 
 ### WGF（Wall Go Format）棋譜
 

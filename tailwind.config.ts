@@ -44,6 +44,7 @@ export default {
           cream: "rgb(var(--tile-cream) / <alpha-value>)",
         },
         "board-line": "rgb(var(--board-line) / <alpha-value>)",
+        "brand-red": "rgb(var(--brand-red) / <alpha-value>)",
         "board-grid": "rgb(var(--board-grid) / <alpha-value>)",
         background: "var(--background)",
         foreground: "var(--foreground)",

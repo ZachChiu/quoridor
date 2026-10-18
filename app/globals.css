@@ -143,6 +143,9 @@
   --tile-forest: 0 105 68;    /* #006944 米白 6.3:1 */
   --tile-ink: 20 16 16;
   --tile-cream: 250 247 240;
+  /* 平台（/）的強調色：Netflix 式的紅（Zach 指定）。只用在平台外殼，各遊戲保留自己的配色。
+     深墨底上 3.9:1 —— 紅字只給大字（平台名），小字一律紅底白字（4.8:1）。 */
+  --brand-red: 226 31 38;
 
   /* 棋盤外框（#3a322c）。外框是「棋盤邊緣那道牆」，所以是深色。 */
   --board-line: 58 50 44;
@@ -477,3 +480,7 @@ body {
   .home-grid button { padding: 0.5rem; gap: 0.25rem; }
   .home-grid button span { font-size: 0.75rem; line-height: 1.15; }
 }
+
+/* 平台首頁是深色外殼：整頁底色跟著換，捲到底或回彈時才不會露出奶油色。
+   :has 在 Safari 15.4+／Chrome 105+，更舊的瀏覽器只是邊緣露一點奶油色，不影響使用。 */
+html:has(.platform-root), body:has(.platform-root) { background: rgb(var(--tile-ink)); }
