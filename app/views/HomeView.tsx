@@ -1,5 +1,5 @@
 import HomeClient from '@/HomeClient';
-import PlatformBar from '@/components/PlatformBar';
+import PlatformCorner from '@/components/PlatformCorner';
 import { getMessages } from '@/i18n';
 import type { Locale } from '@/i18n/locales';
 import { pageGraph, ldScript } from '@/i18n/jsonld';
@@ -17,13 +17,14 @@ export default function HomeView({ locale }: { locale: Locale }) {
   return (
       <div className="flex h-dvh min-h-dvh flex-col items-center justify-center px-5 py-[max(1rem,3dvh)] font-[family-name:var(--font-app)]">
         {/*
-          頂端是平台列（平台名＋聯絡我們＋語言），取代原本右上角那排圓鈕。
-          原本的理由仍然成立：這些東西不能放進磁磚的流程裡多吃一列高度，
+          左上平台 logo、右上聯絡我們＋語言（PlatformCorner）。
+          放角落而不是磁磚底下：這些東西不能放進流程裡多吃一列高度，
           首頁的目標是「整頁塞得進一個螢幕」（iPhone 14 Pro 網址列展開時 393x659）。
         */}
-        <PlatformBar locale={locale} />
-        {/* 讓出平台列的高度（48px）。固定保留、不縮：畫面矮時縮的是磁磚（globals.css 的 .home-grid
-            已經扣掉這 3rem），不是讓標題鑽到列底下。整頁仍然塞得進一個畫面，不會冒出捲軸。 */}
+        <PlatformCorner locale={locale} />
+        {/* 讓出角落那排（logo 與圓鈕，40px＋離邊）的高度。固定保留、不縮：畫面矮時縮的是磁磚
+            （globals.css 的 .home-grid 已經扣掉這 3rem），標題不會跟左上的 logo 疊在一起。
+            整頁仍然塞得進一個畫面，不會冒出捲軸。 */}
         <div aria-hidden="true" className="h-12 w-px shrink-0" />
         <main className="home-main flex w-full max-w-[420px] flex-col items-center">
           <header className="text-center">
