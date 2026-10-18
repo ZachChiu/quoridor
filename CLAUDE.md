@@ -245,7 +245,7 @@ GA 由 `app/shell.tsx` 的 `<GoogleAnalytics>` 載入（只有 `NEXT_PUBLIC_APP_
 | `game_start` | 本機／單人擺下第一顆棋；連線人到齊開始擺棋 | mode、players、difficulty |
 | `game_end` | 分出勝負 | mode、players、difficulty、result、winner、ended、turns、duration_sec |
 | `game_restart` | 結算按再來一局 | mode、players、difficulty |
-| `online_error` | 連線失敗 | reason |
+| `online_error` | 連線失敗 | reason、step |
 | `share_room_link` | 分享房間連結 | method |
 | `tutorial_close` | 關掉遊玩方式 | step、steps、finished |
 | `locale_switch` | 切語系 | from、to |
@@ -253,7 +253,7 @@ GA 由 `app/shell.tsx` 的 `<GoogleAnalytics>` 載入（只有 `NEXT_PUBLIC_APP_
 
 - `game_start` / `game_end` 看**狀態轉變**而不是按鈕；第一次觀察到的狀態不送（重整後從棋譜重建的「已開始／已結束」不是這次發生的），連線另用 sessionStorage 去重。連線局每位玩家各送一次，所以是「人次」不是「局數」。投降不另外送，會以 `game_end` 的 `ended: 'resign'` 出現。
 - **`page_view` 交給 GA 自己算**（首次載入由 config、站內換頁由加強型評估的「依瀏覽器記錄事件」）。不要再手動送 —— 以前的 `AnalyticsProvider` 就是這樣讓每次瀏覽都算兩次。
-- 參數要在 GA 後台「管理 → 自訂定義」註冊才看得到：維度 `mode`、`players`、`difficulty`、`source`、`result`、`winner`、`ended`、`reason`、`method`、`from`、`to`、`finished`；指標 `turns`、`duration_sec`、`step`、`rating`。
+- 參數要在 GA 後台「管理 → 自訂定義」註冊才看得到：維度 `mode`、`players`、`difficulty`、`source`、`result`、`winner`、`ended`、`reason`、`step`、`method`、`from`、`to`、`finished`；指標 `turns`、`duration_sec`、`step`、`rating`。
 
 ## 打版（`npm run release`）
 
@@ -288,6 +288,7 @@ GA 由 `app/shell.tsx` 的 `<GoogleAnalytics>` 載入（只有 `NEXT_PUBLIC_APP_
 - **上傳失敗會安靜地發生**：`silent: !process.env.CI` 把訊息吃掉，而且上傳失敗**不會讓 build 失敗**。要驗證就跑 `CI=1 npm run build`，看到 `Uploaded files to Sentry` 才算成功
 - `deleteSourcemapsAfterUpload` 必開 —— `out/` 會整包 `aws s3 sync` 上去，`.map` 殘留就是把原始碼公開
 - `ignoreErrors` 濾掉環境雜訊。本站特別需要 **動態 import 失敗**那組：Firebase 與 Sentry 自己（含 Replay）都是動態載入，行動網路不穩或瀏覽器快取到舊 chunk 清單時一定會冒，但那是環境問題不是程式錯誤。不濾掉的話 crash-free 率會被壓低到失去意義
+- **連線失敗會送 Sentry**（`utils/onlineError.ts`）：每個碰 Firebase 的 await 都包 `atStep(step, …)`，失敗時 tag 帶 `reason`（connectFail／createFail）、`step`（auth／getRoom／join／create）、`timeout`（`withTimeout` 丟 `TimeoutError`）；按這三個分組。網址 hash 裡的房號送出前會剝掉，不帶 uid。noRoom、roomFull 是正常流程，不送。起因是 2026-10-03 一天 17 次 connectFail 卻查不到原因（`docs/online-error-reporting.md`）
 - 已知限制：`tunnelRoute` 需要 server route，靜態匯出無法使用，故廣告阻擋器使用者的錯誤不會回報
 
 ## 部署

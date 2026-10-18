@@ -15,7 +15,7 @@ import { createRoom } from '@/utils/gameService';
 import { track } from '@/utils/analytics';
 import { parseOnlineHash, type OnlineTarget } from '@/utils/gameMode';
 import { createGame, toWgf } from '@/game/engine';
-import { withTimeout } from '@/utils/withTimeout';
+import { atStep, describeOnlineError, reportOnlineError } from '@/utils/onlineError';
 
 export default function OnlineClient() {
   const g = useGameText();
@@ -50,8 +50,8 @@ export default function OnlineClient() {
     creating.current = true;
     void (async () => {
       try {
-        const uid = await withTimeout(ensureUser());
-        const roomId = await withTimeout(createRoom(createCount, 'A', {
+        const uid = await atStep('auth', ensureUser());
+        const roomId = await atStep('create', createRoom(createCount, 'A', {
           uid,
           displayName: fmt(g.play.playerName, { id: uid.slice(0, 4).toUpperCase() }),
           joinedAt: Date.now(),
@@ -61,8 +61,10 @@ export default function OnlineClient() {
         setTarget({ roomId });
       } catch (err) {
         console.error('[online] 開房失敗：', err);
+        const info = describeOnlineError(err);
         setCreateFailed(true);
-        track('online_error', { reason: 'createFail' });
+        track('online_error', { reason: 'createFail', step: info.step });
+        reportOnlineError('createFail', info);
       }
     })();
   }, [createCount, ensureUser, g]);

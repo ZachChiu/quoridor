@@ -8,9 +8,22 @@
  */
 export const CONNECT_TIMEOUT_MS = 15_000;
 
+/**
+ * 逾時專用的錯誤型別：回報連線失敗時要分得出「等太久」與「Firebase 回了錯誤」，
+ * 兩者的原因完全不同（前者多半是網路或連線數用滿，後者是規則或驗證）。
+ */
+export class TimeoutError extends Error {
+  readonly ms: number;
+  constructor(ms: number) {
+    super(`逾時（${ms}ms）`);
+    this.name = 'TimeoutError';
+    this.ms = ms;
+  }
+}
+
 export function withTimeout<T>(promise: Promise<T>, ms: number = CONNECT_TIMEOUT_MS): Promise<T> {
   return new Promise<T>((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error(`逾時（${ms}ms）`)), ms);
+    const timer = setTimeout(() => reject(new TimeoutError(ms)), ms);
     promise.then(
       (value) => { clearTimeout(timer); resolve(value); },
       (error) => { clearTimeout(timer); reject(error); },
