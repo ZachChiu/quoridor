@@ -1,5 +1,5 @@
 /**
- * 連線對戰失敗時卡在哪一步。給 Sentry 的 tag 與 GA `online_error` 的 step 參數共用。
+ * 連線對戰失敗時卡在哪一步。給 Sentry 的 tag（step）與 GA `online_error` 的 fail_step 參數共用。
  *
  * - auth：Firebase 載入與匿名登入（ensureUser）
  * - getRoom：讀房間

@@ -46,7 +46,11 @@ type Events = {
   /** 結束畫面按「再來一局」 */
   game_restart: { mode: GameModeParam; players: 2 | 3; difficulty?: Difficulty };
   /** 連線對戰失敗 */
-  online_error: { reason: 'noRoom' | 'roomFull' | OnlineFailReason; step?: OnlineStep };
+  /**
+   * fail_step 不叫 step：step 已經是 tutorial_close 的「看到第幾步」，在 GA 註冊成指標，
+   * 同一個參數名稱不能再註冊成維度
+   */
+  online_error: { reason: 'noRoom' | 'roomFull' | OnlineFailReason; fail_step?: OnlineStep };
   /** 分享房間連結 */
   share_room_link: { method: 'native' | 'copy' };
   /** 關掉遊玩方式。step 從 1 起算；finished＝有沒有看到最後一步 */

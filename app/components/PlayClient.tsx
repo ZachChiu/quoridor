@@ -615,7 +615,7 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
         if (cancelled) return;
         const info = describeOnlineError(e);
         setError('connectFail');
-        track('online_error', { reason: 'connectFail', step: info.step });
+        track('online_error', { reason: 'connectFail', fail_step: info.step });
         reportOnlineError('connectFail', info);
         setPhase('error');
       }

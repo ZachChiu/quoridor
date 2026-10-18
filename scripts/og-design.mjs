@@ -134,7 +134,10 @@ export function poster({ tone, copy, titleImages }) {
         if (img) {
           return { type: 'img', props: { src: img.src, width: img.width, height: img.height, style: { marginTop: -img.pad, marginBottom: marginBottom - img.pad } } };
         }
-        return div({ fontSize: titleSize(line), fontWeight: 900, lineHeight: 1.08, marginBottom }, line);
+        // 韓文詞與詞之間有空格，要在空格換行（keep-all）；satori 預設逐字斷，
+        // 「벽바둑 규칙과 하는 법」會斷成「…하／는 법」。中文、日文沒有空格，不能套 —— 套了就完全不換行
+        const hangul = /[\uAC00-\uD7AF]/.test(line);
+        return div({ fontSize: titleSize(line), fontWeight: 900, lineHeight: 1.08, marginBottom, ...(hangul ? { wordBreak: 'keep-all' } : {}) }, line);
       }),
       div({ fontSize: 26, fontWeight: 900, opacity: 0.55 }, 'quoridorgame.com'),
     ]),
