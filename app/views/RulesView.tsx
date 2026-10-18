@@ -8,6 +8,7 @@ import { STEP_TEXT } from '@/i18n/content/steps';
 import { FAQ_TEXT } from '@/i18n/content/faq';
 import { getMessages } from '@/i18n';
 import { localePath, type Locale } from '@/i18n/locales';
+import { wallGo } from '@/i18n/routes';
 import { pageGraph, ldScript } from '@/i18n/jsonld';
 
 /**
@@ -44,7 +45,7 @@ export default function RulesView({ locale }: { locale: Locale }) {
   const t = getMessages(locale);
   const steps = STEP_TEXT[locale];
   const faq = FAQ_TEXT[locale];
-  const home = localePath(locale, '/');
+  const home = localePath(locale, wallGo());
 
   return (
     <div className="min-h-dvh font-[family-name:var(--font-app)]">

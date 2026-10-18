@@ -1,9 +1,8 @@
-import type { Metadata } from 'next';
-import SoloView from '@/views/SoloView';
-import { localeMetadata } from '@/i18n/metadata';
+import { Legacy, legacyMetadata } from '@/i18n/legacy';
 
-export const metadata: Metadata = localeMetadata('zh-TW', '/solo');
+/** 舊網址 /solo：搬到 /wall-go/solo（見 app/i18n/legacy.tsx） */
+export const metadata = legacyMetadata('zh-TW', '/solo');
 
-export default function SoloPage() {
-  return <SoloView locale="zh-TW" />;
+export default function Page() {
+  return <Legacy locale="zh-TW" oldPath="/solo" />;
 }

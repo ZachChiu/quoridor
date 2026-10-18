@@ -10,6 +10,7 @@ import { GiBreakingChain, GiUnplugged } from 'react-icons/gi';
 import { useGameText, useLocale } from '@/i18n/LocaleProvider';
 import { fmt } from '@/i18n/content/game';
 import { localePath } from '@/i18n/locales';
+import { wallGo } from '@/i18n/routes';
 import { useUser } from '@/contexts/UserContext';
 import { createRoom } from '@/utils/gameService';
 import { track } from '@/utils/analytics';
@@ -82,7 +83,7 @@ export default function OnlineClient() {
         body={g.play.connectFailBody}
         actions={<>
           <button type="button" onClick={() => window.location.reload()} className={BTN_PRIMARY}>{g.play.reload}</button>
-          <Link href={localePath(locale, '/')} className={BTN_SECONDARY}>{g.play.backHome}</Link>
+          <Link href={localePath(locale, wallGo())} className={BTN_SECONDARY}>{g.play.backHome}</Link>
         </>}
         embedded
       />
@@ -105,7 +106,7 @@ export default function OnlineClient() {
         iconClass="text-tile-blue"
         title={g.play.badLink}
         body={g.play.badLinkBody}
-        actions={<Link href={localePath(locale, '/')} className={BTN_PRIMARY}>{g.play.backHome}</Link>}
+        actions={<Link href={localePath(locale, wallGo())} className={BTN_PRIMARY}>{g.play.backHome}</Link>}
         embedded
       />
     );

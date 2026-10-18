@@ -1,5 +1,5 @@
 import { Suspense } from 'react';
-import OnlineClient from '@/(default)/online/OnlineClient';
+import OnlineClient from '@/(default)/wall-go/online/OnlineClient';
 import { getMessages } from '@/i18n';
 import type { Locale } from '@/i18n/locales';
 

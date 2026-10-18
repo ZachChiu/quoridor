@@ -1,4 +1,4 @@
-import SoloClient from '@/(default)/solo/SoloClient';
+import SoloClient from '@/(default)/wall-go/solo/SoloClient';
 import { getMessages } from '@/i18n';
 import type { Locale } from '@/i18n/locales';
 import { pageGraph, ldScript } from '@/i18n/jsonld';

@@ -10,6 +10,7 @@ import { evaluate } from '@/game/score';
 import { parseWGF } from '@/utils/wgf';
 import { useLocale, useMessages } from '@/i18n/LocaleProvider';
 import { localePath } from '@/i18n/locales';
+import { wallGo } from '@/i18n/routes';
 import { fmt } from '@/i18n/content/game';
 
 const noop = () => {};
@@ -110,7 +111,7 @@ export default function ReplayClient() {
       <div className="flex max-w-[22rem] flex-col items-center gap-4 px-6 text-center">
         <h2 className="text-2xl font-black">{t.replay.empty}</h2>
         <p className="text-sm leading-relaxed text-ink-soft">{t.replay.emptyBody}</p>
-        <Link href={localePath(locale, '/')}
+        <Link href={localePath(locale, wallGo())}
               className="rounded-2xl bg-tile-ink px-6 py-4 text-lg font-black text-tile-cream transition hover:brightness-110">
           {t.rules.ctaPlay}
         </Link>
@@ -120,7 +121,7 @@ export default function ReplayClient() {
 
   return (
     <>
-      <Link href={localePath(locale, '/')} aria-label={t.nav.backHome}
+      <Link href={localePath(locale, wallGo())} aria-label={t.nav.backHome}
             className="fixed left-5 top-5 z-50 grid size-12 place-items-center rounded-full bg-primary-50 text-2xl text-tile-ink transition hover:brightness-95">
         <GiHut />
       </Link>

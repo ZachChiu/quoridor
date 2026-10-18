@@ -20,7 +20,7 @@ import { useEffect } from 'react';
 export default function MatchRedirect() {
   useEffect(() => {
     const { hash, search } = window.location;
-    window.location.replace(`/online${search}${hash}`);
+    window.location.replace(`/wall-go/online/${search}${hash}`);
   }, []);
   return null;
 }

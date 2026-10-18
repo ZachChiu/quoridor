@@ -1,6 +1,7 @@
 import type { Difficulty } from '@/game/ai';
 import type { GameMode } from '@/types/gameMode';
 import { localePath, type Locale } from '@/i18n/locales';
+import { wallGo } from '@/i18n/routes';
 
 export type { GameMode };
 
@@ -71,7 +72,7 @@ export function readGameHash(): GameMode {
  * 是「朋友點進來看到別的東西」，在元件裡沒有任何辦法自動驗證。
  */
 export function roomShareUrl(origin: string, locale: Locale, roomId: string): string {
-  return `${origin}${localePath(locale, '/online')}#roomId=${roomId}`;
+  return `${origin}${localePath(locale, wallGo('/online'))}#roomId=${roomId}`;
 }
 
 /**

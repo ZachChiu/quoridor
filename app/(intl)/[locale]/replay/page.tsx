@@ -1,20 +1,15 @@
-import type { Metadata } from 'next';
-import { playMetadata } from '@/i18n/metadata';
-import ReplayView from '@/views/ReplayView';
+import { Legacy, legacyMetadata } from '@/i18n/legacy';
 import { PREFIXED, toLocale } from '@/i18n/locales';
 
+/** 舊網址 /{locale}/replay：搬到 /{locale}/wall-go/replay（見 app/i18n/legacy.tsx） */
 export function generateStaticParams() {
   return PREFIXED.map((locale) => ({ locale }));
 }
 
-export async function generateMetadata({
-  params,
-}: { params: Promise<{ locale: string }> }): Promise<Metadata> {
-  return playMetadata(toLocale((await params).locale), '/replay');
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+  return legacyMetadata(toLocale((await params).locale), '/replay');
 }
 
-export default async function Page({
-  params,
-}: { params: Promise<{ locale: string }> }) {
-  return <ReplayView locale={toLocale((await params).locale)} />;
+export default async function Page({ params }: { params: Promise<{ locale: string }> }) {
+  return <Legacy locale={toLocale((await params).locale)} oldPath="/replay" />;
 }

@@ -1,26 +1,19 @@
-import type { Metadata } from 'next';
-import { playMetadata } from '@/i18n/metadata';
-import LocalView from '@/views/LocalView';
+import { Legacy, legacyMetadata } from '@/i18n/legacy';
 import { PREFIXED, toLocale } from '@/i18n/locales';
-import { toPlayersNum } from '@/utils/gameMode';
 
-/** 各語系的 `/{locale}/local/3`。理由與 (default) 那支相同。 */
+/** 舊網址 /{locale}/local/2、/local/3（見 app/i18n/legacy.tsx） */
 export function generateStaticParams() {
-  return PREFIXED.flatMap((locale) => [
-    { locale, players: '2' },
-    { locale, players: '3' },
-  ]);
+  return PREFIXED.flatMap((locale) => [{ locale, players: '2' }, { locale, players: '3' }]);
 }
 
-export async function generateMetadata({
-  params,
-}: { params: Promise<{ locale: string }> }): Promise<Metadata> {
-  return playMetadata(toLocale((await params).locale), '/local');
+type Params = { params: Promise<{ locale: string; players: string }> };
+
+export async function generateMetadata({ params }: Params) {
+  const p = await params;
+  return legacyMetadata(toLocale(p.locale), `/local/${p.players}`);
 }
 
-export default async function Page({
-  params,
-}: { params: Promise<{ locale: string; players: string }> }) {
-  const { locale, players } = await params;
-  return <LocalView locale={toLocale(locale)} playersNum={toPlayersNum(players)} />;
+export default async function Page({ params }: Params) {
+  const p = await params;
+  return <Legacy locale={toLocale(p.locale)} oldPath={`/local/${p.players}`} />;
 }

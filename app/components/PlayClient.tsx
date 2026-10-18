@@ -61,6 +61,7 @@ import type { GameState, PlayerKey, WallDir } from "@/game/types";
 import type { Turn } from "@/game/engine";
 import { useGameText, useLocale } from '@/i18n/LocaleProvider';
 import { localePath } from '@/i18n/locales';
+import { wallGo } from '@/i18n/routes';
 import { roomShareUrl } from '@/utils/gameMode';
 import { fmt } from '@/i18n/content/game';
 
@@ -846,7 +847,7 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
   }
 
   if (isOnline && phase === 'error' && error) {
-    const home = <Link href={localePath(locale, '/')} className={error === 'connectFail' ? BTN_SECONDARY : BTN_PRIMARY}>{g.play.backHome}</Link>;
+    const home = <Link href={localePath(locale, wallGo())} className={error === 'connectFail' ? BTN_SECONDARY : BTN_PRIMARY}>{g.play.backHome}</Link>;
     const screens = {
       noRoom: { icon: GiSpyglass, title: g.play.noRoom, body: g.play.noRoomBody, actions: home },
       roomFull: { icon: GiDoor, title: g.play.roomFull, body: g.play.roomFullBody, actions: home },
@@ -888,7 +889,7 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
             const r = e.currentTarget.getBoundingClientRect();
             const iconH = e.currentTarget.querySelector('svg')?.getBoundingClientRect().height;
             // replace：守門那筆還在最上面就取代它，否則回首頁後按返回會先回到守門
-            const goHome = (replace: boolean) => navigate(localePath(locale, '/'), {
+            const goHome = (replace: boolean) => navigate(localePath(locale, wallGo()), {
               replace,
               wipe: {
                 x: r.left + r.width / 2,

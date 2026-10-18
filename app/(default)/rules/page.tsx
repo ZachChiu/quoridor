@@ -1,9 +1,8 @@
-import type { Metadata } from 'next';
-import RulesView from '@/views/RulesView';
-import { localeMetadata } from '@/i18n/metadata';
+import { Legacy, legacyMetadata } from '@/i18n/legacy';
 
-export const metadata: Metadata = localeMetadata('zh-TW', '/rules');
+/** 舊網址 /rules：搬到 /wall-go/rules（見 app/i18n/legacy.tsx） */
+export const metadata = legacyMetadata('zh-TW', '/rules');
 
-export default function RulesPage() {
-  return <RulesView locale="zh-TW" />;
+export default function Page() {
+  return <Legacy locale="zh-TW" oldPath="/rules" />;
 }

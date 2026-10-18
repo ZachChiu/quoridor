@@ -31,12 +31,22 @@ function handler(event) {
   var uri = request.uri;
 
   // 舊網址 → 新網址。key 一律不帶結尾斜線，比對時兩種都認。
+  // 2026-10 平台化：Wall Go 全部搬進 /wall-go/，首頁 / 改成平台首頁（不轉址）。
+  // 要跟 app/i18n/routes.ts 的 MOVED 一致（tests/infra/redirects.test.ts 會比對）。
   var MOVED = {
-    '/match': '/online',
+    '/rules': '/wall-go/rules',
+    '/solo': '/wall-go/solo',
+    '/local': '/wall-go/local',
+    '/local/2': '/wall-go/local',
+    '/local/3': '/wall-go/local/3',
+    '/online': '/wall-go/online',
+    '/replay': '/wall-go/replay',
+    '/match': '/wall-go/online',
   };
 
-  // 語系前綴要一起處理：/ja/match 應該去 /ja/online，不是 /online。
-  var LOCALES = ['en', 'ja', 'ko'];
+  // 語系前綴要一起處理：/ja/rules 應該去 /ja/wall-go/rules，不是 /wall-go/rules。
+  // 要跟 app/i18n/locales.ts 的 PREFIXED 一致（同一份測試會比對）。
+  var LOCALES = ['en', 'ja', 'ko', 'zh-Hans', 'th'];
 
   var clean = uri.replace(/\/+$/, '') || '/';
   var prefix = '';

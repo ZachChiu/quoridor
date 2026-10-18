@@ -30,8 +30,8 @@ describe.skipIf(!built)('建置產物', () => {
       expect(existsSync(join(OUT, 'zh-TW'))).toBe(false);
     });
 
-    it('四語系的每一頁都在', () => {
-      const pages = ['', 'rules', 'local', 'solo', 'online', 'replay'];
+    it('四語系的每一頁都在（平台首頁＋Wall Go 搬進 /wall-go/）', () => {
+      const pages = ['', 'wall-go', 'wall-go/rules', 'wall-go/local', 'wall-go/solo', 'wall-go/online', 'wall-go/replay'];
       for (const p of pages) {
         expect(existsSync(join(OUT, p, 'index.html')), `/${p}`).toBe(true);
         for (const l of LOCALES) {
@@ -57,9 +57,9 @@ describe.skipIf(!built)('建置產物', () => {
 
     it('本機人數的路由：/local/2 與 /local/3，四語系都有', () => {
       for (const n of ['2', '3']) {
-        expect(existsSync(join(OUT, 'local', n, 'index.html')), `/local/${n}`).toBe(true);
+        expect(existsSync(join(OUT, 'wall-go/local', n, 'index.html')), `/wall-go/local/${n}`).toBe(true);
         for (const l of LOCALES) {
-          expect(existsSync(join(OUT, l, 'local', n, 'index.html')), `/${l}/local/${n}`).toBe(true);
+          expect(existsSync(join(OUT, l, 'wall-go/local', n, 'index.html')), `/${l}/wall-go/local/${n}`).toBe(true);
         }
       }
     });
@@ -73,8 +73,8 @@ describe.skipIf(!built)('建置產物', () => {
       2. og:image 指向一個不存在的檔案 —— 抓取器拿不到圖就只顯示一行字，
          頁面本身完全正常，所以在瀏覽器裡怎麼看都看不出來。
     */
-    it('六頁 × 四語系各有自己的分享圖，檔案都在，而且沒有兩頁共用', () => {
-      const PAGES = ['', 'rules', 'solo', 'local', 'online', 'replay'];
+    it('每一頁 × 每一語系各有自己的分享圖，檔案都在，而且沒有兩頁共用', () => {
+      const PAGES = ['', 'wall-go', 'wall-go/rules', 'wall-go/solo', 'wall-go/local', 'wall-go/online', 'wall-go/replay'];
       const seen = new Map<string, string>();
       for (const l of ALL_LOCALES) {
         for (const page of PAGES) {
@@ -108,8 +108,8 @@ describe.skipIf(!built)('建置產物', () => {
       之後才跳成三人 —— 使用者看得到那一下。
     */
     it('/local/3 的 HTML 帶第三位玩家，/local 沒有', () => {
-      const three = (html('local/3/index.html').match(/player-C/g) || []).length;
-      const two = (html('local/index.html').match(/player-C/g) || []).length;
+      const three = (html('wall-go/local/3/index.html').match(/player-C/g) || []).length;
+      const two = (html('wall-go/local/index.html').match(/player-C/g) || []).length;
       expect(three).toBeGreaterThan(two);
     });
   });
@@ -117,12 +117,22 @@ describe.skipIf(!built)('建置產物', () => {
   describe('sitemap 與 robots 說同一件事', () => {
     const locs = () => [...html('sitemap-0.xml').matchAll(/<loc>([^<]+)<\/loc>/g)].map(m => m[1]);
 
-    it('只收得了值的頁面：首頁、規則、單人', () => {
+    it('只收得了值的頁面：平台首頁、Wall Go 首頁、規則、單人', () => {
       const paths = locs().map(u => new URL(u).pathname);
       expect(paths).toContain('/');
       for (const l of ['', ...LOCALES.map(l => `/${l}`)]) {
-        expect(paths, `${l}/rules/`).toContain(`${l}/rules/`);
-        expect(paths, `${l}/solo/`).toContain(`${l}/solo/`);
+        expect(paths, `${l}/wall-go/`).toContain(`${l}/wall-go/`);
+        expect(paths, `${l}/wall-go/rules/`).toContain(`${l}/wall-go/rules/`);
+        expect(paths, `${l}/wall-go/solo/`).toContain(`${l}/wall-go/solo/`);
+      }
+    });
+
+    it('搬家前的舊網址不在 sitemap 裡（它們只做轉址）', () => {
+      const paths = locs().map(u => new URL(u).pathname);
+      for (const p of paths) {
+        // 語系前綴要逐一列：寫成 [a-z-]+ 的話 /wall-go/rules/ 也會被當成舊網址
+        const legacy = new RegExp(`^(/(${LOCALES.join('|')}))?/(rules|solo)/$`);
+        expect(p, `sitemap 收了舊網址 ${p}`).not.toMatch(legacy);
       }
     });
 

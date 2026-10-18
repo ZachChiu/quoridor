@@ -56,12 +56,15 @@ check() {
   echo "  ✓ ${uri} → ${expect}"
 }
 echo "測試 DEVELOPMENT 階段："
-check "/match"          '"statusCode":301'
-check "/match"          '/online/'
-check "/ja/match/"      '/ja/online/'
-check "/rules/"         '/rules/index.html'
-check "/rules"          '/rules/'
-check "/og/home-ja.png" '/og/home-ja.png'
+check "/match"                '"statusCode":301'
+check "/match"                '/wall-go/online/'
+check "/ja/match/"            '/ja/wall-go/online/'
+check "/rules/"               '/wall-go/rules/'
+check "/zh-Hans/local/3"      '/zh-Hans/wall-go/local/3/'
+check "/wall-go/rules/"       '/wall-go/rules/index.html'
+check "/wall-go/rules"        '/wall-go/rules/'
+check "/"                     '/index.html'
+check "/og/home-ja.png"       '/og/home-ja.png'
 
 # 5. 全過才上線
 aws cloudfront publish-function --name "${NAME}" --if-match "${ETAG}" >/dev/null
