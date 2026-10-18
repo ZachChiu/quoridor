@@ -22,10 +22,12 @@ export default function HomeView({ locale }: { locale: Locale }) {
           首頁的目標是「整頁塞得進一個螢幕」（iPhone 14 Pro 網址列展開時 393x659）。
         */}
         <PlatformCorner locale={locale} />
-        {/* 讓出角落那排（logo 與圓鈕，40px＋離邊）的高度。固定保留、不縮：畫面矮時縮的是磁磚
-            （globals.css 的 .home-grid 已經扣掉這 3rem），標題不會跟左上的 logo 疊在一起。
-            整頁仍然塞得進一個畫面，不會冒出捲軸。 */}
-        <div aria-hidden="true" className="h-12 w-px shrink-0" />
+        {/* 讓出角落那排（logo 與圓鈕）的留白（只在直式）。flex-shrink：畫面夠高時撐滿 3.5rem，
+            把置中的標題推到角落下面；不夠高時自己先縮到 0 —— 不會把整頁撐出一個畫面、
+            冒出捲軸（Zach 不要捲軸），磁磚也維持原本的大小（Zach：不要把磁磚變窄）。
+            縮到 0 時標題會貼到頂，左上的 logo 在矮畫面上會跟著縮小讓開（見 PlatformCorner）。
+            容器因此是固定的 h-dvh，shrink 才有作用。 */}
+        <div aria-hidden="true" className="hidden h-14 w-px shrink portrait:block" />
         <main className="home-main flex w-full max-w-[420px] flex-col items-center">
           <header className="text-center">
             {/* 直式又很矮（640–680 高的舊手機）時字縮一點：那時留白縮到 0、標題貼到頂，

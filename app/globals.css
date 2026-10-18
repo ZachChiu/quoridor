@@ -455,11 +455,10 @@ body {
    把橫式多出來的寬度用掉。
 
    限定 max-height: 600px 才套，桌機（同樣是 landscape）不受影響。 */
-/* 扣掉的高度含角落那排（平台 logo＋圓鈕，PlatformCorner）的 3rem：它是固定保留的，畫面矮時縮的是磁磚，不是蓋住標題 */
-.home-grid { max-width: min(380px, calc(100dvh - 25rem)); }
+.home-grid { max-width: min(380px, calc(100dvh - 22rem)); }
 
 @media (orientation: landscape) and (max-height: 600px) {
-  .home-grid { max-width: min(320px, calc(100dvh - 15rem)); }
+  .home-grid { max-width: min(320px, calc(100dvh - 12rem)); }
   .home-main {
     flex-direction: row;
     align-items: center;

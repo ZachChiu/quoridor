@@ -19,10 +19,11 @@ import { localePath, type Locale } from '@/i18n/locales';
 export default function PlatformCorner({ locale }: { locale: Locale }) {
   return (
     <>
-      {/* 20px 粗體算大字：紅在深墨上 3.9:1，大字的門檻是 3:1 */}
+      {/* 紅在深墨上 3.9:1。logo（字標）不受 WCAG 對比門檻約束，但 20px 粗體本來就過大字的 3:1 */}
       <Link
         href={localePath(locale, '/')}
-        className="fixed left-2.5 top-2.5 z-40 flex h-10 items-center rounded-full bg-tile-ink px-4 text-xl font-black tracking-tight text-brand-red transition active:scale-95"
+        // 矮的直式畫面（≤700 高）上標題會貼到頂：logo 縮小一級，讓開置中的標題
+        className="fixed left-2.5 top-2.5 z-40 flex h-10 items-center rounded-full bg-tile-ink px-4 text-xl font-black tracking-tight text-brand-red transition active:scale-95 [@media(orientation:portrait)_and_(max-height:700px)]:px-2.5 [@media(orientation:portrait)_and_(max-height:700px)]:text-sm"
       >
         {BRAND}
       </Link>
