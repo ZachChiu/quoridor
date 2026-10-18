@@ -3,6 +3,7 @@ import { GiDevilMask, GiHourglass } from 'react-icons/gi';
 import { LuInfo, LuPlay } from 'react-icons/lu';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import ContactButton from '@/components/ContactButton';
+import WipeLink from '@/components/WipeLink';
 import { BRAND } from '@/brand';
 import { SEASONS, gameName, type CatalogGame } from '@/games/catalog';
 import { getMessages, siteName } from '@/i18n';
@@ -62,9 +63,9 @@ export default function PlatformView({ locale }: { locale: Locale }) {
             {/* 19px 粗體算大字：米白在藍底上 4.4:1，大字的門檻是 3:1 */}
             <p className="text-[19px] font-bold leading-relaxed">{p.heroBody}</p>
             <div className="flex flex-wrap gap-3 pt-1">
-              <Link href={localePath(locale, wallGo())} className="flex h-[54px] items-center gap-2.5 rounded-xl bg-tile-cream px-7 text-lg font-black text-tile-ink">
+              <WipeLink href={localePath(locale, wallGo())} color={WALL_GO_BLUE} className="flex h-[54px] items-center gap-2.5 rounded-xl bg-tile-cream px-7 text-lg font-black text-tile-ink">
                 <LuPlay aria-hidden="true" className="fill-current" />{p.play}
-              </Link>
+              </WipeLink>
               <Link href={localePath(locale, wallGo('/rules'))} className="flex h-[54px] items-center gap-2.5 rounded-xl bg-tile-ink px-6 text-lg font-black text-tile-cream">
                 <LuInfo aria-hidden="true" />{p.rules}
               </Link>
@@ -109,6 +110,9 @@ export default function PlatformView({ locale }: { locale: Locale }) {
 
 const CARD = 'relative block aspect-video w-[240px] overflow-hidden rounded-xl';
 
+/** 進 Wall Go 的轉場顏色：它的主視覺與卡片都是這個藍 */
+const WALL_GO_BLUE = 'rgb(var(--tile-blue))';
+
 function GameCard({ game, locale, playable, guide, wallGoName }: {
   game: CatalogGame; locale: Locale; playable: string; guide: string; wallGoName: string;
 }) {
@@ -116,13 +120,13 @@ function GameCard({ game, locale, playable, guide, wallGoName }: {
 
   if (game.playable) {
     return (
-      <Link href={localePath(locale, game.playable)} aria-label={wallGoName} className={`${CARD} bg-tile-blue text-tile-cream`}>
+      <WipeLink href={localePath(locale, game.playable)} color={WALL_GO_BLUE} aria-label={wallGoName} className={`${CARD} bg-tile-blue text-tile-cream`}>
         {/* eslint-disable-next-line @next/next/no-img-element -- 同上 */}
         <img src="/games/wall-go/key-art.svg" alt="" className="pointer-events-none absolute right-[-70px] top-[-50px] w-[230px] rotate-[-14deg]" />
         <span className="absolute left-3 top-3 rounded-md bg-brand-red px-2 py-0.5 text-xs font-black text-white">▶ {playable}</span>
         {/* 名字壓在棋盤圖上會看不清楚，墊一塊藍底 */}
         <span className="absolute bottom-2 left-2 rounded-md bg-tile-blue px-1.5 py-1 text-[22px] font-black leading-none">{name}</span>
-      </Link>
+      </WipeLink>
     );
   }
 

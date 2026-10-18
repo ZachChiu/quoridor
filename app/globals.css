@@ -455,10 +455,11 @@ body {
    把橫式多出來的寬度用掉。
 
    限定 max-height: 600px 才套，桌機（同樣是 landscape）不受影響。 */
-.home-grid { max-width: min(380px, calc(100dvh - 22rem)); }
+/* 扣掉的高度含頂端平台列的 3rem（PlatformBar，h-12）：列是固定保留的，畫面矮時縮的是磁磚，不是蓋住標題 */
+.home-grid { max-width: min(380px, calc(100dvh - 25rem)); }
 
 @media (orientation: landscape) and (max-height: 600px) {
-  .home-grid { max-width: min(320px, calc(100dvh - 12rem)); }
+  .home-grid { max-width: min(320px, calc(100dvh - 15rem)); }
   .home-main {
     flex-direction: row;
     align-items: center;
@@ -477,8 +478,10 @@ body {
     正方形是這套視覺的一部分，該讓的是內容不是形狀。
   */
   .home-grid .tile-icon { font-size: 1.75rem; }
-  .home-grid button { padding: 0.5rem; gap: 0.25rem; }
-  .home-grid button span { font-size: 0.75rem; line-height: 1.15; }
+  /* 磁磚有 href 時是 <a>（給爬蟲走得進去），沒有時是 <button>，兩種都要縮。
+     先前只寫 button，改成連結之後橫式手機上那幾塊就沒縮到 */
+  .home-grid :is(a, button) { padding: 0.5rem; gap: 0.25rem; }
+  .home-grid :is(a, button) span { font-size: 0.75rem; line-height: 1.15; }
 }
 
 /* 平台首頁是深色外殼：整頁底色跟著換，捲到底或回彈時才不會露出奶油色。
