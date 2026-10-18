@@ -1,5 +1,13 @@
 {
   "zh-TW": {
+    "platform": {
+      "kicker": "［平台名］",
+      "title": [
+        "《魔鬼的計謀》",
+        "遊戲"
+      ],
+      "titleSize": 71
+    },
     "home": {
       "kicker": "魔鬼的計謀：死亡密室",
       "title": [
@@ -39,6 +47,14 @@
     }
   },
   "en": {
+    "platform": {
+      "kicker": "［平台名］",
+      "title": [
+        "The Devil's Plan",
+        "games"
+      ],
+      "titleSize": 56
+    },
     "home": {
       "kicker": "The Devil's Plan: Death Room",
       "title": [
@@ -77,6 +93,14 @@
     }
   },
   "ja": {
+    "platform": {
+      "kicker": "［平台名］",
+      "title": [
+        "『悪魔の計略』の",
+        "ゲーム"
+      ],
+      "titleSize": 62
+    },
     "home": {
       "kicker": "悪魔の計略 ～デビルズ・プラン～",
       "title": [
@@ -116,6 +140,14 @@
     }
   },
   "ko": {
+    "platform": {
+      "kicker": "［平台名］",
+      "title": [
+        "『데블스 플랜』",
+        "게임"
+      ],
+      "titleSize": 65
+    },
     "home": {
       "kicker": "데블스 플랜: 데스룸",
       "title": [
@@ -155,6 +187,14 @@
     }
   },
   "zh-Hans": {
+    "platform": {
+      "kicker": "［平台名］",
+      "title": [
+        "《魔鬼的计谋》",
+        "游戏"
+      ],
+      "titleSize": 71
+    },
     "home": {
       "kicker": "魔鬼的计谋：死亡密室",
       "title": [
@@ -194,6 +234,14 @@
     }
   },
   "th": {
+    "platform": {
+      "kicker": "［平台名］",
+      "title": [
+        "เกมใน",
+        "The Devil's Plan"
+      ],
+      "titleSize": 56
+    },
     "home": {
       "kicker": "The Devil's Plan: Death Room",
       "title": [

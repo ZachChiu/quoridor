@@ -12,6 +12,10 @@ export const C = {
   ground: '#e8e1d7',
   ink: '#141010',
   line: '#3a322c',
+  // 格線跟網站一致（v26.10.1 起是淺灰，見 globals.css 的 --board-grid）；外框仍是深色的 line
+  grid: '#d4d0c9',
+  // 平台外殼的紅（globals.css 的 --brand-red）
+  brandRed: '#e21f26',
   A: '#cd4642', A100: '#f0c8c6',
   B: '#2478b7', B100: '#cadfee',
   C3: '#0e8142',
@@ -31,6 +35,8 @@ export const TONES = {
   online: { bg: C.purple, fg: C.cream, pill: C.cream,  pillFg: C.purple },
   solo:   { bg: C.orange, fg: C.ink,   pill: C.ink,    pillFg: C.orange },
   replay: { bg: C.ink,    fg: C.cream, pill: C.cream,  pillFg: C.ink },
+  // 平台首頁：深色外殼＋紅色膠囊（平台名）
+  platform: { bg: C.ink, fg: C.cream, pill: C.brandRed, pillFg: '#ffffff' },
 };
 
 // 格線細、牆粗 —— 兩者同粗的話牆會被讀成格線，盤面就只剩一張網格
@@ -90,7 +96,7 @@ function board() {
     起算的，所以格子會整體偏移一個邊框寬，上左看得到框、下右被蓋掉。
   */
   return div({ padding: FRAME, background: C.line, borderRadius: 12 }, [
-    div({ position: 'relative', width: INNER, height: INNER, background: C.line }, kids),
+    div({ position: 'relative', width: INNER, height: INNER, background: C.grid }, kids),
   ]);
 }
 
@@ -103,6 +109,15 @@ function pillSize(text, max = 36, min = 26, room = 480) {
 
 /** 標題字級：長標題縮小一級。build-og-images 用 Chrome 畫泰文標題時也照這個尺寸。 */
 export const titleSize = (line) => (line.length > 9 ? 76 : 92);
+
+/**
+ * 逐行指定的標題（平台首頁）用：照字寬算出整組都塞得進欄寬的字級，每行同一個大小。
+ * 全形字算 1、半形字算 0.58（同 pillSize）。文字欄可用約 500px。
+ */
+export function fitTitleSize(lines, max = 92, min = 56, room = 500) {
+  const widest = Math.max(...lines.map((l) => [...l].reduce((n, ch) => n + (/[\u2E80-\uFFEF]/.test(ch) ? 1 : 0.58), 0)));
+  return Math.max(min, Math.min(max, Math.floor(room / widest)));
+}
 
 /**
  * `titleImages`（選填）：與 copy.title 一一對應的去背圖片。有給的那一行畫圖、不畫字 ——
@@ -137,7 +152,7 @@ export function poster({ tone, copy, titleImages }) {
         // 韓文詞與詞之間有空格，要在空格換行（keep-all）；satori 預設逐字斷，
         // 「벽바둑 규칙과 하는 법」會斷成「…하／는 법」。中文、日文沒有空格，不能套 —— 套了就完全不換行
         const hangul = /[\uAC00-\uD7AF]/.test(line);
-        return div({ fontSize: titleSize(line), fontWeight: 900, lineHeight: 1.08, marginBottom, ...(hangul ? { wordBreak: 'keep-all' } : {}) }, line);
+        return div({ fontSize: copy.titleSize ?? titleSize(line), fontWeight: 900, lineHeight: 1.08, marginBottom, ...(hangul ? { wordBreak: 'keep-all' } : {}) }, line);
       }),
       div({ fontSize: 26, fontWeight: 900, opacity: 0.55 }, 'quoridorgame.com'),
     ]),

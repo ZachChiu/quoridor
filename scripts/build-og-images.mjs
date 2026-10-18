@@ -19,7 +19,7 @@
 import { ImageResponse } from 'next/og.js';
 import { mkdirSync, writeFileSync, readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { poster, titleSize, TONES } from './og-design.mjs';
+import { poster, titleSize, fitTitleSize, TONES } from './og-design.mjs';
 import { openChrome } from './lib/chrome-text.mjs';
 
 const OUT = 'public/og';
@@ -29,8 +29,9 @@ const CHECK = process.argv.includes('--check');
 /** 語系 → 字型家族。TC 自己就帶拉丁字母，所以 en 跟著用同一套，字形才一致。 */
 const FAMILY = { 'zh-TW': 'Noto+Sans+TC', en: 'Noto+Sans+TC', ja: 'Noto+Sans+JP', ko: 'Noto+Sans+KR', 'zh-Hans': 'Noto+Sans+SC', th: 'Noto+Sans+Thai' };
 const LOCALES = ['zh-TW', 'en', 'ja', 'ko', 'zh-Hans', 'th'];
-const PAGES = ['home', 'rules', 'local', 'online', 'solo', 'replay'];
+const PAGES = ['platform', 'home', 'rules', 'local', 'online', 'solo', 'replay'];
 
+const { BRAND } = await import('../app/brand.ts');
 const messages = Object.fromEntries(await Promise.all(
   LOCALES.map(async (l) => [l, (await import(`../app/i18n/messages/${l}.ts`)).default])
 ));
@@ -40,6 +41,8 @@ function copyFor(locale, page) {
   const t = messages[locale];
   // 英文的 titleLine2 整個不給 —— 用模板拼會變成字面上的 "undefined"（見 app/i18n/index.ts 的 siteName）
   const site = [t.home.titleLine1, t.home.titleLine2].filter(Boolean).join(' ');
+  // 平台首頁：膠囊放平台名，標題逐行指定（metaTitle 太長；自動斷行會把節目名拆開）
+  if (page === 'platform') return { kicker: BRAND, title: t.platform.ogLines, titleSize: fitTitleSize(t.platform.ogLines) };
   const title = page === 'home'
     ? [t.home.titleLine1, t.home.titleLine2].filter(Boolean)
     : [t[page].metaTitle];
@@ -113,11 +116,17 @@ for (const locale of LOCALES) {
 
   for (const page of PAGES) {
     const copy = copyAll[locale][page];
-    const titleImages = SHAPED[locale]
-      ? await Promise.all(copy.title.map((line) => chrome.render({
-          text: line, fontFile: SHAPED[locale], fontSize: titleSize(line), color: TONES[page].fg,
-        })))
-      : undefined;
+    // 一行畫完再畫下一行：所有行共用同一個 Chrome 分頁，同時畫會互相蓋掉
+    // （平台首頁的泰文標題有兩行，兩張圖都變成同一行，2026-10）
+    let titleImages;
+    if (SHAPED[locale]) {
+      titleImages = [];
+      for (const line of copy.title) {
+        titleImages.push(await chrome.render({
+          text: line, fontFile: SHAPED[locale], fontSize: copy.titleSize ?? titleSize(line), color: TONES[page].fg,
+        }));
+      }
+    }
     const png = Buffer.from(await new ImageResponse(
       poster({ tone: page, copy, titleImages }),
       { width: 1200, height: 630, fonts }
