@@ -45,6 +45,12 @@ export default {
         },
         "board-line": "rgb(var(--board-line) / <alpha-value>)",
         "brand-red": "rgb(var(--brand-red) / <alpha-value>)",
+        plat: {
+          bg: "rgb(var(--plat-bg) / <alpha-value>)",
+          surface: "rgb(var(--plat-surface) / <alpha-value>)",
+          raised: "rgb(var(--plat-raised) / <alpha-value>)",
+          muted: "rgb(var(--plat-muted) / <alpha-value>)",
+        },
         "board-grid": "rgb(var(--board-grid) / <alpha-value>)",
         background: "var(--background)",
         foreground: "var(--foreground)",

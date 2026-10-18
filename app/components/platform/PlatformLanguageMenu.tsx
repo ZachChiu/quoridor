@@ -21,7 +21,7 @@ export default function PlatformLanguageMenu() {
         onClick={() => setOpen(true)}
         aria-label={`${t.nav.language}: ${currentName}`}
         aria-haspopup="dialog"
-        className="flex h-10 items-center gap-1.5 rounded-md border border-tile-cream/40 px-3 text-sm font-bold text-tile-cream transition hover:bg-tile-cream/[0.1]"
+        className="flex h-10 items-center gap-1.5 rounded-md border border-tile-cream/30 bg-plat-surface px-3 text-sm font-bold text-tile-cream transition hover:bg-plat-raised"
       >
         <LuGlobe aria-hidden="true" className="text-base" />
         {currentName}
@@ -39,7 +39,7 @@ export default function PlatformLanguageMenu() {
                 aria-current={it.current ? 'true' : undefined}
                 onClick={it.onClick}
                 className={`flex items-center justify-between rounded-md px-4 py-3.5 text-base font-bold transition ${
-                  it.current ? 'bg-tile-cream/[0.12]' : 'hover:bg-tile-cream/[0.08]'
+                  it.current ? 'bg-plat-raised' : 'hover:bg-plat-raised/60'
                 }`}
               >
                 {it.name}

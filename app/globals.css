@@ -146,6 +146,12 @@
   /* 平台（/）的強調色：Netflix 式的紅（Zach 指定）。只用在平台外殼，各遊戲保留自己的配色。
      深墨底上 3.9:1 —— 紅字只給大字（平台名），小字一律紅底白字（4.8:1）。 */
   --brand-red: 226 31 38;
+  /* 平台外殼的三層深色。全部用同一個墨色會糊成一片黑（Zach：平台的元件偏黑），
+     所以底、卡片、浮起來的東西（對話框裡的列、按鈕）各亮一階，都帶一點暖色跟奶油底同家族。 */
+  --plat-bg: 28 24 22;       /* #1c1816 頁面底 */
+  --plat-surface: 46 40 37;  /* #2e2825 卡片、對話框 */
+  --plat-raised: 66 58 54;   /* #423a36 對話框裡的選中列、外框按鈕的底 */
+  --plat-muted: 196 187 175; /* #c4bbaf 次要文字：在 surface 上 8.6:1 */
 
   /* 棋盤外框（#3a322c）。外框是「棋盤邊緣那道牆」，所以是深色。 */
   --board-line: 58 50 44;
@@ -485,4 +491,4 @@ body {
 
 /* 平台首頁是深色外殼：整頁底色跟著換，捲到底或回彈時才不會露出奶油色。
    :has 在 Safari 15.4+／Chrome 105+，更舊的瀏覽器只是邊緣露一點奶油色，不影響使用。 */
-html:has(.platform-root), body:has(.platform-root) { background: rgb(var(--tile-ink)); }
+html:has(.platform-root), body:has(.platform-root) { background: rgb(var(--plat-bg)); }

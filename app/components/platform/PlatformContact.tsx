@@ -48,7 +48,7 @@ export default function PlatformContact() {
     }
   };
 
-  const field = 'w-full rounded-md border border-tile-cream/25 bg-tile-ink px-3.5 py-3 text-base text-tile-cream placeholder:text-[#8f857a] focus:border-tile-cream/60 focus:outline-none';
+  const field = 'w-full rounded-md border border-tile-cream/20 bg-plat-bg px-3.5 py-3 text-base text-tile-cream placeholder:text-plat-muted/70 focus:border-tile-cream/60 focus:outline-none';
 
   return (
     <>
@@ -58,25 +58,25 @@ export default function PlatformContact() {
 
       <PlatformDialog isOpen={open} onClose={() => setOpen(false)} title={state === 'sent' ? g.feedback.sent : g.contact.heading}>
         {state === 'sent' ? (
-          <p className="text-sm leading-relaxed text-[#c9c0b4]">{g.contact.sentBody}</p>
+          <p className="text-sm leading-relaxed text-plat-muted">{g.contact.sentBody}</p>
         ) : (
           <form className="flex flex-col gap-3" onSubmit={(e) => { e.preventDefault(); void submit(); }}>
-            <label className="flex flex-col gap-1.5 text-sm font-bold text-[#c9c0b4]">
+            <label className="flex flex-col gap-1.5 text-sm font-bold text-plat-muted">
               {g.feedback.messageLabel}
               <textarea rows={4} maxLength={800} value={message} onChange={(e) => setMessage(e.target.value)} placeholder={g.contact.placeholder} className={`${field} resize-none`} />
             </label>
-            <label className="flex flex-col gap-1.5 text-sm font-bold text-[#c9c0b4]">
+            <label className="flex flex-col gap-1.5 text-sm font-bold text-plat-muted">
               {g.feedback.contactLabel}
               <input type="text" maxLength={120} value={contact} onChange={(e) => setContact(e.target.value)} placeholder={g.feedback.contactPlaceholder} className={field} />
             </label>
-            <p className="text-xs leading-relaxed text-[#a1978b]">{g.contact.note}</p>
+            <p className="text-xs leading-relaxed text-plat-muted">{g.contact.note}</p>
             {/* 紅字在深色底上只有約 3.7:1，小字不夠 —— 用紅色淡底襯米白字 */}
             {state === 'failed' && <p role="alert" className="rounded-md bg-brand-red/20 px-3 py-2 text-sm font-bold">{g.feedback.failed}</p>}
             {/* 平台的主要按鈕是紅底白字（Netflix 式），不是 Wall Go 的深墨 */}
             <button
               type="submit"
               disabled={!canSend}
-              className="mt-1 h-12 rounded-md bg-brand-red text-base font-black text-white transition disabled:bg-tile-cream/[0.12] disabled:text-[#8f857a]"
+              className="mt-1 h-12 rounded-md bg-brand-red text-base font-black text-white transition disabled:bg-plat-raised disabled:text-plat-muted/70"
             >
               {state === 'sending' ? g.feedback.sending : g.feedback.submit}
             </button>

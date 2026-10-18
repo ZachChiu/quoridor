@@ -38,7 +38,7 @@ export default function PlatformDialog({ isOpen, onClose, title, children }: {
       <div
         ref={panelRef}
         tabIndex={-1}
-        className="relative flex max-h-full w-full max-w-md flex-col overflow-hidden rounded-xl bg-[#1f1a18] font-[family-name:var(--font-app)] text-tile-cream outline-none"
+        className="relative flex max-h-full w-full max-w-md flex-col overflow-hidden rounded-xl bg-plat-surface font-[family-name:var(--font-app)] text-tile-cream outline-none"
       >
         <div className="flex shrink-0 items-center justify-between gap-3 px-6 pb-2 pt-5">
           <h2 className="text-xl font-black">{title}</h2>
@@ -46,7 +46,7 @@ export default function PlatformDialog({ isOpen, onClose, title, children }: {
             type="button"
             aria-label={t.ui.close}
             onClick={onClose}
-            className="-mr-2 grid size-11 shrink-0 place-items-center rounded-full bg-tile-cream/[0.1] text-xl transition hover:bg-tile-cream/[0.2]"
+            className="-mr-2 grid size-11 shrink-0 place-items-center rounded-full bg-plat-raised text-xl transition hover:brightness-125"
           >
             <LuX aria-hidden="true" />
           </button>
