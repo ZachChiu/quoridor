@@ -32,7 +32,7 @@ import { useIsoLayoutEffect } from "@/hook/useIsoLayoutEffect";
 import type { Direction } from "@/types/chessboard";
 
 import { joinRoom, getRoom, subscribeRoom, updateGameState, setRoomWinner, sendFeedback, releaseConnection } from '@/utils/gameService';
-import { withTimeout } from '@/utils/withTimeout';
+import { atStep, describeOnlineError, reportOnlineError } from '@/utils/onlineError';
 import { useUser } from '@/contexts/UserContext';
 import type { Room, RoomPlayer } from '@/types/room';
 
@@ -524,10 +524,10 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
       try {
         // Firebase 的載入與匿名登入延後到這裡才觸發，
         // 因此本機對戰（無 roomId）完全不會下載 Firebase SDK。
-        const uid = await withTimeout(ensureUser());
+        const uid = await atStep('auth', ensureUser());
         if (cancelled) return;
 
-        const existing = await withTimeout(getRoom(roomId!));
+        const existing = await atStep('getRoom', getRoom(roomId!));
         if (cancelled) return;
         if (!existing) {
           setError('noRoom');
@@ -556,7 +556,7 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
             displayName: fmt(g.play.playerName, { id: uid.slice(0, 4).toUpperCase() }),
             joinedAt: Date.now(),
           };
-          await withTimeout(joinRoom(roomId!, next, player));
+          await atStep('join', joinRoom(roomId!, next, player));
           assignedKey = next;
         }
 
@@ -611,8 +611,12 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
         if (assignedKey === 'A') setShareModalOpen(true);
       } catch (e) {
         console.error(e);
+        // 卸載後才失敗的（離開頁面、StrictMode 的第一次掛載）不算，畫面也不用動
+        if (cancelled) return;
+        const info = describeOnlineError(e);
         setError('connectFail');
-        track('online_error', { reason: 'connectFail' });
+        track('online_error', { reason: 'connectFail', step: info.step });
+        reportOnlineError('connectFail', info);
         setPhase('error');
       }
     })();

@@ -1,4 +1,5 @@
 import type { Difficulty } from '@/game/ai';
+import type { OnlineFailReason, OnlineStep } from '@/types/online';
 
 /**
  * Google Analytics（GA4）事件。
@@ -45,7 +46,7 @@ type Events = {
   /** 結束畫面按「再來一局」 */
   game_restart: { mode: GameModeParam; players: 2 | 3; difficulty?: Difficulty };
   /** 連線對戰失敗 */
-  online_error: { reason: 'noRoom' | 'roomFull' | 'connectFail' | 'createFail' };
+  online_error: { reason: 'noRoom' | 'roomFull' | OnlineFailReason; step?: OnlineStep };
   /** 分享房間連結 */
   share_room_link: { method: 'native' | 'copy' };
   /** 關掉遊玩方式。step 從 1 起算；finished＝有沒有看到最後一步 */

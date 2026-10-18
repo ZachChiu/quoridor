@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { withTimeout } from '@/utils/withTimeout';
+import { withTimeout, TimeoutError } from '@/utils/withTimeout';
 
 /*
   Firebase 連不上時 SDK 會一直重試，promise 可能永遠不結束 ——
@@ -26,5 +26,12 @@ describe('withTimeout', () => {
     expect(settled).toBe(false);
     await vi.advanceTimersByTimeAsync(1);
     expect(await caught).toContain('逾時');
+  });
+
+  it('逾時丟的是 TimeoutError，回報時才分得出「等太久」與「Firebase 回錯」', async () => {
+    vi.useFakeTimers();
+    const p = withTimeout(new Promise(() => {}), 100).catch((e: unknown) => e);
+    await vi.advanceTimersByTimeAsync(100);
+    expect(await p).toBeInstanceOf(TimeoutError);
   });
 });
