@@ -63,7 +63,7 @@ export default function OnlineClient() {
         console.error('[online] 開房失敗：', err);
         const info = describeOnlineError(err);
         setCreateFailed(true);
-        track('online_error', { reason: 'createFail', step: info.step });
+        track('online_error', { reason: 'createFail', fail_step: info.step });
         reportOnlineError('createFail', info);
       }
     })();
