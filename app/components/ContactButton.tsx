@@ -14,7 +14,7 @@ import { track } from '@/utils/analytics';
  * 打開的是同一個回饋視窗（variant="contact"），存進同一個 feedback，
  * 以 mode: 'contact' 區分，不附棋譜。
  */
-export default function ContactButton({ onDark = false }: { onDark?: boolean } = {}) {
+export default function ContactButton() {
   const g = useGameText();
   const { ensureUser } = useUser();
   const [open, setOpen] = useState(false);
@@ -26,11 +26,7 @@ export default function ContactButton({ onDark = false }: { onDark?: boolean } =
         onClick={() => { setOpen(true); track('contact_open', {}); }}
         aria-label={g.contact.button}
         aria-haspopup="dialog"
-        className={`relative grid size-10 place-items-center rounded-full text-xl transition after:absolute after:-inset-0.5 after:content-[''] active:scale-95 ${
-          onDark
-            ? 'bg-tile-cream/[0.16] text-tile-cream hover:bg-tile-cream/[0.26]'
-            : 'bg-tile-ink/[0.06] text-ink-soft hover:bg-tile-ink/[0.12]'
-        }`}
+        className="relative grid size-10 place-items-center rounded-full bg-tile-ink/[0.06] text-xl text-ink-soft transition after:absolute after:-inset-0.5 after:content-[''] hover:bg-tile-ink/[0.12] active:scale-95"
       >
         <LuMessageCircle aria-hidden="true" />
       </button>

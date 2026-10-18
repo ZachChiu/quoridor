@@ -42,6 +42,12 @@ export type Wipe = {
    * 放在裡面的話會被那個只有幾十 px 的起點方框夾住，四個字斷成直排。
    */
   big?: boolean;
+  /**
+   * 離場的方式。預設 shrink：色塊縮回去、把圖示吃掉。
+   * fade：蓋滿之後整塊原地淡出。從平台進遊戲用這個 —— 平台與遊戲的風格差很多，
+   * 縮回卡片的位置會像「又回到平台」，淡出才是「打開之後就在遊戲裡了」（Zach 指定）。
+   */
+  exit?: 'shrink' | 'fade';
   iconColor?: string;
   fg?: string;
 };
@@ -167,6 +173,10 @@ const WipeOverlay: React.FC<Props> = ({ phase, wipe, onDone }) => {
       run(face, k.face, opts(540, 60));
       // 大標在色塊快蓋滿時才淡入 —— 早了會疊在還看得見的舊畫面上
       run(big, [{ opacity: 0 }, { opacity: 1 }], opts(260, 360, CSS_IN_OUT_CUBIC));
+    } else if (wipe.exit === 'fade') {
+      // 色塊維持蓋滿（render 時已經是 scale(s)），整塊淡出；字一起淡掉
+      run(shape, [{ opacity: 1 }, { opacity: 0 }], opts(520, 80, CSS_IN_OUT_CUBIC));
+      run(big, [{ opacity: 1 }, { opacity: 0 }], opts(180, 0, CSS_IN_OUT_CUBIC));
     } else {
       /*
         一段連續的縮小，不拆段。

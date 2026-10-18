@@ -1,9 +1,9 @@
 import Link from 'next/link';
 import { GiDevilMask, GiHourglass } from 'react-icons/gi';
 import { LuInfo, LuPlay } from 'react-icons/lu';
-import LanguageSwitcher from '@/components/LanguageSwitcher';
-import ContactButton from '@/components/ContactButton';
 import WipeLink from '@/components/WipeLink';
+import PlatformLanguageMenu from '@/components/platform/PlatformLanguageMenu';
+import PlatformContact from '@/components/platform/PlatformContact';
 import { BRAND } from '@/brand';
 import { SEASONS, gameName, type CatalogGame } from '@/games/catalog';
 import { getMessages, siteName } from '@/i18n';
@@ -34,10 +34,9 @@ export default function PlatformView({ locale }: { locale: Locale }) {
         <Link href={localePath(locale, '/')} className="text-2xl font-black tracking-tight text-brand-red">
           {BRAND}
         </Link>
-        <div className="flex gap-1">
-          <ContactButton onDark />
-          <LanguageSwitcher onDark />
-        </div>
+        {/* 平台自己的元件（components/platform/），不是 Wall Go 的圓鈕與奶油底 Modal。
+            聯絡我們放到頁尾當文字連結 */}
+        <PlatformLanguageMenu />
       </header>
 
       <main className="mx-auto flex max-w-[1360px] flex-col gap-9 px-4 pb-14">
@@ -100,6 +99,7 @@ export default function PlatformView({ locale }: { locale: Locale }) {
 
         <footer className="flex flex-wrap justify-between gap-x-6 gap-y-2 border-t border-tile-cream/15 pt-5 text-[13px] font-medium leading-relaxed text-[#a1978b]">
           <span>{p.disclaimer}</span>
+          <PlatformContact />
         </footer>
       </main>
 

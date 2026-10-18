@@ -59,8 +59,8 @@ type Events = {
   locale_switch: { from: string; to: string };
   /** 打開首頁的「聯絡我們」 */
   contact_open: Record<string, never>;
-  /** 送出回饋。source：對局後的回饋（game）或首頁的聯絡我們（contact） */
-  feedback_send: { source: 'game' | 'contact'; rating?: number };
+  /** 送出回饋。source：對局後的回饋（game）、Wall Go 首頁的聯絡我們（contact）、平台頁尾的聯絡我們（platform） */
+  feedback_send: { source: 'game' | 'contact' | 'platform'; rating?: number };
 };
 
 export type AnalyticsEvent = keyof Events;
