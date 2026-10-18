@@ -42,32 +42,31 @@ export default function PlatformView({ locale }: { locale: Locale }) {
       <main className="mx-auto flex max-w-[1360px] flex-col gap-9 px-4 pb-14">
         <h1 className="sr-only">{p.heading}</h1>
 
-        {/* 推薦作品：目前唯一能玩的 Wall Go。
-            大小以「一個畫面看得完整張卡片、底下還露出下一排」為準（Zach：大卡片偏大看不到全貌）：
-            手機上說明句收掉、兩顆按鈕並排；桌機限高。 */}
-        <section className="relative flex min-h-[440px] items-end overflow-hidden rounded-2xl bg-tile-blue md:min-h-[min(520px,max(400px,40vw))]">
+        {/* 推薦作品：目前唯一能玩的 Wall Go */}
+        {/* 手機上文字區塊幾乎跟畫面一樣寬，區塊要夠高主視覺才露得出來 */}
+        <section className="relative flex min-h-[680px] items-end overflow-hidden rounded-3xl bg-tile-blue md:min-h-[min(640px,max(520px,56vw))]">
           {/* 主視覺：Wall Go 的棋盤放大、斜擺、裁出畫面右上角 */}
           {/* eslint-disable-next-line @next/next/no-img-element -- 靜態匯出、SVG，不需要 next/image */}
           <img
             src="/games/wall-go/key-art.svg"
             alt=""
-            className="pointer-events-none absolute right-[clamp(-220px,-6vw,-60px)] top-[clamp(-110px,-6vw,-60px)] w-[clamp(440px,52vw,720px)] rotate-[-14deg]"
+            className="pointer-events-none absolute right-[clamp(-260px,-8vw,-60px)] top-[clamp(-120px,-6vw,-40px)] w-[clamp(560px,62vw,860px)] rotate-[-14deg]"
           />
-          <div className="relative flex max-w-[520px] flex-col gap-3 rounded-tr-2xl bg-tile-blue p-6 md:gap-4 md:p-[clamp(28px,3.5vw,48px)]">
+          <div className="relative flex max-w-[560px] flex-col gap-4 rounded-tr-3xl bg-tile-blue p-[clamp(24px,4vw,56px)]">
             <span className="self-start rounded-md bg-brand-red px-2.5 py-0.5 text-[13px] font-black text-white">{p.heroBadge}</span>
-            <h2 className="text-[clamp(40px,5.5vw,76px)] font-black leading-[0.95] tracking-tight">
+            <h2 className="text-[clamp(48px,7vw,96px)] font-black leading-[0.95] tracking-tight">
               {t.home.titleLine1}
               {t.home.titleLine2 && <><br />{t.home.titleLine2}</>}
             </h2>
             <p className="text-[15px] font-bold">{p.heroMeta}</p>
-            {/* 19px 粗體算大字：米白在藍底上 4.4:1，大字的門檻是 3:1。手機上收掉，卡片才不會比畫面高 */}
-            <p className="hidden text-[19px] font-bold leading-relaxed md:block">{p.heroBody}</p>
-            <div className="flex flex-wrap gap-2.5 pt-1 md:gap-3">
-              <WipeLink href={localePath(locale, wallGo())} color={WALL_GO_BLUE} className="flex h-12 items-center gap-2 rounded-xl bg-tile-cream px-5 text-base font-black text-tile-ink md:h-[52px] md:px-7 md:text-lg">
+            {/* 19px 粗體算大字：米白在藍底上 4.4:1，大字的門檻是 3:1 */}
+            <p className="text-[19px] font-bold leading-relaxed">{p.heroBody}</p>
+            <div className="flex flex-wrap gap-3 pt-1">
+              <WipeLink href={localePath(locale, wallGo())} color={WALL_GO_BLUE} className="flex h-[54px] items-center gap-2.5 rounded-xl bg-tile-cream px-7 text-lg font-black text-tile-ink">
                 <LuPlay aria-hidden="true" className="fill-current" />{p.play}
               </WipeLink>
               {/* 規則頁的頂部是森綠，轉場就擴散森綠（跟 Wall Go 首頁「遊戲規則」磁磚同色） */}
-              <WipeLink href={localePath(locale, wallGo('/rules'))} color={RULES_GREEN} className="flex h-12 items-center gap-2 rounded-xl bg-plat-bg px-5 text-base font-black text-tile-cream md:h-[52px] md:px-6 md:text-lg">
+              <WipeLink href={localePath(locale, wallGo('/rules'))} color={RULES_GREEN} className="flex h-[54px] items-center gap-2.5 rounded-xl bg-plat-bg px-6 text-lg font-black text-tile-cream">
                 <LuInfo aria-hidden="true" />{p.rules}
               </WipeLink>
             </div>
