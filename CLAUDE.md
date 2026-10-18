@@ -297,6 +297,12 @@ GA 由 `app/shell.tsx` 的 `<GoogleAnalytics>` 載入（只有 `NEXT_PUBLIC_APP_
 
 GitHub Actions（`.github/workflows/`）負責建置並將 `/out` 同步至 AWS S3。設定 `SITE_URL` 環境變數可覆蓋預設的 `https://quoridorgame.com` 以產生 sitemap。
 
+## 數據中心
+
+數據追蹤、方向與驗收由 `~/Desktop/projects/sites-data` 的對話（目前叫「大腦」）負責。分工與回報方式：
+
+@~/Desktop/projects/sites-data/protocol.md
+
 ## 其他規範
 
 每次對話結尾都要說：Zach + 隨機稱讚語
