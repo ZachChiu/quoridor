@@ -6,7 +6,7 @@ import PlatformLanguageMenu from '@/components/platform/PlatformLanguageMenu';
 import PlatformContact from '@/components/platform/PlatformContact';
 import { BRAND } from '@/brand';
 import PlatformMark from '@/components/PlatformMark';
-import { SEASONS, gameName, type CatalogGame } from '@/games/catalog';
+import { PLAYABLE, SEASONS, gameName, playableFirst, type CatalogGame } from '@/games/catalog';
 import { getMessages } from '@/i18n';
 import { localePath, type Locale } from '@/i18n/locales';
 import { wallGo } from '@/i18n/routes';
@@ -76,6 +76,18 @@ export default function PlatformView({ locale }: { locale: Locale }) {
           </div>
         </section>
 
+        {/* 現在就能玩：已經做成線上版的遊戲集中一排（各季那幾排裡也有，Netflix 的排與排本來就會重複） */}
+        <section id="play-now" className="flex flex-col gap-3">
+          <h2 className="text-[21px] font-black">{p.heroBadge}</h2>
+          <ul className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-2">
+            {PLAYABLE.map((game) => (
+              <li key={game.name} className="shrink-0">
+                <GameCard game={game} locale={locale} playable={p.playable} guide={p.guide} />
+              </li>
+            ))}
+          </ul>
+        </section>
+
         {SEASONS.map((season) => (
           <section key={season.id} id={`season-${season.id.slice(1)}`} className="flex flex-col gap-3">
             <h2 className="flex flex-wrap items-center gap-2.5 text-[21px] font-black">
@@ -91,7 +103,7 @@ export default function PlatformView({ locale }: { locale: Locale }) {
               </div>
             ) : (
               <ul className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-2">
-                {season.games.map((game) => (
+                {playableFirst(season.games).map((game) => (
                   <li key={game.name} className="shrink-0">
                     <GameCard game={game} locale={locale} playable={p.playable} guide={p.guide} />
                   </li>
@@ -126,14 +138,26 @@ function GameCard({ game, locale, playable, guide }: {
 
   if (game.playable && game.look) {
     // 能玩的遊戲用自己的識別（主色＋主視覺），點進去擴散自己的顏色
-    const { card, wipe, art } = game.look;
+    const { card, wipe, art, cover } = game.look;
     return (
       <WipeLink href={localePath(locale, game.playable)} color={wipe} aria-label={name} className={`${CARD} ${card}`}>
-        {/* eslint-disable-next-line @next/next/no-img-element -- 同上 */}
-        <img src={art} alt="" className="pointer-events-none absolute right-[-70px] top-[-50px] w-[230px] rotate-[-14deg]" />
+        {cover ? (
+          <>
+            {/* AI 畫的橫幅插畫鋪滿；名字壓在底部的黑色漸層上 */}
+            {/* eslint-disable-next-line @next/next/no-img-element -- 同上 */}
+            <img src={art} alt="" loading="lazy" className="pointer-events-none absolute inset-0 size-full object-cover" />
+            <span aria-hidden="true" className="absolute inset-x-0 bottom-0 h-3/5 bg-gradient-to-t from-black/80 to-transparent" />
+            <span className="absolute inset-x-3 bottom-2.5 text-[22px] font-black leading-none text-white">{name}</span>
+          </>
+        ) : (
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element -- 同上 */}
+            <img src={art} alt="" className="pointer-events-none absolute right-[-70px] top-[-50px] w-[230px] rotate-[-14deg]" />
+            {/* 名字壓在主視覺上會看不清楚，墊一塊卡片同色的底 */}
+            <span className={`absolute bottom-2 left-2 rounded-md px-1.5 py-1 text-[22px] font-black leading-none ${card}`}>{name}</span>
+          </>
+        )}
         <span className="absolute left-3 top-3 rounded-md bg-brand-red px-2 py-0.5 text-xs font-black text-white">▶ {playable}</span>
-        {/* 名字壓在主視覺上會看不清楚，墊一塊卡片同色的底 */}
-        <span className={`absolute bottom-2 left-2 rounded-md px-1.5 py-1 text-[22px] font-black leading-none ${card}`}>{name}</span>
       </WipeLink>
     );
   }

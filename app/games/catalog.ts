@@ -6,14 +6,21 @@
  * 查證後加進 app/i18n/glossary.md，再在這裡補 names。
  *
  * playable：已經做成線上版的遊戲，值是站內路徑；look 是它在平台上的卡片長相（各遊戲自己的識別）。
+ * 第二批五款（時間拍賣、九子棋、盲眼五子棋、均衡曼卡拉、騎士巡邏）是 2026-10-20 的試做：
+ * 頁面 noindex、主視覺是 AI 畫的，各自一種畫風（不沿用 Wall Go 的平塗或虎羊棋的米提拉）。
  */
 export type GameLook = {
   /** 卡片底色與文字色（Tailwind class） */
   card: string;
   /** 從平台點進去時轉場擴散的顏色 */
   wipe: string;
-  /** 主視覺（public/ 底下的 SVG） */
+  /** 主視覺（public/ 底下的圖） */
   art: string;
+  /**
+   * 主視覺鋪滿整張卡片（AI 畫的橫幅插畫）；沒有的話是 Wall Go 那種斜擺在右上角的棋盤 SVG。
+   * 名字壓在底部的漸層上。
+   */
+  cover?: boolean;
 };
 
 export type CatalogGame = {
@@ -40,21 +47,24 @@ export const SEASONS: Season[] = [
         look: { card: 'bg-tile-blue text-tile-cream', wipe: 'rgb(var(--tile-blue))', art: '/games/wall-go/key-art.svg' } },
       // 中文「虎羊棋」是描述性副名、韓文「바그찰」是節目 RULE 卡上的寫法（見 glossary）
       { name: 'Bagh Chal', names: { 'zh-TW': '虎羊棋', 'zh-Hans': '虎羊棋', ko: '바그찰' }, playable: '/bagh-chal',
-        look: { card: 'bg-tile-orange text-tile-ink', wipe: 'rgb(var(--tile-orange))', art: '/games/bagh-chal/key-art.svg' } },
+        look: { card: 'bg-[#e3a43c] text-tile-ink', wipe: '#f1e6cd', art: '/games/bagh-chal/key-art.webp', cover: true } },
       { name: 'Crooked Cops' },
       { name: 'Remove One' },
       { name: 'Unknown' },
-      { name: 'Time Auction' },
+      { name: 'Time Auction', playable: '/time-auction',
+        look: { card: 'bg-[#5a1422] text-white', wipe: '#5a1422', art: '/games/time-auction/key-art.webp', cover: true } },
       { name: 'Halloween Monster' },
       { name: "Sniper Hold'em" },
       { name: 'Treasure Island' },
       { name: 'Triple Dice' },
-      { name: 'Balance Mancala' },
+      { name: 'Balance Mancala', playable: '/balance-mancala',
+        look: { card: 'bg-[#141b3d] text-white', wipe: '#141b3d', art: '/games/balance-mancala/key-art.webp', cover: true } },
       { name: 'Doubt and Bet' },
       { name: 'Equation Pyramid' },
       { name: 'Big Small' },
       { name: 'Question and Truth' },
-      { name: "Knight's Tour" },
+      { name: "Knight's Tour", playable: '/knights-tour',
+        look: { card: 'bg-[#f2c230] text-tile-ink', wipe: '#f2c230', art: '/games/knights-tour/key-art.webp', cover: true } },
     ],
   },
   {
@@ -72,8 +82,10 @@ export const SEASONS: Season[] = [
       { name: 'Scale Game' },
       { name: 'Montage' },
       { name: 'Four Player Three in a Row' },
-      { name: 'Blind Gomoku' },
-      { name: "Nine Men's Morris" },
+      { name: 'Blind Gomoku', playable: '/blind-gomoku',
+        look: { card: 'bg-[#e8457f] text-white', wipe: '#e8457f', art: '/games/blind-gomoku/key-art.webp', cover: true } },
+      { name: "Nine Men's Morris", playable: '/nine-mens-morris',
+        look: { card: 'bg-[#1d3b8a] text-white', wipe: '#1d3b8a', art: '/games/nine-mens-morris/key-art.webp', cover: true } },
       { name: 'Hexagon' },
     ],
   },
@@ -82,3 +94,12 @@ export const SEASONS: Season[] = [
 export function gameName(game: CatalogGame, locale: string): string {
   return game.names?.[locale] ?? game.name;
 }
+
+/** 已經能玩的遊戲（平台首頁最上面那一排），新的一季排前面 */
+export const PLAYABLE: CatalogGame[] = SEASONS.flatMap((s) => s.games).filter((g) => g.playable && g.look);
+
+/** 一季裡能玩的排前面，其他照節目播出順序 */
+export function playableFirst(games: CatalogGame[]): CatalogGame[] {
+  return [...games].sort((a, b) => Number(!!b.playable) - Number(!!a.playable));
+}
+
