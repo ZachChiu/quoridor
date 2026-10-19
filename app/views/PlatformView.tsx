@@ -34,7 +34,7 @@ export default function PlatformView({ locale }: { locale: Locale }) {
       <header className="mx-auto flex max-w-[1360px] items-center justify-between gap-4 p-4">
         <Link href={localePath(locale, '/')} className="flex items-center gap-2.5 text-2xl font-black tracking-tight text-brand-red">
           {/* 跟遊戲首頁左上那顆同一個圖示、同一個位置 */}
-          <PlatformMark className="bg-plat-surface" />
+          <PlatformMark />
           {BRAND}
         </Link>
         {/* 平台自己的元件（components/platform/），不是 Wall Go 的圓鈕與奶油底 Modal。
