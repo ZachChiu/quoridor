@@ -43,19 +43,22 @@ export default function MancalaSetup({ locale, initial, onStart }: { locale: Loc
   return (
     <div className="flex min-h-dvh flex-col items-center font-[family-name:var(--font-app)]">
       <PlatformCorner locale={locale} />
-      <header className="w-full" style={{ background: NAVY, color: CREAM }}>
-        {artOk && (
-          // eslint-disable-next-line @next/next/no-img-element -- 靜態匯出的單張主視覺，不需要 next/image
-          <img src="/games/balance-mancala/key-art.webp" alt="" onError={() => setArtOk(false)}
-            className="mx-auto block h-[min(27dvh,240px)] w-full max-w-[760px] object-cover object-[70%_50%]" />
-        )}
-        <div className={`mx-auto max-w-[460px] px-5 pb-5 text-center ${artOk ? 'pt-1' : 'pt-16'}`}>
-          <p className="text-[11px] font-bold tracking-wide" style={{ color: GOLD }}>{t.showRef}</p>
-          <h1 className="mt-1 text-[clamp(2rem,6dvh,3.25rem)] font-black leading-[1.05] tracking-tight">{t.title}</h1>
-          {t.altName && <p className="mt-1 text-sm font-bold opacity-75">{t.altName}</p>}
-          <p className="mt-2 text-sm font-bold opacity-90">{t.tagline}</p>
-        </div>
-      </header>
+      {/* 海報卡往內縮、上面留出角落圓鈕的高度：主視覺頂到畫面上緣時，右上那兩顆圓鈕疊在深色圖上看不見 */}
+      <div className="w-full max-w-[460px] px-5 pt-[60px]">
+        <header className="w-full overflow-hidden rounded-3xl" style={{ background: NAVY, color: CREAM }}>
+          {artOk && (
+            // eslint-disable-next-line @next/next/no-img-element -- 靜態匯出的單張主視覺，不需要 next/image
+            <img src="/games/balance-mancala/key-art.webp" alt="" onError={() => setArtOk(false)}
+              className="block h-[min(24dvh,220px)] w-full object-cover object-[70%_50%]" />
+          )}
+          <div className={`px-5 pb-5 text-center ${artOk ? 'pt-2' : 'pt-6'}`}>
+            <p className="text-[11px] font-bold tracking-wide" style={{ color: GOLD }}>{t.showRef}</p>
+            <h1 className="mt-1 text-[clamp(2rem,6dvh,3.25rem)] font-black leading-[1.05] tracking-tight">{t.title}</h1>
+            {t.altName && <p className="mt-1 text-sm font-bold opacity-75">{t.altName}</p>}
+            <p className="mt-2 text-sm font-bold opacity-90">{t.tagline}</p>
+          </div>
+        </header>
+      </div>
 
       <main className="flex w-full max-w-[460px] flex-col gap-5 p-5">
         <div className="grid grid-cols-2 gap-1 rounded-2xl bg-tile-ink/[0.07] p-1" role="radiogroup" aria-label={t.modeSolo + ' / ' + t.modeLocal}>
