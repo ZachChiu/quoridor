@@ -169,8 +169,11 @@ export default function BaghChalClient({ locale }: { locale: Locale }) {
       </div>
 
       {/* 棋盤：線用 SVG 畫，交叉點是按鈕（鍵盤與讀屏都點得到） */}
-      <div className="relative mt-2 aspect-square w-full max-w-[520px] rounded-3xl bg-primary-50 p-[4%]">
-        <div className="relative size-full">
+      {/* 外層只管內距，正方形放在內層自己身上（aspect-square 不跟 padding 寫在同一個元素）：
+          兩者寫在一起時，iPhone 的 WebKit 算出來的內框比寬度高一點 —— 交叉點按鈕是照高度的 %
+          定位、線是照正方形畫的，於是點和棋子越往下越偏上（Zach 截圖：歪歪的） */}
+      <div className="mt-2 w-full max-w-[520px] rounded-3xl bg-primary-50 p-[4%]">
+        <div className="relative aspect-square w-full">
           <svg viewBox="0 0 100 100" className="absolute inset-0 size-full" aria-hidden="true">
             {/* 線是走法的路徑，不是裝飾，但太粗會跟棋子搶（Zach：線有點粗） */}
             <g stroke="rgb(var(--board-line))" strokeWidth="0.5" strokeLinecap="round">
