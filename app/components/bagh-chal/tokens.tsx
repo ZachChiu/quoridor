@@ -21,3 +21,7 @@ export const TIGER_SRC = '/games/bagh-chal/tiger.webp';
 export const GOAT_SRC = '/games/bagh-chal/goat.webp';
 export const TigerToken = token(TIGER_SRC);
 export const GoatToken = token(GOAT_SRC);
+/** 選單用的三枚圓牌（同一套畫風）：虎羊對看＝兩人對戰、蠟封信＝邀請朋友、貝葉經上的棋盤＝規則 */
+export const LocalToken = token('/games/bagh-chal/local.webp');
+export const InviteToken = token('/games/bagh-chal/invite.webp');
+export const RulesToken = token('/games/bagh-chal/rules.webp');
