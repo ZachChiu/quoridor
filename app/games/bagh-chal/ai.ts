@@ -14,10 +14,15 @@ import { play as applyMove, legalMoves, trappedTigers, CAPTURES_TO_WIN, type Bag
  */
 export type Difficulty = 'easy' | 'normal' | 'hard';
 
-const SETTINGS: Record<Difficulty, { depth: number; noise: number }> = {
-  easy: { depth: 1, noise: 40 },
-  normal: { depth: 3, noise: 6 },
-  hard: { depth: 5, noise: 0 },
+/**
+ * blunder：這一手直接亂走的機率。只靠搜尋深度分級的話，連一級的羊都不會把羊送給老虎吃 ——
+ * 一層搜尋就看得到「放這裡下一手會被吃」（Zach 回報：當老虎完全吃不到羊）。
+ * 低難度要像人一樣會失誤，玩家才有東西可以吃、有破綻可以抓。
+ */
+const SETTINGS: Record<Difficulty, { depth: number; noise: number; blunder: number }> = {
+  easy: { depth: 1, noise: 40, blunder: 0.4 },
+  normal: { depth: 3, noise: 6, blunder: 0.1 },
+  hard: { depth: 5, noise: 0, blunder: 0 },
 };
 
 const WIN = 100_000;
@@ -62,7 +67,11 @@ function negamax(s: BaghState, depth: number, alpha: number, beta: number): numb
 export function chooseMove(s: BaghState, difficulty: Difficulty = 'normal', random: () => number = Math.random): Move | null {
   const moves = order(legalMoves(s));
   if (moves.length === 0) return null;
-  const { depth, noise } = SETTINGS[difficulty];
+  const { depth, noise, blunder } = SETTINGS[difficulty];
+  // 能直接贏還是會贏 —— 失誤只發生在「不是決勝手」的時候
+  const winning = moves.find((m) => applyMove(s, m).winner === s.turn);
+  if (winning) return winning;
+  if (blunder && random() < blunder) return moves[Math.floor(random() * moves.length)];
   let best: Move = moves[0];
   let bestScore = -Infinity;
   for (const m of moves) {
