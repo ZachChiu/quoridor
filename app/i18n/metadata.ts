@@ -17,7 +17,7 @@ const PAGE_KEY = {
   '/wall-go': 'home', '/wall-go/rules': 'rules', '/wall-go/solo': 'solo',
   '/wall-go/local': 'local', '/wall-go/online': 'online', '/wall-go/replay': 'replay',
   // Bagh Chal 的子頁先共用遊戲首頁那張分享圖（圖上是遊戲名，子頁之間差別不大）
-  '/bagh-chal': 'bagh-chal', '/bagh-chal/rules': 'bagh-chal', '/bagh-chal/solo': 'bagh-chal', '/bagh-chal/local': 'bagh-chal',
+  '/bagh-chal': 'bagh-chal', '/bagh-chal/rules': 'bagh-chal', '/bagh-chal/solo': 'bagh-chal', '/bagh-chal/local': 'bagh-chal', '/bagh-chal/online': 'bagh-chal',
 } as const;
 export type PagePath = keyof typeof PAGE_KEY;
 
@@ -72,6 +72,8 @@ function copy(locale: Locale, path: PagePath) {
       return { title: t.baghChal.rulesMetaTitle, description: t.baghChal.rulesMetaDescription, ogTitle: t.baghChal.rulesMetaTitle, ogDescription: t.baghChal.rulesMetaDescription };
     case '/bagh-chal/solo':
       return { title: `${t.baghChal.title} · ${t.baghChal.vsAi}`, description: t.baghChal.metaDescription, ogTitle: t.baghChal.ogTitle, ogDescription: t.baghChal.ogDescription };
+    case '/bagh-chal/online':
+      return { title: `${t.baghChal.title} · ${t.baghChal.onlineTitle}`, description: t.baghChal.metaDescription, ogTitle: t.baghChal.ogTitle, ogDescription: t.baghChal.ogDescription };
     case '/bagh-chal/local':
       return { title: `${t.baghChal.title} · ${t.baghChal.local}`, description: t.baghChal.metaDescription, ogTitle: t.baghChal.ogTitle, ogDescription: t.baghChal.ogDescription };
     case '/wall-go/rules':

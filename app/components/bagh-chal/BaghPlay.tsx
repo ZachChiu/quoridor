@@ -13,7 +13,11 @@ import { chooseMove, type Difficulty } from '@/games/bagh-chal/ai';
 import { BaghBoard } from './BaghBoard';
 import { RulesStepsPaged } from './BaghRulesSteps';
 
-export type BaghMode = { kind: 'local' } | { kind: 'ai'; human: Side; difficulty: Difficulty };
+export type BaghMode =
+  | { kind: 'local' }
+  | { kind: 'ai'; human: Side; difficulty: Difficulty }
+  /** 連線：局面由房間推導（BaghOnline 持有），這裡只負責畫與把自己的那一手交出去 */
+  | { kind: 'online'; human: Side; game: BaghState; onMove: (m: Move) => void; newRoom: () => void };
 
 const fmt = (s: string, n: number) => s.replace('{n}', String(n));
 
@@ -30,13 +34,18 @@ export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghM
   const t = useMessages();
   const b = t.baghChal;
   const { navigate } = useTransition();
-  const [game, setGame] = useState<BaghState>(createGame);
+  const [localGame, setGame] = useState<BaghState>(createGame);
+  const game = mode.kind === 'online' ? mode.game : localGame;
+  const online = mode.kind === 'online';
   const [selected, setSelected] = useState<Point | null>(null);
   const [helpOpen, setHelpOpen] = useState(false);
 
   const aiSide: Side | null = mode.kind === 'ai' ? (mode.human === 'tiger' ? 'goat' : 'tiger') : null;
   const aiTurn = !!aiSide && !game.winner && game.turn === aiSide;
-  const legal = useMemo(() => (aiTurn ? [] : legalMoves(game)), [game, aiTurn]);
+  // 連線時輪到對方：跟電腦的回合一樣不能動，但狀態寫「輪到對方」
+  const theirTurn = online && !game.winner && game.turn !== mode.human;
+  const locked = aiTurn || theirTurn;
+  const legal = useMemo(() => (locked ? [] : legalMoves(game)), [game, locked]);
 
   // 電腦的回合：讓出一格畫面再算（搜尋在主執行緒，幾毫秒），停一下看起來也像在想
   useEffect(() => {
@@ -48,20 +57,30 @@ export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghM
   }, [aiTurn, mode, game]);
 
   const restart = () => { setGame(createGame()); setSelected(null); };
+  // 連線局沒有悔棋與重來（要兩個人都同意，先不做）；結束後「再來一局」是再開一間房、重新傳連結
+  const [endClosed, setEndClosed] = useState(false);
+  const again = mode.kind === 'online' ? mode.newRoom : restart;
+  const side = (s: Side) => (s === 'tiger' ? b.tiger : b.goat);
+  const whoAmI = mode.kind === 'local' ? '' : mode.kind === 'online' ? b.youAre.replace('{side}', side(mode.human)) : `${b.playAs}：${side(mode.human)}`;
   const home = () => navigate(localePath(locale, BAGH_CHAL));
 
+  const commit = (m: Move) => {
+    if (mode.kind === 'online') mode.onMove(m);
+    else setGame(applyMove(game, m));
+  };
+
   const pick = (p: Point) => {
-    if (aiTurn || game.winner) return;
+    if (locked || game.winner) return;
     if (game.turn === 'goat' && game.goatsInHand > 0) {
       const m = legal.find((x) => x.kind === 'place' && x.to === p);
-      if (m) setGame(applyMove(game, m));
+      if (m) commit(m);
       return;
     }
     const own = game.turn === 'tiger' ? 'T' : 'G';
     if (game.board[p] === own) { setSelected(selected === p ? null : p); return; }
     if (selected !== null) {
       const m = legal.find((x) => x.kind !== 'place' && x.from === selected && x.to === p);
-      if (m) { setGame(applyMove(game, m)); setSelected(null); }
+      if (m) { commit(m); setSelected(null); }
     }
   };
 
@@ -77,13 +96,14 @@ export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghM
   const last = game.history[game.history.length - 1];
   // 跟電腦下時退到「又輪到你」：電腦已經回了就退兩手。電腦先手（你當老虎）的第一手不能退
   const undoSteps = mode.kind === 'ai' ? (game.turn === mode.human ? 2 : 1) : 1;
-  const canUndo = !aiTurn && game.history.length >= undoSteps;
+  const canUndo = !locked && !online && game.history.length >= undoSteps;
   const doUndo = () => { setGame(undo(game, undoSteps)); setSelected(null); };
 
-  const status = game.winner ? '' : aiTurn ? b.thinking : mode.kind === 'ai' ? b.yourTurn : game.turn === 'tiger' ? b.turnTiger : b.turnGoat;
+  const status = game.winner ? '' : aiTurn ? b.thinking : theirTurn ? b.opponentTurn
+    : mode.kind === 'local' ? (game.turn === 'tiger' ? b.turnTiger : b.turnGoat) : b.yourTurn;
   // 第二行提示：新手最常卡住的兩件事 —— 羊不能吃、老虎要「跳過」才吃得到
   const canCapture = game.turn === 'tiger' && capturers.size > 0 && selected === null;
-  const hint = game.winner || aiTurn ? ''
+  const hint = game.winner || locked ? ''
     : game.turn === 'tiger' ? (canCapture ? b.hintCapture : b.hintTiger)
     : game.goatsInHand > 0 ? b.hintPlace : b.hintGoat;
   const result = game.winner === 'tiger' ? { title: b.winTiger, body: b.winTigerBody, band: 'bg-tile-orange', fg: 'text-tile-ink' }
@@ -123,8 +143,10 @@ export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghM
         <h1 className="text-xl font-black">{b.title}</h1>
         <div className="flex gap-1.5">
           <button type="button" onClick={() => setHelpOpen(true)} aria-label={b.rulesHeading} className={round}><LuCircleHelp aria-hidden="true" /></button>
-          <button type="button" onClick={doUndo} disabled={!canUndo} aria-label={b.undo} className={round}><LuUndo2 aria-hidden="true" /></button>
-          <button type="button" onClick={restart} aria-label={b.restart} className={round}><LuRotateCcw aria-hidden="true" /></button>
+          {!online && <>
+            <button type="button" onClick={doUndo} disabled={!canUndo} aria-label={b.undo} className={round}><LuUndo2 aria-hidden="true" /></button>
+            <button type="button" onClick={restart} aria-label={b.restart} className={round}><LuRotateCcw aria-hidden="true" /></button>
+          </>}
         </div>
       </div>
       <div className="mt-4 flex w-full max-w-[520px] flex-col items-center gap-3 lg:hidden">
@@ -142,33 +164,33 @@ export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghM
       <aside className="hidden w-[320px] shrink-0 flex-col gap-5 lg:flex">
         <div>
           <h1 className="text-4xl font-black leading-none">{b.title}</h1>
-          <p className="mt-1.5 text-sm font-bold text-ink-soft">{b.subtitle}{mode.kind === 'ai' ? ` · ${b.playAs}：${mode.human === 'tiger' ? b.tiger : b.goat}` : ` · ${b.local}`}</p>
+          <p className="mt-1.5 text-sm font-bold text-ink-soft">{b.subtitle} · {mode.kind === 'local' ? b.local : mode.kind === 'online' ? `${b.onlineTitle} · ${whoAmI}` : whoAmI}</p>
         </div>
         {statusCards}
         {statusLine}
         <div className="grid grid-cols-2 gap-2.5">
-          <button type="button" onClick={doUndo} disabled={!canUndo} className={wide}><LuUndo2 aria-hidden="true" />{b.undo}</button>
-          <button type="button" onClick={restart} className={wide}><LuRotateCcw aria-hidden="true" />{b.restart}</button>
+          {!online && <>
+            <button type="button" onClick={doUndo} disabled={!canUndo} className={wide}><LuUndo2 aria-hidden="true" />{b.undo}</button>
+            <button type="button" onClick={restart} className={wide}><LuRotateCcw aria-hidden="true" />{b.restart}</button>
+          </>}
           <button type="button" onClick={() => setHelpOpen(true)} className={wide}><LuCircleHelp aria-hidden="true" />{b.rulesHeading}</button>
           <button type="button" onClick={home} className={wide}><LuHouse aria-hidden="true" />{b.menu}</button>
         </div>
       </aside>
 
-      {mode.kind === 'ai' && (
-        <p className="mt-3 text-xs font-bold text-ink-soft lg:hidden">{b.playAs}：{mode.human === 'tiger' ? b.tiger : b.goat}</p>
-      )}
+      {whoAmI && <p className="mt-3 text-xs font-bold text-ink-soft lg:hidden">{whoAmI}</p>}
 
       <Modal isOpen={helpOpen} onClose={() => setHelpOpen(false)} title={b.rulesHeading} kicker={b.title}
         icon={GiRuleBook} band={{ className: 'bg-tile-forest', fg: 'text-tile-cream' }}>
         <RulesStepsPaged rules={b.rules} prev={t.ui.prev} next={t.ui.next} done={t.ui.close} onDone={() => setHelpOpen(false)} />
       </Modal>
 
-      <Modal isOpen={!!game.winner} onClose={restart} title={result.title}
+      <Modal isOpen={!!game.winner && !(online && endClosed)} onClose={online ? () => setEndClosed(true) : restart} title={result.title}
         icon={game.winner === 'goat' ? GiGoat : GiTigerHead} band={{ className: result.band, fg: result.fg }}
         footer={
           <>
             <Button color="bg-tile-ink/[0.07] text-tile-ink" handleClickEvent={home}>{b.menu}</Button>
-            <Button color="bg-tile-ink text-tile-cream" handleClickEvent={restart}>{b.again}</Button>
+            <Button color="bg-tile-ink text-tile-cream" handleClickEvent={again}>{b.again}</Button>
           </>
         }>
         <p className="text-sm leading-relaxed">{result.body}</p>

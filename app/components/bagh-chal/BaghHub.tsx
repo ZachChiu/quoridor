@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { GiGoat, GiRuleBook, GiTabletopPlayers, GiTigerHead } from 'react-icons/gi';
+import { GiGoat, GiRuleBook, GiTabletopPlayers, GiTigerHead, GiWireframeGlobe } from 'react-icons/gi';
 import GameTile, { type TileOrigin } from '@/components/GameTile';
 import Modal from '@/components/Modal';
 import DifficultyButtons from '@/components/DifficultyButtons';
@@ -32,6 +32,7 @@ export default function BaghHub() {
   const locale = useLocale();
   const { navigate } = useTransition();
   const [side, setSide] = useState<Side | null>(null);
+  const [inviteOpen, setInviteOpen] = useState(false);
 
   const startSolo = (difficulty: Difficulty, at: { x: number; y: number }) => {
     if (!side) return;
@@ -45,9 +46,11 @@ export default function BaghHub() {
         href={localePath(locale, baghChal('/solo'))} onClick={() => setSide('tiger')} />
       <GameTile icon={GiGoat} tone="blue" kicker={b.vsAi} label={b.goat}
         href={localePath(locale, baghChal('/solo'))} onClick={() => setSide('goat')} />
-      <GameTile icon={GiTabletopPlayers} tone="amber" label={b.local} wide
+      <GameTile icon={GiTabletopPlayers} tone="amber" label={b.local}
         href={localePath(locale, baghChal('/local'))}
         onClick={(o) => navigate(localePath(locale, baghChal('/local')), { wipe: wipeFrom(o) })} />
+      {/* 邀請朋友：紫（CLAUDE.md 的對應）。先問自己當哪一邊，連線頁再開房 */}
+      <GameTile icon={GiWireframeGlobe} tone="purple" label={b.invite} onClick={() => setInviteOpen(true)} />
       <GameTile icon={GiRuleBook} tone="forest" label={t.home.rules} wide
         href={localePath(locale, baghChal('/rules'))}
         onClick={(o) => navigate(localePath(locale, baghChal('/rules')), { wipe: wipeFrom(o) })} />
@@ -57,6 +60,26 @@ export default function BaghHub() {
         icon={side === 'goat' ? GiGoat : GiTigerHead}
         band={side === 'goat' ? { className: 'bg-tile-blue', fg: 'text-tile-cream' } : { className: 'bg-tile-orange', fg: 'text-tile-ink' }}>
         <DifficultyButtons onPick={startSolo} />
+      </Modal>
+
+      <Modal isOpen={inviteOpen} onClose={() => setInviteOpen(false)} title={b.pickSide} kicker={b.invite}
+        icon={GiWireframeGlobe} band={{ className: 'bg-tile-purple', fg: 'text-tile-cream' }}>
+        <div className="grid grid-cols-2 gap-3">
+          {(['tiger', 'goat'] as const).map((s) => {
+            const Icon = s === 'tiger' ? GiTigerHead : GiGoat;
+            return (
+              <button key={s} type="button"
+                onClick={(e) => {
+                  const r = e.currentTarget.getBoundingClientRect();
+                  setInviteOpen(false);
+                  navigate(localePath(locale, baghChal('/online')) + `#new=${s}`, { wipe: { x: r.left + r.width / 2, y: r.top + r.height / 2, color: 'rgb(var(--tile-cream))' } });
+                }}
+                className="flex flex-col items-center gap-2 rounded-2xl bg-tile-ink/[0.07] py-5 text-xl font-black text-tile-ink transition hover:bg-tile-ink/[0.12] active:scale-[0.97]">
+                <Icon aria-hidden="true" className="text-5xl" />{s === 'tiger' ? b.tiger : b.goat}
+              </button>
+            );
+          })}
+        </div>
       </Modal>
     </div>
   );

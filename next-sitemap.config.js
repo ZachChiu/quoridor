@@ -29,7 +29,7 @@ module.exports = {
     // 無限多個「同一頁」
     '/wall-go/replay', '/*/wall-go/replay',
     // Bagh Chal 的對局頁（跟電腦下的靜態 HTML 是空的，選邊與難度在掛載後才畫）
-    '/bagh-chal/solo', '/*/bagh-chal/solo', '/bagh-chal/local', '/*/bagh-chal/local',
+    '/bagh-chal/solo', '/*/bagh-chal/solo', '/bagh-chal/local', '/*/bagh-chal/local', '/bagh-chal/online', '/*/bagh-chal/online',
     // 舊網址（2026-10 平台化前），只做轉址：真正的 301 在 CloudFront，這些頁面是備援。
     // 逐一列出，不能寫 '/*/rules' —— * 也會對到 wall-go，連新的 /wall-go/rules 一起排除掉
     '/match',

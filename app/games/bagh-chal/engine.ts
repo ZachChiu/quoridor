@@ -183,3 +183,25 @@ export function trappedTigers(board: Cell[]): number {
   });
   return n;
 }
+
+/**
+ * 走法 ↔ 字串，連線房間存的就是這串（`p12 m0-1 j0-12`，空白分隔）。
+ * 跳吃不寫被吃的那一點：跳是沿線走兩格，中間那點就是 (from + to) / 2。
+ */
+export function encodeMoves(moves: Move[]): string {
+  return moves.map((m) => (m.kind === 'place' ? `p${m.to}` : `${m.kind === 'move' ? 'm' : 'j'}${m.from}-${m.to}`)).join(' ');
+}
+
+/** 解不出來或不合法（被竄改、半截）就丟錯 —— 呼叫端要接住，不要畫出一盤錯的棋 */
+export function decodeMoves(text: string): Move[] {
+  if (!text.trim()) return [];
+  return text.trim().split(/\s+/).map((tok) => {
+    const place = /^p(\d+)$/.exec(tok);
+    if (place) return { kind: 'place', to: Number(place[1]) } as Move;
+    const step = /^([mj])(\d+)-(\d+)$/.exec(tok);
+    if (!step) throw new Error(`bad move: ${tok}`);
+    const from = Number(step[2]);
+    const to = Number(step[3]);
+    return step[1] === 'm' ? { kind: 'move', from, to } : { kind: 'jump', from, over: (from + to) / 2, to };
+  });
+}

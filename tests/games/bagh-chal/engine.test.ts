@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   createGame, legalMoves, applyMove, replay, undo, NEIGHBORS, landing, hasDiagonals,
-  GOATS, type BaghState, type Cell, type Move,
+  GOATS, encodeMoves, decodeMoves, type BaghState, type Cell, type Move,
 } from '@/games/bagh-chal/engine';
 import { chooseMove } from '@/games/bagh-chal/ai';
 
@@ -137,5 +137,28 @@ describe('電腦對手', () => {
     const t0 = performance.now();
     chooseMove(s, 'hard');
     expect(performance.now() - t0).toBeLessThan(2000);
+  });
+});
+
+describe('走法字串（連線房間存的格式）', () => {
+  it('一局走過的每一手，寫成字串再讀回來重走，是同一個局面', () => {
+    let s = createGame();
+    // 走到出現跳吃為止，三種走法都要涵蓋到
+    for (let i = 0; i < 200 && !s.winner; i++) {
+      const moves = legalMoves(s);
+      s = applyMove(s, moves.find((m) => m.kind === 'jump') ?? moves[i % moves.length]);
+    }
+    const kinds = new Set(s.history.map((m) => m.kind));
+    expect(kinds).toEqual(new Set(['place', 'move', 'jump']));
+    const text = encodeMoves(s.history);
+    expect(decodeMoves(text)).toEqual(s.history);
+    expect(replay(decodeMoves(text)).board).toEqual(s.board);
+  });
+
+  it('空字串是還沒開始；亂寫的字串丟錯，不畫出一盤錯的棋', () => {
+    expect(decodeMoves('')).toEqual([]);
+    expect(() => decodeMoves('p3 x9')).toThrow();
+    // 格式對但不合法（第一手是老虎走）—— 由 replay 擋下
+    expect(() => replay(decodeMoves('m0-1'))).toThrow();
   });
 });
