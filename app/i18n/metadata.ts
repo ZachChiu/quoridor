@@ -178,3 +178,27 @@ export function playMetadata(locale: Locale, path: PagePath): Metadata {
     ...openGraph(locale, path),
   };
 }
+
+/**
+ * 試做中的遊戲頁（第二批五款）：先不讓搜尋引擎收錄，分享圖暫用平台首頁那張。
+ * 標題與描述由各遊戲的文案表傳進來（不經過 messages/）。正式上線前改成 localeMetadata 並補分享圖。
+ */
+export function trialGameMetadata(locale: Locale, path: string, title: string, description: string): Metadata {
+  const url = ogImageUrl(locale, '/');
+  return {
+    title: { absolute: `${title} | ${BRAND}` },
+    description,
+    robots: { index: false, follow: true },
+    openGraph: {
+      type: 'website',
+      locale: OG_LOCALE[locale],
+      url: SITE + localePath(locale, path),
+      title,
+      description,
+      siteName: BRAND,
+      images: [{ url, ...OG_SIZE, alt: title }],
+    },
+    twitter: { card: 'summary_large_image', title, description, images: [url] },
+  };
+}
+

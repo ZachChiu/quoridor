@@ -18,6 +18,16 @@ export function baghChal(sub: '' | '/rules' | '/solo' | '/local' | '/online' = '
   return BAGH_CHAL + sub;
 }
 
+/**
+ * 第二批試做的五款（2026-10-20）。每款一頁，開局選模式與對局都在那一頁；
+ * 規則頁、連線房之後再補。各自的文案在 app/games/<id>/text.ts。
+ */
+export const TIME_AUCTION = '/time-auction';
+export const NINE_MENS_MORRIS = '/nine-mens-morris';
+export const BLIND_GOMOKU = '/blind-gomoku';
+export const BALANCE_MANCALA = '/balance-mancala';
+export const KNIGHTS_TOUR = '/knights-tour';
+
 /** Wall Go 底下的路徑，例如 wallGo('/rules') → '/wall-go/rules'；不給參數是 Wall Go 首頁 */
 export function wallGo(sub: '' | '/rules' | '/solo' | '/local' | '/local/3' | '/online' | '/replay' = ''): string {
   return WALL_GO + sub;
