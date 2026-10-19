@@ -14,6 +14,9 @@ export const WALL_GO = '/wall-go';
 
 /** Bagh Chal（虎羊棋）。開局選模式與對局在同一頁 */
 export const BAGH_CHAL = '/bagh-chal';
+export function baghChal(sub: '' | '/rules' | '/solo' | '/local' | '/online' = '') {
+  return BAGH_CHAL + sub;
+}
 
 /** Wall Go 底下的路徑，例如 wallGo('/rules') → '/wall-go/rules'；不給參數是 Wall Go 首頁 */
 export function wallGo(sub: '' | '/rules' | '/solo' | '/local' | '/local/3' | '/online' | '/replay' = ''): string {

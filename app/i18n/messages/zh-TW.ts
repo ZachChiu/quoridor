@@ -90,6 +90,8 @@ const zhTW = {
     winGoatBody: '羊把老虎全部困住了。',
     drawBody: '走了太多步還分不出勝負。',
     again: '再來一局',
+    rulesMetaTitle: 'Bagh Chal 虎羊棋規則與玩法',
+    rulesMetaDescription: 'Bagh Chal（虎羊棋）完整規則：5×5 棋盤、4 隻老虎對 20 隻羊、放羊、老虎跳吃、羊把老虎困住。附圖一步一步說明，《魔鬼的計謀》第 2 季決賽的遊戲。',
     rulesHeading: '怎麼玩',
     rules: [
       '棋盤是 5×5 個交叉點，沿著線走。斜線只經過一部分的點。',

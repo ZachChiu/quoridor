@@ -16,7 +16,8 @@ const PAGE_KEY = {
   '/': 'platform',
   '/wall-go': 'home', '/wall-go/rules': 'rules', '/wall-go/solo': 'solo',
   '/wall-go/local': 'local', '/wall-go/online': 'online', '/wall-go/replay': 'replay',
-  '/bagh-chal': 'bagh-chal',
+  // Bagh Chal 的子頁先共用遊戲首頁那張分享圖（圖上是遊戲名，子頁之間差別不大）
+  '/bagh-chal': 'bagh-chal', '/bagh-chal/rules': 'bagh-chal', '/bagh-chal/solo': 'bagh-chal', '/bagh-chal/local': 'bagh-chal',
 } as const;
 export type PagePath = keyof typeof PAGE_KEY;
 
@@ -67,6 +68,12 @@ function copy(locale: Locale, path: PagePath) {
       return { title: undefined, description: t.platform.metaDescription, ogTitle: t.platform.ogTitle, ogDescription: t.platform.ogDescription };
     case '/bagh-chal':
       return { title: t.baghChal.metaTitle, description: t.baghChal.metaDescription, ogTitle: t.baghChal.ogTitle, ogDescription: t.baghChal.ogDescription };
+    case '/bagh-chal/rules':
+      return { title: t.baghChal.rulesMetaTitle, description: t.baghChal.rulesMetaDescription, ogTitle: t.baghChal.rulesMetaTitle, ogDescription: t.baghChal.rulesMetaDescription };
+    case '/bagh-chal/solo':
+      return { title: `${t.baghChal.title} · ${t.baghChal.vsAi}`, description: t.baghChal.metaDescription, ogTitle: t.baghChal.ogTitle, ogDescription: t.baghChal.ogDescription };
+    case '/bagh-chal/local':
+      return { title: `${t.baghChal.title} · ${t.baghChal.local}`, description: t.baghChal.metaDescription, ogTitle: t.baghChal.ogTitle, ogDescription: t.baghChal.ogDescription };
     case '/wall-go/rules':
       return { title: t.rules.metaTitle, description: t.rules.metaDescription, ogTitle: t.rules.ogTitle, ogDescription: t.rules.ogDescription };
     case '/wall-go/solo':
@@ -104,6 +111,11 @@ function openGraph(locale: Locale, path: PagePath) {
   };
 }
 
+/** Wall Go 以外的遊戲：根 layout 的標題格式是「… | 牆壁圍棋 Wall Go」，改接平台名 */
+function otherGameTitle(path: PagePath, title: string | undefined): Metadata {
+  return path.startsWith('/bagh-chal') && title ? { title: { absolute: `${title} | ${BRAND}` } } : {};
+}
+
 /**
  * 會被索引的頁面（首頁、規則、單人）的 metadata，含 hreflang。
  *
@@ -132,7 +144,7 @@ export function localeMetadata(locale: Locale, path: PagePath): Metadata {
     ...(path === '/' ? { title: { absolute: `${t.platform.metaTitle} | ${BRAND}` } } : {}),
     ...(path === '/wall-go' ? { title: { absolute: t.meta.titleDefault } } : {}),
     // 其他遊戲不套 Wall Go 的標題格式（「… | 牆壁圍棋 Wall Go」），接平台名
-    ...(path === '/bagh-chal' ? { title: { absolute: `${t.baghChal.metaTitle} | ${BRAND}` } } : {}),
+    ...otherGameTitle(path, c.title),
     ...(locale === DEFAULT_LOCALE ? {} : {}),
   };
 }
@@ -156,8 +168,10 @@ export function localeMetadata(locale: Locale, path: PagePath): Metadata {
  * nofollow 等於把站內連結切斷，而不索引本來就不需要連帶封鎖連結。
  */
 export function playMetadata(locale: Locale, path: PagePath): Metadata {
+  const title = copy(locale, path).title;
   return {
-    title: copy(locale, path).title,
+    title,
+    ...otherGameTitle(path, title),
     robots: { index: false, follow: true },
     ...openGraph(locale, path),
   };

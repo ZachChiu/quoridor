@@ -84,6 +84,8 @@ const ko: Messages = {
     winGoatBody: '염소가 호랑이를 모두 가뒀습니다.',
     drawBody: '수가 너무 길어져 승부가 나지 않았습니다.',
     again: '한 판 더',
+    rulesMetaTitle: '바그찰 Bagh Chal 규칙과 하는 법',
+    rulesMetaDescription: '바그찰(Bagh Chal) 전체 규칙을 그림으로: 5×5 판, 호랑이 4마리 대 염소 20마리, 염소 놓기, 호랑이의 뛰어넘어 잡기, 염소가 호랑이를 가두는 방법. 『데블스 플랜: 데스룸』 결승 게임.',
     rulesHeading: '하는 법',
     rules: [
       '판은 5×5 교차점이고 선을 따라 움직입니다. 대각선은 일부 교차점만 지납니다.',

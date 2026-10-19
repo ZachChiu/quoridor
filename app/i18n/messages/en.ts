@@ -82,6 +82,8 @@ const en: Messages = {
     winGoatBody: 'The goats trapped every tiger.',
     drawBody: 'Too many moves without a result.',
     again: 'Play again',
+    rulesMetaTitle: 'Bagh Chal Rules: How to Play Tigers and Goats',
+    rulesMetaDescription: "Full Bagh Chal rules with pictures: the 5×5 board, four tigers against twenty goats, placing goats, tigers jumping to capture, and goats trapping the tigers. The game from The Devil's Plan season 2 final.",
     rulesHeading: 'How to play',
     rules: [
       'The board has 5×5 points; pieces move along the lines. Diagonals pass through only some points.',
