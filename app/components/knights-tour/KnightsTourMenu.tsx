@@ -37,7 +37,11 @@ export default function KnightsTourMenu({ locale, onShow, onPractice }: {
       <PlatformCorner locale={locale} />
       <div aria-hidden="true" className="hidden h-14 w-px shrink portrait:block" />
       <main className="home-main flex w-full max-w-[420px] flex-col items-center">
-        <header className="text-center">
+        <header className="flex w-full flex-col items-center text-center">
+          {/* 主視覺：AI 畫的包浩斯海報（騎士跳過棋盤），跟平台卡片同一張；磁磚也跟著用紅黃藍三原色 */}
+          {/* eslint-disable-next-line @next/next/no-img-element -- 靜態匯出，已是 webp */}
+          <img src="/games/knights-tour/key-art.webp" alt="" width={720} height={480}
+            className="mb-[max(0.75rem,2dvh)] aspect-[3/2] max-h-[24dvh] w-full max-w-[380px] rounded-3xl object-cover short:hidden" />
           <h1 className="text-[clamp(2.25rem,7dvh,3.75rem)] font-black leading-[0.95] tracking-tight">
             {t.title}
             {t.subtitle && <><br /><span className="text-[0.5em] tracking-normal">{t.subtitle}</span></>}
@@ -50,7 +54,7 @@ export default function KnightsTourMenu({ locale, onShow, onPractice }: {
               href={`${localePath(locale, KNIGHTS_TOUR)}#show`} onClick={onShow} />
             <GameTile icon={GiChessKnight} tone="amber" kicker={t.practiceKicker} label={t.practiceMode}
               onClick={() => setSizeOpen(true)} />
-            <GameTile icon={GiRuleBook} tone="forest" label={t.rules} wide onClick={() => setHelpOpen(true)} />
+            <GameTile icon={GiRuleBook} tone="blue" label={t.rules} wide onClick={() => setHelpOpen(true)} />
           </div>
           {records.length > 0 && (
             <section className="mt-[max(0.75rem,2dvh)] w-full max-w-[380px]">
