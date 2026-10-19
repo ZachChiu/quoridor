@@ -48,10 +48,11 @@ zh-TW 不加前綴（`app/(default)/`），en / ja / ko / zh-Hans / th 加前綴
 | `/wall-go/online#roomId=…` | 連線對戰（`OnlineClient` → `PlayClient`，帶 `roomId`）。roomId 放 hash 而非 query。noindex |
 | `/wall-go/online#new=2\|3` | Wall Go 首頁連線磁磚的目的地：連線頁自己開房，開好後 `replaceState` 換成 `#roomId=…` |
 | `/wall-go/replay#wgf=…` | 棋譜回放。**開發者工具，不是給玩家的功能** —— 見下 |
-| `/bagh-chal` | Bagh Chal 首頁（`BaghChalView` → `BaghHub`），磁磚同 Wall Go（`GameTile`）。程式在 `app/games/bagh-chal/`（規則與電腦對手）、`app/components/bagh-chal/`（畫面） |
+| `/bagh-chal` | Bagh Chal 首頁（`BaghChalView` → `BaghHub`）。2026-10-20 起是自己的識別（試做中）：尼泊爾印刷棋盤的配色、選單是 `BaghTile`、圖示與棋子都是 AI 畫的米提拉圓牌（`bagh-chal/tokens.tsx`），不用剪影圖示。程式在 `app/games/bagh-chal/`（規則與電腦對手）、`app/components/bagh-chal/`（畫面） |
 | `/bagh-chal/rules` | 規則頁，每步一張小棋盤（`BaghRulesSteps`，對局中的說明彈窗共用） |
 | `/bagh-chal/solo#tiger-normal`、`/bagh-chal/local` | 跟電腦下（hash 是邊＋難度，沒帶就在頁面上選）、兩人同一台。noindex |
 | `/bagh-chal/online#new=tiger\|goat`、`#roomId=…` | 邀請朋友。房間在 RTDB `baghRooms/`（跟 Wall Go 的 `rooms/` 分開，結構見 `types/baghRoom.ts`），存走法字串（`encodeMoves`），只有輪到的人能寫。noindex |
+| `/time-auction`、`/nine-mens-morris`、`/blind-gomoku`、`/balance-mancala`、`/knights-tour` | 第二批五款**試做**（2026-10-20）：每款一頁、選模式與對局都在那一頁（騎士巡邏的模式放 hash：`#show`、`#practice-N`）。規則在 `app/games/<id>/`、畫面在 `app/components/<id>/`、六語系文案在各自的 `app/games/<id>/text.ts`（不進 `messages/`，key 的縮排與順序見 `i18n/gameText.ts`）。metadata 用 `trialGameMetadata`：noindex、不進 sitemap、分享圖暫用平台首頁那張。沒有連線、沒有 GA 事件 |
 | 舊網址 `/rules`、`/solo`、`/local`、`/online`、`/replay`、`/match`（各語系） | CloudFront 301 到 `/wall-go/…`（`infra/cloudfront-redirects.js`，表要跟 `routes.ts` 的 `MOVED` 一致，`tests/infra/redirects.test.ts` 會比對）；舊路徑上另有瀏覽器端轉址當備援（`components/LegacyRedirect.tsx`），noindex、不進 sitemap |
 
 **`/replay` 是用來看玩家回饋的。** 每則回饋都附帶那一局的 WGF（`feedback/*/wgf`），
@@ -166,6 +167,11 @@ players/{ A?, B?, C? }/{ uid, displayName, joinedAt }
   已知例外：森綠磁磚彩度 0.103，低於 0.125 下限。
 - **圖示**用 game-icons.net 的實心剪影（`react-icons/gi` 已內建，CC BY 3.0）。
   線條圖示在大尺寸色塊上會顯得單薄。署名放在遊玩方式 Modal 裡。
+- **Wall Go 首頁磁磚的六顆圖示是貼紙風**（2026-10-20 試做，Zach 給的參考圖）：深墨剪影往右下偏移當影子、
+  上層平塗＋粗描邊（`components/StickerIcons.tsx`），是上面「沒有陰影也沒有粗描邊」的例外，只限這六顆。
+  顏色寫在 inline style —— `globals.css` 的 `.tile-icon path { fill }` 會蓋掉 fill 屬性。
+- **這套視覺只管 Wall Go 與平台**：虎羊棋是印刷棋盤＋米提拉的自己一套（見路由表），第二批五款各有自己的主色與
+  AI 主視覺（跟平台卡片同一張，`public/games/<id>/key-art.webp`）。平台標誌是長角的藍骰子（`public/brand/die-mark.svg`，試套）。
 - **棋盤**：外圍那圈 9px 是「牆」不是裝飾邊框（規則裡棋盤外緣本身就算一道牆）。
   牆的位移一律 `calc(var(--board-gap) * -0.5)` —— 對齊的是格線中心而不是格子邊，
   兩者差半個格縫，寫死會漂掉。
