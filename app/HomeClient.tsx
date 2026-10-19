@@ -1,6 +1,6 @@
 'use client'
 import { useState } from "react";
-import { GiBrain, GiMeshNetwork, GiRuleBook, GiTabletopPlayers, GiThreeFriends, GiWireframeGlobe } from "react-icons/gi";
+import { StickerLocal2, StickerLocal3, StickerOnline2, StickerOnline3, StickerRules, StickerSolo } from "./components/StickerIcons";
 import { useTransition } from "@/contexts/TransitionContext";
 import { gameHash, newRoomHash } from '@/utils/gameMode';
 import { track } from "@/utils/analytics";
@@ -112,15 +112,15 @@ export default function HomeClient() {
       {/* 有靜態目標的都給 href，渲染成真的連結 —— 首頁本來一條站內連結都沒有，
           爬蟲走不進 /rules（整站的 SEO 主力落地頁）。連線那兩塊沒有：
           房間要先建出來才知道網址。 */}
-      <GameTile icon={GiTabletopPlayers} tone="amber"  kicker={t.home.localKicker} label={t.home.twoPlayers} href={localePath(locale, wallGo('/local'))} onClick={(o) => startLocal(2, o)} />
-      <GameTile icon={GiThreeFriends}    tone="purple" kicker={t.home.localKicker} label={t.home.threePlayers} href={localePath(locale, wallGo('/local/3'))} onClick={(o) => startLocal(3, o)} />
-      <GameTile icon={GiWireframeGlobe}  tone="blue"   kicker={t.home.onlineKicker} label={t.home.twoPlayers} onClick={(o) => startConnect(2, o)} onPrefetch={prewarm} />
-      <GameTile icon={GiMeshNetwork}     tone="red"    kicker={t.home.onlineKicker} label={t.home.threePlayers} onClick={(o) => startConnect(3, o)} onPrefetch={prewarm} />
+      <GameTile icon={StickerLocal2} tone="amber"  kicker={t.home.localKicker} label={t.home.twoPlayers} href={localePath(locale, wallGo('/local'))} onClick={(o) => startLocal(2, o)} />
+      <GameTile icon={StickerLocal3} tone="purple" kicker={t.home.localKicker} label={t.home.threePlayers} href={localePath(locale, wallGo('/local/3'))} onClick={(o) => startLocal(3, o)} />
+      <GameTile icon={StickerOnline2} tone="blue"   kicker={t.home.onlineKicker} label={t.home.twoPlayers} onClick={(o) => startConnect(2, o)} onPrefetch={prewarm} />
+      <GameTile icon={StickerOnline3} tone="red"    kicker={t.home.onlineKicker} label={t.home.threePlayers} onClick={(o) => startConnect(3, o)} onPrefetch={prewarm} />
       {/* 單人這塊按下去是開難度選單，但 /solo 本身站得住（自備選單），
           所以 href 照給 —— cmd 點開的是那一頁，爬蟲也走得過去。 */}
-      <GameTile icon={GiBrain} tone="orange" label={t.home.solo} wide href={localePath(locale, wallGo('/solo'))} onClick={() => setSoloOpen(true)} />
+      <GameTile icon={StickerSolo} tone="orange" label={t.home.solo} wide href={localePath(locale, wallGo('/solo'))} onClick={() => setSoloOpen(true)} />
       <GameTile
-        icon={GiRuleBook}
+        icon={StickerRules}
         tone="forest"
         label={t.home.rules}
         wide
