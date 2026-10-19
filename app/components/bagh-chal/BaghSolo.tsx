@@ -1,6 +1,5 @@
 'use client';
 import { useState } from 'react';
-import { GiGoat, GiTigerHead } from 'react-icons/gi';
 import DifficultyButtons from '@/components/DifficultyButtons';
 import { useIsoLayoutEffect } from '@/hook/useIsoLayoutEffect';
 import { useMessages } from '@/i18n/LocaleProvider';
@@ -8,6 +7,7 @@ import type { Locale } from '@/i18n/locales';
 import type { Side } from '@/games/bagh-chal/engine';
 import BaghPlay from './BaghPlay';
 import { readSoloHash, soloHash } from './soloHash';
+import { GoatToken, TigerToken } from './tokens';
 
 /**
  * /bagh-chal/solo：跟電腦下。
@@ -29,25 +29,25 @@ export default function BaghSolo({ locale }: { locale: Locale }) {
     return () => window.removeEventListener('hashchange', read);
   }, []);
 
-  if (mode === undefined) return <div className="min-h-dvh" />;
+  if (mode === undefined) return <div className="min-h-dvh bg-[#f1e6cd]" />;
   if (mode) {
     return <BaghPlay key={`${mode.side}-${mode.difficulty}`} locale={locale} mode={{ kind: 'ai', human: mode.side, difficulty: mode.difficulty }} />;
   }
 
   return (
-    <div className="flex min-h-dvh items-center justify-center px-5 font-[family-name:var(--font-app)]">
+    <div className="flex min-h-dvh items-center justify-center bg-[#f1e6cd] px-5 font-[family-name:var(--font-app)]">
       <div className="flex w-full max-w-[380px] flex-col gap-6">
         <h1 className="text-center text-3xl font-black tracking-tight">{b.title}<span className="mt-1 block text-base text-ink-soft">{b.vsAi}</span></h1>
         <div className="flex flex-col gap-2">
           <p className="text-sm font-bold text-ink-soft">{b.playAs}</p>
           <div className="grid grid-cols-2 gap-3" role="radiogroup" aria-label={b.playAs}>
             {(['tiger', 'goat'] as const).map((s) => {
-              const Icon = s === 'tiger' ? GiTigerHead : GiGoat;
+              const Icon = s === 'tiger' ? TigerToken : GoatToken;
               const on = side === s;
               return (
                 <button key={s} type="button" role="radio" aria-checked={on} onClick={() => setSide(s)}
-                  className={`flex items-center justify-center gap-2 rounded-2xl py-4 text-lg font-black transition ${on ? 'bg-tile-ink text-tile-cream' : 'bg-tile-ink/[0.07] text-ink-soft'}`}>
-                  <Icon aria-hidden="true" className="text-3xl" />{s === 'tiger' ? b.tiger : b.goat}
+                  className={`flex items-center justify-center gap-2.5 rounded-2xl py-3.5 text-lg font-black transition ${on ? 'bg-tile-ink text-tile-cream' : 'bg-[#4a2616]/[0.08] text-ink-soft'}`}>
+                  <Icon className={`text-[40px] transition ${on ? '' : 'opacity-70 grayscale-[35%]'}`} />{s === 'tiger' ? b.tiger : b.goat}
                 </button>
               );
             })}
