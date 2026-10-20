@@ -57,7 +57,7 @@ const ko: Messages = {
     title: 'Bagh Chal',
     subtitle: '바그찰',
     tagline: '호랑이 4마리 대 염소 20마리',
-    local: '한 기기에서 둘이',
+    local: '로컬 대전',
     vsAi: '컴퓨터와',
     playAs: '내 편',
     tiger: '호랑이',

@@ -54,7 +54,7 @@ const ja: Messages = {
     title: 'Bagh Chal',
     subtitle: 'トラとヤギ',
     tagline: 'トラ4頭とヤギ20頭',
-    local: '1台で2人',
+    local: 'ローカル対戦',
     vsAi: 'コンピューターと',
     playAs: 'あなたは',
     tiger: 'トラ',

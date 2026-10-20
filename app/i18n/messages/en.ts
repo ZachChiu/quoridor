@@ -55,7 +55,7 @@ const en: Messages = {
     title: 'Bagh Chal',
     subtitle: 'Tigers and Goats',
     tagline: '4 tigers against 20 goats',
-    local: 'Two players',
+    local: 'Local play',
     vsAi: 'Play the computer',
     playAs: 'Play as',
     tiger: 'Tigers',
