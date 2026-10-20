@@ -61,7 +61,7 @@ const zhHans: Messages = {
     title: 'Bagh Chal',
     subtitle: '虎羊棋',
     tagline: '4 只老虎对 20 只羊',
-    local: '两人同一台',
+    local: '本机对战',
     vsAi: '跟电脑下',
     playAs: '你要当',
     tiger: '老虎',

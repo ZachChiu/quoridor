@@ -63,7 +63,7 @@ const th: Messages = {
     title: 'Bagh Chal',
     subtitle: 'เสือกับแพะ',
     tagline: 'เสือ 4 ตัวสู้กับแพะ 20 ตัว',
-    local: 'สองคนเครื่องเดียว',
+    local: 'เล่นในเครื่อง',
     vsAi: 'เล่นกับคอมพิวเตอร์',
     playAs: 'เล่นเป็น',
     tiger: 'เสือ',

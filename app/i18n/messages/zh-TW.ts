@@ -63,7 +63,7 @@ const zhTW = {
     title: 'Bagh Chal',
     subtitle: '虎羊棋',
     tagline: '4 隻老虎對 20 隻羊',
-    local: '兩人同一台',
+    local: '本機對戰',
     vsAi: '跟電腦下',
     playAs: '你要當',
     tiger: '老虎',
