@@ -8,7 +8,7 @@ import { BAGH } from './palette';
  *
  * 長相取自尼泊爾的印刷棋盤（Wikimedia Commons 那張）：紙色盤面、細墨線、交叉點一朵朵小花
  * （中心最大、四個斜線交會點次之）。老虎追羊的飾帶畫在整頁的畫框上（BaghFrame），
- * 棋盤自己只留一道橄欖綠粗框與四角花飾 —— 兩層飾帶疊在一起太花，而且手機上會把盤面擠小
+ * 棋盤自己只留一道橄欖綠粗框與番紅花內線 —— 兩層飾帶疊在一起太花，而且手機上會把盤面擠小
  * （2026-10-20 Zach 選了「整頁圖騰」的平均版，見 docs 與設計總表）。
  *
  * 棋子是 AI 畫的虎、羊圓牌，用**背景圖**畫、影子用 box-shadow，不用 <img> 加 filter：
@@ -88,22 +88,6 @@ export function Marker({ kind }: { kind: Move['kind'] | 'last' }) {
 
 const SEAT = 'absolute grid size-[17%] -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full';
 
-/** 四角的小花飾（棋盤框的角上），跟印刷棋盤四角那幾朵同一個圖案 */
-function CornerRosettes() {
-  return (
-    <svg viewBox="0 0 100 100" className="pointer-events-none absolute inset-0 size-full" aria-hidden="true">
-      {[[2.6, 2.6], [97.4, 2.6], [2.6, 97.4], [97.4, 97.4]].map(([x, y]) => (
-        <g key={`${x}-${y}`} transform={`translate(${x} ${y}) scale(2.2)`}>
-          {[0, 90, 180, 270].map((a) => (
-            <path key={a} transform={`rotate(${a})`} d="M0-1C.3-.5.25-.18 0 0C-.25-.18-.3-.5 0-1Z" fill={BAGH.saffron} />
-          ))}
-          <circle r=".22" fill={BAGH.brown} />
-        </g>
-      ))}
-    </svg>
-  );
-}
-
 /** 對局用的棋盤 */
 export function BaghBoard({ board, targets, capturers, victims, movable, selected, last, labels, onPick }: {
   board: Cell[];
@@ -118,7 +102,6 @@ export function BaghBoard({ board, targets, capturers, victims, movable, selecte
 }) {
   return (
     <div className="relative w-full rounded-xl border-[6px] border-[#5b6620] bg-[#fbf4e1] shadow-[inset_0_0_0_2px_#e3a43c]">
-      <CornerRosettes />
       <div className="relative aspect-square w-full">
         <BoardLines />
         {board.map((cell, p) => {
