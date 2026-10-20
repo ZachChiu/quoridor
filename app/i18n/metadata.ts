@@ -128,6 +128,35 @@ function otherGameTitle(path: PagePath, title: string | undefined): Metadata {
  * x-default 指向 /en：zh-TW 佔住了無前綴的網址，但語言對不上的訪客
  * 落在英文比落在中文合理。
  */
+/**
+ * 各遊戲自己的 favicon。全站預設（shell.tsx 的 baseMetadata）是平台的骰子惡魔，
+ * Wall Go 與虎羊棋的頁面換成自己的（2026-10-20 Zach：平台頁跟不同遊戲的 favicon 換上去，
+ * 先換 Wall Go 跟虎羊棋，其他遊戲等重新設計視覺，暫用平台的）。頁面的 icons 會整組蓋掉 layout 的。
+ */
+const WALL_GO_ICONS: Metadata['icons'] = {
+  icon: [
+    { url: '/icons/wall-go.svg', type: 'image/svg+xml' },
+    { url: '/icons/wall-go.ico', sizes: '16x16 32x32' },
+    { url: '/icons/wall-go-192.png', type: 'image/png', sizes: '192x192' },
+  ],
+  shortcut: '/icons/wall-go.ico',
+  apple: '/icons/wall-go-apple.png',
+};
+const BAGH_CHAL_ICONS: Metadata['icons'] = {
+  icon: [
+    { url: '/icons/bagh-chal-32.png', type: 'image/png', sizes: '32x32' },
+    { url: '/icons/bagh-chal.ico', sizes: '16x16 32x32' },
+    { url: '/icons/bagh-chal-192.png', type: 'image/png', sizes: '192x192' },
+  ],
+  shortcut: '/icons/bagh-chal.ico',
+  apple: '/icons/bagh-chal-apple.png',
+};
+function gameIcons(path: string): Pick<Metadata, 'icons'> {
+  if (path.startsWith('/wall-go')) return { icons: WALL_GO_ICONS };
+  if (path.startsWith('/bagh-chal')) return { icons: BAGH_CHAL_ICONS };
+  return {};
+}
+
 export function localeMetadata(locale: Locale, path: PagePath): Metadata {
   const t = getMessages(locale);
   const languages = Object.fromEntries(
@@ -147,6 +176,7 @@ export function localeMetadata(locale: Locale, path: PagePath): Metadata {
     ...(path === '/wall-go' ? { title: { absolute: t.meta.titleDefault } } : {}),
     // 其他遊戲不套 Wall Go 的標題格式（「… | 牆壁圍棋 Wall Go」），接平台名
     ...otherGameTitle(path, c.title),
+    ...gameIcons(path),
     ...(locale === DEFAULT_LOCALE ? {} : {}),
   };
 }
@@ -174,6 +204,7 @@ export function playMetadata(locale: Locale, path: PagePath): Metadata {
   return {
     title,
     ...otherGameTitle(path, title),
+    ...gameIcons(path),
     robots: { index: false, follow: true },
     ...openGraph(locale, path),
   };

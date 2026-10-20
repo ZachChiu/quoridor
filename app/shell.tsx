@@ -69,6 +69,7 @@ export function Shell({ locale, children }: { locale: Locale; children: React.Re
 export const baseMetadata: Metadata = {
   metadataBase: new URL(process.env.SITE_URL || 'https://quoridorgame.com'),
   icons: {
+    // 全站預設是平台的骰子惡魔（/ 是平台首頁）；Wall Go 與虎羊棋的頁面在 i18n/metadata.ts 換成自己的。
     // SVG 優先（可無限縮放、檔案最小），.ico 是舊瀏覽器與「直接抓 /favicon.ico」
     // 那類行為的保底。兩者同一份設計，換版時要一起換。
     icon: [
