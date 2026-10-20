@@ -101,19 +101,22 @@ const Modal: React.FC<Props> = ({
         } ${panelClassName}`}
       >
         {bagh && (
-          <div aria-hidden="true" className="h-6 shrink-0 border-b-[3px] border-[#5b6620] bg-[url('/games/bagh-chal/frieze.webp')] bg-[length:auto_100%] bg-center [background-repeat:round_no-repeat]" />
+          <div aria-hidden="true" className="h-7 shrink-0 border-b-[3px] border-[#5b6620] bg-[url('/games/bagh-chal/frieze.webp')] bg-[length:auto_100%] bg-center [background-repeat:round_no-repeat]" />
         )}
         {/* 色帶做成滿版（面板 overflow-hidden 負責切圓角），
-            留白會讓它退化成一條「有底色的標題」，力道差很多。 */}
+            留白會讓它退化成一條「有底色的標題」，力道差很多。
+            虎羊棋（bagh）不要色帶：上面已經有一條飾帶，再疊一條色塊會變成兩條重的橫帶（Zach：整體不太搭）。
+            標題直接放在紙色上，band 的顏色縮成標題下一小條色線，仍看得出是老虎（番紅花）還是羊（橄欖綠）。 */}
         <div
-          className={`flex shrink-0 items-start justify-between gap-3 px-6 py-5 ${band.className ?? ''} ${band.fg}`}
-          style={band.style}
+          className={`flex shrink-0 items-start justify-between gap-3 px-6 ${bagh ? 'pb-1 pt-5 text-tile-ink' : `py-5 ${band.className ?? ''} ${band.fg}`}`}
+          style={bagh ? undefined : band.style}
         >
           <div className="flex items-center gap-3">
             {Icon && <Icon className="shrink-0 text-4xl" aria-hidden="true" />}
             <div>
-              {kicker && <p className="text-xs font-bold tracking-widest opacity-80">{kicker}</p>}
+              {kicker && <p className={`text-xs font-bold tracking-widest ${bagh ? 'text-ink-soft' : 'opacity-80'}`}>{kicker}</p>}
               <h2 className="text-2xl font-black leading-tight">{title}</h2>
+              {bagh && <span aria-hidden="true" className={`mt-1.5 block h-1 w-10 rounded-full ${band.className ?? ''}`} style={band.style} />}
             </div>
           </div>
           <button
@@ -122,7 +125,7 @@ const Modal: React.FC<Props> = ({
             onClick={onClose}
             // p-2 只有 40px，差一點到觸控目標的 44px。
             className={bagh
-              ? '-mr-1 shrink-0 rounded-full bg-[#fbf4e1] p-2 text-tile-ink ring-2 ring-[#5b6620] transition hover:bg-[#f4e8cc]'
+              ? '-mr-1 shrink-0 rounded-full bg-[#f2e4c4] p-2 text-tile-ink transition hover:bg-[#ead8ad]'
               : '-mr-2 -mt-1 shrink-0 rounded-full p-2.5 text-2xl opacity-70 transition hover:opacity-100'}
           >
             {bagh ? (

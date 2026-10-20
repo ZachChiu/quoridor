@@ -20,11 +20,11 @@ const intercept = (fn: () => void) => (e: React.MouseEvent<HTMLAnchorElement>) =
 };
 
 /**
- * 四個按鈕之一：紙色卡片、深墨粗框，中間一枚 AI 畫的圓牌，下面兩行字。
+ * 四個按鈕之一：淡沙色卡片（沒有外框線），中間一枚 AI 畫的圓牌，下面兩行字。
  * 有靜態目標的給 href（爬蟲走得進去、cmd 點可以開新分頁），連線要先選邊所以沒有。
  */
 function Choice({ src, label, sub, href, onClick }: { src: string; label: string; sub: string; href?: string; onClick: () => void }) {
-  const cls = 'group flex flex-col items-center justify-center gap-1 rounded-2xl border-2 border-tile-ink bg-[#fbf4e1] px-2 py-[max(0.75rem,2dvh)] text-center transition fine:hover:bg-[#f4e8cc] active:scale-[0.97]';
+  const cls = 'group flex flex-col items-center justify-center gap-1 rounded-2xl bg-[#f2e4c4] px-2 py-[max(0.75rem,2dvh)] text-center transition fine:hover:bg-[#ead8ad] active:scale-[0.97]';
   const inner = (
     <>
       {/* 背景圖、影子用 box-shadow（不用 <img>＋filter，iPhone 的 WebKit 會漏畫，見 BaghBoard） */}
@@ -87,7 +87,7 @@ export default function BaghHub() {
             return (
               <button key={s} type="button"
                 onClick={() => { setInviteOpen(false); navigate(localePath(locale, baghChal('/online')) + `#new=${s}`, { wipe: DOORS }); }}
-                className="flex flex-col items-center gap-2 rounded-2xl border-2 border-tile-ink bg-[#fbf4e1] py-5 text-xl font-black text-tile-ink transition hover:bg-[#f4e8cc] active:scale-[0.97]">
+                className="flex flex-col items-center gap-2 rounded-2xl bg-[#f2e4c4] py-5 text-xl font-black text-tile-ink transition hover:bg-[#ead8ad] active:scale-[0.97]">
                 <Icon className="text-6xl" />{s === 'tiger' ? b.tiger : b.goat}
               </button>
             );

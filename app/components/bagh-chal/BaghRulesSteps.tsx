@@ -31,7 +31,7 @@ export function RulesStepsList({ rules }: { rules: readonly string[] }) {
   return (
     <ol className="grid gap-5 sm:grid-cols-2">
       {STEPS.map((s, i) => (
-        <li key={i} className="flex flex-col gap-3 rounded-2xl border-2 border-tile-ink bg-[#fbf4e1] p-4">
+        <li key={i} className="flex flex-col gap-3 rounded-2xl bg-[#f2e4c4] p-4">
           <MiniBoard rows={s.rows} marks={s.marks} victims={s.victims} />
           <p className="text-sm font-bold leading-relaxed"><span className="mr-1.5 font-black">{i + 1}.</span>{text[i]}</p>
         </li>

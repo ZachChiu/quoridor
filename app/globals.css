@@ -494,15 +494,12 @@ body {
 html:has(.platform-root), body:has(.platform-root) { background: rgb(var(--plat-bg)); }
 /* 虎羊棋的整頁畫框是番紅花底（BaghFrame），同一個理由 */
 html:has(.bagh-root), body:has(.bagh-root) { background: #e3a43c; }
-/* 虎羊棋的背景：一整幅滿版的米提拉圖騰（BaghFrame）。手機直式一張、桌機與橫放一張，
-   cover 鋪滿、不重複 —— 先前四條飾帶拼成的畫框接縫很明顯（Zach）。底色是圖還沒載入時的番紅花。 */
-.bagh-bg { background: #e3a43c url('/games/bagh-chal/bg-portrait.webp') center / cover no-repeat; }
-@media (min-aspect-ratio: 1/1) { .bagh-bg { background-image: url('/games/bagh-chal/bg-landscape.webp'); } }
-/* 圖騰細節多、webp 壓不小（約 400KB），支援 image-set type() 的瀏覽器改載 AVIF（約省四成）；
-   不支援的（Safari 16 以前）照上面的 webp。 */
+/* 虎羊棋的背景：米提拉圖騰滿版鋪（BaghFrame）。
+   圖塊是把一整幅 AI 圖騰用 image quilting 縫成上下左右都無縫的一塊（在接縫帶裡找差異最小的切線拼接），
+   所以可以縮小重複鋪、看不出接縫。先前試過四條飾帶拼的畫框（接縫明顯）、一整幅 cover（虎羊太大），Zach 都要改。
+   手機每塊 520px、桌機 720px；支援 image-set type() 的瀏覽器載 AVIF，其他退回 webp。底色是圖還沒載入時的番紅花。 */
+.bagh-bg { background: #e3a43c url('/games/bagh-chal/pattern.webp') 0 0 / 520px auto repeat; }
+@media (min-width: 1024px) { .bagh-bg { background-size: 720px auto; } }
 @supports (background-image: image-set(url('/x.avif') type('image/avif'))) {
-  .bagh-bg { background-image: image-set(url('/games/bagh-chal/bg-portrait.avif') type('image/avif'), url('/games/bagh-chal/bg-portrait.webp') type('image/webp')); }
-  @media (min-aspect-ratio: 1/1) {
-    .bagh-bg { background-image: image-set(url('/games/bagh-chal/bg-landscape.avif') type('image/avif'), url('/games/bagh-chal/bg-landscape.webp') type('image/webp')); }
-  }
+  .bagh-bg { background-image: image-set(url('/games/bagh-chal/pattern.avif') type('image/avif'), url('/games/bagh-chal/pattern.webp') type('image/webp')); }
 }
