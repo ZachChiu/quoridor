@@ -2,8 +2,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { LuCircleHelp, LuHouse, LuRotateCcw, LuUndo2 } from 'react-icons/lu';
 import Modal from '@/components/Modal';
-import { useTransition } from '@/contexts/TransitionContext';
-import { DOORS } from '@/components/WipeOverlay';
+import { useRouter } from 'next/navigation';
 import { useMessages } from '@/i18n/LocaleProvider';
 import { localePath, type Locale } from '@/i18n/locales';
 import { BAGH_CHAL } from '@/i18n/routes';
@@ -13,8 +12,7 @@ import { BaghBoard } from './BaghBoard';
 import { GoatToken, RulesToken, TigerToken } from './tokens';
 import { RulesStepsPaged } from './BaghRulesSteps';
 import BaghFrame from './BaghFrame';
-import { BAGH_PRIMARY, BAGH_ROUND, BAGH_SECONDARY } from './BaghUi';
-import BaghWordmark from './BaghWordmark';
+import { BAGH_PRIMARY, BAGH_ROUND, BAGH_SECONDARY } from './styles';
 
 export type BaghMode =
   | { kind: 'local' }
@@ -36,7 +34,7 @@ const fmt = (s: string, n: number) => s.replace('{n}', String(n));
 export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghMode }) {
   const t = useMessages();
   const b = t.baghChal;
-  const { navigate } = useTransition();
+  const router = useRouter();
   const [localGame, setGame] = useState<BaghState>(createGame);
   const game = mode.kind === 'online' ? mode.game : localGame;
   const online = mode.kind === 'online';
@@ -65,7 +63,8 @@ export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghM
   const again = mode.kind === 'online' ? mode.newRoom : restart;
   const side = (s: Side) => (s === 'tiger' ? b.tiger : b.goat);
   const whoAmI = mode.kind === 'local' ? '' : mode.kind === 'online' ? b.youAre.replace('{side}', side(mode.human)) : `${b.playAs}：${side(mode.human)}`;
-  const home = () => navigate(localePath(locale, BAGH_CHAL), { wipe: DOORS });
+  // 虎羊棋裡面換頁不播轉場（開門特效只在平台進虎羊棋）
+  const home = () => router.push(localePath(locale, BAGH_CHAL));
 
   const commit = (m: Move) => {
     if (mode.kind === 'online') mode.onMove(m);
@@ -119,14 +118,14 @@ export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghM
 
   // 兩行：上面圖示＋哪一方，下面數字。數字跟圖示擠同一行的話，「還有 14 隻羊要放」在手機上會斷成三行
   const statusCards = (
-    <div className="grid w-full grid-cols-2 gap-3">
-      <div className={`flex flex-col gap-1 rounded-2xl p-3 ${game.turn === 'tiger' && !game.winner ? 'bg-[#e3a43c] text-tile-ink' : 'bg-[#4a2616]/[0.07] text-ink-soft'}`}>
+    <div className="grid w-full grid-cols-2 gap-2.5">
+      <div className={`flex flex-col gap-1 rounded-2xl px-2.5 py-3 ${game.turn === 'tiger' && !game.winner ? 'bg-[#e3a43c] text-tile-ink' : 'bg-[#4a2616]/[0.07] text-ink-soft'}`}>
         <p className="flex items-center gap-2 text-sm font-bold"><TigerToken className="shrink-0 text-[28px]" />{b.tiger}</p>
-        <p className="text-[15px] font-black leading-tight">{fmt(b.captured, game.captured)}</p>
+        <p className="whitespace-nowrap text-[14px] font-black leading-tight">{fmt(b.captured, game.captured)}</p>
       </div>
-      <div className={`flex flex-col gap-1 rounded-2xl p-3 ${game.turn === 'goat' && !game.winner ? 'bg-[#5b6620] text-tile-cream' : 'bg-[#4a2616]/[0.07] text-ink-soft'}`}>
+      <div className={`flex flex-col gap-1 rounded-2xl px-2.5 py-3 ${game.turn === 'goat' && !game.winner ? 'bg-[#5b6620] text-tile-cream' : 'bg-[#4a2616]/[0.07] text-ink-soft'}`}>
         <p className="flex items-center gap-2 text-sm font-bold"><GoatToken className="shrink-0 text-[28px]" />{b.goat}</p>
-        <p className="text-[15px] font-black leading-tight">{game.goatsInHand > 0 ? fmt(b.goatsInHand, game.goatsInHand) : `${GOATS - game.captured} / ${GOATS}`}</p>
+        <p className="whitespace-nowrap text-[14px] font-black leading-tight">{game.goatsInHand > 0 ? fmt(b.goatsInHand, game.goatsInHand) : `${GOATS - game.captured} / ${GOATS}`}</p>
       </div>
     </div>
   );
@@ -142,17 +141,12 @@ export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghM
   return (
     <BaghFrame variant="play">
     <div className="flex flex-1 flex-col items-center p-3 lg:flex-row lg:items-center lg:justify-center lg:gap-12 lg:py-8">
-      {/* 手機的上方一排 */}
-      <div className="flex w-full max-w-[520px] items-center justify-between lg:hidden">
+      {/* 手機的上方一排只放三樣：回首頁、標題、說明（Zach：手機上面排列很亂）。
+          悔棋與重來移到棋盤下面，做成有字的按鈕 —— 一排五顆圓鈕擠在一起，分不出哪顆是什麼 */}
+      <div className="grid w-full max-w-[520px] grid-cols-[2.75rem_1fr_2.75rem] items-center lg:hidden">
         <button type="button" onClick={home} aria-label={b.menu} className={round}><LuHouse aria-hidden="true" /></button>
-        <h1 aria-label={`${b.title} ${b.subtitle}`}><BaghWordmark className="h-[22px] w-auto" /></h1>
-        <div className="flex gap-1.5">
-          <button type="button" onClick={() => setHelpOpen(true)} aria-label={b.rulesHeading} className={round}><LuCircleHelp aria-hidden="true" /></button>
-          {!online && <>
-            <button type="button" onClick={doUndo} disabled={!canUndo} aria-label={b.undo} className={round}><LuUndo2 aria-hidden="true" /></button>
-            <button type="button" onClick={restart} aria-label={b.restart} className={round}><LuRotateCcw aria-hidden="true" /></button>
-          </>}
-        </div>
+        <h1 className="text-center text-xl font-black tracking-[0.08em]">{b.subtitle}</h1>
+        <button type="button" onClick={() => setHelpOpen(true)} aria-label={b.rulesHeading} className={round}><LuCircleHelp aria-hidden="true" /></button>
       </div>
       <div className="mt-4 flex w-full max-w-[520px] flex-col items-center gap-3 lg:hidden">
         {statusCards}
@@ -165,10 +159,18 @@ export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghM
           selected={selected} last={last} labels={{ tiger: b.tiger, goat: b.goat }} onPick={pick} />
       </div>
 
+      {/* 手機：棋盤下面的悔棋、重來（連線局沒有） */}
+      {!online && (
+        <div className="grid w-full max-w-[520px] grid-cols-2 gap-2.5 lg:hidden">
+          <button type="button" onClick={doUndo} disabled={!canUndo} className={wide}><LuUndo2 aria-hidden="true" />{b.undo}</button>
+          <button type="button" onClick={restart} className={wide}><LuRotateCcw aria-hidden="true" />{b.restart}</button>
+        </div>
+      )}
+
       {/* 桌機的右邊一欄 */}
       <aside className="hidden w-[360px] shrink-0 flex-col gap-5 lg:flex">
         <div>
-          <h1 aria-label={`${b.title} ${b.subtitle}`} className="flex items-end gap-3"><BaghWordmark className="h-11 w-auto" /><span className="pb-0.5 text-2xl font-black">{b.subtitle}</span></h1>
+          <h1 className="text-4xl font-black leading-none tracking-[0.06em]">{b.subtitle}</h1>
           <p className="mt-1.5 text-sm font-bold text-ink-soft">{mode.kind === 'local' ? b.local : mode.kind === 'online' ? `${b.onlineTitle} · ${whoAmI}` : whoAmI}</p>
         </div>
         {statusCards}

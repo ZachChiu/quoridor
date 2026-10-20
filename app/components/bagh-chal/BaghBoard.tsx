@@ -6,10 +6,10 @@ import { BAGH } from './palette';
 /**
  * Bagh Chal 的棋盤。對局用的 BaghBoard（交叉點是按鈕）與規則說明用的 MiniBoard（靜態）共用同一套畫法。
  *
- * 長相取自尼泊爾的印刷棋盤（Wikimedia Commons 那張）：紙色盤面、細墨線、交叉點一朵朵小花
- * （中心最大、四個斜線交會點次之）。老虎追羊的飾帶畫在整頁的畫框上（BaghFrame），
- * 棋盤自己只留一道橄欖綠粗框與番紅花內線 —— 兩層飾帶疊在一起太花，而且手機上會把盤面擠小
- * （2026-10-20 Zach 選了「整頁圖騰」的平均版，見 docs 與設計總表）。
+ * 長相取自尼泊爾的印刷棋盤（Wikimedia Commons 那張）：紙色盤面、細墨線。印刷棋盤交叉點上的小花平常不畫，
+ * 改當點了棋子之後的落點標記（見 Marker）。老虎追羊的飾帶畫在整頁的畫框上（BaghFrame），
+ * 棋盤自己不加框：面板的邊已經是印刷棋盤那道雙線，圖騰只在整頁最外緣一層
+ * （2026-10-21 Zach：圖騰只能有一層在最外層，不能一堆）。
  *
  * 棋子是 AI 畫的虎、羊圓牌，用**背景圖**畫、影子用 box-shadow，不用 <img> 加 filter：
  * iPhone 的 WebKit 會漏畫「套了 filter: drop-shadow 的元素裡動態插入的圖」——
@@ -20,21 +20,6 @@ import { BAGH } from './palette';
  * 線照正方形畫，點和棋子就越往下越偏上（Zach 截圖：歪歪的）。
  */
 export const xy = (p: Point) => ({ x: 10 + (p % SIZE) * 20, y: 10 + Math.floor(p / SIZE) * 20 });
-
-/** 交叉點上的小花：四瓣深褐、四瓣陶紅、紙色花心 */
-function Rosette({ x, y, r }: { x: number; y: number; r: number }) {
-  return (
-    <g transform={`translate(${x} ${y}) scale(${r})`} opacity={0.8}>
-      {[0, 90, 180, 270].map((a) => (
-        <path key={a} transform={`rotate(${a})`} d="M0-1C.28-.5.24-.18 0 0C-.24-.18-.28-.5 0-1Z" fill={BAGH.brown} />
-      ))}
-      {[45, 135, 225, 315].map((a) => (
-        <path key={a} transform={`rotate(${a})`} d="M0-.72C.22-.4.18-.16 0 0C-.18-.16-.22-.4 0-.72Z" fill={BAGH.terracotta} />
-      ))}
-      <circle r=".2" fill={BAGH.paper} />
-    </g>
-  );
-}
 
 /** 棋盤線：直線、橫線、兩條對角線與中間的菱形 —— 斜線只經過列＋行為偶數的點 */
 export function BoardLines({ width = 0.45 }: { width?: number }) {
@@ -51,11 +36,6 @@ export function BoardLines({ width = 0.45 }: { width?: number }) {
         <line x1={90} y1={10} x2={10} y2={90} />
         <polygon points="50,10 90,50 50,90 10,50" />
       </g>
-      {Array.from({ length: SIZE * SIZE }, (_, p) => {
-        const { x, y } = xy(p);
-        const r = p === 12 ? 4.6 : [6, 8, 16, 18].includes(p) ? 3.6 : 2.6;
-        return <Rosette key={p} x={x} y={y} r={r} />;
-      })}
     </svg>
   );
 }
@@ -76,14 +56,33 @@ export function GoatPiece({ ring }: { ring?: 'selected' | 'victim' | 'movable' }
 }
 
 /**
- * 空點上的標記：可以走的點（實心深墨，蓋住底下的小花）、吃子的落點、放羊的點。
- * 放羊時每個空點都能放，交叉點的小花本身就標出了點，所以放羊點只畫一圈淡淡的環，不再每點一顆圓。
+ * 一朵花（四瓣、四瓣斜的、紙色花心）—— 照印刷棋盤交叉點上的花飾。
+ * 小的＝這顆棋子可以走到這裡；大的＝老虎跳過羊落在這裡、把羊吃掉（大小與配色都對調，一眼分得出來）。
  */
-export function Marker({ kind }: { kind: Move['kind'] | 'last' }) {
-  if (kind === 'jump') return <span className="grid size-1/2 place-items-center rounded-full bg-[#b8471f] ring-2 ring-tile-ink"><span className="size-[34%] rounded-full bg-[#fbf4e1]" /></span>;
-  if (kind === 'place') return <span className="size-[46%] rounded-full ring-2 ring-[#4a2616]/25" />;
-  if (kind === 'last') return <span className="size-[46%] rounded-full bg-[#4a2616]/15" />;
-  return <span className="size-[32%] rounded-full bg-tile-ink ring ring-[#fbf4e1]" />;
+function Rosette({ big = false }: { big?: boolean }) {
+  return (
+    <svg viewBox="-1.1 -1.1 2.2 2.2" className={big ? 'size-[82%]' : 'size-[46%]'} aria-hidden="true">
+      {[0, 90, 180, 270].map((a) => (
+        <path key={a} transform={`rotate(${a})`} d="M0-1C.28-.5.24-.18 0 0C-.24-.18-.28-.5 0-1Z" fill={big ? BAGH.terracotta : BAGH.brown} />
+      ))}
+      {[45, 135, 225, 315].map((a) => (
+        <path key={a} transform={`rotate(${a})`} d="M0-.72C.22-.4.18-.16 0 0C-.18-.16-.22-.4 0-.72Z" fill={big ? BAGH.brown : BAGH.terracotta} />
+      ))}
+      <circle r=".22" fill={BAGH.paper} />
+    </svg>
+  );
+}
+
+/**
+ * 空點上的標記。盤面平常只有線（Zach：小裝飾先拔掉），點了棋子才在能去的點開花：
+ * 小花是可以走的點、大花是吃羊的落點。放羊時每個空點都能放，不畫標記，盤面保持乾淨
+ * （規則頁的小棋盤要示意放羊的位置，傳 showPlace 改畫小花）。
+ */
+export function Marker({ kind, showPlace = false }: { kind: Move['kind'] | 'last'; showPlace?: boolean }) {
+  if (kind === 'jump') return <Rosette big />;
+  if (kind === 'move') return <Rosette />;
+  if (kind === 'place') return showPlace ? <Rosette /> : null;
+  return <span className="size-2/5 rounded-full bg-[#4a2616]/15" />;
 }
 
 const SEAT = 'absolute grid size-[17%] -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full';
@@ -101,7 +100,7 @@ export function BaghBoard({ board, targets, capturers, victims, movable, selecte
   onPick: (p: Point) => void;
 }) {
   return (
-    <div className="relative w-full rounded-xl border-[6px] border-[#5b6620] bg-[#fbf4e1] shadow-[inset_0_0_0_2px_#e3a43c]">
+    <div className="relative w-full">
       <div className="relative aspect-square w-full">
         <BoardLines />
         {board.map((cell, p) => {
@@ -139,7 +138,7 @@ export function MiniBoard({ rows, marks = {}, victims = [] }: {
 }) {
   const cells = rows.join('').split('');
   return (
-    <div className="w-full rounded-2xl border-4 border-[#5b6620] bg-[#fbf4e1] p-[4%]" aria-hidden="true">
+    <div className="w-full rounded-xl bg-[#fbf4e1] p-[4%]" aria-hidden="true">
       <div className="relative aspect-square w-full">
         <BoardLines width={0.7} />
         {cells.map((ch, p) => {
@@ -149,7 +148,7 @@ export function MiniBoard({ rows, marks = {}, victims = [] }: {
             <span key={p} className={SEAT} style={{ left: `${x}%`, top: `${y}%` }}>
               {ch === 'T' && <TigerPiece />}
               {ch === 'G' && <GoatPiece ring={victims.includes(p) ? 'victim' : undefined} />}
-              {ch === '.' && mark && <Marker kind={mark} />}
+              {ch === '.' && mark && <Marker kind={mark} showPlace />}
             </span>
           );
         })}

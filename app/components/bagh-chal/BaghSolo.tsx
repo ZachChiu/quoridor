@@ -9,7 +9,6 @@ import { readSoloHash, soloHash } from './soloHash';
 import { GoatToken, TigerToken } from './tokens';
 import BaghFrame from './BaghFrame';
 import { BaghDifficulty } from './BaghUi';
-import BaghWordmark from './BaghWordmark';
 
 /**
  * /bagh-chal/solo：跟電腦下。
@@ -41,8 +40,8 @@ export default function BaghSolo({ locale }: { locale: Locale }) {
     <BaghFrame variant="play">
     <div className="flex flex-1 items-center justify-center px-5 py-8">
       <div className="flex w-full max-w-[380px] flex-col gap-6">
-        <h1 aria-label={`${b.title} ${b.subtitle}`} className="flex flex-col items-center gap-1 text-center">
-          <BaghWordmark className="h-12 w-auto" />
+        <h1 className="flex flex-col items-center gap-1 text-center">
+          <span className="text-3xl font-black tracking-[0.08em]">{b.subtitle}</span>
           <span className="text-base font-black text-ink-soft">{b.vsAi}</span>
         </h1>
         <div className="flex flex-col gap-2">
@@ -53,7 +52,7 @@ export default function BaghSolo({ locale }: { locale: Locale }) {
               const on = side === s;
               return (
                 <button key={s} type="button" role="radio" aria-checked={on} onClick={() => setSide(s)}
-                  className={`flex items-center justify-center gap-2.5 rounded-2xl border-2 border-tile-ink py-3.5 text-lg font-black transition ${on ? 'bg-tile-ink text-tile-cream' : 'bg-[#fbf4e1] text-tile-ink hover:bg-[#f4e8cc]'}`}>
+                  className={`flex items-center justify-center gap-2.5 rounded-2xl py-3.5 text-lg font-black transition ${on ? 'bg-tile-ink text-tile-cream' : 'bg-[#f2e4c4] text-tile-ink hover:bg-[#ead8ad]'}`}>
                   <Icon className={`text-[40px] transition ${on ? '' : 'opacity-70 grayscale-[35%]'}`} />{s === 'tiger' ? b.tiger : b.goat}
                 </button>
               );

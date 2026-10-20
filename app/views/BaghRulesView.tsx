@@ -1,10 +1,9 @@
 import { LuHouse } from 'react-icons/lu';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
-import TransitionLink from '@/components/TransitionLink';
+import Link from 'next/link';
 import { RulesStepsList } from '@/components/bagh-chal/BaghRulesSteps';
 import BaghFrame from '@/components/bagh-chal/BaghFrame';
-import BaghWordmark from '@/components/bagh-chal/BaghWordmark';
-import { BAGH_PRIMARY, BAGH_ROUND, BAGH_SECONDARY } from '@/components/bagh-chal/BaghUi';
+import { BAGH_PRIMARY, BAGH_ROUND, BAGH_SECONDARY } from '@/components/bagh-chal/styles';
 import { LocalToken, TigerToken } from '@/components/bagh-chal/tokens';
 import { getMessages } from '@/i18n';
 import { localePath, type Locale } from '@/i18n/locales';
@@ -21,14 +20,13 @@ export default function BaghRulesView({ locale }: { locale: Locale }) {
   const cta = 'h-14 text-base';
   return (
     <BaghFrame variant="page">
-      <header className="sticky top-0 z-40 rounded-t-[9px] border-b-2 border-[#4a2616]/10 bg-[#fbf4e1]/95 backdrop-blur">
+      <header className="sticky top-0 z-40 border-b-2 border-[#4a2616]/10 bg-[#fbf4e1]/95 backdrop-blur">
         <div className="mx-auto flex max-w-[46rem] items-center gap-3 px-4 py-2.5">
-          <TransitionLink href={localePath(locale, baghChal())} color="#f1e6cd" doors radius={24} aria-label={t.nav.backHome} className={BAGH_ROUND}>
+          {/* 虎羊棋裡面換頁不播轉場（開門特效只在平台進虎羊棋那一下），用一般的 Link */}
+          <Link href={localePath(locale, baghChal())} aria-label={t.nav.backHome} className={BAGH_ROUND}>
             <LuHouse aria-hidden="true" />
-          </TransitionLink>
-          <span className="flex min-w-0 flex-1 items-center gap-2 truncate text-sm font-black">
-            <BaghWordmark className="h-5 w-auto shrink-0" />{b.subtitle}
-          </span>
+          </Link>
+          <span className="min-w-0 flex-1 truncate text-sm font-black">{b.subtitle} · {b.title}</span>
           <LanguageSwitcher skin="bagh" />
         </div>
       </header>
@@ -39,12 +37,12 @@ export default function BaghRulesView({ locale }: { locale: Locale }) {
         <div className="mt-6"><RulesStepsList rules={b.rules} /></div>
         <p className="mt-6 text-sm leading-relaxed text-ink-soft">{b.showNote}</p>
         <div className="mt-8 grid gap-3 sm:grid-cols-2">
-          <TransitionLink href={localePath(locale, baghChal('/solo'))} color="rgb(var(--tile-ink))" doors className={`${BAGH_PRIMARY} ${cta}`}>
+          <Link href={localePath(locale, baghChal('/solo'))} className={`${BAGH_PRIMARY} ${cta}`}>
             <TigerToken className="text-[30px]" />{b.vsAi}
-          </TransitionLink>
-          <TransitionLink href={localePath(locale, baghChal('/local'))} color="#f1e6cd" doors className={`${BAGH_SECONDARY} ${cta}`}>
+          </Link>
+          <Link href={localePath(locale, baghChal('/local'))} className={`${BAGH_SECONDARY} ${cta}`}>
             <LocalToken className="text-[30px]" />{b.local}
-          </TransitionLink>
+          </Link>
         </div>
       </div>
     </BaghFrame>

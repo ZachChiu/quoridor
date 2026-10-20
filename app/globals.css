@@ -494,3 +494,18 @@ body {
 html:has(.platform-root), body:has(.platform-root) { background: rgb(var(--plat-bg)); }
 /* 虎羊棋的整頁畫框是番紅花底（BaghFrame），同一個理由 */
 html:has(.bagh-root), body:has(.bagh-root) { background: #e3a43c; }
+/* 虎羊棋的邊框：三角形圖騰（照那張印刷棋盤的外框：番紅花底、內外兩條橄欖綠細線、中間一排橄欖綠三角形，四角一顆圓點）。
+   用 border-image：圖塊的邊段剛好一個三角形，round 重複就是連續的鋸齒，不會有接縫；四角由圖塊的角落負責。
+   只用在整頁畫框的最外緣一層：先前把面板、棋盤、彈窗的綠色實線也都換成它，一層套一層太花
+   （2026-10-21 Zach：圖騰只能有一層在最外層，不能一堆）。粗細用 --tri 調。
+   border-image 會讓 border-radius 失效 —— 角是方的，印刷棋盤本來就是方角。 */
+.bagh-tri {
+  border: var(--tri, 12px) solid #5b6620;
+  border-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 36 36'%3E%3Crect width='36' height='36' fill='%23e3a43c'/%3E%3Crect x='0.75' y='0.75' width='34.5' height='34.5' fill='none' stroke='%235b6620' stroke-width='1.5'/%3E%3Crect x='11.25' y='11.25' width='13.5' height='13.5' fill='none' stroke='%235b6620' stroke-width='1.5'/%3E%3Cpath d='M12 1.5H24L18 10.2Z M12 34.5H24L18 25.8Z M1.5 12V24L10.2 18Z M34.5 12V24L25.8 18Z' fill='%235b6620'/%3E%3Ccircle cx='6' cy='6' r='2.2' fill='%235b6620'/%3E%3Ccircle cx='30' cy='6' r='2.2' fill='%235b6620'/%3E%3Ccircle cx='6' cy='30' r='2.2' fill='%235b6620'/%3E%3Ccircle cx='30' cy='30' r='2.2' fill='%235b6620'/%3E%3C/svg%3E") 12 / var(--tri, 12px) round;
+}
+/* 虎羊棋的紙面邊：印刷棋盤內框那道橄欖綠雙線（外粗、內細、中間留一條紙色），畫框裡的面板與彈窗用。
+   不是圖騰 —— 圖騰只在整頁最外緣（.bagh-tri）。一樣用 border-image 畫，內容永遠蓋不到線；粗細用 --line 調。 */
+.bagh-line {
+  border: var(--line, 8px) solid #5b6620;
+  border-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' fill='%235b6620'/%3E%3Crect x='3.5' y='3.5' width='17' height='17' fill='%23fbf4e1'/%3E%3Crect x='6' y='6' width='12' height='12' fill='%235b6620'/%3E%3Crect x='7.5' y='7.5' width='9' height='9' fill='%23fbf4e1'/%3E%3C/svg%3E") 8 / var(--line, 8px) stretch;
+}

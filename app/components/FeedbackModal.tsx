@@ -60,7 +60,7 @@ const FeedbackModal: React.FC<Props> = ({ isOpen, onClose, onSubmit, variant = '
   // 虎羊棋頁打開的是虎羊棋樣子：深褐標題列、蠟封信圓牌、紙色框線的欄位與按鈕（不沿用 Wall Go 的元件）
   const bagh = skin === 'bagh';
   const field = bagh
-    ? 'border-2 border-tile-ink bg-[#fffaf0] outline-none ring-[#5b6620] focus:ring-2'
+    ? 'bg-[#f2e4c4] outline-none ring-[#5b6620] focus:ring-2'
     : 'bg-primary-50 outline-none ring-tile-ink/30 focus:ring-2';
   // 對局回饋要選評分；聯絡我們評分選填，但至少要寫點什麼
   const canSend = isContact ? message.trim().length > 0 : rating !== null;
@@ -95,14 +95,14 @@ const FeedbackModal: React.FC<Props> = ({ isOpen, onClose, onSubmit, variant = '
       band={{ className: bagh ? 'bg-[#4a2616]' : 'bg-tile-purple', fg: 'text-tile-cream' }}
       footer={
         state === 'sent' ? (
-          <Button color={bagh ? 'border-2 border-tile-ink bg-tile-ink text-tile-cream' : 'bg-tile-ink text-tile-cream'} handleClickEvent={onClose}>{closeLabel}</Button>
+          <Button color="bg-tile-ink text-tile-cream" handleClickEvent={onClose}>{closeLabel}</Button>
         ) : (
           <>
-            <Button color={bagh ? 'border-2 border-tile-ink bg-[#fbf4e1] text-tile-ink hover:bg-[#f4e8cc]' : 'text-ink-soft hover:bg-tile-ink/[0.06] bg-transparent'} handleClickEvent={onClose}>
+            <Button color={bagh ? 'bg-[#f2e4c4] text-tile-ink hover:bg-[#ead8ad]' : 'text-ink-soft hover:bg-tile-ink/[0.06] bg-transparent'} handleClickEvent={onClose}>
               {g.feedback.later}
             </Button>
             <Button
-              color={`${bagh ? 'border-2 border-tile-ink ' : ''}${canSend ? 'bg-tile-ink text-tile-cream' : 'bg-tile-ink/20 text-tile-ink/40'}`}
+              color={canSend ? 'bg-tile-ink text-tile-cream' : 'bg-tile-ink/20 text-tile-ink/40'}
               handleClickEvent={submit}
             >
               {state === 'sending' ? g.feedback.sending : g.feedback.submit}
@@ -128,8 +128,8 @@ const FeedbackModal: React.FC<Props> = ({ isOpen, onClose, onSubmit, variant = '
                 // 聯絡我們的評分是選填：再點一次同一個可以取消
                 onClick={() => setRating(isContact && rating === f.value ? null : f.value)}
                 className={`flex flex-1 flex-col items-center gap-1 rounded-xl py-3 text-sm font-black transition ${
-                  rating === f.value ? `bg-tile-ink text-tile-cream ${bagh ? 'border-2 border-tile-ink' : ''}`
-                    : bagh ? 'border-2 border-tile-ink bg-[#fbf4e1] text-tile-ink' : 'bg-tile-ink/[0.06] text-ink-soft'
+                  rating === f.value ? 'bg-tile-ink text-tile-cream'
+                    : bagh ? 'bg-[#f2e4c4] text-tile-ink' : 'bg-tile-ink/[0.06] text-ink-soft'
                 }`}
               >
                 <span className="text-2xl leading-none" aria-hidden="true">{f.emoji}</span>

@@ -36,8 +36,8 @@ interface Props {
   /** 內容區額外的 class */
   bodyClassName?: string;
   /**
-   * 外觀。預設是 Wall Go／平台的奶油底面板；bagh 是虎羊棋的紙色面板、橄欖綠框、
-   * 標題列上方一條老虎追羊的飾帶（虎羊棋整套視覺不沿用 Wall Go，見 CLAUDE.md 路由表）。
+   * 外觀。預設是 Wall Go／平台的奶油底面板；bagh 是虎羊棋的紙色面板、印刷棋盤那道橄欖綠雙線框、
+   * 沒有色帶（虎羊棋整套視覺不沿用 Wall Go，見 CLAUDE.md 路由表）。
    */
   skin?: 'default' | 'bagh';
 }
@@ -97,23 +97,24 @@ const Modal: React.FC<Props> = ({
         tabIndex={-1}
         // 最高就是可視高度；放不下時色帶與按鈕固定，只有中間的內容捲動
         className={`relative flex max-h-full w-full max-w-md flex-col overflow-hidden font-[family-name:var(--font-app)] outline-none ${
-          bagh ? 'rounded-[18px] border-[3px] border-[#5b6620] bg-[#fbf4e1]' : 'rounded-2xl bg-primary'
+          bagh ? 'bagh-line bg-[#fbf4e1] [--line:7px]' : 'rounded-2xl bg-primary'
         } ${panelClassName}`}
       >
-        {bagh && (
-          <div aria-hidden="true" className="h-6 shrink-0 border-b-[3px] border-[#5b6620] bg-[url('/games/bagh-chal/frieze.webp')] bg-[length:auto_100%] bg-center [background-repeat:round_no-repeat]" />
-        )}
         {/* 色帶做成滿版（面板 overflow-hidden 負責切圓角），
-            留白會讓它退化成一條「有底色的標題」，力道差很多。 */}
+            留白會讓它退化成一條「有底色的標題」，力道差很多。
+            虎羊棋（bagh）不要色帶也不要飾帶（Zach：上面一排虎羊貼紙不符合風格），也不放三角形圖騰（Zach：MODAL 圖騰不太好）：
+            外框是跟畫框裡的面板同一道橄欖綠雙線（.bagh-line），標題直接放在紙色上，
+            band 的顏色縮成標題下一小條色線，仍看得出是老虎（番紅花）還是羊（橄欖綠）。 */}
         <div
-          className={`flex shrink-0 items-start justify-between gap-3 px-6 py-5 ${band.className ?? ''} ${band.fg}`}
-          style={band.style}
+          className={`flex shrink-0 items-start justify-between gap-3 px-6 ${bagh ? 'pb-1 pt-5 text-tile-ink' : `py-5 ${band.className ?? ''} ${band.fg}`}`}
+          style={bagh ? undefined : band.style}
         >
           <div className="flex items-center gap-3">
             {Icon && <Icon className="shrink-0 text-4xl" aria-hidden="true" />}
             <div>
-              {kicker && <p className="text-xs font-bold tracking-widest opacity-80">{kicker}</p>}
+              {kicker && <p className={`text-xs font-bold tracking-widest ${bagh ? 'text-ink-soft' : 'opacity-80'}`}>{kicker}</p>}
               <h2 className="text-2xl font-black leading-tight">{title}</h2>
+              {bagh && <span aria-hidden="true" className={`mt-1.5 block h-1 w-10 rounded-full ${band.className ?? ''}`} style={band.style} />}
             </div>
           </div>
           <button
@@ -122,7 +123,7 @@ const Modal: React.FC<Props> = ({
             onClick={onClose}
             // p-2 只有 40px，差一點到觸控目標的 44px。
             className={bagh
-              ? '-mr-1 shrink-0 rounded-full bg-[#fbf4e1] p-2 text-tile-ink ring-2 ring-[#5b6620] transition hover:bg-[#f4e8cc]'
+              ? '-mr-1 shrink-0 rounded-full bg-[#f2e4c4] p-2 text-tile-ink transition hover:bg-[#ead8ad]'
               : '-mr-2 -mt-1 shrink-0 rounded-full p-2.5 text-2xl opacity-70 transition hover:opacity-100'}
           >
             {bagh ? (
