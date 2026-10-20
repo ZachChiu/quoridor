@@ -497,6 +497,7 @@ html:has(.bagh-root), body:has(.bagh-root) { background: #e3a43c; }
 /* 虎羊棋的背景：米提拉圖騰滿版鋪（BaghFrame）。
    圖塊是把一整幅 AI 圖騰用 image quilting 縫成上下左右都無縫的一塊（在接縫帶裡找差異最小的切線拼接），
    所以可以縮小重複鋪、看不出接縫。先前試過四條飾帶拼的畫框（接縫明顯）、一整幅 cover（虎羊太大），Zach 都要改。
+   圖塊的顏色用 Lab 空間的色彩轉移對齊到 board-art.webp 外圈的飾帶（原圖偏亮、偏檸檬黃，Zach 要跟那張一致），接近白色的地方保留色相。
    手機每塊 520px、桌機 720px；支援 image-set type() 的瀏覽器載 AVIF，其他退回 webp。底色是圖還沒載入時的番紅花。 */
 .bagh-bg { background: #e3a43c url('/games/bagh-chal/pattern.webp') 0 0 / 520px auto repeat; }
 @media (min-width: 1024px) { .bagh-bg { background-size: 720px auto; } }
