@@ -30,8 +30,8 @@ export default function BaghFrame({ variant = 'hub', className = '', children }:
   const row = play ? 'clamp(24px, 3.4dvh, 34px)' : 'clamp(34px, 5.4dvh, 52px)';
   const col = play ? 'clamp(12px, 3.4vw, 34px)' : 'clamp(14px, 4.2vw, 52px)';
   return (
-    <div className="bagh-root flex min-h-dvh flex-col bg-[#e3a43c] font-[family-name:var(--font-app)] text-tile-ink md:p-[5px]">
-      <div className="bagh-tri grid flex-1 overflow-hidden bg-[#e3a43c]"
+    <div className="bagh-root flex min-h-dvh flex-col bg-[#eaa42c] font-[family-name:var(--font-app)] text-tile-ink md:p-[5px]">
+      <div className="bagh-tri grid flex-1 overflow-hidden bg-[#eaa42c]"
         style={{ gridTemplateColumns: `${col} minmax(0, 1fr) ${col}`, gridTemplateRows: `${row} 1fr ${row}`, '--tri': 'clamp(6px, 1.6vw, 12px)' } as React.CSSProperties}>
         <Corner />
         <Band dir="h" size={row} />
@@ -72,13 +72,13 @@ const SEQ_V = [...SEQ_H].reverse();
  * 改成跟橫條同一批會跑的動物、照印刷棋盤沿著邊跑。下邊左右鏡射（動物仍是正的、往左跑），
  * 右邊轉 180°（往下跑、地面朝面板）。
  */
-function Band({ dir, size, flip = false }: { dir: 'h' | 'v'; size: string; flip?: boolean }) {
+function Band({ dir, size, flip = false, className = '' }: { dir: 'h' | 'v'; size: string; flip?: boolean; className?: string }) {
   const h = dir === 'h';
   return (
     <div aria-hidden="true"
       // contain: size —— 飾帶的大小完全由畫框的格線決定，裡面那 28 隻不能反過來把格線撐大
       // （不加的話，直條的內容高度會被算進中間那一列，桌機首頁被撐得比畫面還高、內容被推到下面）
-      className={`flex min-h-0 min-w-0 flex-wrap content-start justify-evenly overflow-hidden [contain:size] ${h ? 'flex-row' : 'flex-col'}`}
+      className={`flex min-h-0 min-w-0 flex-wrap content-start justify-evenly overflow-hidden [contain:size] ${h ? 'flex-row' : 'flex-col'} ${className}`}
       style={{
         padding: h ? `calc(${size} * 0.1) 0` : `0 calc(${size} * 0.1)`,
         gap: `calc(${size} * 0.22)`,
@@ -92,6 +92,14 @@ function Band({ dir, size, flip = false }: { dir: 'h' | 'v'; size: string; flip?
       ))}
     </div>
   );
+}
+
+/**
+ * 單獨一條橫的飾帶（平台卡片的封面用，BaghCover）。contain: size 讓它不會自己長高，
+ * 高度由外層決定，所以這裡補 h-full。
+ */
+export function MotifStrip({ size }: { size: string }) {
+  return <Band dir="h" size={size} className="h-full" />;
 }
 
 /** 四個角：一株花 */

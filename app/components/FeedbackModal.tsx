@@ -60,7 +60,7 @@ const FeedbackModal: React.FC<Props> = ({ isOpen, onClose, onSubmit, variant = '
   // 虎羊棋頁打開的是虎羊棋樣子：深褐標題列、蠟封信圓牌、紙色框線的欄位與按鈕（不沿用 Wall Go 的元件）
   const bagh = skin === 'bagh';
   const field = bagh
-    ? 'bg-bagh-paper outline-none ring-[#5b6620] focus:ring-2'
+    ? 'bg-bagh-paper outline-none ring-[#736922] focus:ring-2'
     : 'bg-primary-50 outline-none ring-tile-ink/30 focus:ring-2';
   // 對局回饋要選評分；聯絡我們評分選填，但至少要寫點什麼
   const canSend = isContact ? message.trim().length > 0 : rating !== null;

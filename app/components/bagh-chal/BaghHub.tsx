@@ -75,7 +75,7 @@ export default function BaghHub() {
       <Modal skin="bagh" isOpen={!!side} onClose={() => setSide(null)} title={t.ui.pickLevel}
         kicker={`${b.playAs}：${side === 'goat' ? b.goat : b.tiger}`}
         icon={side === 'goat' ? GoatToken : TigerToken}
-        band={side === 'goat' ? { className: 'bg-[#5b6620]', fg: 'text-tile-cream' } : { className: 'bg-[#e3a43c]', fg: 'text-tile-ink' }}>
+        band={side === 'goat' ? { className: 'bg-[#736922]', fg: 'text-tile-cream' } : { className: 'bg-[#eaa42c]', fg: 'text-tile-ink' }}>
         <BaghDifficulty onPick={startSolo} />
       </Modal>
 

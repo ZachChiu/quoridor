@@ -114,7 +114,7 @@ export function BaghBoard({ board, targets, capturers, victims, movable, selecte
               className={SEAT} style={{ left: `${x}%`, top: `${y}%` }}>
               {/* 能吃子的老虎：後面一圈往外擴散的光（還沒選老虎時才閃，選了就看落點） */}
               {cell === 'T' && capturers.has(p) && selected === null && (
-                <span aria-hidden="true" className="absolute inset-[7%] animate-ping rounded-full bg-[#e3a43c]/80" />
+                <span aria-hidden="true" className="absolute inset-[7%] animate-ping rounded-full bg-[#eaa42c]/80" />
               )}
               {cell === 'T' && <TigerPiece selected={selected === p} />}
               {cell === 'G' && <GoatPiece ring={selected === p ? 'selected' : victims.has(p) ? 'victim' : movable.has(p) ? 'movable' : undefined} />}

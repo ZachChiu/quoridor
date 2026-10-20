@@ -6,6 +6,7 @@ import PlatformLanguageMenu from '@/components/platform/PlatformLanguageMenu';
 import PlatformContact from '@/components/platform/PlatformContact';
 import { BRAND } from '@/brand';
 import PlatformMark from '@/components/PlatformMark';
+import BaghCover from '@/components/bagh-chal/BaghCover';
 import { PLAYABLE, SEASONS, gameName, playableFirst, type CatalogGame } from '@/games/catalog';
 import { getMessages } from '@/i18n';
 import { localePath, type Locale } from '@/i18n/locales';
@@ -137,26 +138,30 @@ function GameCard({ game, locale, playable, guide }: {
 
   if (game.playable && game.look) {
     // 能玩的遊戲用自己的識別（主色＋主視覺），點進去擴散自己的顏色
-    const { card, wipe, art, cover, doors } = game.look;
+    const look = game.look;
+    const { card, wipe, doors } = look;
     return (
       <WipeLink href={localePath(locale, game.playable)} color={wipe} doors={doors} aria-label={name} className={`${CARD} ${card}`}>
-        {cover ? (
+        {look.scene === 'bagh-chal' ? (
+          <BaghCover name={name} />
+        ) : look.cover ? (
           <>
             {/* AI 畫的橫幅插畫鋪滿；名字壓在底部的黑色漸層上 */}
             {/* eslint-disable-next-line @next/next/no-img-element -- 同上 */}
-            <img src={art} alt="" loading="lazy" className="pointer-events-none absolute inset-0 size-full object-cover" />
+            <img src={look.art} alt="" loading="lazy" className="pointer-events-none absolute inset-0 size-full object-cover" />
             <span aria-hidden="true" className="absolute inset-x-0 bottom-0 h-3/5 bg-gradient-to-t from-black/80 to-transparent" />
             <span className="absolute inset-x-3 bottom-2.5 text-[22px] font-black leading-none text-white">{name}</span>
           </>
         ) : (
           <>
             {/* eslint-disable-next-line @next/next/no-img-element -- 同上 */}
-            <img src={art} alt="" className="pointer-events-none absolute right-[-70px] top-[-50px] w-[230px] rotate-[-14deg]" />
+            <img src={look.art} alt="" className="pointer-events-none absolute right-[-70px] top-[-50px] w-[230px] rotate-[-14deg]" />
             {/* 名字壓在主視覺上會看不清楚，墊一塊卡片同色的底 */}
             <span className={`absolute bottom-2 left-2 rounded-md px-1.5 py-1 text-[22px] font-black leading-none ${card}`}>{name}</span>
           </>
         )}
-        <span className="absolute left-3 top-3 rounded-md bg-brand-red px-2 py-0.5 text-xs font-black text-white">▶ {playable}</span>
+        {/* 虎羊棋的封面上緣是飾帶，標籤放到飾帶下面（設計稿也是） */}
+        <span className={`absolute left-3 rounded-md bg-brand-red px-2 py-0.5 text-xs font-black text-white ${look.scene ? 'top-[36px]' : 'top-3'}`}>▶ {playable}</span>
       </WipeLink>
     );
   }

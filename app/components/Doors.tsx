@@ -11,7 +11,7 @@ const svgUrl = (svg: string) => `url("data:image/svg+xml,${encodeURIComponent(sv
 
 const WOOD = '#3a1d0f';
 const DARK = '#1c0d06';
-const SAFFRON = '#e3a43c';
+const SAFFRON = '#eaa42c';
 const TERRACOTTA = '#b8471f';
 
 /** 斜格窗櫺：兩道交叉的木條，每個交會點一顆番紅花色的木釘 */

@@ -108,8 +108,8 @@ export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghM
   const hint = game.winner || locked ? ''
     : game.turn === 'tiger' ? (canCapture ? b.hintCapture : b.hintTiger)
     : game.goatsInHand > 0 ? b.hintPlace : b.hintGoat;
-  const result = game.winner === 'tiger' ? { title: b.winTiger, body: b.winTigerBody, band: 'bg-[#e3a43c]', fg: 'text-tile-ink' }
-    : game.winner === 'goat' ? { title: b.winGoat, body: b.winGoatBody, band: 'bg-[#5b6620]', fg: 'text-tile-cream' }
+  const result = game.winner === 'tiger' ? { title: b.winTiger, body: b.winTigerBody, band: 'bg-[#eaa42c]', fg: 'text-tile-ink' }
+    : game.winner === 'goat' ? { title: b.winGoat, body: b.winGoatBody, band: 'bg-[#736922]', fg: 'text-tile-cream' }
     : { title: b.draw, body: b.drawBody, band: 'bg-tile-ink', fg: 'text-tile-cream' };
 
   // 虎羊棋自己的按鈕（BaghUi）：紙色底、橄欖綠外圈的圓鈕，深墨框的寬鈕 —— 不沿用 Wall Go 的灰色無框鈕
@@ -119,11 +119,11 @@ export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghM
   // 兩行：上面圖示＋哪一方，下面數字。數字跟圖示擠同一行的話，「還有 14 隻羊要放」在手機上會斷成三行
   const statusCards = (
     <div className="grid w-full grid-cols-2 gap-2.5">
-      <div className={`flex flex-col gap-1 rounded-2xl px-2.5 py-3 ${game.turn === 'tiger' && !game.winner ? 'bg-[#e3a43c] text-tile-ink' : 'bg-[#4a2616]/[0.07] text-ink-soft'}`}>
+      <div className={`flex flex-col gap-1 rounded-2xl px-2.5 py-3 ${game.turn === 'tiger' && !game.winner ? 'bg-[#db6a0b] text-tile-ink' : 'bg-[#4a2616]/[0.07] text-ink-soft'}`}>
         <p className="flex items-center gap-2 text-sm font-bold"><TigerToken className="shrink-0 text-[28px]" />{b.tiger}</p>
         <p className="whitespace-nowrap text-[14px] font-black leading-tight">{fmt(b.captured, game.captured)}</p>
       </div>
-      <div className={`flex flex-col gap-1 rounded-2xl px-2.5 py-3 ${game.turn === 'goat' && !game.winner ? 'bg-[#5b6620] text-tile-cream' : 'bg-[#4a2616]/[0.07] text-ink-soft'}`}>
+      <div className={`flex flex-col gap-1 rounded-2xl px-2.5 py-3 ${game.turn === 'goat' && !game.winner ? 'bg-[#736922] text-tile-cream' : 'bg-[#4a2616]/[0.07] text-ink-soft'}`}>
         <p className="flex items-center gap-2 text-sm font-bold"><GoatToken className="shrink-0 text-[28px]" />{b.goat}</p>
         <p className="whitespace-nowrap text-[14px] font-black leading-tight">{game.goatsInHand > 0 ? fmt(b.goatsInHand, game.goatsInHand) : `${GOATS - game.captured} / ${GOATS}`}</p>
       </div>
@@ -134,7 +134,7 @@ export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghM
     <div className="flex min-h-12 flex-col items-center text-center lg:items-start lg:text-left" aria-live="polite">
       <p className="text-sm font-black">{status}</p>
       {/* 有得吃的時候用番紅花底襯深墨字，跟老虎那張狀態卡同色 */}
-      {hint && <p className={`mt-1 text-xs font-bold ${canCapture ? 'rounded-md bg-[#e3a43c] px-2 py-0.5 text-tile-ink' : 'text-ink-soft'}`}>{hint}</p>}
+      {hint && <p className={`mt-1 text-xs font-bold ${canCapture ? 'rounded-md bg-[#db6a0b] px-2 py-0.5 text-tile-ink' : 'text-ink-soft'}`}>{hint}</p>}
     </div>
   );
 
@@ -188,7 +188,7 @@ export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghM
       {whoAmI && <p className="mt-3 text-xs font-bold text-ink-soft lg:hidden">{whoAmI}</p>}
 
       <Modal skin="bagh" isOpen={helpOpen} onClose={() => setHelpOpen(false)} title={b.rulesHeading} kicker={b.title}
-        icon={RulesToken} band={{ className: 'bg-[#5b6620]', fg: 'text-tile-cream' }}>
+        icon={RulesToken} band={{ className: 'bg-[#736922]', fg: 'text-tile-cream' }}>
         <RulesStepsPaged rules={b.rules} prev={t.ui.prev} next={t.ui.next} done={t.ui.close} onDone={() => setHelpOpen(false)} />
       </Modal>
 

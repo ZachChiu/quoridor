@@ -16,16 +16,26 @@ export type GameLook = {
   card: string;
   /** 從平台點進去時轉場擴散的顏色 */
   wipe: string;
-  /** 主視覺（public/ 底下的圖） */
-  art: string;
-  /**
-   * 主視覺鋪滿整張卡片（AI 畫的橫幅插畫）；沒有的話是 Wall Go 那種斜擺在右上角的棋盤 SVG。
-   * 名字壓在底部的漸層上。
-   */
-  cover?: boolean;
   /** 點進去走木窗門轉場而不是擴散色塊（虎羊棋） */
   doors?: boolean;
-};
+} & (
+  | {
+      /** 主視覺（public/ 底下的圖） */
+      art: string;
+      /**
+       * 主視覺鋪滿整張卡片（AI 畫的橫幅插畫）；沒有的話是 Wall Go 那種斜擺在右上角的棋盤 SVG。
+       * 名字壓在底部的漸層上。
+       */
+      cover?: boolean;
+      scene?: never;
+    }
+  | {
+      /** 不用圖，改用遊戲裡的零件拼出封面（虎羊棋：BaghCover），跟點進去看到的是同一套東西 */
+      scene: 'bagh-chal';
+      art?: never;
+      cover?: never;
+    }
+);
 
 export type CatalogGame = {
   /** 英文官方名稱 */
@@ -51,7 +61,7 @@ export const SEASONS: Season[] = [
         look: { card: 'bg-tile-blue text-tile-cream', wipe: 'rgb(var(--tile-blue))', art: '/games/wall-go/key-art.svg' } },
       // 中文「虎羊棋」是描述性副名、韓文「바그찰」是節目 RULE 卡上的寫法（見 glossary）
       { name: 'Bagh Chal', names: { 'zh-TW': '虎羊棋', 'zh-Hans': '虎羊棋', ko: '바그찰' }, playable: BAGH_CHAL,
-        look: { card: 'bg-[#e3a43c] text-tile-ink', wipe: '#f1e6cd', art: '/games/bagh-chal/key-art.webp', cover: true, doors: true } },
+        look: { card: 'bg-bagh-field text-tile-ink', wipe: '#f0b15e', scene: 'bagh-chal', doors: true } },
       { name: 'Crooked Cops' },
       { name: 'Remove One' },
       { name: 'Unknown' },
