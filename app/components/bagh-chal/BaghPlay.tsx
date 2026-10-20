@@ -5,6 +5,7 @@ import { LuCircleHelp, LuHouse, LuRotateCcw, LuUndo2 } from 'react-icons/lu';
 import Modal from '@/components/Modal';
 import Button from '@/components/Button';
 import { useTransition } from '@/contexts/TransitionContext';
+import { DOORS } from '@/components/WipeOverlay';
 import { useMessages } from '@/i18n/LocaleProvider';
 import { localePath, type Locale } from '@/i18n/locales';
 import { BAGH_CHAL } from '@/i18n/routes';
@@ -13,6 +14,8 @@ import { chooseMove, type Difficulty } from '@/games/bagh-chal/ai';
 import { BaghBoard } from './BaghBoard';
 import { GoatToken, TigerToken } from './tokens';
 import { RulesStepsPaged } from './BaghRulesSteps';
+import BaghFrame, { WeaveStrip } from './BaghFrame';
+import BaghWordmark from './BaghWordmark';
 
 export type BaghMode =
   | { kind: 'local' }
@@ -63,7 +66,7 @@ export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghM
   const again = mode.kind === 'online' ? mode.newRoom : restart;
   const side = (s: Side) => (s === 'tiger' ? b.tiger : b.goat);
   const whoAmI = mode.kind === 'local' ? '' : mode.kind === 'online' ? b.youAre.replace('{side}', side(mode.human)) : `${b.playAs}：${side(mode.human)}`;
-  const home = () => navigate(localePath(locale, BAGH_CHAL));
+  const home = () => navigate(localePath(locale, BAGH_CHAL), { wipe: DOORS });
 
   const commit = (m: Move) => {
     if (mode.kind === 'online') mode.onMove(m);
@@ -137,11 +140,12 @@ export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghM
   );
 
   return (
-    <div className="flex min-h-dvh flex-col items-center bg-[#f1e6cd] px-4 pb-6 pt-4 font-[family-name:var(--font-app)] lg:flex-row lg:items-center lg:justify-center lg:gap-12 lg:py-10">
+    <BaghFrame variant="play">
+    <div className="flex flex-1 flex-col items-center p-3 lg:flex-row lg:items-center lg:justify-center lg:gap-12 lg:py-8">
       {/* 手機的上方一排 */}
       <div className="flex w-full max-w-[520px] items-center justify-between lg:hidden">
         <button type="button" onClick={home} aria-label={b.menu} className={round}><LuHouse aria-hidden="true" /></button>
-        <h1 className="text-xl font-black">{b.title}</h1>
+        <h1 aria-label={`${b.title} ${b.subtitle}`}><BaghWordmark className="h-[22px] w-auto" /></h1>
         <div className="flex gap-1.5">
           <button type="button" onClick={() => setHelpOpen(true)} aria-label={b.rulesHeading} className={round}><LuCircleHelp aria-hidden="true" /></button>
           {!online && <>
@@ -162,10 +166,10 @@ export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghM
       </div>
 
       {/* 桌機的右邊一欄 */}
-      <aside className="hidden w-[320px] shrink-0 flex-col gap-5 lg:flex">
+      <aside className="hidden w-[360px] shrink-0 flex-col gap-5 lg:flex">
         <div>
-          <h1 className="text-4xl font-black leading-none">{b.title}</h1>
-          <p className="mt-1.5 text-sm font-bold text-ink-soft">{b.subtitle} · {mode.kind === 'local' ? b.local : mode.kind === 'online' ? `${b.onlineTitle} · ${whoAmI}` : whoAmI}</p>
+          <h1 aria-label={`${b.title} ${b.subtitle}`} className="flex items-end gap-3"><BaghWordmark className="h-11 w-auto" /><span className="pb-0.5 text-2xl font-black">{b.subtitle}</span></h1>
+          <p className="mt-1.5 text-sm font-bold text-ink-soft">{mode.kind === 'local' ? b.local : mode.kind === 'online' ? `${b.onlineTitle} · ${whoAmI}` : whoAmI}</p>
         </div>
         {statusCards}
         {statusLine}
@@ -197,5 +201,7 @@ export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghM
         <p className="text-sm leading-relaxed">{result.body}</p>
       </Modal>
     </div>
+    <WeaveStrip className="mx-3 mb-3 h-3 rounded-sm" />
+    </BaghFrame>
   );
 }

@@ -3,12 +3,13 @@ import { LuBot, LuUsers } from 'react-icons/lu';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import TransitionLink from '@/components/TransitionLink';
 import { RulesStepsList } from '@/components/bagh-chal/BaghRulesSteps';
+import BaghFrame from '@/components/bagh-chal/BaghFrame';
 import { getMessages } from '@/i18n';
 import { localePath, type Locale } from '@/i18n/locales';
 import { baghChal } from '@/i18n/routes';
 
 /**
- * Bagh Chal 的規則頁（六個語系共用），版面照 Wall Go 規則頁、配色是虎羊棋的手工紙底與飾帶：
+ * Bagh Chal 的規則頁（六個語系共用），版面照 Wall Go 規則頁，整頁包在虎羊棋的畫框裡（BaghFrame）：
  * sticky 置頂列（回遊戲首頁、標題、語言）＋ 每一步一張附小棋盤的卡片，最後是開始玩的兩顆鈕。
  * 同一組步驟也在對局中的說明彈窗裡（一次一步）。
  */
@@ -17,10 +18,10 @@ export default function BaghRulesView({ locale }: { locale: Locale }) {
   const b = t.baghChal;
   const cta = 'flex h-14 items-center justify-center gap-2 rounded-2xl text-base font-black transition hover:brightness-95 active:scale-[0.98]';
   return (
-    <div className="min-h-dvh bg-[#f1e6cd] font-[family-name:var(--font-app)]">
-      <header className="sticky top-0 z-40 border-b-2 border-[#4a2616]/10 bg-[#f1e6cd]/95 backdrop-blur">
+    <BaghFrame variant="page">
+      <header className="sticky top-0 z-40 rounded-t-[9px] border-b-2 border-[#4a2616]/10 bg-[#fbf4e1]/95 backdrop-blur">
         <div className="mx-auto flex max-w-[46rem] items-center gap-3 px-4 py-2.5">
-          <TransitionLink href={localePath(locale, baghChal())} color="#f1e6cd" radius={24} aria-label={t.nav.backHome}
+          <TransitionLink href={localePath(locale, baghChal())} color="#f1e6cd" doors radius={24} aria-label={t.nav.backHome}
             className="grid size-11 shrink-0 place-items-center rounded-full bg-primary-50 text-xl text-tile-ink shadow-[0_1px_6px_rgba(20,16,16,0.12)] ring-2 ring-tile-ink/10 transition hover:brightness-95">
             <GiHut />
           </TransitionLink>
@@ -32,19 +33,17 @@ export default function BaghRulesView({ locale }: { locale: Locale }) {
       <div className="mx-auto max-w-[46rem] px-5 pb-[max(3rem,6dvh)] pt-8">
         <p className="text-sm font-bold text-ink-soft">{b.title} · {b.tagline}</p>
         <h1 className="mt-1 text-[clamp(1.75rem,7vw,3rem)] font-black leading-[1.1] tracking-tight">{b.rulesMetaTitle}</h1>
-        {/* 跟遊戲首頁同一條老虎追羊的飾帶 */}
-        <div aria-hidden="true" className="mt-4 h-9 w-full rounded-md border-2 border-[#5b6620] bg-[url('/games/bagh-chal/frieze.webp')] bg-[length:auto_100%] bg-repeat-x" />
         <div className="mt-6"><RulesStepsList rules={b.rules} /></div>
         <p className="mt-6 text-sm leading-relaxed text-ink-soft">{b.showNote}</p>
         <div className="mt-8 grid gap-3 sm:grid-cols-2">
-          <TransitionLink href={localePath(locale, baghChal('/solo'))} color="rgb(var(--tile-ink))" className={`${cta} bg-tile-ink text-tile-cream`}>
+          <TransitionLink href={localePath(locale, baghChal('/solo'))} color="rgb(var(--tile-ink))" doors className={`${cta} bg-tile-ink text-tile-cream`}>
             <LuBot aria-hidden="true" />{b.vsAi}
           </TransitionLink>
-          <TransitionLink href={localePath(locale, baghChal('/local'))} color="#f1e6cd" className={`${cta} bg-[#4a2616]/[0.08] text-tile-ink`}>
+          <TransitionLink href={localePath(locale, baghChal('/local'))} color="#f1e6cd" doors className={`${cta} bg-[#4a2616]/[0.08] text-tile-ink`}>
             <LuUsers aria-hidden="true" />{b.local}
           </TransitionLink>
         </div>
       </div>
-    </div>
+    </BaghFrame>
   );
 }

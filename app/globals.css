@@ -492,3 +492,5 @@ body {
 /* 平台首頁是深色外殼：整頁底色跟著換，捲到底或回彈時才不會露出奶油色。
    :has 在 Safari 15.4+／Chrome 105+，更舊的瀏覽器只是邊緣露一點奶油色，不影響使用。 */
 html:has(.platform-root), body:has(.platform-root) { background: rgb(var(--plat-bg)); }
+/* 虎羊棋的整頁畫框是番紅花底（BaghFrame），同一個理由 */
+html:has(.bagh-root), body:has(.bagh-root) { background: #e3a43c; }

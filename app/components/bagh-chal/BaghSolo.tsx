@@ -8,6 +8,8 @@ import type { Side } from '@/games/bagh-chal/engine';
 import BaghPlay from './BaghPlay';
 import { readSoloHash, soloHash } from './soloHash';
 import { GoatToken, TigerToken } from './tokens';
+import BaghFrame from './BaghFrame';
+import BaghWordmark from './BaghWordmark';
 
 /**
  * /bagh-chal/solo：跟電腦下。
@@ -29,15 +31,20 @@ export default function BaghSolo({ locale }: { locale: Locale }) {
     return () => window.removeEventListener('hashchange', read);
   }, []);
 
-  if (mode === undefined) return <div className="min-h-dvh bg-[#f1e6cd]" />;
+  // 掛載前先畫空的畫框：靜態 HTML 就是這一格，接著才換成選單或對局，底色不會閃
+  if (mode === undefined) return <BaghFrame variant="play"><div /></BaghFrame>;
   if (mode) {
     return <BaghPlay key={`${mode.side}-${mode.difficulty}`} locale={locale} mode={{ kind: 'ai', human: mode.side, difficulty: mode.difficulty }} />;
   }
 
   return (
-    <div className="flex min-h-dvh items-center justify-center bg-[#f1e6cd] px-5 font-[family-name:var(--font-app)]">
+    <BaghFrame variant="play">
+    <div className="flex flex-1 items-center justify-center px-5 py-8">
       <div className="flex w-full max-w-[380px] flex-col gap-6">
-        <h1 className="text-center text-3xl font-black tracking-tight">{b.title}<span className="mt-1 block text-base text-ink-soft">{b.vsAi}</span></h1>
+        <h1 aria-label={`${b.title} ${b.subtitle}`} className="flex flex-col items-center gap-1 text-center">
+          <BaghWordmark className="h-12 w-auto" />
+          <span className="text-base font-black text-ink-soft">{b.vsAi}</span>
+        </h1>
         <div className="flex flex-col gap-2">
           <p className="text-sm font-bold text-ink-soft">{b.playAs}</p>
           <div className="grid grid-cols-2 gap-3" role="radiogroup" aria-label={b.playAs}>
@@ -62,5 +69,6 @@ export default function BaghSolo({ locale }: { locale: Locale }) {
         </div>
       </div>
     </div>
+    </BaghFrame>
   );
 }

@@ -1,39 +1,37 @@
 import BaghHub from '@/components/bagh-chal/BaghHub';
+import BaghFrame from '@/components/bagh-chal/BaghFrame';
+import BaghWordmark from '@/components/bagh-chal/BaghWordmark';
 import PlatformCorner from '@/components/PlatformCorner';
 import { getMessages } from '@/i18n';
 import type { Locale } from '@/i18n/locales';
 
 /**
- * Bagh Chal 的遊戲首頁（六個語系共用）。角落是平台 logo 與聯絡／語言，中間是標題與選單，整頁塞得進一個畫面。
- *
- * 2026-10-20 換成印刷棋盤那一套識別（不再是 Wall Go 的奶油底撞色）：手工紙底色、
- * 標題下一條老虎追羊的飾帶、選單是 AI 畫的圓牌。桌機左邊多一張 AI 畫的整面棋盤，
- * 手機沒有位置放，只留飾帶。規則在自己的頁面（/bagh-chal/rules）。
+ * Bagh Chal 的遊戲首頁（六個語系共用）—— 「整頁圖騰」提案的平均版（2026-10-20 Zach 選的）：
+ * 整頁包在番紅花畫框裡（上下老虎追羊的飾帶、兩側小花），紙色面板上是天城體大字 बाघचाल、
+ * 棋子勳章、織帶按鈕。桌機多一張 AI 畫的整面印刷棋盤放在左邊。
+ * 角落是平台 logo 與聯絡／語言（PlatformCorner，fixed，疊在畫框上緣兩端的橘色方塊上）。
  */
 export default function BaghChalView({ locale }: { locale: Locale }) {
   const b = getMessages(locale).baghChal;
   return (
-    <div className="flex h-dvh min-h-dvh flex-col items-center justify-center bg-[#f1e6cd] px-5 py-[max(1rem,3dvh)] font-[family-name:var(--font-app)]">
+    <BaghFrame variant="hub">
       <PlatformCorner locale={locale} />
-      <div aria-hidden="true" className="hidden h-14 w-px shrink portrait:block" />
-      <div className="flex w-full items-center justify-center gap-[clamp(2rem,5vw,5rem)]">
+      <div className="flex flex-1 items-center justify-center gap-[clamp(2rem,5vw,4.5rem)] px-4 py-[max(1rem,3dvh)]">
         {/* eslint-disable-next-line @next/next/no-img-element -- 靜態匯出，已是 webp */}
         <img src="/games/bagh-chal/board-art.webp" alt="" width={760} height={760}
-          className="hidden aspect-square w-[min(560px,72dvh,45vw)] rounded-[28px] lg:block" />
-        <main className="home-main flex w-full max-w-[420px] flex-col items-center">
-          <header className="w-full text-center">
-            <h1 className="mt-1 text-[clamp(2.25rem,7dvh,3.75rem)] font-black leading-[0.95] tracking-tight">
-              {b.title}<br /><span className="text-[0.62em]">{b.subtitle}</span>
-            </h1>
-            <p className="mt-[max(0.5rem,1.5dvh)] text-sm font-bold text-ink-soft md:text-base">{b.tagline}</p>
-            {/* 老虎追羊的飾帶：印刷棋盤外框那一圈，在這裡當標題下的分隔 */}
-            <div aria-hidden="true" className="mx-auto mt-[max(0.75rem,2dvh)] h-[clamp(28px,5dvh,40px)] w-full max-w-[min(380px,calc(100dvh-22rem))] rounded-md border-2 border-[#5b6620] bg-[url('/games/bagh-chal/frieze.webp')] bg-[length:auto_100%] bg-repeat-x" />
-          </header>
-          <div className="home-grid mt-[max(1rem,3dvh)] w-full">
+          className="hidden aspect-square w-[min(500px,64dvh,40vw)] rounded-[24px] lg:block" />
+        <main className="flex w-full max-w-[400px] flex-col items-center">
+          <h1 className="flex flex-col items-center text-center">
+            <span className="sr-only">{b.title}</span>
+            <BaghWordmark className="h-auto w-[min(82%,320px,40dvh)]" />
+            <span className="mt-[max(0.25rem,1dvh)] text-[clamp(1.4rem,4dvh,2rem)] font-black tracking-[0.12em]">{b.subtitle}</span>
+          </h1>
+          <p className="mt-1 text-sm font-bold text-ink-soft">{b.tagline}</p>
+          <div className="mt-[max(1rem,2.6dvh)] w-full">
             <BaghHub />
           </div>
         </main>
       </div>
-    </div>
+    </BaghFrame>
   );
 }

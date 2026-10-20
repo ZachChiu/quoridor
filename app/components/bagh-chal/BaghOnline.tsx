@@ -1,7 +1,7 @@
 'use client';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { GiBreakingChain, GiCheckMark, GiGoat, GiTigerHead, GiUnplugged } from 'react-icons/gi';
+import { GiBreakingChain, GiCheckMark, GiUnplugged } from 'react-icons/gi';
 import { LuCopy, LuShare2 } from 'react-icons/lu';
 import Connecting from '@/components/Connecting';
 import StatusScreen, { BTN_PRIMARY, BTN_SECONDARY } from '@/components/StatusScreen';
@@ -16,6 +16,8 @@ import type { BaghRoom } from '@/types/baghRoom';
 import { createBaghRoom, getBaghRoom, joinBaghRoom, subscribeBaghRoom, writeBaghMoves } from '@/utils/baghService';
 import { atStep, describeOnlineError, reportOnlineError } from '@/utils/onlineError';
 import BaghPlay from './BaghPlay';
+import BaghFrame from './BaghFrame';
+import { GoatToken, TigerToken } from './tokens';
 
 /** `#new=tiger`（自己開房、自己當老虎）或 `#roomId=…`（進房） */
 type Target = { create: Side } | { roomId: string } | { invalid: true };
@@ -154,7 +156,7 @@ function Waiting({ me, url, home }: { me: Side; url: string; home: string }) {
   const canShare = useWebShare();
   const [copied, setCopied] = useState(false);
   const name = (s: Side) => (s === 'tiger' ? b.tiger : b.goat);
-  const Icon = me === 'tiger' ? GiTigerHead : GiGoat;
+  const Icon = me === 'tiger' ? TigerToken : GoatToken;
 
   const copy = async () => {
     try { await navigator.clipboard.writeText(url); } catch { return; }
@@ -163,12 +165,11 @@ function Waiting({ me, url, home }: { me: Side; url: string; home: string }) {
   };
 
   return (
-    <div className="flex min-h-dvh items-center justify-center px-5 font-[family-name:var(--font-app)]">
+    <BaghFrame variant="play">
+    <div className="flex flex-1 items-center justify-center px-5 py-8">
       <div className="flex w-full max-w-[420px] flex-col gap-5">
         <div className="flex items-center gap-3">
-          <span className={`grid size-14 shrink-0 place-items-center rounded-full text-3xl ${me === 'tiger' ? 'bg-tile-orange text-tile-ink' : 'bg-tile-ink text-tile-cream'}`}>
-            <Icon aria-hidden="true" />
-          </span>
+          <Icon className="shrink-0 text-[56px]" />
           <div>
             <p className="text-sm font-bold text-ink-soft">{b.title} · {b.onlineTitle}</p>
             <h1 className="text-2xl font-black leading-tight">{b.inviteHeading}</h1>
@@ -197,5 +198,6 @@ function Waiting({ me, url, home }: { me: Side; url: string; home: string }) {
         <Link href={home} className="self-start text-sm font-bold text-ink-soft underline underline-offset-4">{g.play.backHome}</Link>
       </div>
     </div>
+    </BaghFrame>
   );
 }
