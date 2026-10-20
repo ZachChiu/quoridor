@@ -48,9 +48,9 @@ zh-TW 不加前綴（`app/(default)/`），en / ja / ko / zh-Hans / th 加前綴
 | `/wall-go/online#roomId=…` | 連線對戰（`OnlineClient` → `PlayClient`，帶 `roomId`）。roomId 放 hash 而非 query。noindex |
 | `/wall-go/online#new=2\|3` | Wall Go 首頁連線磁磚的目的地：連線頁自己開房，開好後 `replaceState` 換成 `#roomId=…` |
 | `/wall-go/replay#wgf=…` | 棋譜回放。**開發者工具，不是給玩家的功能** —— 見下 |
-| `/bagh-chal` | Bagh Chal 首頁（`BaghChalView` → `BaghHub`）。2026-10-20 起是自己的識別（試做中），**不沿用 Wall Go 的元件與視覺**：每一頁包在番紅花畫框裡（`BaghFrame`：四邊飾帶是從 board-art 外框一隻隻摳出來的老虎、羊、花樹，組成 `band-h`／`band-v` 圖塊，在連續的番紅花底上用 `background-repeat: space` 平均排開、四角各一株花 —— 圖塊之間只有底色，任何尺寸都不會切到半隻、沒有接線；先前把整條插畫重複接起來，段與段、四個角的接線很明顯），面板頂列放平台 logo 與聯絡／語言（`BaghHeader`，不疊在畫框上）；首頁是天城體字標＋四個按鈕（老虎、羊、兩人同一台、連線對戰）；彈窗用 `Modal` 的 `skin="bagh"`、按鈕與難度在 `BaghUi`；棋子與圖示是 AI 畫的米提拉圓牌（`bagh-chal/tokens.tsx`，用背景圖畫，不用 `<img>`＋filter —— iPhone 會漏畫），換頁是木窗門（`WipeOverlay` 的 `DOORS`）。配色在 `bagh-chal/palette.ts`。程式在 `app/games/bagh-chal/`（規則與電腦對手）、`app/components/bagh-chal/`（畫面） |
+| `/bagh-chal` | Bagh Chal 首頁（`BaghChalView` → `BaghHub`）。2026-10-20 起是自己的識別（試做中），**不沿用 Wall Go 的元件與視覺**：每一頁包在番紅花畫框裡（`BaghFrame`：四邊飾帶是從 board-art 外框一隻隻摳出來的老虎、羊、花樹（`m-*.webp`，直條用事先轉 90° 的 `m-*-v.webp`，沿著邊跑），用 flex 一隻隻排開、`space-evenly` 分空間、放不下的那隻藏起來 —— 不會切到半隻、沒有接線，也沒有 `background-repeat: space` 那種一段段空白；四角各一株花）。**三角形圖騰（`.bagh-tri`）只在整頁最外緣一層**，面板與彈窗是印刷棋盤內框那道橄欖綠雙線（`.bagh-line`），棋盤不加框（Zach：圖騰只能有一層在最外層，不能一堆）。面板頂列放平台 logo 與聯絡／語言（`BaghHeader`，不疊在畫框上）；首頁是天城體字標（बाघचाल，尼泊爾文的 Bagh Chal，**只放首頁**）＋四個按鈕（老虎、羊、本機對戰、連線對戰），桌機也只有手機寬的一欄；盤面平常只有線，點了棋子才在能去的點開花（小花可以走、大花是吃子落點）；彈窗用 `Modal` 的 `skin="bagh"`、按鈕樣式在 `bagh-chal/styles.ts`（不能放在 `'use client'` 模組：規則頁是 server component，import 到的會是 client reference）；棋子與圖示是 AI 畫的米提拉圓牌（`bagh-chal/tokens.tsx`，用背景圖畫，不用 `<img>`＋filter —— iPhone 會漏畫）。**開門轉場（`WipeOverlay` 的 `DOORS`）只在平台卡片進虎羊棋那一下**，虎羊棋裡面換頁一律 `router.push`／`Link`。favicon 是老虎圓牌（`public/icons/bagh-chal-*`）。配色在 `bagh-chal/palette.ts`。程式在 `app/games/bagh-chal/`（規則與電腦對手）、`app/components/bagh-chal/`（畫面） |
 | `/bagh-chal/rules` | 規則頁，每步一張小棋盤（`BaghRulesSteps`，對局中的說明彈窗共用） |
-| `/bagh-chal/solo#tiger-normal`、`/bagh-chal/local` | 跟電腦下（hash 是邊＋難度，沒帶就在頁面上選）、兩人同一台。noindex |
+| `/bagh-chal/solo#tiger-normal`、`/bagh-chal/local` | 跟電腦下（hash 是邊＋難度，沒帶就在頁面上選）、本機對戰（兩人同一台）。noindex |
 | `/bagh-chal/online#new=tiger\|goat`、`#roomId=…` | 邀請朋友。房間在 RTDB `baghRooms/`（跟 Wall Go 的 `rooms/` 分開，結構見 `types/baghRoom.ts`），存走法字串（`encodeMoves`），只有輪到的人能寫。noindex |
 | `/time-auction`、`/nine-mens-morris`、`/blind-gomoku`、`/balance-mancala`、`/knights-tour` | 第二批五款**試做**（2026-10-20）：每款一頁、選模式與對局都在那一頁（騎士巡邏的模式放 hash：`#show`、`#practice-N`）。規則在 `app/games/<id>/`、畫面在 `app/components/<id>/`、六語系文案在各自的 `app/games/<id>/text.ts`（不進 `messages/`，key 的縮排與順序見 `i18n/gameText.ts`）。metadata 用 `trialGameMetadata`：noindex、不進 sitemap、分享圖暫用平台首頁那張。沒有連線、沒有 GA 事件 |
 | 舊網址 `/rules`、`/solo`、`/local`、`/online`、`/replay`、`/match`（各語系） | CloudFront 301 到 `/wall-go/…`（`infra/cloudfront-redirects.js`，表要跟 `routes.ts` 的 `MOVED` 一致，`tests/infra/redirects.test.ts` 會比對）；舊路徑上另有瀏覽器端轉址當備援（`components/LegacyRedirect.tsx`），noindex、不進 sitemap |
@@ -171,6 +171,7 @@ players/{ A?, B?, C? }/{ uid, displayName, joinedAt }
   Zach 都要復原（「Wall Go 決定不改」）。不要再加回來。
 - **這套視覺只管 Wall Go 與平台**：虎羊棋是印刷棋盤＋米提拉的自己一套（見路由表），第二批五款各有自己的主色與
   AI 主視覺（跟平台卡片同一張，`public/games/<id>/key-art.webp`）。平台標誌是長角的藍骰子（`public/brand/die-mark.svg`，試套）。
+- **favicon 一款遊戲一組**：全站預設（`shell.tsx` 的 baseMetadata、`/favicon.*`、`/icon-*.png`）是平台骰子；Wall Go 與虎羊棋由 `i18n/metadata.ts` 的 `gameIcons` 依路徑換成自己的（`public/icons/`）。頁面的 icons 會整組蓋掉 layout 的，所以要給完整一組。第二批五款暫用平台的，等各自重新設計視覺（2026-10-20 Zach）
 - **棋盤**：外圍那圈 9px 是「牆」不是裝飾邊框（規則裡棋盤外緣本身就算一道牆）。
   牆的位移一律 `calc(var(--board-gap) * -0.5)` —— 對齊的是格線中心而不是格子邊，
   兩者差半個格縫，寫死會漂掉。
