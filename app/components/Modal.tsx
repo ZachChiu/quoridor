@@ -97,7 +97,7 @@ const Modal: React.FC<Props> = ({
         tabIndex={-1}
         // 最高就是可視高度；放不下時色帶與按鈕固定，只有中間的內容捲動
         className={`relative flex max-h-full w-full max-w-md flex-col overflow-hidden font-[family-name:var(--font-app)] outline-none ${
-          bagh ? 'bagh-line bg-[#fbf4e1] [--line:7px]' : 'rounded-2xl bg-primary'
+          bagh ? 'bagh-line bg-bagh-field [--line:7px]' : 'rounded-2xl bg-primary'
         } ${panelClassName}`}
       >
         {/* 色帶做成滿版（面板 overflow-hidden 負責切圓角），
@@ -122,7 +122,7 @@ const Modal: React.FC<Props> = ({
             onClick={onClose}
             // p-2 只有 40px，差一點到觸控目標的 44px。
             className={bagh
-              ? '-mr-1 shrink-0 rounded-full bg-[#f2e4c4] p-2 text-tile-ink transition hover:bg-[#ead8ad]'
+              ? '-mr-1 shrink-0 rounded-full bg-bagh-paper p-2 text-tile-ink transition hover:bg-bagh-paper-deep'
               : '-mr-2 -mt-1 shrink-0 rounded-full p-2.5 text-2xl opacity-70 transition hover:opacity-100'}
           >
             {bagh ? (

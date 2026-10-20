@@ -10,10 +10,10 @@ export const BAGH = {
   olive: '#5b6620',
   /** 花飾、深色字 */
   brown: '#4a2616',
-  /** 花飾、兩人同一台 */
+  /** 花飾、本機對戰 */
   terracotta: '#b8471f',
-  /** 盤面、面板 */
-  paper: '#fbf4e1',
+  /** 奶油紙：棋盤、選項卡（Tailwind 用 bg-bagh-paper，值在 globals.css 的 --bagh-paper；面板的泰奶色是 --bagh-field） */
+  paper: '#fcf3e2',
   /** 棋盤線 */
   line: '#4a3426',
   /** 頁面外圍的手工紙底（換頁轉場也用這個） */

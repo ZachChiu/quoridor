@@ -52,7 +52,7 @@ export default function BaghSolo({ locale }: { locale: Locale }) {
               const on = side === s;
               return (
                 <button key={s} type="button" role="radio" aria-checked={on} onClick={() => setSide(s)}
-                  className={`flex items-center justify-center gap-2.5 rounded-2xl py-3.5 text-lg font-black transition ${on ? 'bg-tile-ink text-tile-cream' : 'bg-[#f2e4c4] text-tile-ink hover:bg-[#ead8ad]'}`}>
+                  className={`flex items-center justify-center gap-2.5 rounded-2xl py-3.5 text-lg font-black transition ${on ? 'bg-tile-ink text-tile-cream' : 'bg-bagh-paper text-tile-ink hover:bg-bagh-paper-deep'}`}>
                   <Icon className={`text-[40px] transition ${on ? '' : 'opacity-70 grayscale-[35%]'}`} />{s === 'tiger' ? b.tiger : b.goat}
                 </button>
               );

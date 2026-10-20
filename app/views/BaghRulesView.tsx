@@ -20,7 +20,7 @@ export default function BaghRulesView({ locale }: { locale: Locale }) {
   const cta = 'h-14 text-base';
   return (
     <BaghFrame variant="page">
-      <header className="sticky top-0 z-40 border-b-2 border-[#4a2616]/10 bg-[#fbf4e1]/95 backdrop-blur">
+      <header className="sticky top-0 z-40 border-b-2 border-[#4a2616]/10 bg-bagh-field/95 backdrop-blur">
         <div className="mx-auto flex max-w-[46rem] items-center gap-3 px-4 py-2.5">
           {/* 虎羊棋裡面換頁不播轉場（開門特效只在平台進虎羊棋那一下），用一般的 Link */}
           <Link href={localePath(locale, baghChal())} aria-label={t.nav.backHome} className={BAGH_ROUND}>

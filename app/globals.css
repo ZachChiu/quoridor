@@ -494,6 +494,16 @@ body {
 html:has(.platform-root), body:has(.platform-root) { background: rgb(var(--plat-bg)); }
 /* 虎羊棋的整頁畫框是番紅花底（BaghFrame），同一個理由 */
 html:has(.bagh-root), body:has(.bagh-root) { background: #e3a43c; }
+/* 虎羊棋的面與紙：面板與彈窗是泰奶色，棋盤、選項卡、次要按鈕是放在上面的奶油紙
+   （2026-10-21 Zach：整體應該偏泰奶色，現在偏白 —— 平台設計稿裡虎羊棋是一整片暖色底上放一張奶油色棋盤）。
+   頁面外的彈窗是 portal 到 body 的，所以變數放 :root，不放 .bagh-root。 */
+:root {
+  --bagh-field: 241 195 145;
+  --bagh-paper: 252 243 226;
+  --bagh-paper-deep: 245 228 199;
+}
+/* 泰奶底上原本的副字色（#6b5c4d）只有 3.9:1，小字不到 4.5；虎羊棋的頁面（含彈窗）換深一階，約 5:1 */
+html:has(.bagh-root) { --ink-soft: #5a4a3b; }
 /* 虎羊棋的邊框：三角形圖騰（照那張印刷棋盤的外框：番紅花底、內外兩條橄欖綠細線、中間一排橄欖綠三角形，四角一顆圓點）。
    用 border-image：圖塊的邊段剛好一個三角形，round 重複就是連續的鋸齒，不會有接縫；四角由圖塊的角落負責。
    只用在整頁畫框的最外緣一層：先前把面板、棋盤、彈窗的綠色實線也都換成它，一層套一層太花
@@ -504,8 +514,9 @@ html:has(.bagh-root), body:has(.bagh-root) { background: #e3a43c; }
   border-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 36 36'%3E%3Crect width='36' height='36' fill='%23e3a43c'/%3E%3Crect x='0.75' y='0.75' width='34.5' height='34.5' fill='none' stroke='%235b6620' stroke-width='1.5'/%3E%3Crect x='11.25' y='11.25' width='13.5' height='13.5' fill='none' stroke='%235b6620' stroke-width='1.5'/%3E%3Cpath d='M12 1.5H24L18 10.2Z M12 34.5H24L18 25.8Z M1.5 12V24L10.2 18Z M34.5 12V24L25.8 18Z' fill='%235b6620'/%3E%3Ccircle cx='6' cy='6' r='2.2' fill='%235b6620'/%3E%3Ccircle cx='30' cy='6' r='2.2' fill='%235b6620'/%3E%3Ccircle cx='6' cy='30' r='2.2' fill='%235b6620'/%3E%3Ccircle cx='30' cy='30' r='2.2' fill='%235b6620'/%3E%3C/svg%3E") 12 / var(--tri, 12px) round;
 }
 /* 虎羊棋的紙面邊：印刷棋盤內框那道橄欖綠雙線（外粗、內細、中間留一條紙色），畫框裡的面板與彈窗用。
-   不是圖騰 —— 圖騰只在整頁最外緣（.bagh-tri）。一樣用 border-image 畫，內容永遠蓋不到線；粗細用 --line 調。 */
+   不是圖騰 —— 圖騰只在整頁最外緣（.bagh-tri）。一樣用 border-image 畫，內容永遠蓋不到線；粗細用 --line 調。
+   兩道線中間是透明的，露出元素自己的底色（面板、彈窗換底色時不用跟著改這張圖）。 */
 .bagh-line {
   border: var(--line, 8px) solid #5b6620;
-  border-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' fill='%235b6620'/%3E%3Crect x='3.5' y='3.5' width='17' height='17' fill='%23fbf4e1'/%3E%3Crect x='6' y='6' width='12' height='12' fill='%235b6620'/%3E%3Crect x='7.5' y='7.5' width='9' height='9' fill='%23fbf4e1'/%3E%3C/svg%3E") 8 / var(--line, 8px) stretch;
+  border-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath fill='%235b6620' fill-rule='evenodd' d='M0 0H24V24H0Z M3.5 3.5V20.5H20.5V3.5Z'/%3E%3Cpath fill='%235b6620' fill-rule='evenodd' d='M6 6H18V18H6Z M7.5 7.5V16.5H16.5V7.5Z'/%3E%3C/svg%3E") 8 / var(--line, 8px) stretch;
 }

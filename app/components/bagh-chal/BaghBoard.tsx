@@ -68,7 +68,7 @@ function Rosette({ big = false }: { big?: boolean }) {
       {[45, 135, 225, 315].map((a) => (
         <path key={a} transform={`rotate(${a})`} d="M0-.72C.22-.4.18-.16 0 0C-.18-.16-.22-.4 0-.72Z" fill={big ? BAGH.brown : BAGH.terracotta} />
       ))}
-      <circle r=".22" fill={BAGH.paper} />
+      <circle r=".22" style={{ fill: 'rgb(var(--bagh-paper))' }} />
     </svg>
   );
 }
@@ -100,7 +100,8 @@ export function BaghBoard({ board, targets, capturers, victims, movable, selecte
   onPick: (p: Point) => void;
 }) {
   return (
-    <div className="relative w-full">
+    // 棋盤是放在泰奶色面板上的一張奶油紙（照平台設計稿：暖色底上一張奶油色棋盤），不加框線
+    <div className="relative w-full rounded-2xl bg-bagh-paper p-[2.5%]">
       <div className="relative aspect-square w-full">
         <BoardLines />
         {board.map((cell, p) => {
@@ -138,7 +139,7 @@ export function MiniBoard({ rows, marks = {}, victims = [] }: {
 }) {
   const cells = rows.join('').split('');
   return (
-    <div className="w-full rounded-xl bg-[#fbf4e1] p-[4%]" aria-hidden="true">
+    <div className="w-full rounded-xl bg-bagh-paper p-[4%]" aria-hidden="true">
       <div className="relative aspect-square w-full">
         <BoardLines width={0.7} />
         {cells.map((ch, p) => {

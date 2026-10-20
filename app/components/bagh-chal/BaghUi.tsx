@@ -13,7 +13,7 @@ export function BaghDifficulty({ onPick }: { onPick: (difficulty: Difficulty) =>
     <div className="grid w-full grid-cols-3 gap-2.5">
       {LEVELS.map((key, i) => (
         <button key={key} type="button" onClick={() => onPick(key)}
-          className="flex flex-col items-center gap-2.5 rounded-2xl bg-[#f2e4c4] py-4 text-xl font-black text-tile-ink transition hover:bg-[#ead8ad] active:scale-[0.97]">
+          className="flex flex-col items-center gap-2.5 rounded-2xl bg-bagh-paper py-4 text-xl font-black text-tile-ink transition hover:bg-bagh-paper-deep active:scale-[0.97]">
           <span className="flex gap-1" aria-hidden="true">
             {LEVELS.map((_, dot) => (
               <span key={dot} className={`size-3 rounded-full border-2 border-tile-ink ${dot <= i ? 'bg-[#e3a43c]' : ''}`} />

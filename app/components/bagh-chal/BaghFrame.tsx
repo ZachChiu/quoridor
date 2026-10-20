@@ -37,7 +37,7 @@ export default function BaghFrame({ variant = 'hub', className = '', children }:
         <Band dir="h" size={row} />
         <Corner />
         <Band dir="v" size={col} />
-        <div className={`bagh-line flex min-w-0 flex-col bg-[#fbf4e1] ${className}`} style={{ '--line': 'clamp(5px, 1.4vw, 8px)' } as React.CSSProperties}>
+        <div className={`bagh-line flex min-w-0 flex-col bg-bagh-field ${className}`} style={{ '--line': 'clamp(5px, 1.4vw, 8px)' } as React.CSSProperties}>
           {children}
         </div>
         <Band dir="v" size={col} flip />

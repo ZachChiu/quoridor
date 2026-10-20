@@ -183,7 +183,7 @@ function Waiting({ me, url, home }: { me: Side; url: string; home: string }) {
         </div>
         <p className="text-sm leading-relaxed">{b.inviteBody.replace('{me}', name(me)).replace('{them}', name(other(me)))}</p>
 
-        <div className="flex items-center gap-2 rounded-xl bg-[#f2e4c4] p-2 pl-4">
+        <div className="flex items-center gap-2 rounded-xl bg-bagh-paper p-2 pl-4">
           <span className="flex-1 select-all truncate font-mono text-sm">{url}</span>
           <button type="button" onClick={copy} aria-label={copied ? g.share.copied : g.share.copyAria}
             className={`${BAGH_PRIMARY} shrink-0 gap-1.5 px-3 py-2 text-sm`}>

@@ -49,7 +49,7 @@ export default function LanguageSwitcher({ onDark = false, skin = 'default' }: {
         aria-label={t.nav.language}
         aria-haspopup="dialog"
         className={`relative grid size-10 place-items-center rounded-full text-xl transition after:absolute after:-inset-0.5 after:content-[''] active:scale-95 ${
-          bagh ? 'bg-[#f2e4c4] text-tile-ink hover:bg-[#ead8ad]'
+          bagh ? 'bg-bagh-paper text-tile-ink hover:bg-bagh-paper-deep'
           : onDark
             ? 'bg-tile-cream/[0.16] text-tile-cream hover:bg-tile-cream/[0.26]'
             : 'bg-tile-ink/[0.06] text-ink-soft hover:bg-tile-ink/[0.12]'
@@ -78,7 +78,7 @@ export default function LanguageSwitcher({ onDark = false, skin = 'default' }: {
                   hrefLang={it.locale}
                   aria-current={it.current ? 'true' : undefined}
                   onClick={it.onClick}
-                  className={`${row} ${it.current ? 'bg-tile-ink text-tile-cream' : bagh ? 'bg-[#f2e4c4] text-tile-ink hover:bg-[#ead8ad]' : 'bg-primary-50 text-tile-ink hover:brightness-95'}`}
+                  className={`${row} ${it.current ? 'bg-tile-ink text-tile-cream' : bagh ? 'bg-bagh-paper text-tile-ink hover:bg-bagh-paper-deep' : 'bg-primary-50 text-tile-ink hover:brightness-95'}`}
                 >
                   {it.name}
                   {it.current && <LuCheck aria-hidden="true" />}

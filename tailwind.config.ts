@@ -45,6 +45,12 @@ export default {
         },
         "board-line": "rgb(var(--board-line) / <alpha-value>)",
         "brand-red": "rgb(var(--brand-red) / <alpha-value>)",
+        // 虎羊棋的面與紙（globals.css 的 --bagh-*）：泰奶色的面板、奶油色的紙
+        bagh: {
+          field: "rgb(var(--bagh-field) / <alpha-value>)",
+          paper: "rgb(var(--bagh-paper) / <alpha-value>)",
+          "paper-deep": "rgb(var(--bagh-paper-deep) / <alpha-value>)",
+        },
         plat: {
           bg: "rgb(var(--plat-bg) / <alpha-value>)",
           surface: "rgb(var(--plat-surface) / <alpha-value>)",
