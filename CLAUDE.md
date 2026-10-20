@@ -48,7 +48,7 @@ zh-TW 不加前綴（`app/(default)/`），en / ja / ko / zh-Hans / th 加前綴
 | `/wall-go/online#roomId=…` | 連線對戰（`OnlineClient` → `PlayClient`，帶 `roomId`）。roomId 放 hash 而非 query。noindex |
 | `/wall-go/online#new=2\|3` | Wall Go 首頁連線磁磚的目的地：連線頁自己開房，開好後 `replaceState` 換成 `#roomId=…` |
 | `/wall-go/replay#wgf=…` | 棋譜回放。**開發者工具，不是給玩家的功能** —— 見下 |
-| `/bagh-chal` | Bagh Chal 首頁（`BaghChalView` → `BaghHub`）。2026-10-20 起是自己的識別（試做中）：每一頁包在番紅花畫框裡（`BaghFrame`：上下老虎追羊的 AI 飾帶、兩側小花），首頁是「整頁圖騰」提案的平均版（天城體字標、棋子勳章、達卡織紋按鈕）；棋子與圖示是 AI 畫的米提拉圓牌（`bagh-chal/tokens.tsx`，用背景圖畫，不用 `<img>`＋filter —— iPhone 會漏畫），換頁是木窗門（`WipeOverlay` 的 `DOORS`）。配色在 `bagh-chal/palette.ts`。程式在 `app/games/bagh-chal/`（規則與電腦對手）、`app/components/bagh-chal/`（畫面） |
+| `/bagh-chal` | Bagh Chal 首頁（`BaghChalView` → `BaghHub`）。2026-10-20 起是自己的識別（試做中）：尼泊爾印刷棋盤的配色、選單是 `BaghTile`、圖示與棋子都是 AI 畫的米提拉圓牌（`bagh-chal/tokens.tsx`），不用剪影圖示。程式在 `app/games/bagh-chal/`（規則與電腦對手）、`app/components/bagh-chal/`（畫面） |
 | `/bagh-chal/rules` | 規則頁，每步一張小棋盤（`BaghRulesSteps`，對局中的說明彈窗共用） |
 | `/bagh-chal/solo#tiger-normal`、`/bagh-chal/local` | 跟電腦下（hash 是邊＋難度，沒帶就在頁面上選）、兩人同一台。noindex |
 | `/bagh-chal/online#new=tiger\|goat`、`#roomId=…` | 邀請朋友。房間在 RTDB `baghRooms/`（跟 Wall Go 的 `rooms/` 分開，結構見 `types/baghRoom.ts`），存走法字串（`encodeMoves`），只有輪到的人能寫。noindex |
@@ -167,11 +167,8 @@ players/{ A?, B?, C? }/{ uid, displayName, joinedAt }
   已知例外：森綠磁磚彩度 0.103，低於 0.125 下限。
 - **圖示**用 game-icons.net 的實心剪影（`react-icons/gi` 已內建，CC BY 3.0）。
   線條圖示在大尺寸色塊上會顯得單薄。署名放在遊玩方式 Modal 裡。
-- **對局頁的按鈕與牆是貼紙風**（2026-10-20 試做，Zach 給的參考圖是粗黑框＋往右下偏移的硬影子）：
-  左上的房子／規則圓鈕、手機控制盤（箭頭、白旗、重來、槌子、完成）、桌機的投降鈕用 `components/StickerIcons.tsx`；
-  牆畫成一段磚牆（`.wall-brick`：深墨描邊、磚縫、硬影子），控制盤外圈的蓋牆鈕同一個樣子。
-  這是上面「沒有陰影也沒有粗描邊」的例外，只限對局頁。先試過放在首頁磁磚，Zach 要復原 —— 首頁維持實心剪影。
-  圖示顏色寫在 inline style —— `globals.css` 的 `.tile-icon path { fill }` 會蓋掉 fill 屬性。
+- **貼紙風（粗黑框＋硬影子）試過、不用**：2026-10-20 先放在 Wall Go 首頁磁磚、再試在對局頁的按鈕與牆（磚牆），
+  Zach 都要復原（「Wall Go 決定不改」）。不要再加回來。
 - **這套視覺只管 Wall Go 與平台**：虎羊棋是印刷棋盤＋米提拉的自己一套（見路由表），第二批五款各有自己的主色與
   AI 主視覺（跟平台卡片同一張，`public/games/<id>/key-art.webp`）。平台標誌是長角的藍骰子（`public/brand/die-mark.svg`，試套）。
 - **棋盤**：外圍那圈 9px 是「牆」不是裝飾邊框（規則裡棋盤外緣本身就算一道牆）。

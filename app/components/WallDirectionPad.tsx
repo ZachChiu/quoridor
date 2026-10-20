@@ -1,6 +1,6 @@
 'use client';
 import React from 'react';
-import { StickerArrowDown, StickerArrowLeft, StickerArrowRight, StickerArrowUp, StickerCheck, StickerFlag, StickerHammer, StickerRestart } from './StickerIcons';
+import { LuCheck, LuRotateCcw, LuFlag, LuHammer } from 'react-icons/lu';
 import type { Direction } from '@/types/chessboard';
 import { useGameText } from '@/i18n/LocaleProvider';
 import TurnGuide from './TurnGuide';
@@ -69,6 +69,12 @@ type Props = {
   onSwitchPiece: () => void;
 };
 
+const ARROW: Record<Direction, string> = {
+  top: 'M12 5v14M5 12l7-7 7 7',
+  bottom: 'M12 19V5M5 12l7 7 7-7',
+  left: 'M19 12H5M12 5l-7 7 7 7',
+  right: 'M5 12h14M12 5l7 7-7 7',
+};
 const MOVE_POS: Record<Direction, string> = {
   top: 'col-start-3 row-start-2', bottom: 'col-start-3 row-start-4',
   left: 'col-start-2 row-start-3', right: 'col-start-4 row-start-3',
@@ -77,9 +83,8 @@ const WALL_POS: Record<Direction, string> = {
   top: 'col-start-3 row-start-1', bottom: 'col-start-3 row-start-5',
   left: 'col-start-1 row-start-3', right: 'col-start-5 row-start-3',
 };
-/* 一小段磚牆：比原本的細長條粗一點，描邊與磚縫才看得出來 */
 const WALL_BAR: Record<Direction, string> = {
-  top: 'h-[10px] w-9', bottom: 'h-[10px] w-9', left: 'h-9 w-[10px]', right: 'h-9 w-[10px]',
+  top: 'h-[6px] w-8', bottom: 'h-[6px] w-8', left: 'h-8 w-[6px]', right: 'h-8 w-[6px]',
 };
 /*
   ✓ / ↺ / 🔨 放在**九宮格的四個角**。
@@ -103,8 +108,6 @@ const CORNER = {
   confirm: 'col-start-4 row-start-4',
 } as const;
 const DIRS: Direction[] = ['top', 'bottom', 'left', 'right'];
-/** 方向鍵的貼紙箭頭（2026-10-20 試做：Zach 要的「遊戲頁內的按鈕補上設計圖」） */
-const STICKER_ARROW = { top: StickerArrowUp, bottom: StickerArrowDown, left: StickerArrowLeft, right: StickerArrowRight } as const;
 
 export default function WallDirectionPad({
   placing, selected, movable, buildable, breakable, breaksLeft,
@@ -185,7 +188,9 @@ export default function WallDirectionPad({
               onClick={() => onMove(dir)}
               className={`${MOVE_POS[dir]} grid place-items-center rounded-xl bg-tile-ink/[0.07] text-tile-ink transition enabled:active:scale-95 disabled:opacity-20`}
             >
-              {React.createElement(STICKER_ARROW[dir], { className: 'text-[28px]' })}
+              <svg viewBox="0 0 24 24" className="size-6" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d={ARROW[dir]} />
+              </svg>
             </button>
           ))}
 
@@ -203,11 +208,11 @@ export default function WallDirectionPad({
               style={pending === dir ? { backgroundColor: `${color}22` } : undefined}
             >
               <span
-                className={`block ${WALL_BAR[dir]} ${dir === 'top' || dir === 'bottom' ? 'wall-brick wall-brick-h' : 'wall-brick wall-brick-v'}`}
+                className={`block rounded-full ${WALL_BAR[dir]}`}
                 style={{
                   backgroundColor: breakMode
                     ? 'rgb(var(--tile-red))'
-                    : pending === dir ? color : `color-mix(in srgb, ${color} 45%, rgb(var(--tile-cream)))`,
+                    : pending === dir ? color : 'rgb(var(--tile-ink) / 0.25)',
                 }}
               />
             </button>
@@ -222,7 +227,7 @@ export default function WallDirectionPad({
             onClick={onSurrender}
             className={`${CORNER.surrender} grid size-11 place-items-center rounded-xl bg-tile-ink/[0.07] text-xl text-ink-soft transition enabled:active:scale-95 disabled:opacity-20`}
           >
-            <StickerFlag className="text-[28px]" />
+            <LuFlag />
           </button>
           <button
             type="button"
@@ -231,7 +236,7 @@ export default function WallDirectionPad({
             onClick={onConfirm}
             className={`${CORNER.confirm} grid size-11 place-items-center rounded-xl bg-tile-ink text-2xl text-tile-cream transition enabled:active:scale-95 disabled:opacity-20`}
           >
-            <StickerCheck className="text-[30px]" />
+            <LuCheck />
           </button>
           <button
             type="button"
@@ -240,7 +245,7 @@ export default function WallDirectionPad({
             onClick={onRedo}
             className={`${CORNER.redo} grid size-11 place-items-center rounded-xl bg-tile-ink/[0.07] text-xl text-ink-soft transition enabled:active:scale-95 disabled:opacity-20`}
           >
-            <StickerRestart className="text-[28px]" />
+            <LuRotateCcw />
           </button>
           {/* 破牆只有三人局有，所以這顆只在那時才佔位置。
               按下去之後外圈的長條改代表「可以打破的牆」（染成磚紅），
@@ -267,7 +272,7 @@ export default function WallDirectionPad({
                 breakMode ? 'bg-tile-red text-tile-cream' : 'bg-tile-ink/[0.07] text-ink-soft'
               }`}
             >
-              <StickerHammer className="text-[28px]" />
+              <LuHammer />
             </button>
           )}
 

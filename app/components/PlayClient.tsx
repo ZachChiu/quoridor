@@ -2,7 +2,8 @@
 import { useState, useEffect, useMemo, useCallback, useReducer, useRef } from "react";
 // 小圓鈕與首頁磁磚用同一套圖示（game-icons 實心）——
 // 同一件事在兩個地方長得不一樣，會讓人以為那是兩個不同的東西。
-import { StickerFlag, StickerHome, StickerRules } from "./StickerIcons";
+import { GiHut, GiRuleBook } from "react-icons/gi";
+import { LuFlag } from "react-icons/lu";
 import Link from 'next/link';
 import Chessboard from "@/components/Chessboard";
 import ChampionModal from "@/components/ChampionModal";
@@ -910,7 +911,7 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
                 // 這顆鈕本來就是圓的，圓角給半徑即可 —— 於是它是
                 // 「圓脹大、再縮回圓」，沒有多餘的方轉圓。
                 from: { width: r.width, height: r.height, radius: r.width / 2 },
-                icon: StickerHome,
+                icon: GiHut,
                 // 這顆鈕的圖示只有 24px，寫死 text-7xl 會變成一顆比按鈕
                 // 還大的房子憑空冒出來 —— 量它真正的尺寸。
                 iconSize: iconH,
@@ -932,10 +933,10 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
             goHome(guardOnTopRef.current);
           }}
           className="rounded-full bg-primary-50 p-3.5 text-2xl text-tile-ink transition hover:brightness-95 active:scale-95">
-          <StickerHome />
+          <GiHut />
         </button>
         <IconButton color="bg-primary-50 text-tile-ink" handleClickEvent={handleRuleBtnOpen} label={g.play.howToPlay}>
-          <StickerRules />
+          <GiRuleBook />
         </IconButton>
       </div>
 
@@ -994,7 +995,7 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
                          px-[18px] py-3 text-[15px] font-black text-ink-soft transition
                          hover:text-tile-ink active:scale-95 lg:bottom-[5dvh] coarse:hidden"
             >
-              <StickerFlag className="text-2xl" />
+              <LuFlag className="text-xl" />
               {g.surrender.label}
             </button>
           )}

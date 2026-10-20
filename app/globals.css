@@ -427,18 +427,6 @@ body {
    格線兩種尺寸都是 2px（原本 4px／3px）：改成淺色之後，桌機上 4px 的淺灰
    仍顯得厚，2px 才退成底紋；手機上 2px 與 3px 幾乎看不出差別。 */
 .board-frame { --board-wall: 9px; --board-gap: 2px; }
-/* 牆畫成一段磚牆（2026-10-20 試做，Zach：遊戲頁內的牆補上設計圖）：
-   深墨描邊＋往右下的硬影子（跟控制盤的貼紙圖示同一套語彙），上面一道道米白磚縫。
-   底色仍是玩家色（inline style 的 background-color），磚縫是疊在上面的 background-image。
-   牆只有 7–9px 粗，所以描邊與影子都只有 1.5px，磚縫每 11px 一道。 */
-.wall-brick {
-  border: 1.5px solid rgb(var(--tile-ink));
-  border-radius: 3px;
-  box-shadow: 1.5px 1.5px 0 rgb(var(--tile-ink));
-}
-.wall-brick-h { background-image: repeating-linear-gradient(90deg, transparent 0 9.5px, rgb(var(--tile-cream) / 0.65) 9.5px 11px); }
-.wall-brick-v { background-image: repeating-linear-gradient(180deg, transparent 0 9.5px, rgb(var(--tile-cream) / 0.65) 9.5px 11px); }
-
 .chessboard-container { container-type: inline-size; }
 @container (max-width: 480px) {
   .board-frame { --board-wall: 7px; --board-gap: 2px; }
