@@ -3,6 +3,7 @@ import React, { useEffect, useRef } from 'react';
 import { useIsoLayoutEffect } from '@/hook/useIsoLayoutEffect';
 import { CSS_IN_OUT_CUBIC, inOutCubic, outCubic, scaleKeyframes } from './wipeKeyframes';
 import type { IconType } from 'react-icons';
+import Door from './Doors';
 
 export type WipePhase = 'cover' | 'uncover';
 
@@ -50,7 +51,18 @@ export type Wipe = {
   exit?: 'shrink' | 'fade';
   iconColor?: string;
   fg?: string;
+  /**
+   * 換一種形式：兩扇紐瓦爾木窗門關上、換好頁再往外推開（虎羊棋，2026-10-20 Zach 指定）。
+   * 這時 x／y／from／icon 都用不到，color 是門後的底色。見下方 DOORS。
+   */
+  kind?: 'doors';
 };
+
+/** 虎羊棋的換頁：木窗門。navigate(href, { wipe: DOORS }) */
+export const DOORS: Wipe = { x: 0, y: 0, color: '#f1e6cd', kind: 'doors' };
+
+/** 門的開闔角度：轉過 90° 之後背面朝外，backface-visibility 讓它消失 */
+const DOOR_OPEN = 100;
 
 interface Props {
   phase: WipePhase;
@@ -137,6 +149,31 @@ const WipeOverlay: React.FC<Props> = ({ phase, wipe, onDone }) => {
   useEffect(() => {
     const root = rootRef.current;
     if (!root) return;
+
+    /*
+      木窗門：左門的鉸鍊在左緣、右門在右緣，rotateY 轉開（往畫面裡推，像從屋裡推開窗）。
+      一樣交給 element.animate()，transform 與 opacity 都在合成執行緒跑。
+      關門用 in-out（像被帶上），開門用 out（推開後慢慢停住）；門越轉開越暗，看得出深度。
+    */
+    if (wipe.kind === 'doors') {
+      const doors = Array.from(root.querySelectorAll<HTMLElement>('[data-door]'));
+      if (!doors.length || typeof doors[0].animate !== 'function') { doneRef.current(); return; }
+      const anims: Animation[] = [];
+      for (const el of doors) {
+        const open = `rotateY(${el.dataset.door === 'left' ? DOOR_OPEN : -DOOR_OPEN}deg)`;
+        const shut = 'rotateY(0deg)';
+        const o: KeyframeAnimationOptions = phase === 'cover'
+          ? { duration: 560, easing: 'cubic-bezier(0.55, 0, 0.45, 1)', fill: 'both' }
+          : { duration: 780, delay: 90, easing: 'cubic-bezier(0.3, 0, 0.15, 1)', fill: 'both' };
+        anims.push(el.animate(phase === 'cover' ? [{ transform: open }, { transform: shut }] : [{ transform: shut }, { transform: open }], o));
+        const shade = el.querySelector('[data-shade]');
+        if (shade) anims.push(shade.animate(phase === 'cover' ? [{ opacity: 0.7 }, { opacity: 0 }] : [{ opacity: 0 }, { opacity: 0.7 }], o));
+      }
+      let cancelled = false;
+      Promise.all(anims.map((a) => a.finished)).then(() => { if (!cancelled) doneRef.current(); }).catch(() => {});
+      return () => { cancelled = true; anims.forEach((a) => a.cancel()); };
+    }
+
     const shape = root.querySelector<HTMLElement>('[data-shape]');
     if (!shape || typeof shape.animate !== 'function') { doneRef.current(); return; }
     const face = root.querySelector<HTMLElement>('[data-face]');
@@ -210,6 +247,36 @@ const WipeOverlay: React.FC<Props> = ({ phase, wipe, onDone }) => {
       anims.forEach((a) => a.cancel());
     };
   }, [phase, wipe]);
+
+  if (wipe.kind === 'doors') {
+    return (
+      <div
+        ref={rootRef}
+        className="cover-viewport z-[60] overflow-hidden"
+        // 透視放在容器上：兩扇門共用同一個消失點（畫面中央），轉開時才像同一扇窗
+        style={{ position: 'absolute', perspective: '1600px' }}
+        aria-hidden="true"
+      >
+        {(['left', 'right'] as const).map((side) => (
+          <div
+            key={side}
+            data-door={side}
+            className={`absolute inset-y-0 w-1/2 ${side === 'left' ? 'left-0' : 'right-0'}`}
+            style={{
+              transformOrigin: side === 'left' ? 'left center' : 'right center',
+              backfaceVisibility: 'hidden',
+              willChange: 'transform',
+              // 初始值在 render 就給對：關門前是開著的、開門前是關著的（同上方色塊的理由）
+              transform: phase === 'cover' ? `rotateY(${side === 'left' ? DOOR_OPEN : -DOOR_OPEN}deg)` : 'rotateY(0deg)',
+            }}
+          >
+            <Door side={side} />
+            <div data-shade className="absolute inset-0 bg-black" style={{ opacity: phase === 'cover' ? 0.7 : 0 }} />
+          </div>
+        ))}
+      </div>
+    );
+  }
 
   const box = boxOf(wipe);
   const s = coverScale(wipe);

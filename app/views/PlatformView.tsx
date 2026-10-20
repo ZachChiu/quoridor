@@ -32,10 +32,9 @@ export default function PlatformView({ locale }: { locale: Locale }) {
   return (
     <div className="platform-root min-h-dvh bg-plat-bg font-[family-name:var(--font-app)] text-tile-cream">
       <header className="mx-auto flex max-w-[1360px] items-center justify-between gap-4 p-4">
-        <Link href={localePath(locale, '/')} className="flex items-center gap-2.5 text-2xl font-black tracking-tight text-brand-red">
-          {/* 跟遊戲首頁左上那顆同一個圖示、同一個位置 */}
+        {/* 只放骰子 logo、不放平台名（Zach：有 LOGO 了）。跟遊戲首頁左上那顆同一個圖示、同一個位置 */}
+        <Link href={localePath(locale, '/')} aria-label={BRAND} title={BRAND} className="transition hover:brightness-110">
           <PlatformMark />
-          {BRAND}
         </Link>
         {/* 平台自己的元件（components/platform/），不是 Wall Go 的圓鈕與奶油底 Modal。
             聯絡我們放到頁尾當文字連結 */}
@@ -138,9 +137,9 @@ function GameCard({ game, locale, playable, guide }: {
 
   if (game.playable && game.look) {
     // 能玩的遊戲用自己的識別（主色＋主視覺），點進去擴散自己的顏色
-    const { card, wipe, art, cover } = game.look;
+    const { card, wipe, art, cover, doors } = game.look;
     return (
-      <WipeLink href={localePath(locale, game.playable)} color={wipe} aria-label={name} className={`${CARD} ${card}`}>
+      <WipeLink href={localePath(locale, game.playable)} color={wipe} doors={doors} aria-label={name} className={`${CARD} ${card}`}>
         {cover ? (
           <>
             {/* AI 畫的橫幅插畫鋪滿；名字壓在底部的黑色漸層上 */}

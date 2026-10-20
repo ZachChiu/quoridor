@@ -1,6 +1,7 @@
 'use client';
 import React from 'react';
 import { useTransition } from '@/contexts/TransitionContext';
+import { DOORS } from '@/components/WipeOverlay';
 
 /**
  * 會走換場動畫的連結。
@@ -17,6 +18,8 @@ type Props = {
   /** 換場色塊的顏色，通常就是這顆按鈕自己的底色 */
   color: string;
   radius?: number;
+  /** 改走木窗門轉場（虎羊棋），color 與 radius 就用不到 */
+  doors?: boolean;
   className?: string;
   'aria-label'?: string;
   hrefLang?: string;
@@ -24,7 +27,7 @@ type Props = {
   children: React.ReactNode;
 };
 
-export default function TransitionLink({ href, color, radius = 16, className, children, ...rest }: Props) {
+export default function TransitionLink({ href, color, radius = 16, doors, className, children, ...rest }: Props) {
   const { navigate } = useTransition();
   return (
     <a
@@ -36,7 +39,7 @@ export default function TransitionLink({ href, color, radius = 16, className, ch
         e.preventDefault();
         const r = e.currentTarget.getBoundingClientRect();
         navigate(href, {
-          wipe: {
+          wipe: doors ? DOORS : {
             x: r.left + r.width / 2,
             y: r.top + r.height / 2,
             color,
