@@ -308,7 +308,8 @@ GA 由 `app/shell.tsx` 的 `<GoogleAnalytics>` 載入（只有 `NEXT_PUBLIC_APP_
 
 ## 部署
 
-GitHub Actions（`.github/workflows/`）負責建置並將 `/out` 同步至 AWS S3。設定 `SITE_URL` 環境變數可覆蓋預設的 `https://quoridorgame.com` 以產生 sitemap。
+GitHub Actions（`.github/workflows/`）負責建置並將 `/out` 同步至 AWS S3。
+`aws s3 sync` 依副檔名猜 Content-Type：虎羊棋的背景是 `.avif`、各遊戲圖是 `.webp`，**第一次上線後要用 `curl -I` 確認 S3 回的是 `image/avif`／`image/webp`**（猜錯成 `binary/octet-stream` 時，帶 `nosniff` 的情況下瀏覽器不會畫；本機預覽的 `serve` 也不認得 `.avif`，要用 `--config` 加標頭）。設定 `SITE_URL` 環境變數可覆蓋預設的 `https://quoridorgame.com` 以產生 sitemap。
 
 ## 數據中心
 
