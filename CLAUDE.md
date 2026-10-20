@@ -48,7 +48,7 @@ zh-TW 不加前綴（`app/(default)/`），en / ja / ko / zh-Hans / th 加前綴
 | `/wall-go/online#roomId=…` | 連線對戰（`OnlineClient` → `PlayClient`，帶 `roomId`）。roomId 放 hash 而非 query。noindex |
 | `/wall-go/online#new=2\|3` | Wall Go 首頁連線磁磚的目的地：連線頁自己開房，開好後 `replaceState` 換成 `#roomId=…` |
 | `/wall-go/replay#wgf=…` | 棋譜回放。**開發者工具，不是給玩家的功能** —— 見下 |
-| `/bagh-chal` | Bagh Chal 首頁（`BaghChalView` → `BaghHub`）。2026-10-20 起是自己的識別（試做中），**不沿用 Wall Go 的元件與視覺**：每一頁包在番紅花畫框裡（`BaghFrame`：四邊都是 AI 畫的老虎追羊飾帶，順時針繞一圈），面板頂列放平台 logo 與聯絡／語言（`BaghHeader`，不疊在畫框上）；首頁是天城體字標＋四個按鈕（老虎、羊、兩人同一台、連線對戰）；彈窗用 `Modal` 的 `skin="bagh"`、按鈕與難度在 `BaghUi`；棋子與圖示是 AI 畫的米提拉圓牌（`bagh-chal/tokens.tsx`，用背景圖畫，不用 `<img>`＋filter —— iPhone 會漏畫），換頁是木窗門（`WipeOverlay` 的 `DOORS`）。配色在 `bagh-chal/palette.ts`。程式在 `app/games/bagh-chal/`（規則與電腦對手）、`app/components/bagh-chal/`（畫面） |
+| `/bagh-chal` | Bagh Chal 首頁（`BaghChalView` → `BaghHub`）。2026-10-20 起是自己的識別（試做中），**不沿用 Wall Go 的元件與視覺**：每一頁包在番紅花畫框裡（`BaghFrame`：四邊飾帶是從 board-art 外框一隻隻摳出來的老虎、羊、花樹，組成 `band-h`／`band-v` 圖塊，在連續的番紅花底上用 `background-repeat: space` 平均排開、四角各一株花 —— 圖塊之間只有底色，任何尺寸都不會切到半隻、沒有接線；先前把整條插畫重複接起來，段與段、四個角的接線很明顯），面板頂列放平台 logo 與聯絡／語言（`BaghHeader`，不疊在畫框上）；首頁是天城體字標＋四個按鈕（老虎、羊、兩人同一台、連線對戰）；彈窗用 `Modal` 的 `skin="bagh"`、按鈕與難度在 `BaghUi`；棋子與圖示是 AI 畫的米提拉圓牌（`bagh-chal/tokens.tsx`，用背景圖畫，不用 `<img>`＋filter —— iPhone 會漏畫），換頁是木窗門（`WipeOverlay` 的 `DOORS`）。配色在 `bagh-chal/palette.ts`。程式在 `app/games/bagh-chal/`（規則與電腦對手）、`app/components/bagh-chal/`（畫面） |
 | `/bagh-chal/rules` | 規則頁，每步一張小棋盤（`BaghRulesSteps`，對局中的說明彈窗共用） |
 | `/bagh-chal/solo#tiger-normal`、`/bagh-chal/local` | 跟電腦下（hash 是邊＋難度，沒帶就在頁面上選）、兩人同一台。noindex |
 | `/bagh-chal/online#new=tiger\|goat`、`#roomId=…` | 邀請朋友。房間在 RTDB `baghRooms/`（跟 Wall Go 的 `rooms/` 分開，結構見 `types/baghRoom.ts`），存走法字串（`encodeMoves`），只有輪到的人能寫。noindex |
