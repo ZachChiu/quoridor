@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { MiniBoard } from './BaghBoard';
-import { BAGH_PRIMARY, BAGH_SECONDARY } from './BaghUi';
+import { BAGH_PRIMARY, BAGH_SECONDARY } from './styles';
 import type { Move, Point } from '@/games/bagh-chal/engine';
 
 /**

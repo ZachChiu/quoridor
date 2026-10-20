@@ -13,7 +13,7 @@ import { BaghBoard } from './BaghBoard';
 import { GoatToken, RulesToken, TigerToken } from './tokens';
 import { RulesStepsPaged } from './BaghRulesSteps';
 import BaghFrame from './BaghFrame';
-import { BAGH_PRIMARY, BAGH_ROUND, BAGH_SECONDARY } from './BaghUi';
+import { BAGH_PRIMARY, BAGH_ROUND, BAGH_SECONDARY } from './styles';
 import BaghWordmark from './BaghWordmark';
 
 export type BaghMode =

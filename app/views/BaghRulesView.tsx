@@ -4,7 +4,7 @@ import TransitionLink from '@/components/TransitionLink';
 import { RulesStepsList } from '@/components/bagh-chal/BaghRulesSteps';
 import BaghFrame from '@/components/bagh-chal/BaghFrame';
 import BaghWordmark from '@/components/bagh-chal/BaghWordmark';
-import { BAGH_PRIMARY, BAGH_ROUND, BAGH_SECONDARY } from '@/components/bagh-chal/BaghUi';
+import { BAGH_PRIMARY, BAGH_ROUND, BAGH_SECONDARY } from '@/components/bagh-chal/styles';
 import { LocalToken, TigerToken } from '@/components/bagh-chal/tokens';
 import { getMessages } from '@/i18n';
 import { localePath, type Locale } from '@/i18n/locales';

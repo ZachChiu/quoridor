@@ -17,7 +17,7 @@ import { atStep, describeOnlineError, reportOnlineError } from '@/utils/onlineEr
 import BaghPlay from './BaghPlay';
 import BaghFrame from './BaghFrame';
 import { GoatToken, InviteToken, TigerToken } from './tokens';
-import { BAGH_PRIMARY, BAGH_SECONDARY } from './BaghUi';
+import { BAGH_PRIMARY, BAGH_SECONDARY } from './styles';
 
 /** `#new=tiger`（自己開房、自己當老虎）或 `#roomId=…`（進房） */
 type Target = { create: Side } | { roomId: string } | { invalid: true };
