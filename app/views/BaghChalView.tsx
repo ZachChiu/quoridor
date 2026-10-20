@@ -16,6 +16,8 @@ import type { Locale } from '@/i18n/locales';
  */
 export default function BaghChalView({ locale }: { locale: Locale }) {
   const b = getMessages(locale).baghChal;
+  // 英文的名字（Tigers and Goats）比中日韓泰長很多，用同樣的大字、寬字距會斷成兩行：長的縮一號、字距收窄
+  const long = b.subtitle.length > 10;
   return (
     <BaghFrame variant="hub">
       <BaghHeader locale={locale} />
@@ -24,7 +26,7 @@ export default function BaghChalView({ locale }: { locale: Locale }) {
           <h1 className="flex flex-col items-center text-center">
             <span className="sr-only">{b.title}</span>
             <BaghWordmark className="h-auto w-[min(80%,300px,36dvh)]" />
-            <span className="mt-[max(0.25rem,1dvh)] text-[clamp(1.4rem,4dvh,2rem)] font-black tracking-[0.12em]">{b.subtitle}</span>
+            <span className={`mt-[max(0.25rem,1dvh)] font-black ${long ? 'text-[clamp(1.2rem,3.2dvh,1.6rem)] tracking-[0.04em]' : 'text-[clamp(1.4rem,4dvh,2rem)] tracking-[0.12em]'}`}>{b.subtitle}</span>
           </h1>
           <p className="mt-1.5 text-sm font-bold text-ink-soft">{b.tagline}</p>
           <div className="mt-[max(1rem,2.6dvh)] w-full">

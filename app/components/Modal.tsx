@@ -37,7 +37,7 @@ interface Props {
   bodyClassName?: string;
   /**
    * 外觀。預設是 Wall Go／平台的奶油底面板；bagh 是虎羊棋的紙色面板、印刷棋盤那道橄欖綠雙線框、
-   * 沒有色帶（虎羊棋整套視覺不沿用 Wall Go，見 CLAUDE.md 路由表）。
+   * 沒有色帶也不用 band（虎羊棋整套視覺不沿用 Wall Go，見 CLAUDE.md 路由表）。
    */
   skin?: 'default' | 'bagh';
 }
@@ -103,8 +103,8 @@ const Modal: React.FC<Props> = ({
         {/* 色帶做成滿版（面板 overflow-hidden 負責切圓角），
             留白會讓它退化成一條「有底色的標題」，力道差很多。
             虎羊棋（bagh）不要色帶也不要飾帶（Zach：上面一排虎羊貼紙不符合風格），也不放三角形圖騰（Zach：MODAL 圖騰不太好）：
-            外框是跟畫框裡的面板同一道橄欖綠雙線（.bagh-line），標題直接放在紙色上，
-            band 的顏色縮成標題下一小條色線，仍看得出是老虎（番紅花）還是羊（橄欖綠）。 */}
+            外框是跟畫框裡的面板同一道橄欖綠雙線（.bagh-line），標題直接放在紙色上。
+            標題下原本有一小條 band 色的短線，也拿掉（Zach：每一頁不要有這個）—— bagh 完全不用 band。 */}
         <div
           className={`flex shrink-0 items-start justify-between gap-3 px-6 ${bagh ? 'pb-1 pt-5 text-tile-ink' : `py-5 ${band.className ?? ''} ${band.fg}`}`}
           style={bagh ? undefined : band.style}
@@ -114,7 +114,6 @@ const Modal: React.FC<Props> = ({
             <div>
               {kicker && <p className={`text-xs font-bold tracking-widest ${bagh ? 'text-ink-soft' : 'opacity-80'}`}>{kicker}</p>}
               <h2 className="text-2xl font-black leading-tight">{title}</h2>
-              {bagh && <span aria-hidden="true" className={`mt-1.5 block h-1 w-10 rounded-full ${band.className ?? ''}`} style={band.style} />}
             </div>
           </div>
           <button
