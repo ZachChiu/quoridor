@@ -1,8 +1,7 @@
 'use client';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { GiCheckMark } from 'react-icons/gi';
-import { LuCopy, LuShare2 } from 'react-icons/lu';
+import { LuCheck, LuCopy, LuShare2 } from 'react-icons/lu';
 import Connecting from '@/components/Connecting';
 import StatusScreen from '@/components/StatusScreen';
 import { useUser } from '@/contexts/UserContext';
@@ -162,6 +161,8 @@ function Waiting({ me, url, home }: { me: Side; url: string; home: string }) {
   const [copied, setCopied] = useState(false);
   const name = (s: Side) => (s === 'tiger' ? b.tiger : b.goat);
   const Icon = me === 'tiger' ? TigerToken : GoatToken;
+  // 等的是對方那一邊：用對方的圓牌輕輕閃，不用 Wall Go 等候室的虛線轉圈
+  const Them = other(me) === 'tiger' ? TigerToken : GoatToken;
 
   const copy = async () => {
     try { await navigator.clipboard.writeText(url); } catch { return; }
@@ -186,7 +187,7 @@ function Waiting({ me, url, home }: { me: Side; url: string; home: string }) {
           <span className="flex-1 select-all truncate font-mono text-sm">{url}</span>
           <button type="button" onClick={copy} aria-label={copied ? g.share.copied : g.share.copyAria}
             className={`${BAGH_PRIMARY} shrink-0 gap-1.5 px-3 py-2 text-sm`}>
-            {copied ? <GiCheckMark /> : <LuCopy />}{copied ? g.share.copied : g.share.copy}
+            {copied ? <LuCheck /> : <LuCopy />}{copied ? g.share.copied : g.share.copy}
           </button>
         </div>
         {canShare && (
@@ -197,7 +198,7 @@ function Waiting({ me, url, home }: { me: Side; url: string; home: string }) {
         )}
 
         <div className="flex items-center gap-2.5 text-sm font-bold text-ink-soft" aria-live="polite">
-          <span className="animate-seat-wait size-5 rounded-full border-2 border-dashed border-tile-ink/35" />
+          <Them className="shrink-0 animate-pulse text-[22px]" />
           {b.waitingOpponent}
         </div>
         <Link href={home} className="self-start text-sm font-bold text-ink-soft underline underline-offset-4">{g.play.backHome}</Link>

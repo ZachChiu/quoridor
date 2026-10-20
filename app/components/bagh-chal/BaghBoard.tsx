@@ -80,7 +80,7 @@ export function GoatPiece({ ring }: { ring?: 'selected' | 'victim' | 'movable' }
  * 放羊時每個空點都能放，交叉點的小花本身就標出了點，所以放羊點只畫一圈淡淡的環，不再每點一顆圓。
  */
 export function Marker({ kind }: { kind: Move['kind'] | 'last' }) {
-  if (kind === 'jump') return <span className="grid size-1/2 place-items-center rounded-full bg-tile-orange ring-2 ring-tile-ink"><span className="size-[34%] rounded-full bg-tile-ink" /></span>;
+  if (kind === 'jump') return <span className="grid size-1/2 place-items-center rounded-full bg-[#b8471f] ring-2 ring-tile-ink"><span className="size-[34%] rounded-full bg-[#fbf4e1]" /></span>;
   if (kind === 'place') return <span className="size-[46%] rounded-full ring-2 ring-[#4a2616]/25" />;
   if (kind === 'last') return <span className="size-[46%] rounded-full bg-[#4a2616]/15" />;
   return <span className="size-[32%] rounded-full bg-tile-ink ring ring-[#fbf4e1]" />;
@@ -114,7 +114,7 @@ export function BaghBoard({ board, targets, capturers, victims, movable, selecte
               className={SEAT} style={{ left: `${x}%`, top: `${y}%` }}>
               {/* 能吃子的老虎：後面一圈往外擴散的光（還沒選老虎時才閃，選了就看落點） */}
               {cell === 'T' && capturers.has(p) && selected === null && (
-                <span aria-hidden="true" className="absolute inset-[7%] animate-ping rounded-full bg-tile-orange/70" />
+                <span aria-hidden="true" className="absolute inset-[7%] animate-ping rounded-full bg-[#e3a43c]/80" />
               )}
               {cell === 'T' && <TigerPiece selected={selected === p} />}
               {cell === 'G' && <GoatPiece ring={selected === p ? 'selected' : victims.has(p) ? 'victim' : movable.has(p) ? 'movable' : undefined} />}
