@@ -1,9 +1,7 @@
 'use client';
 import { useEffect, useMemo, useState } from 'react';
-import { GiRuleBook } from 'react-icons/gi';
 import { LuCircleHelp, LuHouse, LuRotateCcw, LuUndo2 } from 'react-icons/lu';
 import Modal from '@/components/Modal';
-import Button from '@/components/Button';
 import { useTransition } from '@/contexts/TransitionContext';
 import { DOORS } from '@/components/WipeOverlay';
 import { useMessages } from '@/i18n/LocaleProvider';
@@ -12,9 +10,10 @@ import { BAGH_CHAL } from '@/i18n/routes';
 import { createGame, legalMoves, applyMove, undo, GOATS, type BaghState, type Point, type Side, type Move } from '@/games/bagh-chal/engine';
 import { chooseMove, type Difficulty } from '@/games/bagh-chal/ai';
 import { BaghBoard } from './BaghBoard';
-import { GoatToken, TigerToken } from './tokens';
+import { GoatToken, RulesToken, TigerToken } from './tokens';
 import { RulesStepsPaged } from './BaghRulesSteps';
-import BaghFrame, { WeaveStrip } from './BaghFrame';
+import BaghFrame from './BaghFrame';
+import { BAGH_PRIMARY, BAGH_ROUND, BAGH_SECONDARY } from './BaghUi';
 import BaghWordmark from './BaghWordmark';
 
 export type BaghMode =
@@ -114,19 +113,20 @@ export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghM
     : game.winner === 'goat' ? { title: b.winGoat, body: b.winGoatBody, band: 'bg-[#5b6620]', fg: 'text-tile-cream' }
     : { title: b.draw, body: b.drawBody, band: 'bg-tile-ink', fg: 'text-tile-cream' };
 
-  const round = 'grid size-11 place-items-center rounded-full bg-[#4a2616]/[0.08] text-xl text-ink-soft transition hover:bg-[#4a2616]/[0.14] disabled:opacity-35';
-  const wide = 'flex h-12 items-center justify-center gap-2 rounded-2xl bg-[#4a2616]/[0.08] text-sm font-black text-tile-ink transition hover:bg-[#4a2616]/[0.14] disabled:opacity-35';
+  // 虎羊棋自己的按鈕（BaghUi）：紙色底、橄欖綠外圈的圓鈕，深墨框的寬鈕 —— 不沿用 Wall Go 的灰色無框鈕
+  const round = BAGH_ROUND;
+  const wide = `${BAGH_SECONDARY} h-12 text-sm`;
 
   // 兩行：上面圖示＋哪一方，下面數字。數字跟圖示擠同一行的話，「還有 14 隻羊要放」在手機上會斷成三行
   const statusCards = (
     <div className="grid w-full grid-cols-2 gap-3">
-      <div className={`flex flex-col gap-1 rounded-2xl px-4 py-3 ${game.turn === 'tiger' && !game.winner ? 'bg-[#e3a43c] text-tile-ink' : 'bg-[#4a2616]/[0.07] text-ink-soft'}`}>
+      <div className={`flex flex-col gap-1 rounded-2xl p-3 ${game.turn === 'tiger' && !game.winner ? 'bg-[#e3a43c] text-tile-ink' : 'bg-[#4a2616]/[0.07] text-ink-soft'}`}>
         <p className="flex items-center gap-2 text-sm font-bold"><TigerToken className="shrink-0 text-[28px]" />{b.tiger}</p>
-        <p className="text-base font-black leading-tight">{fmt(b.captured, game.captured)}</p>
+        <p className="text-[15px] font-black leading-tight">{fmt(b.captured, game.captured)}</p>
       </div>
-      <div className={`flex flex-col gap-1 rounded-2xl px-4 py-3 ${game.turn === 'goat' && !game.winner ? 'bg-[#5b6620] text-tile-cream' : 'bg-[#4a2616]/[0.07] text-ink-soft'}`}>
+      <div className={`flex flex-col gap-1 rounded-2xl p-3 ${game.turn === 'goat' && !game.winner ? 'bg-[#5b6620] text-tile-cream' : 'bg-[#4a2616]/[0.07] text-ink-soft'}`}>
         <p className="flex items-center gap-2 text-sm font-bold"><GoatToken className="shrink-0 text-[28px]" />{b.goat}</p>
-        <p className="text-base font-black leading-tight">{game.goatsInHand > 0 ? fmt(b.goatsInHand, game.goatsInHand) : `${GOATS - game.captured} / ${GOATS}`}</p>
+        <p className="text-[15px] font-black leading-tight">{game.goatsInHand > 0 ? fmt(b.goatsInHand, game.goatsInHand) : `${GOATS - game.captured} / ${GOATS}`}</p>
       </div>
     </div>
   );
@@ -185,23 +185,22 @@ export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghM
 
       {whoAmI && <p className="mt-3 text-xs font-bold text-ink-soft lg:hidden">{whoAmI}</p>}
 
-      <Modal isOpen={helpOpen} onClose={() => setHelpOpen(false)} title={b.rulesHeading} kicker={b.title}
-        icon={GiRuleBook} band={{ className: 'bg-tile-forest', fg: 'text-tile-cream' }}>
+      <Modal skin="bagh" isOpen={helpOpen} onClose={() => setHelpOpen(false)} title={b.rulesHeading} kicker={b.title}
+        icon={RulesToken} band={{ className: 'bg-[#5b6620]', fg: 'text-tile-cream' }}>
         <RulesStepsPaged rules={b.rules} prev={t.ui.prev} next={t.ui.next} done={t.ui.close} onDone={() => setHelpOpen(false)} />
       </Modal>
 
-      <Modal isOpen={!!game.winner && !(online && endClosed)} onClose={online ? () => setEndClosed(true) : restart} title={result.title}
+      <Modal skin="bagh" isOpen={!!game.winner && !(online && endClosed)} onClose={online ? () => setEndClosed(true) : restart} title={result.title}
         icon={game.winner === 'goat' ? GoatToken : TigerToken} band={{ className: result.band, fg: result.fg }}
         footer={
           <>
-            <Button color="bg-tile-ink/[0.07] text-tile-ink" handleClickEvent={home}>{b.menu}</Button>
-            <Button color="bg-tile-ink text-tile-cream" handleClickEvent={again}>{b.again}</Button>
+            <button type="button" onClick={home} className={`${BAGH_SECONDARY} flex-1`}>{b.menu}</button>
+            <button type="button" onClick={again} className={`${BAGH_PRIMARY} flex-1`}>{b.again}</button>
           </>
         }>
         <p className="text-sm leading-relaxed">{result.body}</p>
       </Modal>
     </div>
-    <WeaveStrip className="mx-3 mb-3 h-3 rounded-sm" />
     </BaghFrame>
   );
 }

@@ -1,6 +1,5 @@
 'use client';
 import { useState } from 'react';
-import DifficultyButtons from '@/components/DifficultyButtons';
 import { useIsoLayoutEffect } from '@/hook/useIsoLayoutEffect';
 import { useMessages } from '@/i18n/LocaleProvider';
 import type { Locale } from '@/i18n/locales';
@@ -9,6 +8,7 @@ import BaghPlay from './BaghPlay';
 import { readSoloHash, soloHash } from './soloHash';
 import { GoatToken, TigerToken } from './tokens';
 import BaghFrame from './BaghFrame';
+import { BaghDifficulty } from './BaghUi';
 import BaghWordmark from './BaghWordmark';
 
 /**
@@ -53,7 +53,7 @@ export default function BaghSolo({ locale }: { locale: Locale }) {
               const on = side === s;
               return (
                 <button key={s} type="button" role="radio" aria-checked={on} onClick={() => setSide(s)}
-                  className={`flex items-center justify-center gap-2.5 rounded-2xl py-3.5 text-lg font-black transition ${on ? 'bg-tile-ink text-tile-cream' : 'bg-[#4a2616]/[0.08] text-ink-soft'}`}>
+                  className={`flex items-center justify-center gap-2.5 rounded-2xl border-2 border-tile-ink py-3.5 text-lg font-black transition ${on ? 'bg-tile-ink text-tile-cream' : 'bg-[#fbf4e1] text-tile-ink hover:bg-[#f4e8cc]'}`}>
                   <Icon className={`text-[40px] transition ${on ? '' : 'opacity-70 grayscale-[35%]'}`} />{s === 'tiger' ? b.tiger : b.goat}
                 </button>
               );
@@ -62,7 +62,7 @@ export default function BaghSolo({ locale }: { locale: Locale }) {
         </div>
         <div className="flex flex-col gap-2">
           <p className="text-sm font-bold text-ink-soft">{b.level}</p>
-          <DifficultyButtons onPick={(difficulty) => {
+          <BaghDifficulty onPick={(difficulty) => {
             history.replaceState(null, '', location.pathname + soloHash(side, difficulty));
             setMode({ side, difficulty });
           }} />

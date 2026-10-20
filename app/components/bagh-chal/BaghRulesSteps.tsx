@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { MiniBoard } from './BaghBoard';
+import { BAGH_PRIMARY, BAGH_SECONDARY } from './BaghUi';
 import type { Move, Point } from '@/games/bagh-chal/engine';
 
 /**
@@ -30,7 +31,7 @@ export function RulesStepsList({ rules }: { rules: readonly string[] }) {
   return (
     <ol className="grid gap-5 sm:grid-cols-2">
       {STEPS.map((s, i) => (
-        <li key={i} className="flex flex-col gap-3 rounded-3xl bg-tile-ink/[0.05] p-4">
+        <li key={i} className="flex flex-col gap-3 rounded-2xl border-2 border-tile-ink bg-[#fbf4e1] p-4">
           <MiniBoard rows={s.rows} marks={s.marks} victims={s.victims} />
           <p className="text-sm font-bold leading-relaxed"><span className="mr-1.5 font-black">{i + 1}.</span>{text[i]}</p>
         </li>
@@ -55,9 +56,9 @@ export function RulesStepsPaged({ rules, prev, next, done, onDone }: {
         <span className="text-xs font-black tabular-nums text-ink-soft">{i + 1} / {STEPS.length}</span>
         <div className="flex gap-2">
           {i > 0 && (
-            <button type="button" onClick={() => setI(i - 1)} className="rounded-xl bg-tile-ink/[0.07] px-4 py-2.5 text-sm font-black text-tile-ink">{prev}</button>
+            <button type="button" onClick={() => setI(i - 1)} className={`${BAGH_SECONDARY} px-4 py-2 text-sm`}>{prev}</button>
           )}
-          <button type="button" onClick={() => (last ? onDone() : setI(i + 1))} className="rounded-xl bg-tile-ink px-4 py-2.5 text-sm font-black text-tile-cream">
+          <button type="button" onClick={() => (last ? onDone() : setI(i + 1))} className={`${BAGH_PRIMARY} px-4 py-2 text-sm`}>
             {last ? done : next}
           </button>
         </div>

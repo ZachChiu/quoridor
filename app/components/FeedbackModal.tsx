@@ -24,6 +24,8 @@ type Props = {
   onClose: () => void;
   onSubmit: (rating: 1 | 2 | 3 | null, message: string, contact: string) => Promise<void>;
   variant?: 'game' | 'contact';
+  /** 外觀，傳給 Modal（虎羊棋頁用 bagh） */
+  skin?: 'default' | 'bagh';
 };
 
 /*
@@ -36,7 +38,7 @@ const FACES: { value: 1 | 2 | 3; emoji: string }[] = [
   { value: 3, emoji: '🤩' },
 ];
 
-const FeedbackModal: React.FC<Props> = ({ isOpen, onClose, onSubmit, variant = 'game' }) => {
+const FeedbackModal: React.FC<Props> = ({ isOpen, onClose, onSubmit, variant = 'game', skin = 'default' }) => {
   const g = useGameText();
   const t = useMessages();
   const closeLabel = t.ui.close;
@@ -78,6 +80,7 @@ const FeedbackModal: React.FC<Props> = ({ isOpen, onClose, onSubmit, variant = '
 
   return (
     <Modal
+      skin={skin}
       isOpen={isOpen}
       onClose={onClose}
       title={state === 'sent' ? g.feedback.sent : copy.heading}

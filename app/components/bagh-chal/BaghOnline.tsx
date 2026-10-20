@@ -1,10 +1,10 @@
 'use client';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { GiBreakingChain, GiCheckMark, GiUnplugged } from 'react-icons/gi';
+import { GiCheckMark } from 'react-icons/gi';
 import { LuCopy, LuShare2 } from 'react-icons/lu';
 import Connecting from '@/components/Connecting';
-import StatusScreen, { BTN_PRIMARY, BTN_SECONDARY } from '@/components/StatusScreen';
+import StatusScreen from '@/components/StatusScreen';
 import { useUser } from '@/contexts/UserContext';
 import { useWebShare, share } from '@/hook/useWebShare';
 import { useIsoLayoutEffect } from '@/hook/useIsoLayoutEffect';
@@ -17,7 +17,8 @@ import { createBaghRoom, getBaghRoom, joinBaghRoom, subscribeBaghRoom, writeBagh
 import { atStep, describeOnlineError, reportOnlineError } from '@/utils/onlineError';
 import BaghPlay from './BaghPlay';
 import BaghFrame from './BaghFrame';
-import { GoatToken, TigerToken } from './tokens';
+import { GoatToken, InviteToken, TigerToken } from './tokens';
+import { BAGH_PRIMARY, BAGH_SECONDARY } from './BaghUi';
 
 /** `#new=tiger`（自己開房、自己當老虎）或 `#roomId=…`（進房） */
 type Target = { create: Side } | { roomId: string } | { invalid: true };
@@ -134,14 +135,18 @@ function Session({ locale, hash }: { locale: Locale; hash: string }) {
       badLink: [g.play.badLink, g.play.badLinkBody],
     }[failure];
     return (
-      <StatusScreen icon={failure === 'connectFail' ? GiUnplugged : GiBreakingChain} iconClass="text-tile-purple" title={copy[0]} body={copy[1]}
-        actions={<>
-          {failure === 'connectFail' && <button type="button" onClick={() => window.location.reload()} className={BTN_PRIMARY}>{g.play.reload}</button>}
-          <Link href={home} className={failure === 'connectFail' ? BTN_SECONDARY : BTN_PRIMARY}>{g.play.backHome}</Link>
-        </>} />
+      <BaghFrame variant="play" className="justify-center py-8">
+        <StatusScreen embedded icon={InviteToken} title={copy[0]} body={copy[1]}
+          actions={<>
+            {failure === 'connectFail' && <button type="button" onClick={() => window.location.reload()} className={`${BAGH_PRIMARY} px-6 py-3.5 text-lg`}>{g.play.reload}</button>}
+            <Link href={home} className={`${failure === 'connectFail' ? BAGH_SECONDARY : BAGH_PRIMARY} px-6 py-3.5 text-lg`}>{g.play.backHome}</Link>
+          </>} />
+      </BaghFrame>
     );
   }
-  if (!roomId || !me || !room) return <Connecting label={g.play.connecting} />;
+  if (!roomId || !me || !room) {
+    return <BaghFrame variant="play" className="items-center justify-center"><Connecting label={g.play.connecting} /></BaghFrame>;
+  }
 
   if (!room.players?.[other(me)]) {
     return <Waiting me={me} url={`${location.origin}${location.pathname}#roomId=${roomId}`} home={home} />;
@@ -177,16 +182,16 @@ function Waiting({ me, url, home }: { me: Side; url: string; home: string }) {
         </div>
         <p className="text-sm leading-relaxed">{b.inviteBody.replace('{me}', name(me)).replace('{them}', name(other(me)))}</p>
 
-        <div className="flex items-center gap-2 rounded-xl bg-primary-50 p-2 pl-4">
+        <div className="flex items-center gap-2 rounded-xl border-2 border-tile-ink bg-[#fbf4e1] p-2 pl-4">
           <span className="flex-1 select-all truncate font-mono text-sm">{url}</span>
           <button type="button" onClick={copy} aria-label={copied ? g.share.copied : g.share.copyAria}
-            className="flex shrink-0 items-center gap-1.5 rounded-lg bg-tile-ink px-3 py-2 text-sm font-black text-tile-cream transition hover:brightness-125 active:scale-[0.98]">
+            className={`${BAGH_PRIMARY} shrink-0 gap-1.5 px-3 py-2 text-sm`}>
             {copied ? <GiCheckMark /> : <LuCopy />}{copied ? g.share.copied : g.share.copy}
           </button>
         </div>
         {canShare && (
           <button type="button" onClick={() => share({ title: b.title, text: b.shareText, url })}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-tile-ink px-4 py-3 text-base font-black text-tile-cream transition hover:brightness-125 active:scale-[0.98]">
+            className={`${BAGH_PRIMARY} w-full px-4 py-3 text-base`}>
             <LuShare2 className="text-lg" aria-hidden="true" />{g.share.share}
           </button>
         )}

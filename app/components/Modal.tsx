@@ -35,11 +35,17 @@ interface Props {
   panelClassName?: string;
   /** 內容區額外的 class */
   bodyClassName?: string;
+  /**
+   * 外觀。預設是 Wall Go／平台的奶油底面板；bagh 是虎羊棋的紙色面板、橄欖綠框、
+   * 標題列上方一條老虎追羊的飾帶（虎羊棋整套視覺不沿用 Wall Go，見 CLAUDE.md 路由表）。
+   */
+  skin?: 'default' | 'bagh';
 }
 
 const Modal: React.FC<Props> = ({
-  isOpen, onClose, title, icon: Icon, kicker, band, children, footer, onKeyDown, panelClassName = '', bodyClassName = '',
+  isOpen, onClose, title, icon: Icon, kicker, band, children, footer, onKeyDown, panelClassName = '', bodyClassName = '', skin = 'default',
 }) => {
+  const bagh = skin === 'bagh';
   // 捲動鎖、Esc、焦點鎖、portal 時機：跟平台的 PlatformDialog 共用（見 useDialog）
   const { panelRef, portalReady } = useDialog(isOpen, onClose, onKeyDown);
   const t = useMessages();
@@ -90,8 +96,13 @@ const Modal: React.FC<Props> = ({
         ref={panelRef}
         tabIndex={-1}
         // 最高就是可視高度；放不下時色帶與按鈕固定，只有中間的內容捲動
-        className={`relative flex max-h-full w-full max-w-md flex-col overflow-hidden rounded-2xl bg-primary font-[family-name:var(--font-app)] outline-none ${panelClassName}`}
+        className={`relative flex max-h-full w-full max-w-md flex-col overflow-hidden font-[family-name:var(--font-app)] outline-none ${
+          bagh ? 'rounded-[18px] border-[3px] border-[#5b6620] bg-[#fbf4e1]' : 'rounded-2xl bg-primary'
+        } ${panelClassName}`}
       >
+        {bagh && (
+          <div aria-hidden="true" className="h-6 shrink-0 border-b-[3px] border-[#5b6620] bg-[url('/games/bagh-chal/frieze.webp')] bg-[length:auto_100%] bg-center [background-repeat:round_no-repeat]" />
+        )}
         {/* 色帶做成滿版（面板 overflow-hidden 負責切圓角），
             留白會讓它退化成一條「有底色的標題」，力道差很多。 */}
         <div
@@ -110,9 +121,15 @@ const Modal: React.FC<Props> = ({
             aria-label={t.ui.close}
             onClick={onClose}
             // p-2 只有 40px，差一點到觸控目標的 44px。
-            className="-mr-2 -mt-1 shrink-0 rounded-full p-2.5 text-2xl opacity-70 transition hover:opacity-100"
+            className={bagh
+              ? '-mr-1 shrink-0 rounded-full bg-[#fbf4e1] p-2 text-tile-ink ring-2 ring-[#5b6620] transition hover:bg-[#f4e8cc]'
+              : '-mr-2 -mt-1 shrink-0 rounded-full p-2.5 text-2xl opacity-70 transition hover:opacity-100'}
           >
-            <GiCancel />
+            {bagh ? (
+              <svg viewBox="0 0 24 24" className="size-5" aria-hidden="true">
+                <path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+              </svg>
+            ) : <GiCancel />}
           </button>
         </div>
 
