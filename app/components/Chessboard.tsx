@@ -1,7 +1,7 @@
 "use client";
 
 import type { Player, Move, Direction } from "@/types/chessboard.ts";
-import { GiHammerBreak } from "react-icons/gi";
+import { StickerHammer } from "./StickerIcons";
 
 /**
  * 玩家色以 CSS 變數取用，而不是 `bg-player-${player}` 這種動態拼接的 class。
@@ -170,13 +170,7 @@ export default React.memo(function Chessboard({
 
   const isCoarse = useCoarsePointer();
 
-  // 換一格、或換人下之後，還沒確認的方向就不再成立。
-  const wallCtx = selectedChess ? `${selectedChess.row},${selectedChess.col},${currentPlayer}` : '';
-  const [lastWallCtx, setLastWallCtx] = useState(wallCtx);
-  if (lastWallCtx !== wallCtx) {
-    setLastWallCtx(wallCtx);
-    setPendingWall(null);
-  }
+  // 換一格、或換人下之後清掉還沒確認的方向：由持有 pendingWall 的 PlayClient 負責（在這裡改父層狀態會被 React 擋）
 
   /** 四個方向各自送出時的座標換算（牆存在「某一格的下緣／右緣」）。 */
   const commitWall = useCallback((row: number, col: number, dir: Direction) => {
@@ -652,10 +646,12 @@ export default React.memo(function Chessboard({
                     一道牆和一條空格線的差別只有顏色，盤面一複雜就難掃視。
                     改成 9px、兩端圓角、並向左右各突出 3px：牆因此比格線厚、
                     也蓋過交叉點，讀起來是「放上去的東西」而不是「被上色的格線」。
+                    2026-10-20 再畫成一段磚牆（.wall-brick）：深墨描邊、磚縫、往右下的硬影子 ——
+                    Zach 要的「遊戲頁內的牆補上設計圖」，跟控制盤的貼紙圖示同一套。
                   */}
                   {hasHorizontalWallPlayer && (
                     <div
-                      className={`absolute inset-x-[-3px] bottom-[calc(var(--board-gap)*-0.5)] z-20 h-[var(--board-wall)] translate-y-1/2 rounded-full ${
+                      className={`wall-brick wall-brick-h absolute inset-x-[-3px] bottom-[calc(var(--board-gap)*-0.5)] z-20 h-[var(--board-wall)] translate-y-1/2 ${
                         walls.fresh === `h:${rowIndex * size + colIndex}` ? 'animate-wall-h' : ''
                       }`}
                       style={{ backgroundColor: PLAYER_VAR[hasHorizontalWallPlayer] }}
@@ -667,14 +663,14 @@ export default React.memo(function Chessboard({
                           className="animate-shine absolute left-1/2 top-1/2 z-30 grid size-7 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-tile-ink text-sm text-tile-cream ring-2 ring-primary-50"
                           onClick={(e) => { e.stopPropagation(); onClickBreakWall(rowIndex, colIndex, 'horizontal'); }}
                         >
-                          <GiHammerBreak />
+                          <StickerHammer className="text-lg" />
                         </button>
                       )}
                     </div>
                   )}
                   {hasVerticalWall && (
                     <div
-                      className={`absolute inset-y-[-3px] right-[calc(var(--board-gap)*-0.5)] z-20 w-[var(--board-wall)] translate-x-1/2 rounded-full ${
+                      className={`wall-brick wall-brick-v absolute inset-y-[-3px] right-[calc(var(--board-gap)*-0.5)] z-20 w-[var(--board-wall)] translate-x-1/2 ${
                         walls.fresh === `v:${rowIndex * size + colIndex}` ? 'animate-wall-v' : ''
                       }`}
                       style={{ backgroundColor: PLAYER_VAR[hasVerticalWall] }}
@@ -686,7 +682,7 @@ export default React.memo(function Chessboard({
                           className="animate-shine absolute left-1/2 top-1/2 z-30 grid size-7 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-tile-ink text-sm text-tile-cream ring-2 ring-primary-50"
                           onClick={(e) => { e.stopPropagation(); onClickBreakWall(rowIndex, colIndex, 'vertical'); }}
                         >
-                          <GiHammerBreak />
+                          <StickerHammer className="text-lg" />
                         </button>
                       )}
                     </div>
@@ -720,7 +716,7 @@ export default React.memo(function Chessboard({
                         <button
                           type="button"
                           aria-label={g.board.buildTop}
-                          className={`wall-hit-h absolute top-[calc(var(--board-gap)*-0.5)] z-20 h-[var(--board-wall)] -translate-y-1/2 rounded-full transition hover:inset-x-[-3px] hover:opacity-100 ${bar('top', 'x')}`}
+                          className={`wall-hit-h absolute top-[calc(var(--board-gap)*-0.5)] z-20 h-[var(--board-wall)] -translate-y-1/2 rounded-[3px] transition hover:inset-x-[-3px] hover:opacity-100 ${bar('top', 'x')}`}
                           style={{ backgroundColor: PLAYER_VAR[currentPlayer] }}
                           onClick={(e) => { e.stopPropagation(); onWallEdge(rowIndex, colIndex, 'top'); }}
                         />
@@ -729,7 +725,7 @@ export default React.memo(function Chessboard({
                         <button
                           type="button"
                           aria-label={g.board.buildBottom}
-                          className={`wall-hit-h absolute bottom-[calc(var(--board-gap)*-0.5)] z-20 h-[var(--board-wall)] translate-y-1/2 rounded-full transition hover:inset-x-[-3px] hover:opacity-100 ${bar('bottom', 'x')}`}
+                          className={`wall-hit-h absolute bottom-[calc(var(--board-gap)*-0.5)] z-20 h-[var(--board-wall)] translate-y-1/2 rounded-[3px] transition hover:inset-x-[-3px] hover:opacity-100 ${bar('bottom', 'x')}`}
                           style={{ backgroundColor: PLAYER_VAR[currentPlayer] }}
                           onClick={(e) => { e.stopPropagation(); onWallEdge(rowIndex, colIndex, 'bottom'); }}
                         />
@@ -738,7 +734,7 @@ export default React.memo(function Chessboard({
                         <button
                           type="button"
                           aria-label={g.board.buildLeft}
-                          className={`wall-hit-v absolute left-[calc(var(--board-gap)*-0.5)] z-20 w-[var(--board-wall)] -translate-x-1/2 rounded-full transition hover:inset-y-[-3px] hover:opacity-100 ${bar('left', 'y')}`}
+                          className={`wall-hit-v absolute left-[calc(var(--board-gap)*-0.5)] z-20 w-[var(--board-wall)] -translate-x-1/2 rounded-[3px] transition hover:inset-y-[-3px] hover:opacity-100 ${bar('left', 'y')}`}
                           style={{ backgroundColor: PLAYER_VAR[currentPlayer] }}
                           onClick={(e) => { e.stopPropagation(); onWallEdge(rowIndex, colIndex, 'left'); }}
                         />
@@ -747,7 +743,7 @@ export default React.memo(function Chessboard({
                         <button
                           type="button"
                           aria-label={g.board.buildRight}
-                          className={`wall-hit-v absolute right-[calc(var(--board-gap)*-0.5)] z-20 w-[var(--board-wall)] translate-x-1/2 rounded-full transition hover:inset-y-[-3px] hover:opacity-100 ${bar('right', 'y')}`}
+                          className={`wall-hit-v absolute right-[calc(var(--board-gap)*-0.5)] z-20 w-[var(--board-wall)] translate-x-1/2 rounded-[3px] transition hover:inset-y-[-3px] hover:opacity-100 ${bar('right', 'y')}`}
                           style={{ backgroundColor: PLAYER_VAR[currentPlayer] }}
                           onClick={(e) => { e.stopPropagation(); onWallEdge(rowIndex, colIndex, 'right'); }}
                         />

@@ -2,8 +2,7 @@
 import { useState, useEffect, useMemo, useCallback, useReducer, useRef } from "react";
 // 小圓鈕與首頁磁磚用同一套圖示（game-icons 實心）——
 // 同一件事在兩個地方長得不一樣，會讓人以為那是兩個不同的東西。
-import { GiHut, GiRuleBook } from "react-icons/gi";
-import { LuFlag } from "react-icons/lu";
+import { StickerFlag, StickerHome, StickerRules } from "./StickerIcons";
 import Link from 'next/link';
 import Chessboard from "@/components/Chessboard";
 import ChampionModal from "@/components/ChampionModal";
@@ -338,6 +337,19 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
   */
   const [pendingWall, setPendingWall] = useState<Direction | null>(null);
   const [breakMode, setBreakMode] = useState(false);
+
+  /*
+    換一顆棋子、或換人下之後，還沒確認的牆就不再成立。
+    原本這段寫在 Chessboard 的 render 裡，但 pendingWall 是這一層的狀態 ——
+    在子元件 render 時改父元件的狀態，React 會報「Cannot update a component while rendering
+    a different component」（開發模式每選一顆棋子就跳一次）。在持有狀態的這一層比對才合法。
+  */
+  const wallCtx = state.selected ? `${state.selected.row},${state.selected.col},${state.currentPlayer}` : '';
+  const [lastWallCtx, setLastWallCtx] = useState(wallCtx);
+  if (lastWallCtx !== wallCtx) {
+    setLastWallCtx(wallCtx);
+    setPendingWall(null);
+  }
 
   const onWallStep = useMemo(
     () => !!state.selected && !isPlacing
@@ -898,7 +910,7 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
                 // 這顆鈕本來就是圓的，圓角給半徑即可 —— 於是它是
                 // 「圓脹大、再縮回圓」，沒有多餘的方轉圓。
                 from: { width: r.width, height: r.height, radius: r.width / 2 },
-                icon: GiHut,
+                icon: StickerHome,
                 // 這顆鈕的圖示只有 24px，寫死 text-7xl 會變成一顆比按鈕
                 // 還大的房子憑空冒出來 —— 量它真正的尺寸。
                 iconSize: iconH,
@@ -920,10 +932,10 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
             goHome(guardOnTopRef.current);
           }}
           className="rounded-full bg-primary-50 p-3.5 text-2xl text-tile-ink transition hover:brightness-95 active:scale-95">
-          <GiHut />
+          <StickerHome />
         </button>
         <IconButton color="bg-primary-50 text-tile-ink" handleClickEvent={handleRuleBtnOpen} label={g.play.howToPlay}>
-          <GiRuleBook />
+          <StickerRules />
         </IconButton>
       </div>
 
@@ -982,7 +994,7 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
                          px-[18px] py-3 text-[15px] font-black text-ink-soft transition
                          hover:text-tile-ink active:scale-95 lg:bottom-[5dvh] coarse:hidden"
             >
-              <LuFlag className="text-xl" />
+              <StickerFlag className="text-2xl" />
               {g.surrender.label}
             </button>
           )}
