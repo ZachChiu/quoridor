@@ -504,3 +504,17 @@ html:has(.bagh-root), body:has(.bagh-root) { background: #e3a43c; }
 @supports (background-image: image-set(url('/x.avif') type('image/avif'))) {
   .bagh-bg { background-image: image-set(url('/games/bagh-chal/pattern.avif') type('image/avif'), url('/games/bagh-chal/pattern.webp') type('image/webp')); }
 }
+
+/* ── 第二批五款各自的視覺 ───────────────────────────────────────────────────
+   每款在自己的 feat/game-<id> 分支，CSS 接在下面自己那行標記底下。
+   標記之間刻意隔一行空白：分支依序合併時改的是不同地方，git 才不會衝突（CLAUDE.md〈視覺〉）。 */
+
+/* ▸ 九子棋（feat/game-nine-mens-morris） */
+
+/* ▸ 盲眼五子棋（feat/game-blind-gomoku） */
+
+/* ▸ 騎士巡邏（feat/game-knights-tour） */
+
+/* ▸ 時間拍賣（feat/game-time-auction） */
+
+/* ▸ 均衡曼卡拉（feat/game-balance-mancala） */
