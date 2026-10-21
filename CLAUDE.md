@@ -186,7 +186,7 @@ players/{ A?, B?, C? }/{ uid, displayName, joinedAt }
 
   - 時間拍賣：試做中，視覺在 `feat/game-time-auction`。
 
-  - 均衡曼卡拉：試做中，視覺在 `feat/game-balance-mancala`。
+  - 均衡曼卡拉（`feat/game-balance-mancala`）：原件是 1825 年的 Adinkra 印花布、阿坎黃金砝碼、Oware 木盤；最外緣蓋印的布邊（`.mcl-frame`，Rattray 1927 的符號，3 倍點陣圖）；主視覺三件砝碼 `weights.webp`（卡片 `card.webp`）。Adinkra 符號要照原意用：外框的三個符號與意思寫在說明彈窗的出處裡；圖版上形似卍字的 #12、王權的 Aban、手銬的 Epa 不用，黑、深紅底的喪服布不放進網站（只取色也避開）。
 
 - **棋盤**：外圍那圈 9px 是「牆」不是裝飾邊框（規則裡棋盤外緣本身就算一道牆）。
   牆的位移一律 `calc(var(--board-gap) * -0.5)` —— 對齊的是格線中心而不是格子邊，

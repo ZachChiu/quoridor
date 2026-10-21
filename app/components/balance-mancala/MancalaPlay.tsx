@@ -14,14 +14,15 @@ import {
 } from '@/games/balance-mancala/engine';
 import { chooseMove, choosePlacement, personalityOf, suggestColour, suggestMove } from '@/games/balance-mancala/ai';
 import { humanSeatsOf, type MatchSetup } from './match';
-import { DISH_BG, GOLD, NAVY, cellName, seatLook } from './palette';
+import { BRASS, DISH_BG, WOOD, cellName, seatLook } from './palette';
+import MancalaFrame from './MancalaFrame';
 import MancalaRing, { type RingMark } from './MancalaRing';
 import ScorePanel from './ScorePanel';
 import OrderEditor from './OrderEditor';
 import MancalaRules from './MancalaRules';
 import PieceDisc from './PieceDisc';
 
-/** 節奏（毫秒）。電腦每手約 1.5–2 秒；點盤面可以直接跳過播種動畫 */
+/** 節奏（毫秒）。AI 每手約 1.5–2 秒；點盤面可以直接跳過播種動畫 */
 const TIMING = { place: 260, think: 320, lift: 150, step: 190, stepHuman: 140, hold: 480, holdHuman: 360 };
 
 type Anim = { move: Move; sow: Sow; step: number; by: Seat };
@@ -35,14 +36,15 @@ function subscribeMotion(cb: () => void) {
 }
 
 /**
- * 對局畫面（跟電腦玩、多人同一台共用）。只持有一個不可變的 MancalaState，規則全在 engine。
+ * 對局畫面（跟 AI 玩、本機對戰共用）。只持有一個不可變的 MancalaState，規則全在 engine。
  *
- * 一手的流程：點起點格 → 排序編輯器（預設是電腦建議的排法，盤面畫出播完的樣子）→ 播下去 →
- * 一顆一顆落下的動畫 → 動畫播完才 applyMove。電腦的回合也走同一條動畫。
- * 動畫跟局面分開存（anim），套用那一刻 setGame 與 setAnim(null) 在同一個事件裡 —— 驅動電腦的 effect
+ * 一手的流程：點起點格 → 排序編輯器（預設是 AI 建議的排法，盤面畫出播完的樣子）→ 播下去 →
+ * 一顆一顆落下的動畫 → 動畫播完才 applyMove。AI 的回合也走同一條動畫。
+ * 動畫跟局面分開存（anim），套用那一刻 setGame 與 setAnim(null) 在同一個事件裡 —— 驅動 AI 的 effect
  * 依賴兩者，不會出現「局面還沒換、動畫已經清掉」的中間狀態而重複出手（CLAUDE.md〈單人對戰〉的教訓）。
  *
  * 版面：手機直式上面圓盤、下面分數（選了起點格時分數換成排序編輯器）；桌機（lg）左盤右欄。
+ * 整頁是同一塊 Adinkra 印花布（MancalaFrame），盤面是一塊圓的木頭（WOOD），軌道線與勝利的桂冠是黃銅。
  */
 export default function MancalaPlay({ locale, setup, onSettings, onAgain }: {
   locale: Locale;
@@ -80,7 +82,7 @@ export default function MancalaPlay({ locale, setup, onSettings, onAgain }: {
     setAnim(null);
   }, []);
 
-  // 電腦的回合：讓出一點時間再算（一手幾毫秒），看起來也像在想
+  // AI 的回合：讓出一點時間再算（一手幾毫秒），看起來也像在想
   useEffect(() => {
     if (anim || game.phase === 'over' || isHuman(game.turn)) return;
     const id = window.setTimeout(() => {
@@ -185,7 +187,7 @@ export default function MancalaPlay({ locale, setup, onSettings, onAgain }: {
       : (isHuman(actor) ? (solo ? t.turnYou : fill(t.turnHuman, { name: names[actor] })) : fill(t.thinking, { name: names[actor] }));
   const last = game.last;
   const lastMover = game.phase === 'over' ? game.turn : (game.turn - 1 + setup.seats) % setup.seats;
-  // 第二行：電腦播種時提示可以跳過動畫，其他時候是上一手做了什麼
+  // 第二行：AI 播種時提示可以跳過動畫，其他時候是上一手做了什麼
   const lastLine = anim ? (isHuman(anim.by) || reduced ? '' : t.skipHint)
     : last && last.colour !== null
       ? fill(t.lastMove, { name: names[lastMover], cell: cellName(last.from, t), n: last.order.length, owner: names[last.owner], colour: t.colourShort[last.colour], points: last.points })
@@ -215,15 +217,16 @@ export default function MancalaPlay({ locale, setup, onSettings, onAgain }: {
     else onSettings();
   };
 
-  const round = 'grid size-11 place-items-center rounded-full bg-tile-ink/[0.07] text-xl text-ink-soft transition hover:bg-tile-ink/[0.12]';
-  const wide = 'flex h-11 items-center justify-center gap-2 rounded-2xl bg-tile-ink/[0.07] text-sm font-black text-tile-ink transition hover:bg-tile-ink/[0.12]';
+  // 布上一層淡墨，沒有框線（全站的次要按鈕）
+  const round = 'grid size-11 place-items-center rounded-full bg-[#201211]/[0.07] text-xl text-ink-soft transition fine:hover:bg-[#201211]/[0.12]';
+  const wide = 'flex h-11 items-center justify-center gap-2 rounded-2xl bg-[#201211]/[0.07] text-sm font-black transition fine:hover:bg-[#201211]/[0.12]';
 
   const center = over ? (
     <>
-      <GiLaurelCrown aria-hidden="true" style={{ color: GOLD, width: '11cqw', height: '11cqw' }} />
+      <GiLaurelCrown aria-hidden="true" style={{ color: BRASS, width: '11cqw', height: '11cqw' }} />
       <p className="mt-[1cqw] font-black leading-tight" style={{ fontSize: '3.6cqw' }}>{t.over}</p>
       {endClosed && (
-        <button type="button" onClick={() => setEndClosed(false)} className="mt-[2cqw] rounded-full bg-tile-cream px-[3cqw] py-[1.2cqw] font-black text-tile-ink" style={{ fontSize: '3cqw' }}>
+        <button type="button" onClick={() => setEndClosed(false)} className="mt-[2cqw] rounded-full bg-[#fef2ec] px-[3cqw] py-[1.2cqw] font-black text-[#201211]" style={{ fontSize: '3cqw' }}>
           {t.results}
         </button>
       )}
@@ -251,11 +254,11 @@ export default function MancalaPlay({ locale, setup, onSettings, onAgain }: {
     </div>
   );
 
-  // 手機上圓盤讓出分數面板的高度（每席約 2.75rem），整頁塞得進一個畫面
-  const ringMax = `max(15rem, min(100%, calc(100dvh - ${8.5 + setup.seats * 2.75}rem)))`;
+  // 手機上圓盤讓出分數面板的高度（每席約 2.75rem）與上下兩條布邊（各 20px），整頁塞得進一個畫面
+  const ringMax = `max(15rem, min(100%, calc(100dvh - ${11 + setup.seats * 2.75}rem)))`;
 
   return (
-    <div className="flex min-h-dvh flex-col items-center px-4 pb-5 pt-3 font-[family-name:var(--font-app)] lg:flex-row lg:items-start lg:justify-center lg:gap-10 lg:pt-8">
+    <MancalaFrame className="items-center px-4 pb-5 pt-3 lg:flex-row lg:items-start lg:justify-center lg:gap-10 lg:pt-8">
       {/* 手機的上方一排 */}
       <div className="flex w-full max-w-[520px] items-center justify-between lg:hidden">
         <button type="button" onClick={() => askLeave('home')} aria-label={t.home} className={round}><LuHouse aria-hidden="true" /></button>
@@ -267,9 +270,9 @@ export default function MancalaPlay({ locale, setup, onSettings, onAgain }: {
       </div>
       <div className="mt-1 w-full max-w-[520px] lg:hidden">{statusBlock}</div>
 
-      {/* 圓盤：夜空藍的實色磁磚 */}
-      <div className="mt-1 w-full lg:mt-0 lg:!max-w-[min(600px,calc(100dvh-4rem))] lg:flex-1" style={{ maxWidth: ringMax }}>
-        <div className="rounded-[2rem] p-[3%]" style={{ background: NAVY }}>
+      {/* 圓盤：一塊圓的木頭（Oware 棋盤的木色），盤子嵌在上面 */}
+      <div className="mt-1 w-full lg:mt-0 lg:!max-w-[min(600px,calc(100dvh-7.5rem))] lg:flex-1" style={{ maxWidth: ringMax }}>
+        <div className="rounded-full p-[3%]" style={{ background: WOOD }}>
           <MancalaRing board={view.board} colourShort={t.colourShort} highLabel={t.high} lowLabel={t.low} ariaOf={ariaOf}
             selectable={selectable} dimOthers={!pick} selected={pick?.from ?? null} incoming={view.incoming} emptied={view.emptied}
             dropped={view.dropped} dropKey={anim?.step ?? 0} mark={view.mark} onPick={onPick} center={center} />
@@ -298,16 +301,16 @@ export default function MancalaPlay({ locale, setup, onSettings, onAgain }: {
       </div>
 
       <Modal isOpen={helpOpen} onClose={() => setHelpOpen(false)} title={t.rulesHeading} kicker={t.title}
-        icon={GiRuleBook} band={{ className: 'bg-tile-forest', fg: 'text-tile-cream' }}>
+        icon={GiRuleBook} band={{ style: { backgroundColor: WOOD }, fg: 'text-[#fef2ec]' }} panelClassName="!bg-[#ebd2cb]">
         <MancalaRules t={t} />
       </Modal>
 
       <Modal isOpen={leaving !== null} onClose={() => setLeaving(null)} title={t.leaveTitle} icon={GiExitDoor}
-        band={{ className: 'bg-tile-ink', fg: 'text-tile-cream' }}
+        band={{ className: 'bg-[#201211]', fg: 'text-[#ebd2cb]' }} panelClassName="!bg-[#ebd2cb]"
         footer={
           <>
-            <Button color="bg-tile-ink/[0.07] text-tile-ink" handleClickEvent={() => setLeaving(null)}>{t.stay}</Button>
-            <Button color="bg-tile-ink text-tile-cream" handleClickEvent={() => {
+            <Button color="bg-[#201211]/[0.07] text-[#201211]" handleClickEvent={() => setLeaving(null)}>{t.stay}</Button>
+            <Button color="bg-[#201211] text-[#ebd2cb]" handleClickEvent={() => {
               const where = leaving;
               setLeaving(null);
               if (where === 'home') home(); else onSettings();
@@ -318,14 +321,14 @@ export default function MancalaPlay({ locale, setup, onSettings, onAgain }: {
       </Modal>
 
       <Modal isOpen={over && !endClosed} onClose={() => setEndClosed(true)} title={endTitle} kicker={t.gameOver}
-        icon={soleWinner === null ? GiScales : GiLaurelCrown}
+        icon={soleWinner === null ? GiScales : GiLaurelCrown} panelClassName="!bg-[#ebd2cb]"
         band={soleWinner === null
-          ? { className: 'bg-tile-ink', fg: 'text-tile-cream' }
+          ? { className: 'bg-[#201211]', fg: 'text-[#ebd2cb]' }
           : { style: { backgroundColor: seatLook(soleWinner).bg }, fg: seatLook(soleWinner).fgClass }}
         footer={
           <>
-            <Button color="bg-tile-ink/[0.07] text-tile-ink" handleClickEvent={onSettings}>{t.settings}</Button>
-            <Button color="bg-tile-ink text-tile-cream" handleClickEvent={onAgain}>{t.again}</Button>
+            <Button color="bg-[#201211]/[0.07] text-[#201211]" handleClickEvent={onSettings}>{t.settings}</Button>
+            <Button color="bg-[#201211] text-[#ebd2cb]" handleClickEvent={onAgain}>{t.again}</Button>
           </>
         }>
         {endReason && <p className="text-sm leading-relaxed">{endReason}</p>}
@@ -334,7 +337,7 @@ export default function MancalaPlay({ locale, setup, onSettings, onAgain }: {
             const win = r.rank === 1;
             const look = seatLook(r.seat);
             return (
-              <li key={r.seat} className={`flex items-center gap-3 rounded-2xl px-3 ${win ? 'py-3' : 'bg-tile-ink/[0.05] py-2 text-ink-soft'}`}
+              <li key={r.seat} className={`flex items-center gap-3 rounded-2xl px-3 ${win ? 'py-3' : 'bg-[#201211]/[0.05] py-2 text-ink-soft'}`}
                 style={win ? { background: look.bg, color: look.fg } : undefined}>
                 <span className="w-12 shrink-0 text-xs font-black">{fill(t.rank, { n: r.rank })}</span>
                 <PieceDisc seat={r.seat} size={win ? '2rem' : '1.5rem'} className={win ? '' : 'opacity-50'} />
@@ -355,6 +358,6 @@ export default function MancalaPlay({ locale, setup, onSettings, onAgain }: {
           })}
         </ol>
       </Modal>
-    </div>
+    </MancalaFrame>
   );
 }

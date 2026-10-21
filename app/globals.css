@@ -526,3 +526,15 @@ html:has(.bagh-root), body:has(.bagh-root) { background: #e3a43c; }
 /* ▸ 時間拍賣（feat/game-time-auction） */
 
 /* ▸ 均衡曼卡拉（feat/game-balance-mancala） */
+/* 均衡曼卡拉（MancalaFrame）：一塊阿坎（今迦納）的 Adinkra 印花布。.mcl-frame 是蓋了印的布邊 —— 兩側各兩道梳子畫的細線
+   （nwomu），中間一排印章：上下寶螺殼（Nsirewa）、左右曲折（Nkyimkyim）、四角連在一起的心（Akoma ntoaso）。
+   符號摳自 Rattray 1927 的圖版（公有領域），做成 3 倍的點陣圖 public/games/balance-mancala/frame.png（尺寸與做法見 MancalaFrame.tsx）。
+   唯一的裝飾，只有這一層。邊段 round 重複，任何長度都是整數個印章；梳線在四角交叉（布上的格線本來就是交叉的）。
+   副字色換成羚羊砝碼的青銅 #5e4b3f（布上 5.7:1）。顏色見 components/balance-mancala/palette.ts。 */
+html:has(.mcl-root), body:has(.mcl-root) { background: #ebd2cb; }
+html:has(.mcl-root) { --ink-soft: #5e4b3f; }
+.mcl-frame {
+  border: var(--mcl-frame, 28px) solid #201211;
+  border-image: url('/games/balance-mancala/frame.png') 84 / var(--mcl-frame, 28px) round;
+}
+@media (max-width: 640px) { .mcl-frame { --mcl-frame: 20px; } }

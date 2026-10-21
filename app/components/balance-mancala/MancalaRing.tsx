@@ -2,7 +2,7 @@
 import type { ReactNode } from 'react';
 import { GiAngelWings, GiImpLaugh } from 'react-icons/gi';
 import { CELLS, ANGEL, DEVIL, CELL_COLOUR, type Colour, type Seat } from '@/games/balance-mancala/engine';
-import { CREAM, DISH_BG, GOLD, INK, NAVY } from './palette';
+import { BRASS, CLOTH_LIGHT, DISH_BG, INK, WOOD } from './palette';
 import PieceDisc from './PieceDisc';
 
 /**
@@ -12,6 +12,8 @@ import PieceDisc from './PieceDisc';
  * 不必分兩套數字。格子中心在半徑 37%、直徑 15%，外側印顏色短標（色盲也分得出三色）、內側印子數。
  *
  * 同一格裡 4 顆以內一顆一顆畫；超過就依主人合併成一顆、右上角標數量（同一個人的子沒有差別，合併不丟資訊）。
+ *
+ * 盤面是一塊圓的木頭（外層 MancalaPlay 畫），軌道線、箭頭、盤子的外緣是嵌在木頭上的黃銅；字是亮布色。
  */
 const R = 37;
 const D = 15;
@@ -84,13 +86,13 @@ export default function MancalaRing({
   return (
     <div className="relative aspect-square w-full select-none [container-type:inline-size]">
       <svg viewBox="0 0 100 100" className="absolute inset-0 size-full" aria-hidden="true">
-        <circle cx={50} cy={50} r={R} fill="none" stroke={GOLD} strokeOpacity={0.35} strokeWidth={0.35} />
+        <circle cx={50} cy={50} r={R} fill="none" stroke={BRASS} strokeOpacity={0.45} strokeWidth={0.35} />
         {/* 格與格之間的小箭頭：順時針 */}
         {Array.from({ length: CELLS }, (_, i) => {
           const a = rad(i + 0.5);
           const deg = -90 + ((i + 0.5) * 360) / CELLS + 90;
           return (
-            <path key={i} d="M -0.55 -0.75 L 0.45 0 L -0.55 0.75" fill="none" stroke={GOLD} strokeWidth={0.42}
+            <path key={i} d="M -0.55 -0.75 L 0.45 0 L -0.55 0.75" fill="none" stroke={BRASS} strokeWidth={0.42}
               strokeLinecap="round" strokeLinejoin="round" strokeOpacity={0.85}
               transform={`translate(${50 + R * Math.cos(a)} ${50 + R * Math.sin(a)}) rotate(${deg})`} />
           );
@@ -98,18 +100,19 @@ export default function MancalaRing({
       </svg>
 
       {center && (
-        <div className="absolute inset-[27%] flex flex-col items-center justify-center text-center" style={{ color: CREAM }}>
+        <div className="absolute inset-[27%] flex flex-col items-center justify-center text-center" style={{ color: CLOTH_LIGHT }}>
           {center}
         </div>
       )}
 
       {board.map((owners, cell) => {
         const colour = CELL_COLOUR[cell];
-        const bg = colour !== null ? DISH_BG[colour] : cell === DEVIL ? '#0b0d18' : CREAM;
+        // 惡魔格是印花的墨（比木頭更深）、天使格是亮布色；兩格都靠黃銅外緣跟木頭分開
+        const bg = colour !== null ? DISH_BG[colour] : cell === DEVIL ? INK : CLOTH_LIGHT;
         const canPick = selectable?.has(cell) ?? false;
         const dim = dimOthers && selectable !== null && !canPick && selected !== cell;
         const isSel = selected === cell;
-        const outline = isSel ? `0.8cqw solid ${GOLD}` : canPick ? `0.5cqw solid ${CREAM}` : emptied === cell ? `0.4cqw dashed ${CREAM}` : 'none';
+        const outline = isSel ? `0.8cqw solid ${BRASS}` : canPick ? `0.5cqw solid ${CLOTH_LIGHT}` : emptied === cell ? `0.4cqw dashed ${CLOTH_LIGHT}` : 'none';
         const showMark = mark && mark.cell === cell;
         return (
           <div key={cell}>
@@ -124,27 +127,27 @@ export default function MancalaRing({
                 width: `${D}cqw`, height: `${D}cqw`,
                 transform: `translate(-50%, -50%)${isSel ? ' scale(1.07)' : ''}`,
                 background: bg,
-                boxShadow: `inset 0 0 0 0.45cqw ${GOLD}`,
+                boxShadow: `inset 0 0 0 0.45cqw ${BRASS}`,
                 outline, outlineOffset: '0.5cqw',
               }}
             >
-              {cell === DEVIL && <GiImpLaugh aria-hidden="true" className="absolute size-[62%]" style={{ color: GOLD, opacity: owners.length ? 0.35 : 0.9 }} />}
-              {cell === ANGEL && <GiAngelWings aria-hidden="true" className="absolute size-[66%]" style={{ color: NAVY, opacity: owners.length ? 0.18 : 0.55 }} />}
+              {cell === DEVIL && <GiImpLaugh aria-hidden="true" className="absolute size-[62%]" style={{ color: BRASS, opacity: owners.length ? 0.35 : 0.9 }} />}
+              {cell === ANGEL && <GiAngelWings aria-hidden="true" className="absolute size-[66%]" style={{ color: WOOD, opacity: owners.length ? 0.18 : 0.55 }} />}
               <CellPieces owners={owners} incoming={!!incoming?.has(cell)} dropped={dropped === cell} dropKey={dropKey} />
-              {/* 不能選的格子蓋一層夜空藍調暗。不用 opacity：半透明的格子會透出底下那圈軌道線 */}
-              {dim && <span aria-hidden="true" className="pointer-events-none absolute inset-0 rounded-full" style={{ background: NAVY, opacity: 0.6 }} />}
+              {/* 不能選的格子蓋一層木頭色調暗。不用 opacity：半透明的格子會透出底下那圈軌道線 */}
+              {dim && <span aria-hidden="true" className="pointer-events-none absolute inset-0 rounded-full" style={{ background: WOOD, opacity: 0.6 }} />}
             </button>
 
             {/* 外側：顏色短標；惡魔、天使寫記到哪一色 */}
             <span aria-hidden="true" className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 whitespace-nowrap font-black leading-none"
-              style={{ ...pos(cell, R + D / 2 + 3.4), fontSize: '2.7cqw', color: colour !== null ? CREAM : GOLD, opacity: colour !== null ? 0.8 : 1 }}>
+              style={{ ...pos(cell, R + D / 2 + 3.4), fontSize: '2.7cqw', color: colour !== null ? CLOTH_LIGHT : BRASS, opacity: colour !== null ? 0.8 : 1 }}>
               {colour !== null ? colourShort[colour] : cell === DEVIL ? highLabel : lowLabel}
             </span>
 
             {/* 內側：子數（得分標記出現時讓位） */}
             {!showMark && owners.length > 0 && (
               <span aria-hidden="true" className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 font-black leading-none"
-                style={{ ...pos(cell, R - D / 2 - 3), fontSize: '2.8cqw', color: CREAM, opacity: 0.7 }}>
+                style={{ ...pos(cell, R - D / 2 - 3), fontSize: '2.8cqw', color: CLOTH_LIGHT, opacity: 0.7 }}>
                 {owners.length}
               </span>
             )}
@@ -152,11 +155,11 @@ export default function MancalaRing({
             {showMark && (
               <span aria-hidden="true"
                 className={`pointer-events-none absolute z-10 flex -translate-x-1/2 -translate-y-1/2 items-center rounded-full font-black leading-none ${mark.faded ? '' : 'animate-piece-drop'}`}
-                style={{ ...pos(cell, R - D / 2 - 6.2), gap: '0.7cqw', padding: '0.6cqw 1.2cqw 0.6cqw 0.6cqw', fontSize: '3.2cqw', background: CREAM, color: INK, opacity: mark.faded ? 0.8 : 1 }}>
+                style={{ ...pos(cell, R - D / 2 - 6.2), gap: '0.7cqw', padding: '0.6cqw 1.2cqw 0.6cqw 0.6cqw', fontSize: '3.2cqw', background: CLOTH_LIGHT, color: INK, opacity: mark.faded ? 0.8 : 1 }}>
                 <PieceDisc seat={mark.owner} size="3.8cqw" />
                 +{mark.points}
                 {mark.colour !== null && (
-                  <span className="rounded-full leading-none" style={{ padding: '0.5cqw 1cqw', fontSize: '2.6cqw', background: DISH_BG[mark.colour], color: CREAM }}>
+                  <span className="rounded-full leading-none" style={{ padding: '0.5cqw 1cqw', fontSize: '2.6cqw', background: DISH_BG[mark.colour], color: CLOTH_LIGHT }}>
                     {colourShort[mark.colour]}
                   </span>
                 )}
