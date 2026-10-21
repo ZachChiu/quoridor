@@ -3,7 +3,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { GiHourglass, GiLaurelsTrophy } from 'react-icons/gi';
 import { LuArrowRight, LuCheck, LuRotateCcw, LuTimer } from 'react-icons/lu';
 import Modal from '@/components/Modal';
-import Button from '@/components/Button';
 import { fill, useTextTable } from '@/i18n/gameText';
 import { canStartFrom, legalMoves, tapKind, type Square } from '@/games/knights-tour/engine';
 import {
@@ -119,8 +118,8 @@ export default function ShowGame({ onMenu, onPractice }: {
             const active = i === run.level && !done;
             return (
               <li key={s} aria-current={active ? 'step' : undefined}
-                className={`flex flex-1 flex-col items-center justify-center rounded-xl px-1 py-1.5 ${
-                  done ? 'bg-[#e2c9b1] text-[#322e2a]' : active ? 'bg-[#322e2a] text-[#edddc7]' : 'bg-[#322e2a]/[0.08] text-ink-soft'}`}>
+                className={`kt-plate flex flex-1 flex-col items-center justify-center px-1 py-1.5 ${
+                  done ? 'is-wash' : active ? 'is-hatched' : 'text-ink-soft'}`}>
                 <span className="text-[10px] font-bold leading-none opacity-80">{fill(t.level, { i: i + 1 })}</span>
                 <span className="mt-0.5 flex items-center gap-0.5 text-sm font-black tabular-nums leading-tight">
                   {done && <LuCheck aria-hidden="true" className="shrink-0" />}{sizeLabel(s)}
@@ -129,14 +128,14 @@ export default function ShowGame({ onMenu, onPractice }: {
             );
           })}
         </ol>
-        <div className={`flex min-w-[5.5rem] flex-col items-end justify-center rounded-xl px-3 py-1.5 ${remaining < 5 * 60_000 && running ? 'bg-[#834d36] text-[#edddc7]' : 'bg-[#322e2a]/[0.08]'}`}>
+        <div className={`flex min-w-[5.5rem] flex-col items-end justify-center px-3.5 py-2 ${remaining < 5 * 60_000 && running ? 'kt-chalk' : 'kt-plate'}`}>
           <span className="flex items-center gap-1 text-[10px] font-bold leading-none opacity-80"><LuTimer aria-hidden="true" />{t.timeLeft}</span>
           <span className="mt-0.5 text-xl font-black tabular-nums leading-tight" role="timer">{formatTime(remaining, true)}</span>
         </div>
       </div>
       <div className={`flex min-h-10 flex-col justify-center ${place === 'bar' ? 'items-center text-center' : ''}`} aria-live="polite">
         {alert
-          ? <p className="rounded-lg bg-[#834d36] px-2.5 py-1 text-sm font-black text-[#edddc7]">{alert}</p>
+          ? <p className="kt-chalk px-2.5 py-1 text-sm font-black">{alert}</p>
           : <p className={`text-sm font-bold leading-snug ${note ? 'text-[#322e2a]' : 'text-ink-soft'}`}>{message}</p>}
         {attempt > 1 && !over && <p className="mt-1 text-xs font-bold text-ink-soft">{fill(t.attempt, { k: attempt })}</p>}
       </div>
@@ -178,20 +177,20 @@ export default function ShowGame({ onMenu, onPractice }: {
       <Modal isOpen={status === 'won' && !endClosed} onClose={() => setEndClosed(true)} title={t.wonTitle} kicker={t.title}
         icon={GiLaurelsTrophy} band={BAND_CHALK} panelClassName={MODAL_PANEL}
         footer={<>
-          <Button color="bg-[#322e2a]/[0.08] text-[#322e2a]" handleClickEvent={onMenu}>{t.menu}</Button>
-          <Button color="bg-[#322e2a] text-[#edddc7]" handleClickEvent={again}>{t.again}</Button>
+          <button type="button" className="kt-plate flex-1 py-3.5 font-black" onClick={onMenu}>{t.menu}</button>
+          <button type="button" className="kt-chalk flex-1 py-3.5 font-black" onClick={again}>{t.again}</button>
         </>}>
         <div className="flex flex-col gap-4">
           <div className="flex items-end justify-between gap-3">
             <p className="text-5xl font-black tabular-nums leading-none">{formatTime(elapsed)}</p>
             {record?.isNew
-              ? <p className="rounded-lg bg-[#322e2a] px-2.5 py-1 text-sm font-black text-[#edddc7]">{t.newBest}</p>
+              ? <p className="kt-chalk px-2.5 py-1 text-sm font-black">{t.newBest}</p>
               : bestShow !== undefined && <p className="text-sm font-bold text-ink-soft">{fill(t.bestWas, { time: formatTime(bestShow) })}</p>}
           </div>
           <p className="text-sm font-bold leading-relaxed">{fill(t.wonBody, { time: formatTime(elapsed) })}</p>
           <ol className="flex flex-col gap-1.5">
             {SHOW_SIZES.map((s, i) => (
-              <li key={s} className="flex items-center justify-between rounded-xl bg-[#322e2a]/[0.05] px-3 py-2 text-sm font-bold">
+              <li key={s} className="flex items-center justify-between border-b border-dotted border-[#322e2a]/35 px-1 py-2 text-sm font-bold last:border-b-0">
                 <span className="font-black tabular-nums">{sizeLabel(s)}</span>
                 <span className="text-ink-soft">{(run.attempts[i] ?? 1) > 1 ? fill(t.attempt, { k: run.attempts[i] }) : ''}</span>
                 <span className="font-black tabular-nums">{formatTime((run.splits[i] ?? 0) - (run.splits[i - 1] ?? 0))}</span>
@@ -204,8 +203,8 @@ export default function ShowGame({ onMenu, onPractice }: {
       <Modal isOpen={status === 'timeUp' && !endClosed} onClose={() => setEndClosed(true)} title={t.timeUpTitle} kicker={t.title}
         icon={GiHourglass} band={BAND_INK} panelClassName={MODAL_PANEL}
         footer={<>
-          <Button color="bg-[#322e2a]/[0.08] text-[#322e2a]" handleClickEvent={() => onPractice(SHOW_SIZES[stoppedAt])}>{t.toPractice}</Button>
-          <Button color="bg-[#322e2a] text-[#edddc7]" handleClickEvent={again}>{t.again}</Button>
+          <button type="button" className="kt-plate flex-1 py-3.5 font-black" onClick={() => onPractice(SHOW_SIZES[stoppedAt])}>{t.toPractice}</button>
+          <button type="button" className="kt-chalk flex-1 py-3.5 font-black" onClick={again}>{t.again}</button>
         </>}>
         <p className="text-sm font-bold leading-relaxed">{fill(t.timeUpBody, { i: stoppedAt + 1, size: sizeLabel(SHOW_SIZES[stoppedAt]) })}</p>
       </Modal>

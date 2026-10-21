@@ -28,8 +28,7 @@ export default function SizePicker({ open, current, onPick, onClose }: {
           const ms = best[practiceKey(n)];
           return (
             <button key={n} type="button" onClick={() => onPick(n)} aria-pressed={n === current}
-              className={`flex flex-col items-center gap-1 rounded-2xl py-4 transition active:scale-[0.97] ${
-                n === current ? 'bg-[#322e2a] text-[#edddc7]' : 'bg-[#322e2a]/[0.08] text-[#322e2a] fine:hover:bg-[#322e2a]/[0.14]'}`}>
+              className={`kt-plate flex flex-col items-center gap-1 py-4 active:scale-[0.97] ${n === current ? 'is-hatched' : ''}`}>
               <span className="text-xl font-black tabular-nums">{sizeLabel(n)}</span>
               <span className={`text-[11px] font-bold tabular-nums ${n === current ? 'opacity-80' : 'text-ink-soft'}`}>{ms ? formatTime(ms) : '—'}</span>
             </button>

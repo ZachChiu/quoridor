@@ -1,7 +1,6 @@
 'use client';
 import { GiRuleBook } from 'react-icons/gi';
 import Modal from '@/components/Modal';
-import Button from '@/components/Button';
 import { useMessages } from '@/i18n/LocaleProvider';
 import { useTextTable } from '@/i18n/gameText';
 import { knightMoves } from '@/games/knights-tour/engine';
@@ -20,7 +19,7 @@ export default function HowToPlay({ open, onClose }: { open: boolean; onClose: (
   return (
     <Modal isOpen={open} onClose={onClose} title={t.rules} kicker={t.title} icon={GiRuleBook}
       band={BAND_CHALK} panelClassName={MODAL_PANEL}
-      footer={<Button color="bg-[#322e2a] text-[#edddc7]" handleClickEvent={onClose}>{t.gotIt}</Button>}>
+      footer={<button type="button" className="kt-chalk flex-1 py-3.5 font-black" onClick={onClose}>{t.gotIt}</button>}>
       <div className="flex flex-col gap-4">
         <div className="mx-auto w-full max-w-[180px]"><TourBoard n={5} path={DEMO_PATH} targets={DEMO_TARGETS} /></div>
         <ol className="flex flex-col gap-2.5 text-sm font-bold leading-relaxed">

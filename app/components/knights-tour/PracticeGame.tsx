@@ -3,7 +3,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { GiChessKnight } from 'react-icons/gi';
 import { LuCheck, LuCircleHelp, LuGrid3X3, LuLightbulb, LuRotateCcw, LuTimer, LuUndo2, LuX } from 'react-icons/lu';
 import Modal from '@/components/Modal';
-import Button from '@/components/Button';
 import { fill, useTextTable } from '@/i18n/gameText';
 import {
   canStartFrom, createTour, hint as findHint, isComplete, isStuck, legalMoves, move, tapKind, truncate, undo, verdict,
@@ -118,25 +117,25 @@ export default function PracticeGame({ n, onMenu, onSize }: { n: number; onMenu:
     return name;
   };
 
-  const chip = solvable === 'yes' ? { text: t.canFinish, icon: LuCheck, cls: 'bg-[#322e2a]/[0.08] text-[#322e2a]' }
-    : solvable === 'no' ? { text: t.cannotFinish, icon: LuX, cls: 'bg-[#834d36] text-[#edddc7]' }
-    : solvable === 'unknown' ? { text: t.unsure, icon: LuCircleHelp, cls: 'bg-[#322e2a]/[0.08] text-ink-soft' }
+  const chip = solvable === 'yes' ? { text: t.canFinish, icon: LuCheck, cls: 'kt-plate' }
+    : solvable === 'no' ? { text: t.cannotFinish, icon: LuX, cls: 'kt-chalk' }
+    : solvable === 'unknown' ? { text: t.unsure, icon: LuCircleHelp, cls: 'kt-plate text-ink-soft' }
     : null;
 
   const status = (place: Place) => (
     <div className="flex flex-col gap-3">
       <div className="flex items-stretch gap-2">
         {/* 窄的時候（橫放手機的右欄、英文的長字）判定換到第二行，不在字中間斷開 */}
-        <div className="flex flex-1 flex-wrap items-center gap-x-3 gap-y-1 rounded-xl bg-[#322e2a]/[0.08] px-3 py-1.5">
+        <div className="kt-plate flex flex-1 flex-wrap items-center gap-x-3 gap-y-1 px-3.5 py-2">
           <span className="whitespace-nowrap text-xl font-black tabular-nums">{size}</span>
           <span className="whitespace-nowrap text-sm font-bold tabular-nums text-ink-soft">{tour.path.length} / {total}</span>
           {chip && (
-            <span className={`ml-auto flex items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-black ${chip.cls}`}>
+            <span className={`ml-auto flex items-center gap-1 whitespace-nowrap px-2.5 py-1.5 text-xs font-black ${chip.cls}`}>
               <chip.icon aria-hidden="true" className="shrink-0" />{chip.text}
             </span>
           )}
         </div>
-        <div className="flex min-w-[5.5rem] flex-col items-end justify-center rounded-xl bg-[#322e2a]/[0.08] px-3 py-1.5">
+        <div className="kt-plate flex min-w-[5.5rem] flex-col items-end justify-center px-3.5 py-2">
           <span className="flex items-center gap-1 text-[10px] font-bold leading-none text-ink-soft"><LuTimer aria-hidden="true" />{t.elapsed}</span>
           <span className="mt-0.5 text-xl font-black tabular-nums leading-tight">{formatTime(elapsed)}</span>
         </div>
@@ -145,7 +144,7 @@ export default function PracticeGame({ n, onMenu, onSize }: { n: number; onMenu:
         <p className={`text-sm font-bold leading-snug ${note || hint ? 'text-[#322e2a]' : 'text-ink-soft'}`}>{message}</p>
         {hint?.kind === 'undo' && (
           <button type="button" onClick={() => commit(truncate(tour, hint.keep))}
-            className="rounded-lg bg-[#322e2a] px-3 py-1.5 text-xs font-black text-[#edddc7] transition active:scale-[0.97]">
+            className="kt-chalk px-3 py-1.5 text-xs font-black active:scale-[0.97]">
             {hint.keep ? fill(t.undoTo, { k: hint.keep }) : t.reselectStart}
           </button>
         )}
@@ -194,14 +193,14 @@ export default function PracticeGame({ n, onMenu, onSize }: { n: number; onMenu:
         title={t.doneTitle} kicker={`${t.practiceMode} · ${size}`} icon={GiChessKnight}
         band={BAND_CHALK} panelClassName={MODAL_PANEL}
         footer={<>
-          <Button color="bg-[#322e2a]/[0.08] text-[#322e2a]" handleClickEvent={() => { setResult((r) => (r ? { ...r, open: false } : r)); setSizeOpen(true); }}>{t.changeSize}</Button>
-          <Button color="bg-[#322e2a] text-[#edddc7]" handleClickEvent={restart}>{t.again}</Button>
+          <button type="button" className="kt-plate flex-1 py-3.5 font-black" onClick={() => { setResult((r) => (r ? { ...r, open: false } : r)); setSizeOpen(true); }}>{t.changeSize}</button>
+          <button type="button" className="kt-chalk flex-1 py-3.5 font-black" onClick={restart}>{t.again}</button>
         </>}>
         <div className="flex flex-col gap-3">
           <div className="flex items-end justify-between gap-3">
             <p className="text-5xl font-black tabular-nums leading-none">{formatTime(result?.ms ?? 0)}</p>
             {result?.isNew
-              ? <p className="rounded-lg bg-[#322e2a] px-2.5 py-1 text-sm font-black text-[#edddc7]">{t.newBest}</p>
+              ? <p className="kt-chalk px-2.5 py-1 text-sm font-black">{t.newBest}</p>
               : bestHere !== undefined && <p className="text-sm font-bold text-ink-soft">{fill(t.bestWas, { time: formatTime(bestHere) })}</p>}
           </div>
           <p className="text-sm font-bold leading-relaxed">{fill(t.doneBody, { size, time: formatTime(result?.ms ?? 0) })}</p>

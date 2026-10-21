@@ -35,7 +35,7 @@ export default function KnightsTourMenu({ locale, onShow, onPractice }: {
   const [sizeOpen, setSizeOpen] = useState(false);
   const records = ([['show', t.showMode], ...SIZES.map((n) => [practiceKey(n), sizeLabel(n)])] as [RecordKey, string][])
     .flatMap(([key, name]) => { const ms = best[key]; return ms === undefined ? [] : [{ key, name, ms }]; });
-  const card = 'flex w-full items-center gap-3 rounded-2xl px-4 py-3.5 text-left transition active:scale-[0.99]';
+  const card = 'flex w-full items-center gap-3 px-4 py-3.5 text-left active:scale-[0.99]';
 
   return (
     <KtFrame className="items-center justify-center px-5 py-[max(1rem,3dvh)]">
@@ -58,7 +58,7 @@ export default function KnightsTourMenu({ locale, onShow, onPractice }: {
 
         <div className="mt-[max(1rem,3dvh)] flex w-full flex-col gap-2.5 lg:mt-0 lg:w-[380px]">
           <a href={`${localePath(locale, KNIGHTS_TOUR)}#show`} onClick={(e) => { e.preventDefault(); onShow(); }}
-            className={`${card} bg-[#322e2a] text-[#edddc7] fine:hover:brightness-125`}>
+            className={`${card} kt-chalk`}>
             <GiStopwatch aria-hidden="true" className="shrink-0 text-3xl" />
             <span className="min-w-0 flex-1">
               <span className="block text-lg font-black leading-tight">{t.showMode}</span>
@@ -66,7 +66,7 @@ export default function KnightsTourMenu({ locale, onShow, onPractice }: {
             </span>
             <LuChevronRight aria-hidden="true" className="shrink-0 text-xl opacity-70" />
           </a>
-          <button type="button" onClick={() => setSizeOpen(true)} className={`${card} bg-[#322e2a]/[0.08] fine:hover:bg-[#322e2a]/[0.14]`}>
+          <button type="button" onClick={() => setSizeOpen(true)} className={`${card} kt-plate`}>
             <GiChessKnight aria-hidden="true" className="shrink-0 text-3xl" />
             <span className="min-w-0 flex-1">
               <span className="block text-lg font-black leading-tight">{t.practiceMode}</span>
@@ -74,7 +74,7 @@ export default function KnightsTourMenu({ locale, onShow, onPractice }: {
             </span>
             <LuChevronRight aria-hidden="true" className="shrink-0 text-xl opacity-60" />
           </button>
-          <button type="button" onClick={() => setHelpOpen(true)} className="self-center px-3 py-2 text-sm font-black underline decoration-2 underline-offset-4 opacity-80 transition hover:opacity-100">
+          <button type="button" onClick={() => setHelpOpen(true)} className="self-center px-3 py-2 text-sm font-black underline decoration-1 underline-offset-4 opacity-80 transition before:mr-1.5 before:inline-block before:font-serif before:text-base before:italic before:content-['§'] hover:opacity-100">
             {t.rules}
           </button>
           {records.length > 0 && (
@@ -82,7 +82,7 @@ export default function KnightsTourMenu({ locale, onShow, onPractice }: {
               <h2 className="text-xs font-black opacity-70">{t.best}</h2>
               <dl className="mt-1.5 flex flex-wrap gap-1.5">
                 {records.map(({ key, name, ms }) => (
-                  <div key={key} className="flex items-baseline gap-1.5 rounded-xl bg-[#322e2a]/[0.08] px-2.5 py-1">
+                  <div key={key} className="kt-plate flex items-baseline gap-1.5 px-3 py-1.5">
                     <dt className="text-xs font-bold opacity-75">{name}</dt>
                     <dd className="kt-serif text-sm font-semibold tabular-nums">{formatTime(ms)}</dd>
                   </div>

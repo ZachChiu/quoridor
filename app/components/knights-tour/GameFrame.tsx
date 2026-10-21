@@ -7,13 +7,15 @@ import KtFrame from './KtFrame';
  * 按鈕只有兩種（照 Wall Go）：主要是墨、次要是紙上一層淡墨，沒有框線。墨是 18 世紀銅版畫取樣的 #322e2a（palette.ts）。
  * hover 只給滑鼠（觸控會一直停在 :hover）
  */
-export const BTN_ROUND = 'grid size-11 shrink-0 place-items-center rounded-full bg-[#322e2a]/[0.08] text-xl text-[#322e2a] transition fine:hover:bg-[#322e2a]/[0.14] disabled:opacity-35';
-export const BTN = 'flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-[#322e2a]/[0.08] px-3 py-2 text-sm font-black leading-tight text-[#322e2a] transition active:scale-[0.98] fine:hover:bg-[#322e2a]/[0.14] disabled:pointer-events-none disabled:opacity-35';
-export const BTN_PRIMARY = 'flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-[#322e2a] px-3 py-2 text-sm font-black leading-tight text-[#edddc7] transition active:scale-[0.98] fine:hover:brightness-125 disabled:pointer-events-none disabled:opacity-35';
-/** 騎士巡邏的彈窗：紙色面板＋紅粉筆色帶（紙色字 5.1:1），一個面板一個色相 */
-export const MODAL_PANEL = '!bg-[#edddc7]';
-export const BAND_CHALK = { className: 'bg-[#834d36]', fg: 'text-[#edddc7]' };
-export const BAND_INK = { className: 'bg-[#322e2a]', fg: 'text-[#edddc7]' };
+// 按鈕照銅版畫（globals.css 的 .kt-*，Zach 10/22：每款的按鈕要有自己的樣子）：
+// 次要是雙線壓痕框、主要是紅粉筆色、選中填斜線排線
+export const BTN_ROUND = 'kt-plate grid size-11 shrink-0 place-items-center text-xl disabled:opacity-35';
+export const BTN = 'kt-plate flex min-h-12 items-center justify-center gap-2 px-3 py-2 text-sm font-black leading-tight active:scale-[0.98] disabled:pointer-events-none disabled:opacity-35';
+export const BTN_PRIMARY = 'kt-chalk flex min-h-12 items-center justify-center gap-2 px-3 py-2 text-sm font-black leading-tight active:scale-[0.98] disabled:pointer-events-none disabled:opacity-35';
+/** 騎士巡邏的彈窗：書裡的一頁圖版 —— 紙色面板內側一道銅版雙線，標題下一道雙線（紅粉筆或墨），不用色帶 */
+export const MODAL_PANEL = '!rounded-[2px] !bg-[#edddc7] shadow-[inset_0_0_0_1.5px_#322e2a,inset_0_0_0_4px_#edddc7,inset_0_0_0_4.6px_rgb(50_46_42/0.6)]';
+export const BAND_CHALK = { className: 'mx-6 !px-0 border-b-[3px] border-double border-[#834d36] bg-transparent', fg: 'text-[#834d36]' };
+export const BAND_INK = { className: 'mx-6 !px-0 border-b-[3px] border-double border-[#322e2a]/70 bg-transparent', fg: 'text-[#322e2a]' };
 
 export type Place = 'bar' | 'aside';
 
