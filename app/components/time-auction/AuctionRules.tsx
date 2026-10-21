@@ -19,13 +19,13 @@ export default function AuctionRules({ mode }: { mode: Mode }) {
       <ol className="flex flex-col gap-2.5">
         {t.rules.map((rule, i) => (
           <li key={i} className="flex gap-2.5 text-sm font-bold leading-relaxed">
-            <span className="mt-0.5 grid size-6 shrink-0 place-items-center rounded-full bg-tile-ink text-xs font-black text-tile-cream">{i + 1}</span>
+            <span className="mt-0.5 grid size-6 shrink-0 place-items-center rounded-full bg-[#35331c] text-xs font-black text-[#ebe1b8]">{i + 1}</span>
             <span>{fill(rule, vars)}</span>
           </li>
         ))}
       </ol>
       {/* 兩句分兩行：中日文句子之間不該夾一個半形空白 */}
-      <div className="rounded-xl bg-tile-ink/[0.05] px-3 py-2.5 text-xs font-bold leading-relaxed text-ink-soft">
+      <div className="rounded-xl bg-[#35331c]/[0.06] px-3 py-2.5 text-xs font-bold leading-relaxed text-ink-soft">
         <p>{cfg.showRemaining ? t.rulesQuick : t.rulesShow}</p>
         <p className="mt-1">{t.controls}</p>
       </div>

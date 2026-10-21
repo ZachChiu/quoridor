@@ -15,6 +15,7 @@ import { TEXT } from '@/games/time-auction/text';
 import AuctionRules from './AuctionRules';
 import { roundBtn } from './AuctionSetup';
 import { KEY_BG, KEY_RING } from './theme';
+import TauFrame from './TauFrame';
 
 /**
  * ready：等你按下去開始這一回合（第一回合）
@@ -28,10 +29,11 @@ type Live = { start: number; aiBids: number[] };
 /**
  * 大螢幕的數字。每個字固定寬度，跑秒時才不會左右抖 ——
  * 字型子集不保證留著等寬數字（tnum）的 OpenType 功能，tabular-nums 不一定有效。
+ * 字是 Didone 襯線（.tau-display），維多利亞時代拍賣傳單上的數字就是這個樣子。
  */
 function BigTime({ text, dim = false }: { text: string; dim?: boolean }) {
   return (
-    <span aria-hidden="true" className={`inline-flex font-black leading-none ${dim ? 'text-tile-ink/25' : ''}`}>
+    <span aria-hidden="true" className={`tau-display inline-flex font-bold leading-none ${dim ? 'text-[#35331c]/25' : ''}`}>
       {[...text].map((ch, i) => (
         <span key={i} className={`inline-block text-center ${/\d/.test(ch) ? 'w-[0.6em]' : 'w-[0.3em]'}`}>{ch}</span>
       ))}
@@ -278,12 +280,12 @@ export default function AuctionPlay({ mode, opponents, difficulty, seed, onHome,
           : (cfg.showRemaining ? fill(t.maxLeft, { t: fmt(maxRemaining(game.budget, pub, seat)) }) : '');
         return (
           <li key={seat} aria-label={fill(t.tokensAria, { name: name(seat), n })}
-            className={`rounded-2xl px-3 py-2 transition-colors ${won ? `${KEY_BG} text-tile-cream` : 'bg-tile-ink/[0.07] text-tile-ink'}`}>
+            className={`rounded-2xl px-3 py-2 transition-colors ${won ? `${KEY_BG} text-[#ebe1b8]` : 'bg-[#35331c]/[0.08] text-[#35331c]'}`}>
             <div className="flex items-baseline justify-between gap-2">
               <span className="truncate text-xs font-black">{name(seat)}</span>
               <span className="text-2xl font-black leading-none">{n}</span>
             </div>
-            {note && <p className={`mt-0.5 truncate text-[11px] font-bold ${won ? 'text-tile-cream/75' : 'text-ink-soft'}`}>{note}</p>}
+            {note && <p className={`mt-0.5 truncate text-[11px] font-bold ${won ? 'text-[#ebe1b8]/75' : 'text-ink-soft'}`}>{note}</p>}
           </li>
         );
       })}
@@ -291,7 +293,7 @@ export default function AuctionPlay({ mode, opponents, difficulty, seed, onHome,
   );
 
   const historyBox = (
-    <div className="flex min-h-[4.5rem] flex-1 flex-col rounded-2xl bg-tile-ink/[0.05] px-3 pb-1 pt-2.5">
+    <div className="flex min-h-[4.5rem] flex-1 flex-col rounded-2xl bg-[#35331c]/[0.05] px-3 pb-1 pt-2.5">
       <p className="text-xs font-black text-ink-soft">{t.historyTitle}</p>
       {game.history.length === 0 ? (
         <p className="mt-1 text-xs font-bold text-ink-soft">{t.historyEmpty}</p>
@@ -300,13 +302,15 @@ export default function AuctionPlay({ mode, opponents, difficulty, seed, onHome,
           {[...pub].reverse().map((r, idx) => {
             const n = pub.length - idx;
             return (
-              <li key={n} className="flex items-center gap-3 border-t border-tile-ink/[0.06] py-1.5 text-sm font-bold first:border-t-0">
-                <span className="w-6 shrink-0 text-xs text-ink-soft">{n}</span>
-                <span className={`flex min-w-0 flex-1 items-center gap-1.5 truncate ${r.winner === null ? 'text-ink-soft' : ''}`}>
+              // 拍賣目錄的一行：號碼、得標者、點線、秒數
+              <li key={n} className="flex items-baseline gap-2 py-1.5 text-sm font-bold">
+                <span className="tau-display w-6 shrink-0 text-xs italic text-ink-soft">{n}</span>
+                <span className={`flex min-w-0 shrink items-center gap-1.5 truncate ${r.winner === null ? 'text-ink-soft' : ''}`}>
                   {r.winner === 0 && <span aria-hidden="true" className={`size-2 shrink-0 rounded-full ${KEY_BG}`} />}
                   {r.winner === null ? (r.top > 0 ? t.historyTie : t.historyNone) : name(r.winner)}
                 </span>
-                <span className="shrink-0">{r.top > 0 ? fmt(r.top) : '–'}</span>
+                <span aria-hidden="true" className="min-w-4 flex-1 border-b-2 border-dotted border-[#35331c]/25" />
+                <span className="tau-display shrink-0 font-bold">{r.top > 0 ? fmt(r.top) : '–'}</span>
               </li>
             );
           })}
@@ -316,7 +320,8 @@ export default function AuctionPlay({ mode, opponents, difficulty, seed, onHome,
   );
 
   return (
-    <div className="flex h-dvh flex-col overflow-hidden px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 font-[family-name:var(--font-app)] lg:px-8 lg:pb-8 short:h-auto short:min-h-dvh short:overflow-visible">
+    <TauFrame rootClassName="h-dvh overflow-hidden short:h-auto short:min-h-dvh short:overflow-visible"
+      className="px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 lg:px-8 lg:pb-8">
       <header className="flex shrink-0 items-center justify-between gap-2 lg:mx-auto lg:w-full lg:max-w-[1040px]">
         <button type="button" onClick={() => askLeave('home')} aria-label={t.home} className={roundBtn}><LuHouse aria-hidden="true" /></button>
         <div className="min-w-0 text-center">
@@ -343,7 +348,7 @@ export default function AuctionPlay({ mode, opponents, difficulty, seed, onHome,
         <section className="flex shrink-0 flex-col items-center lg:flex-1 lg:justify-center">
           <div className="flex h-[clamp(4rem,11dvh,6.5rem)] items-center text-[clamp(3.25rem,9.5dvh,5.5rem)] lg:h-36 lg:text-[clamp(5rem,13vh,8rem)]">
             {phase === 'live' && count > 0
-              ? <span aria-hidden="true" className="font-black leading-none">{count}</span>
+              ? <span aria-hidden="true" className="tau-display font-bold leading-none">{count}</span>
               : <BigTime text={fmt(clock)} dim={phase === 'ready'} />}
           </div>
           <div className="flex min-h-11 flex-col items-center justify-center text-center" aria-live="polite">
@@ -354,11 +359,11 @@ export default function AuctionPlay({ mode, opponents, difficulty, seed, onHome,
           {over ? (
             <div className="mt-2 flex w-full max-w-[460px] flex-col gap-2">
               <button type="button" onClick={onAgain}
-                className="h-[clamp(4.5rem,12dvh,7rem)] w-full rounded-[2rem] bg-tile-ink text-xl font-black text-tile-cream">
+                className="h-[clamp(4.5rem,12dvh,7rem)] w-full rounded-[2rem] bg-[#35331c] text-xl font-black text-[#ebe1b8]">
                 {t.again}
               </button>
               <button type="button" onClick={() => { setEndShown(true); setEndClosed(false); }}
-                className="h-11 w-full rounded-2xl bg-tile-ink/[0.07] text-sm font-black text-tile-ink">
+                className="h-11 w-full rounded-2xl bg-[#35331c]/[0.08] text-sm font-black text-[#35331c]">
                 {t.standingsTitle}
               </button>
             </div>
@@ -374,23 +379,23 @@ export default function AuctionPlay({ mode, opponents, difficulty, seed, onHome,
                 // 只認按住（pointer）與空白鍵；Enter 觸發的 click 不算
                 onClick={(e) => e.preventDefault()}
                 className={`mt-2 flex h-[clamp(6.5rem,17dvh,10rem)] w-full max-w-[460px] touch-none select-none flex-col items-center justify-center rounded-[2rem] px-4 text-center transition-transform duration-100 [-webkit-touch-callout:none] motion-reduce:transition-none lg:h-48 ${
-                  holdingNow ? `${KEY_BG} scale-[0.97] text-tile-cream ring-8 ${KEY_RING}`
-                    : phase === 'live' ? 'bg-tile-ink/[0.07] text-ink-soft'
-                    : `${KEY_BG} text-tile-cream active:scale-[0.97]`
+                  holdingNow ? `${KEY_BG} scale-[0.97] text-[#ebe1b8] ring-8 ${KEY_RING}`
+                    : phase === 'live' ? 'bg-[#35331c]/[0.08] text-ink-soft'
+                    : `${KEY_BG} text-[#ebe1b8] active:scale-[0.97]`
                 }`}
               >
                 <span className="text-xl font-black leading-tight">{holdLabel}</span>
-                {canBegin && <span className="mt-1 hidden text-xs font-bold text-tile-cream/70 fine:block">{t.pressHint}</span>}
+                {canBegin && <span className="mt-1 hidden text-xs font-bold text-[#ebe1b8]/70 fine:block">{t.pressHint}</span>}
               </button>
               <div className="mt-2 flex h-11 w-full max-w-[460px] items-center justify-center">
                 {phase === 'live' && !holdingNow && myBid !== null && live ? (
                   <button type="button" onClick={() => finish(myBid, live)}
-                    className="flex h-11 items-center gap-2 rounded-2xl bg-tile-ink/[0.07] px-5 text-sm font-black text-tile-ink">
+                    className="flex h-11 items-center gap-2 rounded-2xl bg-[#35331c]/[0.08] px-5 text-sm font-black text-[#35331c]">
                     <LuFastForward aria-hidden="true" />{t.skip}
                   </button>
                 ) : canBegin ? (
                   <button type="button" onClick={() => begin(true)}
-                    className="h-11 rounded-2xl bg-tile-ink/[0.07] px-5 text-sm font-black text-tile-ink">
+                    className="h-11 rounded-2xl bg-[#35331c]/[0.08] px-5 text-sm font-black text-[#35331c]">
                     {t.pass}
                   </button>
                 ) : null}
@@ -401,16 +406,16 @@ export default function AuctionPlay({ mode, opponents, difficulty, seed, onHome,
       </div>
 
       <Modal isOpen={helpOpen} onClose={() => setHelpOpen(false)} title={t.howTo} kicker={t.title}
-        icon={GiRuleBook} band={{ className: 'bg-tile-forest', fg: 'text-tile-cream' }}>
+        icon={GiRuleBook} band={{ className: KEY_BG, fg: 'text-[#ebe1b8]' }} panelClassName="!bg-[#ebe1b8]">
         <AuctionRules mode={mode} />
       </Modal>
 
       <Modal isOpen={leave !== null} onClose={() => setLeave(null)} title={t.leaveTitle} kicker={t.title}
-        icon={GiExitDoor} band={{ className: 'bg-tile-ink', fg: 'text-tile-cream' }}
+        icon={GiExitDoor} band={{ className: 'bg-[#35331c]', fg: 'text-[#ebe1b8]' }} panelClassName="!bg-[#ebe1b8]"
         footer={
           <>
-            <Button color="bg-tile-ink/[0.07] text-tile-ink" handleClickEvent={() => setLeave(null)}>{t.stay}</Button>
-            <Button color="bg-tile-ink text-tile-cream" handleClickEvent={() => (leave === 'home' ? onHome() : onSettings())}>{t.leave}</Button>
+            <Button color="bg-[#35331c]/[0.08] text-[#35331c]" handleClickEvent={() => setLeave(null)}>{t.stay}</Button>
+            <Button color="bg-[#35331c] text-[#ebe1b8]" handleClickEvent={() => (leave === 'home' ? onHome() : onSettings())}>{t.leave}</Button>
           </>
         }>
         <p className="text-sm font-bold leading-relaxed">{t.leaveBody}</p>
@@ -419,11 +424,11 @@ export default function AuctionPlay({ mode, opponents, difficulty, seed, onHome,
       {/* 結算：勝方（第一名）排最上面、滿色放大；其他人淡灰（CLAUDE.md〈視覺〉）。電腦的個性在這時才揭曉 */}
       <Modal isOpen={endOpen} onClose={() => setEndClosed(true)} title={endTitle} kicker={t.standingsTitle}
         icon={me?.rank === 1 ? GiTrophyCup : GiPodium}
-        band={{ className: me?.rank === 1 ? KEY_BG : 'bg-tile-ink', fg: 'text-tile-cream' }}
+        band={{ className: me?.rank === 1 ? KEY_BG : 'bg-[#35331c]', fg: 'text-[#ebe1b8]' }} panelClassName="!bg-[#ebe1b8]"
         footer={
           <>
-            <Button color="bg-tile-ink/[0.07] text-tile-ink" handleClickEvent={onSettings}>{t.settings}</Button>
-            <Button color="bg-tile-ink text-tile-cream" handleClickEvent={onAgain}>{t.again}</Button>
+            <Button color="bg-[#35331c]/[0.08] text-[#35331c]" handleClickEvent={onSettings}>{t.settings}</Button>
+            <Button color="bg-[#35331c] text-[#ebe1b8]" handleClickEvent={onAgain}>{t.again}</Button>
           </>
         }>
         <p className="text-xs font-bold leading-relaxed text-ink-soft">{t.endBody}</p>
@@ -433,10 +438,10 @@ export default function AuctionPlay({ mode, opponents, difficulty, seed, onHome,
             const first = r.rank === 1;
             const persona = r.seat > 0 ? t.personas[personas[r.seat - 1]] : null;
             return (
-              <li key={r.seat} className={`flex items-center gap-3 rounded-2xl px-3 ${first ? `${KEY_BG} py-3 text-tile-cream` : 'bg-tile-ink/[0.05] py-2 text-ink-soft'}`}>
+              <li key={r.seat} className={`flex items-center gap-3 rounded-2xl px-3 ${first ? `${KEY_BG} py-3 text-[#ebe1b8]` : 'bg-[#35331c]/[0.05] py-2 text-ink-soft'}`}>
                 <span className="w-5 shrink-0 text-center text-sm font-black">{r.rank}</span>
                 <span className="min-w-0 flex-1">
-                  <span className={`block truncate font-black ${first ? 'text-lg' : 'text-sm'} ${r.seat === 0 && !first ? 'text-tile-ink' : ''}`}>{name(r.seat)}</span>
+                  <span className={`block truncate font-black ${first ? 'text-lg' : 'text-sm'} ${r.seat === 0 && !first ? 'text-[#35331c]' : ''}`}>{name(r.seat)}</span>
                   {persona && <span className="block truncate text-[11px] font-bold opacity-80">{persona.name} · {persona.hint}</span>}
                 </span>
                 <span className="shrink-0 text-right">
@@ -448,6 +453,6 @@ export default function AuctionPlay({ mode, opponents, difficulty, seed, onHome,
           })}
         </ol>
       </Modal>
-    </div>
+    </TauFrame>
   );
 }

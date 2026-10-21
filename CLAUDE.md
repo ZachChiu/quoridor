@@ -184,7 +184,7 @@ players/{ A?, B?, C? }/{ uid, displayName, joinedAt }
 
   - 騎士巡邏：試做中，視覺在 `feat/game-knights-tour`。
 
-  - 時間拍賣：試做中，視覺在 `feat/game-time-auction`。
+  - 時間拍賣（`feat/game-time-auction`）：原件是 Cruikshank 1819、《Puck》1888 的拍賣版畫；最外緣紅色牛津角框（`.tau-frame`）；主視覺是拍賣場 `auction.webp`、Abril Fatface 字標。
 
   - 均衡曼卡拉：試做中，視覺在 `feat/game-balance-mancala`。
 

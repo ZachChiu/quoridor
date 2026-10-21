@@ -524,5 +524,15 @@ html:has(.bagh-root), body:has(.bagh-root) { background: #e3a43c; }
 /* ▸ 騎士巡邏（feat/game-knights-tour） */
 
 /* ▸ 時間拍賣（feat/game-time-auction） */
+/* 時間拍賣（TauFrame）：一張維多利亞時代的拍賣傳單。.tau-frame 是紅色的「牛津角」框：一粗一細兩條線在四角交叉、
+   再伸出去一點（騎士巡邏是墨色雙線、不交叉，兩款分得開）。唯一的裝飾。顏色取自原件，見 components/time-auction/theme.ts。
+   .tau-display：跑秒的大數字用 Didone 襯線（蘋果裝置有 Didot／Bodoni 72，其他裝置落到 Georgia）。 */
+html:has(.tau-root), body:has(.tau-root) { background: #ebe1b8; }
+.tau-frame {
+  border: var(--tau-frame, 14px) solid #92383a;
+  border-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30' viewBox='0 0 30 30'%3E%3Cg fill='%2392383a'%3E%3Crect x='0' y='2.6' width='30' height='2.4'/%3E%3Crect x='0' y='25' width='30' height='2.4'/%3E%3Crect x='2.6' y='0' width='2.4' height='30'/%3E%3Crect x='25' y='0' width='2.4' height='30'/%3E%3Crect x='0' y='7.4' width='30' height='0.9'/%3E%3Crect x='0' y='21.7' width='30' height='0.9'/%3E%3Crect x='7.4' y='0' width='0.9' height='30'/%3E%3Crect x='21.7' y='0' width='0.9' height='30'/%3E%3C/g%3E%3C/svg%3E") 10 / var(--tau-frame, 14px) stretch;
+}
+@media (max-width: 640px) { .tau-frame { --tau-frame: 11px; } }
+.tau-display { font-family: Didot, "Bodoni 72", "Bodoni MT", "Bodoni 72 Oldstyle", Georgia, serif; }
 
 /* ▸ 均衡曼卡拉（feat/game-balance-mancala） */
