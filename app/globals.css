@@ -535,4 +535,97 @@ html:has(.tau-root), body:has(.tau-root) { background: #ebe1b8; }
 @media (max-width: 640px) { .tau-frame { --tau-frame: 11px; } }
 .tau-display { font-family: Didot, "Bodoni 72", "Bodoni MT", "Bodoni 72 Oldstyle", Georgia, serif; }
 
+/* 時間拍賣的介面零件：照拍賣傳單與拍品票的印刷方式（1838 木材拍賣傳單、1877 拍賣海報、1889 土地拍賣海報，
+   皆 Wikimedia Commons 公有領域）—— 方角、墨色雙線（外框＋內縮一道細線）、選中是紅色版塊配紙色字。
+   只換材質、形狀與字，不疊花紋（裝飾仍只有最外緣的牛津角框）。顏色同 components/time-auction/theme.ts。 */
+.tau-lot {
+  position: relative; border-radius: 2px; background: #ebe1b8; color: #35331c;
+  box-shadow: inset 0 0 0 1.5px #35331c, inset 0 0 0 4px #ebe1b8, inset 0 0 0 5px rgb(53 51 28 / 0.45);
+  transition: background-color 0.15s, color 0.15s, box-shadow 0.15s;
+}
+@media (pointer: fine) { .tau-lot:hover { background: color-mix(in srgb, #35331c 7%, #ebe1b8); } }
+/* 選中：同一張票改用紅墨印（紅色雙線＋紅字），不填滿 —— 填滿的紅色版塊留給「開拍、出價」這種主要動作，
+   否則一頁三排選項加一顆開拍鈕全是紅塊，太重 */
+.tau-lot[aria-checked="true"], .tau-lot.is-on {
+  color: #92383a;
+  box-shadow: inset 0 0 0 2.5px #92383a, inset 0 0 0 4.5px #ebe1b8, inset 0 0 0 5.5px #92383a;
+}
+/* 不能按的雙線框（說明裡的模式備註）：同一套線，沒有 hover */
+.tau-box { border-radius: 2px; box-shadow: inset 0 0 0 1.5px #35331c, inset 0 0 0 4px #ebe1b8, inset 0 0 0 5px rgb(53 51 28 / 0.45); }
+/* 打孔的拍品票：左邊一個穿繩的洞（洞裡透出紙色） */
+.tau-ticket { padding-left: 1.6rem; }
+.tau-ticket::before {
+  content: ''; position: absolute; left: 0.7rem; top: 50%; width: 9px; height: 9px; margin-top: -4.5px;
+  border-radius: 50%; background: #ebe1b8; box-shadow: inset 0 0 0 1.5px currentColor;
+}
+/* 主要動作：紅色鉛字版塊（開拍、按住出價、再來一局） */
+.tau-press {
+  border-radius: 2px; background: #92383a; color: #ebe1b8; letter-spacing: 0.12em;
+  box-shadow: inset 0 0 0 5px #92383a, inset 0 0 0 6.5px rgb(235 225 184 / 0.75);
+  transition: transform 0.1s, box-shadow 0.15s, background-color 0.15s, color 0.15s;
+}
+.tau-press:active { transform: translateY(1px); }
+/* 按住出價中：版塊換成墨色、內線換成金色（得標的金幣）；放手之後是一張作廢的虛線票 */
+.tau-press.is-holding { background: #35331c; box-shadow: inset 0 0 0 5px #35331c, inset 0 0 0 6.5px #c4af4c; transform: scale(0.985); }
+.tau-press.is-out { background: transparent; color: rgb(53 51 28 / 0.6); box-shadow: inset 0 0 0 2px rgb(53 51 28 / 0.35); }
+/* 次要動作：前面一隻指示手（維多利亞印刷品指向附註的符號 ☞），底下一條點線 */
+.tau-hand {
+  display: inline-flex; align-items: center; gap: 0.35em; font-weight: 900; color: #35331c;
+  text-decoration: underline dotted rgb(53 51 28 / 0.55); text-decoration-thickness: 2px; text-underline-offset: 5px;
+}
+.tau-hand::before { content: '\261E'; display: inline-block; font-size: 1.3em; line-height: 1; }
+/* 區段標題：左右兩條細線夾著，拍賣傳單上分段的方式 */
+.tau-head { display: flex; align-items: center; gap: 0.75rem; font-size: 12px; font-weight: 900; letter-spacing: 0.2em; }
+.tau-head::before, .tau-head::after { content: ''; flex: 1; border-top: 1px solid rgb(53 51 28 / 0.4); }
+/* 競買人名片：方角細框；自己那張是紅框 */
+.tau-bidder { position: relative; border-radius: 2px; box-shadow: inset 0 0 0 1px rgb(53 51 28 / 0.5); }
+.tau-bidder.is-me { box-shadow: inset 0 0 0 2px #92383a; }
+/* 成交章：每回合結束蓋在得標者身上；沒人得標蓋墨色的流標章 */
+.tau-stamp {
+  display: inline-block; border: 2.5px solid currentColor; border-radius: 3px; padding: 0.08em 0.4em;
+  font-weight: 900; letter-spacing: 0.12em; line-height: 1.2; color: #92383a; transform: rotate(-7deg);
+  mix-blend-mode: multiply; opacity: 0.92; /* 印泥：壓在字上，底下的字還看得到 */
+  animation: tau-stamp 0.32s cubic-bezier(0.2, 0.9, 0.3, 1.3) both;
+}
+@keyframes tau-stamp { from { transform: rotate(-7deg) scale(1.7); opacity: 0; } to { transform: rotate(-7deg) scale(1); opacity: 1; } }
+/* 一排實心圓點（1877 拍賣海報標題底下那條） */
+.tau-dots { height: 6px; background: radial-gradient(circle, rgb(53 51 28 / 0.7) 2px, transparent 2.5px) 0 50% / 10px 6px repeat-x; }
+@media (prefers-reduced-motion: reduce) { .tau-stamp { animation: none; } .tau-press { transition: none; } }
+
+/* 均衡曼卡拉（MancalaFrame）：一塊阿坎（今迦納）的 Adinkra 印花布。.mcl-frame 是蓋了印的布邊 —— 兩側各兩道梳子畫的細線
+   （nwomu），中間一排印章：上下寶螺殼（Nsirewa）、左右曲折（Nkyimkyim）、四角連在一起的心（Akoma ntoaso）。
+   符號摳自 Rattray 1927 的圖版（公有領域），做成 3 倍的點陣圖 public/games/balance-mancala/frame.png（尺寸與做法見 MancalaFrame.tsx）。
+   唯一的裝飾，只有這一層。邊段 round 重複，任何長度都是整數個印章；梳線在四角交叉（布上的格線本來就是交叉的）。
+   副字色換成羚羊砝碼的青銅 #5e4b3f（布上 5.7:1）。顏色見 components/balance-mancala/palette.ts。 */
+html:has(.mcl-root), body:has(.mcl-root) { background: #ebd2cb; }
+html:has(.mcl-root) { --ink-soft: #5e4b3f; }
+.mcl-frame {
+  border: var(--mcl-frame, 28px) solid #201211;
+  border-image: url('/games/balance-mancala/frame.png') 84 / var(--mcl-frame, 28px) round;
+}
+@media (max-width: 640px) { .mcl-frame { --mcl-frame: 20px; } }
+.nmm-field {
+  background-color: #4b4577;
+  background-image:
+    radial-gradient(circle, rgba(238, 224, 196, 0.32) 0 0.9px, transparent 1.4px),
+    radial-gradient(circle, rgba(238, 224, 196, 0.18) 0 0.7px, transparent 1.2px);
+  background-size: 34px 34px, 34px 34px;
+  background-position: 0 0, 17px 17px;
+}
+/* 虎羊棋的邊框：三角形圖騰（照那張印刷棋盤的外框：番紅花底、內外兩條橄欖綠細線、中間一排橄欖綠三角形，四角一顆圓點）。
+   用 border-image：圖塊的邊段剛好一個三角形，round 重複就是連續的鋸齒，不會有接縫；四角由圖塊的角落負責。
+   只用在整頁畫框的最外緣一層：先前把面板、棋盤、彈窗的綠色實線也都換成它，一層套一層太花
+   （2026-10-21 Zach：圖騰只能有一層在最外層，不能一堆）。粗細用 --tri 調。
+   border-image 會讓 border-radius 失效 —— 角是方的，印刷棋盤本來就是方角。 */
+.bagh-tri {
+  border: var(--tri, 12px) solid #736922;
+  border-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 36 36'%3E%3Crect width='36' height='36' fill='%23eaa42c'/%3E%3Crect x='0.75' y='0.75' width='34.5' height='34.5' fill='none' stroke='%23736922' stroke-width='1.5'/%3E%3Crect x='11.25' y='11.25' width='13.5' height='13.5' fill='none' stroke='%23736922' stroke-width='1.5'/%3E%3Cpath d='M12 1.5H24L18 10.2Z M12 34.5H24L18 25.8Z M1.5 12V24L10.2 18Z M34.5 12V24L25.8 18Z' fill='%23736922'/%3E%3Ccircle cx='6' cy='6' r='2.2' fill='%23736922'/%3E%3Ccircle cx='30' cy='6' r='2.2' fill='%23736922'/%3E%3Ccircle cx='6' cy='30' r='2.2' fill='%23736922'/%3E%3Ccircle cx='30' cy='30' r='2.2' fill='%23736922'/%3E%3C/svg%3E") 12 / var(--tri, 12px) round;
+}
+/* 虎羊棋的紙面邊：印刷棋盤內框那道橄欖綠雙線（外粗、內細、中間留一條紙色），畫框裡的面板與彈窗用。
+   不是圖騰 —— 圖騰只在整頁最外緣（.bagh-tri）。一樣用 border-image 畫，內容永遠蓋不到線；粗細用 --line 調。
+   兩道線中間是透明的，露出元素自己的底色（面板、彈窗換底色時不用跟著改這張圖）。 */
+.bagh-line {
+  border: var(--line, 8px) solid #736922;
+  border-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath fill='%23736922' fill-rule='evenodd' d='M0 0H24V24H0Z M3.5 3.5V20.5H20.5V3.5Z'/%3E%3Cpath fill='%23736922' fill-rule='evenodd' d='M6 6H18V18H6Z M7.5 7.5V16.5H16.5V7.5Z'/%3E%3C/svg%3E") 8 / var(--line, 8px) stretch;
+}
 /* ▸ 均衡曼卡拉（feat/game-balance-mancala） */

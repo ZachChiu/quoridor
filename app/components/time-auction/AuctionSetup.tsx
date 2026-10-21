@@ -9,7 +9,7 @@ import type { Mode } from '@/games/time-auction/engine';
 import type { Difficulty } from '@/games/time-auction/ai';
 import { TEXT } from '@/games/time-auction/text';
 import AuctionRules from './AuctionRules';
-import { KEY_ART, KEY_BG } from './theme';
+import { KEY_ART, TAU_BAND, TAU_PANEL } from './theme';
 import TauFrame from './TauFrame';
 import TauWordmark from './TauWordmark';
 
@@ -19,14 +19,17 @@ const MODE_KEYS: Mode[] = ['quick', 'show'];
 const OPPONENTS: Setup['opponents'][] = [3, 4, 5];
 const LEVELS: Difficulty[] = ['easy', 'normal', 'hard'];
 
-/** 小圓鈕（回平台、說明）：紙上一層淡墨，沒有框線 */
-export const roundBtn = 'grid size-11 shrink-0 place-items-center rounded-full bg-[#35331c]/[0.08] text-xl text-[#35331c] transition fine:hover:bg-[#35331c]/[0.14] disabled:opacity-35';
+/** 角落的小鈕（回平台、說明、換設定）：方角、一道墨線，像傳單角落的小框 */
+export const roundBtn = 'grid size-11 shrink-0 place-items-center rounded-[2px] text-xl text-[#35331c] shadow-[inset_0_0_0_1.5px_#35331c] transition fine:hover:bg-[#35331c]/[0.07] disabled:opacity-35';
 
 /**
  * 開局設定：整頁是一張維多利亞時代的拍賣傳單（TauFrame：報紙色的紙、紅色牛津角框）。
  * 上面是主視覺 —— Cruikshank〈Sales by Auction〉（1819）的拍賣場本身（公有領域，附出處）—— 與標題：
- * 中日韓的名字＋肥臉體的「TIME AUCTION」字標（英文版字標直接當標題）；下面是選項（選中的墨色、其餘淡墨），
- * 最後一顆墨色的「開始」。紅是唯一的主色，只用在難度的點數。桌機（lg）改成左右兩欄。
+ * 中日韓的名字＋肥臉體的「TIME AUCTION」字標（英文版字標直接當標題）；下面是選項，最後一塊紅色版塊「開拍」。
+ *
+ * 介面照拍賣傳單與拍品票的印刷方式（globals.css 的 .tau-*，Zach 10/22：每款的按鈕要有自己的樣子，不要最後都是黑白按鈕）：
+ * 區段標題左右夾細線、選項是方角雙線的票（選中＝紅色版塊）、對手人數是打孔的拍品票、難度用羅馬數字、
+ * 開拍是紅色鉛字版塊、怎麼玩是一隻指示手 ☞。桌機（lg）改成左右兩欄。
  */
 export default function AuctionSetup({ value, onChange, onStart, onHome }: {
   value: Setup;
@@ -40,9 +43,8 @@ export default function AuctionSetup({ value, onChange, onStart, onHome }: {
   const [helpOpen, setHelpOpen] = useState(false);
   const levelNames = [m.solo.level1, m.solo.level2, m.solo.level3];
 
-  const option = (on: boolean) =>
-    `rounded-2xl transition ${on ? 'bg-[#35331c] text-[#ebe1b8]' : 'bg-[#35331c]/[0.08] text-[#35331c] fine:hover:bg-[#35331c]/[0.14]'}`;
-  const legend = 'mb-1.5 text-sm font-bold text-ink-soft';
+  const legend = 'tau-head mb-2 w-full text-ink-soft';
+  const ROMAN = ['I', 'II', 'III'];
   // 名字本來就是英文（英文版）就讓字標當標題，不重複寫兩次
   const latinTitle = t.nameEn === t.title;
 
@@ -85,9 +87,9 @@ export default function AuctionSetup({ value, onChange, onStart, onHome }: {
                 const on = value.mode === key;
                 return (
                   <button key={key} type="button" role="radio" aria-checked={on} onClick={() => onChange({ mode: key })}
-                    className={`flex flex-col items-start gap-1 px-4 py-3 text-left ${option(on)}`}>
+                    className="tau-lot flex flex-col items-start gap-1 px-4 py-3 text-left">
                     <span className="text-base font-black">{key === 'quick' ? t.modeQuick : t.modeShow}</span>
-                    <span className={`text-xs font-bold leading-snug ${on ? 'text-[#ebe1b8]/75' : 'text-ink-soft'}`}>
+                    <span className={`text-xs font-bold leading-snug ${on ? 'text-[#92383a]/80' : 'text-ink-soft'}`}>
                       {key === 'quick' ? t.modeQuickNote : t.modeShowNote}
                     </span>
                   </button>
@@ -103,7 +105,7 @@ export default function AuctionSetup({ value, onChange, onStart, onHome }: {
                 const on = value.opponents === n;
                 return (
                   <button key={n} type="button" role="radio" aria-checked={on} onClick={() => onChange({ opponents: n })}
-                    className={`h-12 text-base font-black ${option(on)}`}>
+                    className="tau-lot tau-ticket h-12 text-base font-black">
                     {fill(t.opponentsUnit, { n })}
                   </button>
                 );
@@ -118,13 +120,9 @@ export default function AuctionSetup({ value, onChange, onStart, onHome }: {
                 const on = value.difficulty === level;
                 return (
                   <button key={level} type="button" role="radio" aria-checked={on} onClick={() => onChange({ difficulty: level })}
-                    className={`flex flex-col items-center gap-2 py-2.5 text-base font-black ${option(on)}`}>
-                    {/* 強度用點數講，不用三個色相（CLAUDE.md〈視覺〉） */}
-                    <span className="flex gap-1.5" aria-hidden="true">
-                      {LEVELS.map((_, dot) => (
-                        <span key={dot} className={`size-2.5 rounded-full ${dot <= i ? (on ? 'bg-[#ebe1b8]' : KEY_BG) : on ? 'bg-[#ebe1b8]/25' : 'bg-[#35331c]/15'}`} />
-                      ))}
-                    </span>
+                    className="tau-lot flex flex-col items-center gap-0.5 py-2.5 text-base font-black">
+                    {/* 強度用羅馬數字講（傳單上的分級寫法），不用三個色相 */}
+                    <span aria-hidden="true" className="tau-display text-xl font-bold italic leading-none">{ROMAN[i]}</span>
                     {levelNames[i]}
                   </button>
                 );
@@ -132,18 +130,17 @@ export default function AuctionSetup({ value, onChange, onStart, onHome }: {
             </div>
           </fieldset>
 
-          <button type="button" onClick={onStart}
-            className="mt-1 h-14 w-full rounded-2xl bg-[#35331c] text-lg font-black text-[#ebe1b8] transition active:scale-[0.985] fine:hover:brightness-125">
+          <button type="button" onClick={onStart} className="tau-press mt-1 h-14 w-full text-lg font-black">
             {t.start}
           </button>
-          <button type="button" onClick={() => setHelpOpen(true)} className="mx-auto text-sm font-bold text-ink-soft underline underline-offset-4">
+          <button type="button" onClick={() => setHelpOpen(true)} className="tau-hand mx-auto text-sm">
             {t.howTo}
           </button>
         </section>
       </main>
 
       <Modal isOpen={helpOpen} onClose={() => setHelpOpen(false)} title={t.howTo} kicker={t.title}
-        icon={GiRuleBook} band={{ className: KEY_BG, fg: 'text-[#ebe1b8]' }} panelClassName="!bg-[#ebe1b8]">
+        icon={GiRuleBook} band={TAU_BAND} panelClassName={TAU_PANEL}>
         <AuctionRules mode={value.mode} />
       </Modal>
     </TauFrame>

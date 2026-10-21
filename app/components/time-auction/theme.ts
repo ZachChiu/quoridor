@@ -15,3 +15,10 @@ export const GOLD = '#c4af4c';
 
 /** 首頁主視覺：Cruikshank〈Sales by Auction〉（1819）的拍賣場，裁掉了下面那行說明文字 */
 export const KEY_ART = '/games/time-auction/auction.webp';
+
+/**
+ * 彈窗：拍賣目錄的一頁 —— 方角紙色面板、一道墨線外框；標題下一道雙線，不用色帶（色帶是 Wall Go 的語彙）。
+ * 結算時勝方那一列另外用紅色版塊。
+ */
+export const TAU_PANEL = '!rounded-[3px] !bg-[#ebe1b8] shadow-[inset_0_0_0_1.5px_#35331c]';
+export const TAU_BAND = { className: 'mx-6 !px-0 border-b-[4px] border-double border-[#35331c]/70 bg-transparent', fg: 'text-[#35331c]' };
