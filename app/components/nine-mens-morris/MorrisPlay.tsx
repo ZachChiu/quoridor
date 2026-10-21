@@ -16,6 +16,7 @@ import {
 import { chooseTurn } from '@/games/nine-mens-morris/ai';
 import { TEXT } from '@/games/nine-mens-morris/text';
 import { BlackPieceIcon, MorrisBoard, PieceGlyph, WhitePieceIcon } from './MorrisBoard';
+import MorrisFrame from './MorrisFrame';
 import { MorrisRulesModal } from './MorrisRules';
 import { clearSession, saveSession, type Session } from './session';
 
@@ -36,8 +37,10 @@ function restore(session: Session): MorrisState {
  * - 桌機（lg）：棋盤在左，右邊一欄放狀態與有字的按鈕
  *
  * 一個回合可能是兩段：放（走）一手成三之後，同一個人再點一顆對方的子拿掉。
- * 拿子是獨立的一步（engine 的 removing），狀態列換成主色的「拿子」、可以拿的子會發光並帶 ×，
- * 剛連成的那條線用主色粗線標出來 —— 新手最容易卡在「成三之後要做什麼」。
+ * 拿子是獨立的一步（engine 的 removing），狀態列的「拿子」亮成羊皮紙色、可以拿的子會發光並帶 ×，
+ * 剛連成的那條線用羊皮紙色粗線標出來 —— 新手最容易卡在「成三之後要做什麼」。
+ *
+ * 整頁包在《遊戲之書》的畫框裡（MorrisFrame）：群青底上的字是羊皮紙色，按鈕與狀態卡是羊皮紙、沒有框線。
  */
 export default function MorrisPlay({ locale, session, onMenu }: { locale: Locale; session: Session; onMenu: () => void }) {
   const t = useTextTable(TEXT);
@@ -155,11 +158,12 @@ export default function MorrisPlay({ locale, session, onMenu }: { locale: Locale
     : selected !== null ? t.hint.moveSelected
     : phase === 'fly' ? t.hint.fly : t.hint.move;
 
-  const round = 'grid size-11 shrink-0 place-items-center rounded-full bg-tile-ink/[0.07] text-xl text-ink-soft transition hover:bg-tile-ink/[0.12] disabled:opacity-35';
-  const wide = 'flex h-12 items-center justify-center gap-2 rounded-2xl bg-tile-ink/[0.07] px-2 text-sm font-black text-tile-ink transition hover:bg-tile-ink/[0.12] disabled:opacity-35';
-  const stacked = 'flex h-14 flex-col items-center justify-center gap-0.5 rounded-2xl bg-tile-ink/[0.07] px-1 text-xs font-black text-tile-ink transition hover:bg-tile-ink/[0.12] disabled:opacity-35 [&_svg]:text-lg';
+  // 群青底上的按鈕一律羊皮紙色、沒有框線（照 Wall Go 的次要按鈕：中性、安靜）
+  const round = 'grid size-11 shrink-0 place-items-center rounded-full bg-[#eee0c4] text-xl text-[#1e120a] transition hover:bg-[#e3c99c] disabled:opacity-40';
+  const wide = 'flex h-12 items-center justify-center gap-2 rounded-2xl bg-[#eee0c4] px-2 text-sm font-black text-[#1e120a] transition hover:bg-[#e3c99c] disabled:opacity-40';
+  const stacked = 'flex h-14 flex-col items-center justify-center gap-0.5 rounded-2xl bg-[#eee0c4] px-1 text-xs font-black text-[#1e120a] transition hover:bg-[#e3c99c] disabled:opacity-40 [&_svg]:text-lg';
 
-  // 兩方的狀態：輪到的那方主色底。棋子放在米白小圓上，深底淺底都看得清楚
+  // 兩方的狀態：輪到的那方亮成羊皮紙（墨字），另一方淡淡的半透明。棋子放在羊皮紙小圓上，亮暗都看得清楚
   const statusCards = (
     <div className="grid w-full grid-cols-2 gap-3">
       {(['black', 'white'] as const).map((s) => {
@@ -167,9 +171,9 @@ export default function MorrisPlay({ locale, session, onMenu }: { locale: Locale
         const onBoard = countOnBoard(game.board, s);
         const hand = game.inHand[s];
         return (
-          <div key={s} className={`flex min-w-0 flex-col gap-1 rounded-2xl px-3.5 py-2.5 ${active ? 'bg-[#1d3b8a] text-tile-cream' : 'bg-tile-ink/[0.07] text-ink-soft'}`}>
+          <div key={s} className={`flex min-w-0 flex-col gap-1 rounded-2xl px-3.5 py-2.5 ${active ? 'bg-[#eee0c4] text-[#1e120a]' : 'bg-[#eee0c4]/[0.14] text-[#eee0c4]/85'}`}>
             <p className="flex min-w-0 items-center gap-2 text-sm font-bold">
-              <span className="grid size-7 shrink-0 place-items-center rounded-full bg-tile-cream"><PieceGlyph side={s} className="size-5" /></span>
+              <span className="grid size-7 shrink-0 place-items-center rounded-full bg-[#eee0c4]"><PieceGlyph side={s} className="size-5" /></span>
               <span className="truncate">{label(s)}</span>
             </p>
             <p className="flex flex-wrap gap-x-2 text-sm font-black tabular-nums leading-tight">
@@ -187,24 +191,24 @@ export default function MorrisPlay({ locale, session, onMenu }: { locale: Locale
     <div className="flex min-h-[3.25rem] w-full flex-col items-center gap-1 text-center lg:items-start lg:text-left" aria-live="polite">
       <div className="flex items-center gap-2">
         {!game.winner && (
-          <span className={`rounded-full px-2.5 py-0.5 text-xs font-black ${phase === 'remove' ? 'bg-[#1d3b8a] text-tile-cream' : 'bg-tile-ink/[0.07] text-tile-ink'}`}>
+          <span className={`rounded-full px-2.5 py-0.5 text-xs font-black ${phase === 'remove' ? 'bg-[#eee0c4] text-[#1e120a]' : 'bg-[#eee0c4]/[0.16] text-[#eee0c4]'}`}>
             {t.phase[phase]}
           </span>
         )}
         <p className="text-sm font-black">{status}</p>
       </div>
-      {hint && <p className="text-xs font-bold text-ink-soft">{hint}</p>}
+      {hint && <p className="text-xs font-bold text-[#eee0c4]/80">{hint}</p>}
     </div>
   );
 
   return (
-    <div className="flex min-h-dvh flex-col items-center px-4 pb-4 pt-3 font-[family-name:var(--font-app)] lg:flex-row lg:items-center lg:justify-center lg:gap-12 lg:py-10">
+    <MorrisFrame className="items-center px-4 pb-4 pt-3 lg:flex-row lg:items-center lg:justify-center lg:gap-12 lg:py-10">
       {/* 手機的上方一排 */}
       <div className="flex w-full max-w-[520px] items-center gap-3 lg:hidden">
         <button type="button" onClick={home} aria-label={t.home} className={round}><LuHouse aria-hidden="true" /></button>
         <div className="min-w-0 flex-1">
           <h1 className="truncate text-lg font-black leading-tight">{t.title}</h1>
-          <p className="text-xs font-bold leading-snug text-ink-soft">{summary}</p>
+          <p className="text-xs font-bold leading-snug text-[#eee0c4]/80">{summary}</p>
         </div>
         <button type="button" onClick={() => setHelpOpen(true)} aria-label={t.rulesHeading} className={round}><LuCircleHelp aria-hidden="true" /></button>
       </div>
@@ -233,7 +237,7 @@ export default function MorrisPlay({ locale, session, onMenu }: { locale: Locale
           <button type="button" onClick={home} aria-label={t.home} className={round}><LuHouse aria-hidden="true" /></button>
           <div className="min-w-0">
             <h1 className="text-3xl font-black leading-none">{t.title}</h1>
-            <p className="mt-1.5 text-sm font-bold text-ink-soft">{summary}</p>
+            <p className="mt-1.5 text-sm font-bold text-[#eee0c4]/80">{summary}</p>
           </div>
         </div>
         {statusCards}
@@ -250,15 +254,16 @@ export default function MorrisPlay({ locale, session, onMenu }: { locale: Locale
 
       <Modal isOpen={!!game.winner && closedFor !== game} onClose={() => setClosedFor(game)} title={resultTitle} kicker={t.title}
         icon={game.winner === 'draw' ? GiScales : game.winner === 'white' ? WhitePieceIcon : BlackPieceIcon}
-        band={game.winner === 'draw' ? { className: 'bg-tile-ink', fg: 'text-tile-cream' } : { className: 'bg-[#1d3b8a]', fg: 'text-tile-cream' }}
+        band={game.winner === 'draw' ? { className: 'bg-[#1e120a]', fg: 'text-[#eee0c4]' } : { className: 'bg-[#4b4577]', fg: 'text-[#eee0c4]' }}
+        panelClassName="!bg-[#eee0c4]"
         footer={
           <>
-            <Button color="bg-tile-ink/[0.07] text-tile-ink" handleClickEvent={onMenu}>{t.menu}</Button>
-            <Button color="bg-tile-ink text-tile-cream" handleClickEvent={restart}>{t.again}</Button>
+            <Button color="bg-[#1e120a]/[0.08] text-[#1e120a]" handleClickEvent={onMenu}>{t.menu}</Button>
+            <Button color="bg-[#1e120a] text-[#eee0c4]" handleClickEvent={restart}>{t.again}</Button>
           </>
         }>
-        <p className="text-sm leading-relaxed">{resultBody}</p>
+        <p className="text-sm leading-relaxed text-[#1e120a]">{resultBody}</p>
       </Modal>
-    </div>
+    </MorrisFrame>
   );
 }

@@ -93,7 +93,8 @@ export const SEASONS: Season[] = [
       { name: 'Four Player Three in a Row' },
       { name: 'Blind Gomoku' },
       // （盲眼五子棋與九子棋各自的分支會改上下這兩行，中間隔這一行，依序合併才不會衝突）
-      { name: "Nine Men's Morris" },
+      { name: "Nine Men's Morris", playable: routes.NINE_MENS_MORRIS,
+        look: { card: 'bg-[#4b4577] text-[#eee0c4]', wipe: '#4b4577', art: '/games/nine-mens-morris/libro.webp', cover: true } },
       { name: 'Hexagon' },
     ],
   },
