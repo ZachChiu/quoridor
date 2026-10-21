@@ -2,8 +2,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { LuCircleHelp, LuHouse, LuRotateCcw, LuUndo2 } from 'react-icons/lu';
 import Modal from '@/components/Modal';
-import { useTransition } from '@/contexts/TransitionContext';
-import { DOORS } from '@/components/WipeOverlay';
+import { useRouter } from 'next/navigation';
 import { useMessages } from '@/i18n/LocaleProvider';
 import { localePath, type Locale } from '@/i18n/locales';
 import { BAGH_CHAL } from '@/i18n/routes';
@@ -36,7 +35,7 @@ const fmt = (s: string, n: number) => s.replace('{n}', String(n));
 export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghMode }) {
   const t = useMessages();
   const b = t.baghChal;
-  const { navigate } = useTransition();
+  const router = useRouter();
   const [localGame, setGame] = useState<BaghState>(createGame);
   const game = mode.kind === 'online' ? mode.game : localGame;
   const online = mode.kind === 'online';
@@ -65,7 +64,8 @@ export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghM
   const again = mode.kind === 'online' ? mode.newRoom : restart;
   const side = (s: Side) => (s === 'tiger' ? b.tiger : b.goat);
   const whoAmI = mode.kind === 'local' ? '' : mode.kind === 'online' ? b.youAre.replace('{side}', side(mode.human)) : `${b.playAs}：${side(mode.human)}`;
-  const home = () => navigate(localePath(locale, BAGH_CHAL), { wipe: DOORS });
+  // 虎羊棋裡面換頁不播轉場（木窗門只留在從平台卡片進來的那一下）
+  const home = () => router.push(localePath(locale, BAGH_CHAL));
 
   const commit = (m: Move) => {
     if (mode.kind === 'online') mode.onMove(m);

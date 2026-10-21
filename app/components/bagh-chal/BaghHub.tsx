@@ -1,8 +1,7 @@
 'use client';
 import { useState } from 'react';
 import Modal from '@/components/Modal';
-import { DOORS } from '@/components/WipeOverlay';
-import { useTransition } from '@/contexts/TransitionContext';
+import { useRouter } from 'next/navigation';
 import { useMessages, useLocale } from '@/i18n/LocaleProvider';
 import { localePath } from '@/i18n/locales';
 import { baghChal } from '@/i18n/routes';
@@ -41,21 +40,22 @@ function Choice({ src, label, sub, href, onClick }: { src: string; label: string
 /**
  * Bagh Chal 首頁的四個按鈕（2026-10-20 Zach：首頁變成四個按鈕 —— 老虎、羊、本地、連線）：
  * 當老虎／當羊跟電腦下（按下去問難度）、兩人同一台、連線對戰（先選自己當哪一邊）。
- * 圖示是 AI 畫的米提拉圓牌，不用剪影圖示；換頁一律是木窗門（DOORS）。
+ * 圖示是 AI 畫的米提拉圓牌，不用剪影圖示。
+ * 虎羊棋裡面換頁不播轉場（Zach 10/22：木窗門只留在從平台卡片進來的那一下），直接 router.push。
  */
 export default function BaghHub() {
   const t = useMessages();
   const b = t.baghChal;
   const locale = useLocale();
-  const { navigate } = useTransition();
+  const router = useRouter();
   const [side, setSide] = useState<Side | null>(null);
   const [inviteOpen, setInviteOpen] = useState(false);
-  const go = (path: string) => navigate(localePath(locale, path), { wipe: DOORS });
+  const go = (path: string) => router.push(localePath(locale, path));
 
   const startSolo = (difficulty: Difficulty) => {
     if (!side) return;
     setSide(null);
-    navigate(localePath(locale, baghChal('/solo')) + soloHash(side, difficulty), { wipe: DOORS });
+    router.push(localePath(locale, baghChal('/solo')) + soloHash(side, difficulty));
   };
 
   return (
@@ -86,7 +86,7 @@ export default function BaghHub() {
             const Icon = s === 'tiger' ? TigerToken : GoatToken;
             return (
               <button key={s} type="button"
-                onClick={() => { setInviteOpen(false); navigate(localePath(locale, baghChal('/online')) + `#new=${s}`, { wipe: DOORS }); }}
+                onClick={() => { setInviteOpen(false); router.push(localePath(locale, baghChal('/online')) + `#new=${s}`); }}
                 className="flex flex-col items-center gap-2 rounded-2xl bg-[#f2e4c4] py-5 text-xl font-black text-tile-ink transition hover:bg-[#ead8ad] active:scale-[0.97]">
                 <Icon className="text-6xl" />{s === 'tiger' ? b.tiger : b.goat}
               </button>

@@ -58,7 +58,7 @@ export type Wipe = {
   kind?: 'doors';
 };
 
-/** 虎羊棋的換頁：木窗門。navigate(href, { wipe: DOORS }) */
+/** 木窗門：只用在從平台卡片進虎羊棋的那一下（WipeLink doors）。虎羊棋裡面換頁不播轉場（2026-10-22 Zach） */
 export const DOORS: Wipe = { x: 0, y: 0, color: '#f1e6cd', kind: 'doors' };
 
 /** 門的開闔角度：轉過 90° 之後背面朝外，backface-visibility 讓它消失 */
