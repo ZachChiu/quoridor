@@ -16,3 +16,16 @@ export const GMK = {
   /** 主色：青綠布 */
   teal: '#046161',
 } as const;
+
+/**
+ * 彈窗：一塊包袱巾 —— 標題列是拼起來的青綠布（左上角一塊桃紅三角、中間一道白絲縫線），
+ * 整塊面板內側一圈平針縫。介面零件本身在 globals.css 的 .gmk-*。
+ */
+export const GMK_BAND = {
+  style: {
+    background:
+      'linear-gradient(135deg, transparent 33px, #f2e4c9 33px, #f2e4c9 35px, transparent 35px), linear-gradient(135deg, #be3479 34px, #046161 34px)',
+  },
+  fg: 'text-[#f2e4c9]',
+};
+export const GMK_PANEL = '!rounded-[3px] !bg-[#f2e4c9] ![outline:1.5px_dashed_rgb(42_37_37/0.35)] ![outline-offset:-7px]';

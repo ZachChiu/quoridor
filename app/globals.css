@@ -531,6 +531,25 @@ html:has(.gmk-root), body:has(.gmk-root) { background: #e4d6bb; }
 }
 @media (max-width: 640px) { .gmk-frame { --gmk-frame: 17px; } }
 
+/* 盲眼五子棋的介面零件：照朝鮮拼布包袱巾（조각보）的做法 —— 每顆按鈕是一塊布，邊上一圈平針縫（홈질）的虛線；
+   主要動作是拼起來的布（青綠布、左上角拼一塊桃紅三角，三角與主布之間一道白絲縫線）；次要動作是半透明的苧麻布
+   （모시 조각보），縫線透出來；連結底下是一道縫線。不疊花紋：裝飾仍只有最外緣的布條外框。顏色同 palette.ts 與 Stone.tsx。 */
+.gmk-patch {
+  position: relative; border-radius: 2px; background: #f2e4c9; color: #2a2525;
+  outline: 1.5px dashed rgb(42 37 37 / 0.4); outline-offset: -5px;
+  transition: background-color 0.15s, color 0.15s, filter 0.15s;
+}
+@media (pointer: fine) { .gmk-patch:hover:not(:disabled) { filter: brightness(0.96); } }
+.gmk-patch.is-ramie { background: rgb(242 228 201 / 0.5); box-shadow: inset 0 0 0 1px rgb(42 37 37 / 0.16); }
+.gmk-patch.is-pieced {
+  --corner: 22px; color: #f2e4c9; outline-color: rgb(242 228 201 / 0.6);
+  background:
+    linear-gradient(135deg, transparent calc(var(--corner) - 1px), #f2e4c9 calc(var(--corner) - 1px), #f2e4c9 calc(var(--corner) + 1px), transparent calc(var(--corner) + 1px)),
+    linear-gradient(135deg, #be3479 var(--corner), #046161 var(--corner));
+}
+/* 連結：底下一道平針縫 */
+.gmk-thread { font-weight: 900; text-decoration: underline dashed rgb(42 37 37 / 0.55); text-decoration-thickness: 2px; text-underline-offset: 6px; }
+
 /* ▸ 騎士巡邏（feat/game-knights-tour） */
 
 /* ▸ 時間拍賣（feat/game-time-auction） */

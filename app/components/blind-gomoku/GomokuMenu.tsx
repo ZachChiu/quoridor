@@ -14,22 +14,23 @@ import { HowToPlay } from './HowToPlay';
 import { KEY_HEX } from './Stone';
 import GomokuFrame from './GomokuFrame';
 import { MENU_CLASS, type GomokuMode } from './modeHash';
+import { GMK_BAND, GMK_PANEL } from './palette';
 
 /**
  * 選模式的畫面（/blind-gomoku 沒帶 hash 時）。整頁包在拼布畫框裡（GomokuFrame：最外緣一圈包袱巾的布條），
  * 上面是標題與主視覺 —— 主視覺就是那塊 19 世紀的朝鮮包袱巾本身（公有領域，附出處）；
- * 下面的清單只有深墨（推薦：盲棋）與中性灰，彩色的只有外框、包袱巾與棋子。桌機改成左右兩欄。
+ * 下面的清單照包袱巾的做法（globals.css 的 .gmk-*，Zach 10/22：每款的按鈕要有自己的樣子）：
+ * 推薦的盲棋是一塊拼起來的青綠布（左上角桃紅三角、白絲縫線），其他是一塊塊白絲或半透明的苧麻布，邊上一圈平針縫；
+ * 難度是縫在一起的小布塊（幾塊青綠就是幾級）；「怎麼玩」底下一道縫線。桌機改成左右兩欄。
  */
 function ModeRow({ icon: Icon, title, desc, primary, onClick }: { icon: IconType; title: string; desc: string; primary?: boolean; onClick: () => void }) {
   return (
     <button type="button" onClick={onClick}
-      className={`flex min-h-[60px] w-full items-center gap-3 rounded-2xl px-4 py-3 text-left transition active:scale-[0.99] ${
-        primary ? 'bg-tile-ink text-tile-cream' : 'bg-tile-ink/[0.07] text-tile-ink fine:hover:bg-tile-ink/[0.12]'
-      }`}>
+      className={`gmk-patch flex min-h-[60px] w-full items-center gap-3 py-3 pr-4 text-left active:scale-[0.99] ${primary ? 'is-pieced pl-8' : 'pl-4'}`}>
       <Icon aria-hidden="true" className="shrink-0 text-3xl" />
       <span className="min-w-0 flex-1">
         <span className="block text-base font-black leading-tight">{title}</span>
-        <span className={`mt-0.5 block text-xs font-bold leading-snug ${primary ? 'opacity-75' : 'text-ink-soft'}`}>{desc}</span>
+        <span className={`mt-0.5 block text-xs font-bold leading-snug ${primary ? 'opacity-80' : 'text-ink-soft'}`}>{desc}</span>
       </span>
       <LuChevronRight aria-hidden="true" className="shrink-0 text-xl opacity-60" />
     </button>
@@ -42,7 +43,7 @@ export default function GomokuMenu({ locale, onStart }: { locale: Locale; onStar
   /** 選難度的對象：true 盲棋、false 一般五子棋、null 沒開 */
   const [levelFor, setLevelFor] = useState<boolean | null>(null);
   const [helpOpen, setHelpOpen] = useState(false);
-  const chip = 'rounded-xl bg-[#f2e4c9] px-3 py-2 text-sm font-black text-tile-ink transition active:scale-95 fine:hover:brightness-95';
+  const chip = 'gmk-patch px-3 py-2 text-sm font-black active:scale-95';
 
   return (
     <GomokuFrame className={`${MENU_CLASS} items-center px-4 pb-5 pt-14 lg:flex-row lg:items-center lg:justify-center lg:gap-12 lg:px-10 lg:py-16`}>
@@ -65,7 +66,7 @@ export default function GomokuMenu({ locale, onStart }: { locale: Locale; onStar
       <nav aria-label={t.title} className="mt-4 flex w-full max-w-[440px] shrink-0 flex-col gap-2.5 lg:mt-0 lg:w-[400px]">
         <ModeRow primary icon={GiBlindfold} title={t.blindAi} desc={t.blindAiDesc} onClick={() => setLevelFor(true)} />
         <ModeRow icon={GiRobotGolem} title={t.classicAi} desc={t.classicAiDesc} onClick={() => setLevelFor(false)} />
-        <div className="flex min-h-[60px] w-full items-center gap-3 rounded-2xl bg-tile-ink/[0.07] py-2.5 pl-4 pr-2.5">
+        <div className="gmk-patch is-ramie flex min-h-[60px] w-full items-center gap-3 py-2.5 pl-4 pr-2.5">
           <GiTabletopPlayers aria-hidden="true" className="shrink-0 text-3xl" />
           <span className="min-w-0 flex-1">
             <span className="block text-base font-black leading-tight">{t.local}</span>
@@ -76,23 +77,23 @@ export default function GomokuMenu({ locale, onStart }: { locale: Locale; onStar
             <button type="button" className={chip} onClick={() => onStart({ opponent: 'local', blind: false })}>{t.classic}</button>
           </span>
         </div>
-        <button type="button" onClick={() => setHelpOpen(true)} className="self-center px-3 py-2 text-sm font-black text-ink-soft underline underline-offset-4">
+        <button type="button" onClick={() => setHelpOpen(true)} className="gmk-thread self-center px-3 py-2 text-sm text-ink-soft">
           {t.howTo}
         </button>
       </nav>
 
       <Modal isOpen={levelFor !== null} onClose={() => setLevelFor(null)} title={t.pickLevel}
         kicker={levelFor ? t.blindAi : t.classicAi} icon={levelFor ? GiBlindfold : GiRobotGolem}
-        band={{ style: { background: KEY_HEX }, fg: 'text-[#f2e4c9]' }} panelClassName="!bg-[#f2e4c9]">
+        band={GMK_BAND} panelClassName={GMK_PANEL}>
         <div className="flex flex-col gap-2.5">
           {LEVELS.map((lv, i) => (
             <button key={lv} type="button"
               onClick={() => { const blind = !!levelFor; setLevelFor(null); onStart({ opponent: 'ai', blind, level: lv }); }}
-              className="flex items-center gap-4 rounded-2xl bg-tile-ink/[0.07] px-4 py-3.5 text-left transition active:scale-[0.99] fine:hover:bg-tile-ink/[0.12]">
-              {/* 強度用點數講，不另外帶色相（CLAUDE.md：並列的選項不各帶一個顏色） */}
-              <span className="flex shrink-0 gap-1" aria-hidden="true">
+              className="gmk-patch flex items-center gap-4 px-4 py-3.5 text-left active:scale-[0.99]">
+              {/* 強度是縫在一起的三小塊布：幾塊青綠就是幾級（布塊之間一道白絲縫） */}
+              <span className="flex shrink-0 gap-px bg-[#f2e4c9] p-px shadow-[inset_0_0_0_1px_rgb(42_37_37/0.25)]" aria-hidden="true">
                 {LEVELS.map((_, d) => (
-                  <span key={d} className="size-2.5 rounded-full" style={{ background: d <= i ? KEY_HEX : 'rgb(var(--tile-ink) / 0.15)' }} />
+                  <span key={d} className="h-4 w-3" style={{ background: d <= i ? KEY_HEX : 'rgb(42 37 37 / 0.12)' }} />
                 ))}
               </span>
               <span className="min-w-0">
@@ -105,7 +106,7 @@ export default function GomokuMenu({ locale, onStart }: { locale: Locale; onStar
       </Modal>
 
       <Modal isOpen={helpOpen} onClose={() => setHelpOpen(false)} title={t.rules} kicker={t.title}
-        icon={GiRuleBook} band={{ style: { background: KEY_HEX }, fg: 'text-[#f2e4c9]' }} panelClassName="!bg-[#f2e4c9]">
+        icon={GiRuleBook} band={GMK_BAND} panelClassName={GMK_PANEL}>
         <HowToPlay t={t} prev={ui.prev} next={ui.next} done={ui.close} onDone={() => setHelpOpen(false)} />
       </Modal>
     </GomokuFrame>

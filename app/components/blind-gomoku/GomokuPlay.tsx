@@ -14,7 +14,8 @@ import {
 import { GomokuBoard, Ghost, revealMs } from './GomokuBoard';
 import { ColorPicker } from './ColorPicker';
 import { HowToPlay, colorName } from './HowToPlay';
-import { BlackStoneIcon, KEY_HEX, PairStonesIcon, SideFace, WhiteStoneIcon } from './Stone';
+import { BlackStoneIcon, PairStonesIcon, SideFace, WhiteStoneIcon } from './Stone';
+import { GMK_BAND, GMK_PANEL } from './palette';
 import GomokuFrame from './GomokuFrame';
 import { useGomokuAi } from './useGomokuAi';
 import type { GomokuMode } from './modeHash';
@@ -120,11 +121,12 @@ export default function GomokuPlay({ mode, onMenu }: { mode: GomokuMode; onMenu:
 
   const band = game.winner === 'black' ? { className: 'bg-tile-ink', fg: 'text-tile-cream' }
     : game.winner === 'white' ? { className: 'bg-white', fg: 'text-tile-ink' }
-    : { style: { background: KEY_HEX }, fg: 'text-[#f2e4c9]' };
+    : GMK_BAND;
 
-  const round = 'grid size-11 shrink-0 place-items-center rounded-full bg-tile-ink/[0.07] text-xl text-ink-soft transition fine:hover:bg-tile-ink/[0.12] disabled:opacity-35';
-  const wide = 'flex h-12 items-center justify-center gap-2 rounded-2xl bg-tile-ink/[0.07] text-sm font-black text-tile-ink transition fine:hover:bg-tile-ink/[0.12] disabled:opacity-35';
-  const ink = 'flex h-12 items-center justify-center gap-2 rounded-2xl bg-tile-ink text-sm font-black text-tile-cream transition active:scale-[0.98] disabled:opacity-35';
+  // 按鈕是一塊塊布（globals.css 的 .gmk-*）：角落的小鈕與次要動作是半透明的苧麻布，主要動作是拼起來的青綠布
+  const round = 'gmk-patch is-ramie grid size-11 shrink-0 place-items-center text-xl text-ink-soft disabled:opacity-35';
+  const wide = 'gmk-patch is-ramie flex h-12 items-center justify-center gap-2 text-sm font-black disabled:opacity-35';
+  const ink = 'gmk-patch is-pieced flex h-12 items-center justify-center gap-2 text-sm font-black active:scale-[0.98] disabled:opacity-35';
 
   const statusBlock = (
     <div className="flex items-start justify-between gap-3">
@@ -133,7 +135,7 @@ export default function GomokuPlay({ mode, onMenu }: { mode: GomokuMode; onMenu:
         {hint && <p className="mt-0.5 text-xs font-bold leading-snug text-ink-soft">{hint}</p>}
         {canPlay && <p className="mt-0.5 hidden text-xs font-bold leading-snug text-ink-soft coarse:block">{t.aimHint}</p>}
       </div>
-      <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-tile-ink/[0.07] py-1 pl-1.5 pr-2.5 text-xs font-black tabular-nums">
+      <span className="gmk-patch is-ramie flex shrink-0 items-center gap-1.5 py-1.5 pl-2 pr-3 text-xs font-black tabular-nums">
         <SideFace side={game.winner && game.winner !== 'draw' ? game.winner : game.turn} className="size-4" />
         {moveNo}
       </span>
@@ -222,14 +224,14 @@ export default function GomokuPlay({ mode, onMenu }: { mode: GomokuMode; onMenu:
       </aside>
 
       <Modal isOpen={helpOpen} onClose={() => setHelpOpen(false)} title={t.rules} kicker={t.title}
-        icon={GiRuleBook} band={{ style: { background: KEY_HEX }, fg: 'text-[#f2e4c9]' }} panelClassName="!bg-[#f2e4c9]">
+        icon={GiRuleBook} band={GMK_BAND} panelClassName={GMK_PANEL}>
         <HowToPlay t={t} prev={ui.prev} next={ui.next} done={ui.close} onDone={() => setHelpOpen(false)} />
       </Modal>
 
       {/* 關掉結算還留在棋盤上，可以看翻開後的盤面；下面換成換模式／再來一局 */}
       <Modal isOpen={resultOpen} onClose={() => setResultOpen(false)} title={resultTitle} kicker={t.title}
         icon={game.winner === 'black' ? BlackStoneIcon : game.winner === 'white' ? WhiteStoneIcon : PairStonesIcon}
-        band={band} panelClassName="!bg-[#f2e4c9]"
+        band={band} panelClassName={GMK_PANEL}
         footer={
           <>
             <Button color="bg-tile-ink/[0.07] text-tile-ink" handleClickEvent={onMenu}>{t.menu}</Button>
