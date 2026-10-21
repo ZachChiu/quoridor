@@ -522,6 +522,16 @@ html:has(.bagh-root), body:has(.bagh-root) { background: #e3a43c; }
 /* ▸ 盲眼五子棋（feat/game-blind-gomoku） */
 
 /* ▸ 騎士巡邏（feat/game-knights-tour） */
+/* 騎士巡邏（KtFrame）：一張印了銅版插圖的紙。.kt-frame 是銅版的雙線框（外粗內細、中間透明露出紙色），
+   唯一的裝飾，只有這一層。顏色取自 18 世紀的原件，見 components/knights-tour/palette.ts。
+   .kt-serif：拉丁字與數字用舊式襯線（系統字型：蘋果裝置有 Iowan Old Style，Windows 有 Palatino Linotype）。 */
+html:has(.kt-root), body:has(.kt-root) { background: #edddc7; }
+.kt-frame {
+  border: var(--kt-frame, 8px) solid #322e2a;
+  border-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath fill='%23322e2a' fill-rule='evenodd' d='M0 0H24V24H0Z M2.6 2.6V21.4H21.4V2.6Z'/%3E%3Cpath fill='%23322e2a' fill-rule='evenodd' d='M5 5H19V19H5Z M5.9 5.9V18.1H18.1V5.9Z'/%3E%3C/svg%3E") 8 / var(--kt-frame, 8px) stretch;
+}
+@media (max-width: 640px) { .kt-frame { --kt-frame: 6px; } }
+.kt-serif { font-family: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif; }
 
 /* ▸ 時間拍賣（feat/game-time-auction） */
 

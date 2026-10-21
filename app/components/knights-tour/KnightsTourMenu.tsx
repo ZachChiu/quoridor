@@ -1,24 +1,28 @@
 'use client';
 import { useState } from 'react';
-import { GiChessKnight, GiRuleBook, GiStopwatch } from 'react-icons/gi';
-import GameTile from '@/components/GameTile';
+import { GiChessKnight, GiStopwatch } from 'react-icons/gi';
+import { LuChevronRight } from 'react-icons/lu';
 import PlatformCorner from '@/components/PlatformCorner';
 import { useTextTable } from '@/i18n/gameText';
 import { localePath, type Locale } from '@/i18n/locales';
 import { KNIGHTS_TOUR } from '@/i18n/routes';
 import { SIZES } from '@/games/knights-tour/engine';
+import { EULER_TOUR } from '@/games/knights-tour/euler';
 import { TEXT, type KnightsText } from '@/games/knights-tour/text';
 import HowToPlay from './HowToPlay';
+import KtFrame from './KtFrame';
 import SizePicker from './SizePicker';
+import TourBoard from './TourBoard';
 import { practiceKey, useBestTimes, type RecordKey } from './records';
 import { formatTime, sizeLabel } from './ui';
 
 /**
- * 騎士巡邏的首頁（選模式），版面照 Wall Go／Bagh Chal 的遊戲首頁：角落是平台 logo（回平台首頁）
- * 與聯絡／語言，中間是標題與模式磁磚（GameTile），整頁塞得進一個畫面（home-main／home-grid 管矮螢幕）。
+ * 騎士巡邏的首頁（選模式）。整頁是一張印了銅版插圖的紙（KtFrame：紙邊、雙線框、右下角 Tab. I.），
+ * 主視覺是「Fig. 1」：歐拉 1759 年論文裡那條 8×8 走法，用對局同一個棋盤畫（深格斜線、舊式數字、紅粉筆路徑）——
+ * 不用另外畫插圖，也跟點進去的棋盤是同一套東西。
  *
- * 磁磚配色：節目挑戰磚紅（限時、會整盤清空的那個）、練習琥珀（這款遊戲的顏色，棋盤上走過的格子也是琥珀）、
- * 規則照全站慣例森綠。
+ * 模式是兩張沒有框線的卡片：節目挑戰墨色（主要）、練習淡墨（次要），照 Wall Go 的兩種按鈕；規則放成文字連結。
+ * 節目挑戰是真的 `<a href="#show">`（新分頁開也對），點擊在當下交給上層 pushState（WebKit 的返回鍵規則）。
  */
 export default function KnightsTourMenu({ locale, onShow, onPractice }: {
   locale: Locale;
@@ -31,39 +35,56 @@ export default function KnightsTourMenu({ locale, onShow, onPractice }: {
   const [sizeOpen, setSizeOpen] = useState(false);
   const records = ([['show', t.showMode], ...SIZES.map((n) => [practiceKey(n), sizeLabel(n)])] as [RecordKey, string][])
     .flatMap(([key, name]) => { const ms = best[key]; return ms === undefined ? [] : [{ key, name, ms }]; });
+  const card = 'flex w-full items-center gap-3 rounded-2xl px-4 py-3.5 text-left transition active:scale-[0.99]';
 
   return (
-    <div className="flex min-h-dvh flex-col items-center justify-center px-5 py-[max(1rem,3dvh)] font-[family-name:var(--font-app)]">
-      <PlatformCorner locale={locale} />
-      <div aria-hidden="true" className="hidden h-14 w-px shrink portrait:block" />
-      <main className="home-main flex w-full max-w-[420px] flex-col items-center">
-        <header className="flex w-full flex-col items-center text-center">
-          {/* 主視覺：AI 畫的包浩斯海報（騎士跳過棋盤），跟平台卡片同一張；磁磚也跟著用紅黃藍三原色 */}
-          {/* eslint-disable-next-line @next/next/no-img-element -- 靜態匯出，已是 webp */}
-          <img src="/games/knights-tour/key-art.webp" alt="" width={720} height={480}
-            className="mb-[max(0.75rem,2dvh)] aspect-[3/2] max-h-[24dvh] w-full max-w-[380px] rounded-3xl object-cover short:hidden" />
-          <h1 className="text-[clamp(2.25rem,7dvh,3.75rem)] font-black leading-[0.95] tracking-tight">
-            {t.title}
-            {t.subtitle && <><br /><span className="text-[0.5em] tracking-normal">{t.subtitle}</span></>}
+    <KtFrame className="items-center justify-center px-5 py-[max(1rem,3dvh)]">
+      <PlatformCorner locale={locale} offset="calc(clamp(6px, 1.6vw, 14px) + var(--kt-frame, 8px) + 6px)" />
+      <main className="flex w-full max-w-[420px] flex-col items-center pt-10 lg:max-w-[900px] lg:flex-row lg:items-center lg:gap-14 lg:pt-0">
+        <header className="flex w-full flex-col items-center text-center lg:flex-1">
+          <h1 className="flex flex-col items-center">
+            <span className="text-[clamp(2.1rem,6.5dvh,3.5rem)] font-black leading-none tracking-[0.04em]">{t.title}</span>
+            {t.subtitle && <span className="kt-serif mt-1 text-[clamp(1.1rem,3dvh,1.6rem)] italic">{t.subtitle}</span>}
           </h1>
-          <p className="mt-[max(0.5rem,1.5dvh)] text-sm font-bold text-ink-soft md:text-base">{t.tagline}</p>
+          <p className="mt-[max(0.4rem,1.2dvh)] text-sm font-bold opacity-80 md:text-base">{t.tagline}</p>
+          {/* Fig. 1：歐拉的走法 */}
+          <figure className="mt-[max(0.75rem,2.2dvh)] flex w-full flex-col items-center gap-1.5">
+            <div className="w-[min(100%,17rem,30dvh)] lg:w-[min(100%,24rem)]">
+              <TourBoard n={8} path={EULER_TOUR} showKnight={false} />
+            </div>
+            <figcaption className="kt-serif text-xs opacity-80"><span className="italic">Fig. 1.</span> {t.figCaption}</figcaption>
+          </figure>
         </header>
-        <div className="flex w-full flex-col items-center">
-          <div className="home-grid relative z-20 mt-[max(1rem,3dvh)] grid w-full grid-cols-2 gap-3 md:gap-4">
-            <GameTile icon={GiStopwatch} tone="red" kicker={t.showKicker} label={t.showMode}
-              href={`${localePath(locale, KNIGHTS_TOUR)}#show`} onClick={onShow} />
-            <GameTile icon={GiChessKnight} tone="amber" kicker={t.practiceKicker} label={t.practiceMode}
-              onClick={() => setSizeOpen(true)} />
-            <GameTile icon={GiRuleBook} tone="blue" label={t.rules} wide onClick={() => setHelpOpen(true)} />
-          </div>
+
+        <div className="mt-[max(1rem,3dvh)] flex w-full flex-col gap-2.5 lg:mt-0 lg:w-[380px]">
+          <a href={`${localePath(locale, KNIGHTS_TOUR)}#show`} onClick={(e) => { e.preventDefault(); onShow(); }}
+            className={`${card} bg-[#322e2a] text-[#edddc7] fine:hover:brightness-125`}>
+            <GiStopwatch aria-hidden="true" className="shrink-0 text-3xl" />
+            <span className="min-w-0 flex-1">
+              <span className="block text-lg font-black leading-tight">{t.showMode}</span>
+              <span className="kt-serif mt-0.5 block text-sm opacity-80">{t.showKicker}</span>
+            </span>
+            <LuChevronRight aria-hidden="true" className="shrink-0 text-xl opacity-70" />
+          </a>
+          <button type="button" onClick={() => setSizeOpen(true)} className={`${card} bg-[#322e2a]/[0.08] fine:hover:bg-[#322e2a]/[0.14]`}>
+            <GiChessKnight aria-hidden="true" className="shrink-0 text-3xl" />
+            <span className="min-w-0 flex-1">
+              <span className="block text-lg font-black leading-tight">{t.practiceMode}</span>
+              <span className="kt-serif mt-0.5 block text-sm opacity-75">{t.practiceKicker}</span>
+            </span>
+            <LuChevronRight aria-hidden="true" className="shrink-0 text-xl opacity-60" />
+          </button>
+          <button type="button" onClick={() => setHelpOpen(true)} className="self-center px-3 py-2 text-sm font-black underline decoration-2 underline-offset-4 opacity-80 transition hover:opacity-100">
+            {t.rules}
+          </button>
           {records.length > 0 && (
-            <section className="mt-[max(0.75rem,2dvh)] w-full max-w-[380px]">
-              <h2 className="text-xs font-black text-ink-soft">{t.best}</h2>
+            <section className="w-full">
+              <h2 className="text-xs font-black opacity-70">{t.best}</h2>
               <dl className="mt-1.5 flex flex-wrap gap-1.5">
                 {records.map(({ key, name, ms }) => (
-                  <div key={key} className="flex items-baseline gap-1.5 rounded-xl bg-tile-ink/[0.07] px-2.5 py-1">
-                    <dt className="text-xs font-bold text-ink-soft">{name}</dt>
-                    <dd className="text-sm font-black tabular-nums">{formatTime(ms)}</dd>
+                  <div key={key} className="flex items-baseline gap-1.5 rounded-xl bg-[#322e2a]/[0.08] px-2.5 py-1">
+                    <dt className="text-xs font-bold opacity-75">{name}</dt>
+                    <dd className="kt-serif text-sm font-semibold tabular-nums">{formatTime(ms)}</dd>
                   </div>
                 ))}
               </dl>
@@ -74,6 +95,6 @@ export default function KnightsTourMenu({ locale, onShow, onPractice }: {
 
       <HowToPlay open={helpOpen} onClose={() => setHelpOpen(false)} />
       <SizePicker open={sizeOpen} onClose={() => setSizeOpen(false)} onPick={(n) => { setSizeOpen(false); onPractice(n); }} />
-    </div>
+    </KtFrame>
   );
 }

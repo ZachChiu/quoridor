@@ -73,7 +73,8 @@ export const SEASONS: Season[] = [
       { name: 'Equation Pyramid' },
       { name: 'Big Small' },
       { name: 'Question and Truth' },
-      { name: "Knight's Tour" },
+      { name: "Knight's Tour", playable: routes.KNIGHTS_TOUR,
+        look: { card: 'bg-[#edddc7] text-[#322e2a]', wipe: '#edddc7', art: '/games/knights-tour/plate.webp', cover: true } },
     ],
   },
   {

@@ -182,7 +182,7 @@ players/{ A?, B?, C? }/{ uid, displayName, joinedAt }
 
   - 盲眼五子棋：試做中，視覺在 `feat/game-blind-gomoku`。
 
-  - 騎士巡邏：試做中，視覺在 `feat/game-knights-tour`。
+  - 騎士巡邏（`feat/game-knights-tour`）：原件是歐拉 1759 的數學版畫、18 世紀紅粉筆素描；最外緣銅版雙線框（`.kt-frame`）；主視覺 `plate.webp`，首頁 Fig. 1 是歐拉的走法（`euler.ts`，有測試）。
 
   - 時間拍賣：試做中，視覺在 `feat/game-time-auction`。
 

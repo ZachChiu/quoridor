@@ -15,6 +15,7 @@ import HowToPlay from './HowToPlay';
 import TourBoard from './TourBoard';
 import { saveBest, useBestTimes } from './records';
 import { formatTime, shake, sizeLabel, squareName } from './ui';
+import { BAND_CHALK, MODAL_PANEL, BAND_INK } from './GameFrame';
 
 type Note = 'notKnight' | 'badStart' | null;
 
@@ -119,7 +120,7 @@ export default function ShowGame({ onMenu, onPractice }: {
             return (
               <li key={s} aria-current={active ? 'step' : undefined}
                 className={`flex flex-1 flex-col items-center justify-center rounded-xl px-1 py-1.5 ${
-                  done ? 'bg-tile-amber text-tile-ink' : active ? 'bg-tile-ink text-tile-cream' : 'bg-tile-ink/[0.07] text-ink-soft'}`}>
+                  done ? 'bg-[#e2c9b1] text-[#322e2a]' : active ? 'bg-[#322e2a] text-[#edddc7]' : 'bg-[#322e2a]/[0.08] text-ink-soft'}`}>
                 <span className="text-[10px] font-bold leading-none opacity-80">{fill(t.level, { i: i + 1 })}</span>
                 <span className="mt-0.5 flex items-center gap-0.5 text-sm font-black tabular-nums leading-tight">
                   {done && <LuCheck aria-hidden="true" className="shrink-0" />}{sizeLabel(s)}
@@ -128,15 +129,15 @@ export default function ShowGame({ onMenu, onPractice }: {
             );
           })}
         </ol>
-        <div className={`flex min-w-[5.5rem] flex-col items-end justify-center rounded-xl px-3 py-1.5 ${remaining < 5 * 60_000 && running ? 'bg-tile-red text-tile-cream' : 'bg-tile-ink/[0.07]'}`}>
+        <div className={`flex min-w-[5.5rem] flex-col items-end justify-center rounded-xl px-3 py-1.5 ${remaining < 5 * 60_000 && running ? 'bg-[#834d36] text-[#edddc7]' : 'bg-[#322e2a]/[0.08]'}`}>
           <span className="flex items-center gap-1 text-[10px] font-bold leading-none opacity-80"><LuTimer aria-hidden="true" />{t.timeLeft}</span>
           <span className="mt-0.5 text-xl font-black tabular-nums leading-tight" role="timer">{formatTime(remaining, true)}</span>
         </div>
       </div>
       <div className={`flex min-h-10 flex-col justify-center ${place === 'bar' ? 'items-center text-center' : ''}`} aria-live="polite">
         {alert
-          ? <p className="rounded-lg bg-tile-red px-2.5 py-1 text-sm font-black text-tile-cream">{alert}</p>
-          : <p className={`text-sm font-bold leading-snug ${note ? 'text-tile-ink' : 'text-ink-soft'}`}>{message}</p>}
+          ? <p className="rounded-lg bg-[#834d36] px-2.5 py-1 text-sm font-black text-[#edddc7]">{alert}</p>
+          : <p className={`text-sm font-bold leading-snug ${note ? 'text-[#322e2a]' : 'text-ink-soft'}`}>{message}</p>}
         {attempt > 1 && !over && <p className="mt-1 text-xs font-bold text-ink-soft">{fill(t.attempt, { k: attempt })}</p>}
       </div>
     </div>
@@ -175,22 +176,22 @@ export default function ShowGame({ onMenu, onPractice }: {
       <HowToPlay open={helpOpen} onClose={() => setHelpOpen(false)} />
 
       <Modal isOpen={status === 'won' && !endClosed} onClose={() => setEndClosed(true)} title={t.wonTitle} kicker={t.title}
-        icon={GiLaurelsTrophy} band={{ className: 'bg-tile-amber', fg: 'text-tile-ink' }}
+        icon={GiLaurelsTrophy} band={BAND_CHALK} panelClassName={MODAL_PANEL}
         footer={<>
-          <Button color="bg-tile-ink/[0.07] text-tile-ink" handleClickEvent={onMenu}>{t.menu}</Button>
-          <Button color="bg-tile-ink text-tile-cream" handleClickEvent={again}>{t.again}</Button>
+          <Button color="bg-[#322e2a]/[0.08] text-[#322e2a]" handleClickEvent={onMenu}>{t.menu}</Button>
+          <Button color="bg-[#322e2a] text-[#edddc7]" handleClickEvent={again}>{t.again}</Button>
         </>}>
         <div className="flex flex-col gap-4">
           <div className="flex items-end justify-between gap-3">
             <p className="text-5xl font-black tabular-nums leading-none">{formatTime(elapsed)}</p>
             {record?.isNew
-              ? <p className="rounded-lg bg-tile-ink px-2.5 py-1 text-sm font-black text-tile-cream">{t.newBest}</p>
+              ? <p className="rounded-lg bg-[#322e2a] px-2.5 py-1 text-sm font-black text-[#edddc7]">{t.newBest}</p>
               : bestShow !== undefined && <p className="text-sm font-bold text-ink-soft">{fill(t.bestWas, { time: formatTime(bestShow) })}</p>}
           </div>
           <p className="text-sm font-bold leading-relaxed">{fill(t.wonBody, { time: formatTime(elapsed) })}</p>
           <ol className="flex flex-col gap-1.5">
             {SHOW_SIZES.map((s, i) => (
-              <li key={s} className="flex items-center justify-between rounded-xl bg-tile-ink/[0.05] px-3 py-2 text-sm font-bold">
+              <li key={s} className="flex items-center justify-between rounded-xl bg-[#322e2a]/[0.05] px-3 py-2 text-sm font-bold">
                 <span className="font-black tabular-nums">{sizeLabel(s)}</span>
                 <span className="text-ink-soft">{(run.attempts[i] ?? 1) > 1 ? fill(t.attempt, { k: run.attempts[i] }) : ''}</span>
                 <span className="font-black tabular-nums">{formatTime((run.splits[i] ?? 0) - (run.splits[i - 1] ?? 0))}</span>
@@ -201,10 +202,10 @@ export default function ShowGame({ onMenu, onPractice }: {
       </Modal>
 
       <Modal isOpen={status === 'timeUp' && !endClosed} onClose={() => setEndClosed(true)} title={t.timeUpTitle} kicker={t.title}
-        icon={GiHourglass} band={{ className: 'bg-tile-ink', fg: 'text-tile-cream' }}
+        icon={GiHourglass} band={BAND_INK} panelClassName={MODAL_PANEL}
         footer={<>
-          <Button color="bg-tile-ink/[0.07] text-tile-ink" handleClickEvent={() => onPractice(SHOW_SIZES[stoppedAt])}>{t.toPractice}</Button>
-          <Button color="bg-tile-ink text-tile-cream" handleClickEvent={again}>{t.again}</Button>
+          <Button color="bg-[#322e2a]/[0.08] text-[#322e2a]" handleClickEvent={() => onPractice(SHOW_SIZES[stoppedAt])}>{t.toPractice}</Button>
+          <Button color="bg-[#322e2a] text-[#edddc7]" handleClickEvent={again}>{t.again}</Button>
         </>}>
         <p className="text-sm font-bold leading-relaxed">{fill(t.timeUpBody, { i: stoppedAt + 1, size: sizeLabel(SHOW_SIZES[stoppedAt]) })}</p>
       </Modal>
