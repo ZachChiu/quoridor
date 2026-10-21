@@ -56,3 +56,10 @@ export function cellName(cell: number, t: { devil: string; angel: string; dishNa
 }
 
 export { letterOf };
+
+/**
+ * 彈窗：一塊切角的印花布 —— 標題是木頭色的字，底下兩道梳子畫的線（布上隔開方格的那種），不用色帶。
+ * 介面零件本身在 globals.css 的 .mcl-*（黃銅牌、印花布條、寶螺殼印章）。
+ */
+export const MCL_PANEL = '!rounded-none !bg-[#fef2ec] [clip-path:polygon(10px_0,calc(100%-10px)_0,100%_10px,100%_calc(100%-10px),calc(100%-10px)_100%,10px_100%,0_calc(100%-10px),0_10px)]';
+export const MCL_BAND = { className: 'mx-6 !px-0 bg-transparent border-b-[4px] border-double border-[#201211]/55', fg: 'text-[#362522]' };

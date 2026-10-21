@@ -27,7 +27,7 @@ export default function ScorePanel({ scores, names, turn, gain, colourShort, fin
         const f = finalScore(sc);
         const f2 = finalScore(after);
         return (
-          <div key={seat} className={`flex items-center gap-2 rounded-xl px-2 py-1 ${turn === seat ? 'bg-[#201211]/[0.08]' : ''}`}
+          <div key={seat} className={`mcl-cut flex items-center gap-2 px-2 py-1 ${turn === seat ? 'bg-[#201211]/[0.08]' : ''}`}
             aria-label={`${names[seat]}: ${COLOURS.map((c) => `${colourShort[c]} ${sc[c]}`).join(', ')}; ${finalLabel} ${f}`}>
             <PieceDisc seat={seat} size="1.65rem" />
             <p className="w-[4.25rem] shrink-0 truncate text-xs font-black">{names[seat]}</p>

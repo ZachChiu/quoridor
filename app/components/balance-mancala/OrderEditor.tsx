@@ -49,10 +49,12 @@ export default function OrderEditor({
   // 得分的人這一手前後的分數（還沒選色時兩者相同）
   const after = preview.scores[preview.owner];
   const prior = preview.colour !== null ? (after.map((v, k) => (k === preview.colour ? v - preview.points : v)) as Scores) : after;
-  const chip = 'rounded-full bg-[#201211]/[0.07] px-3 py-1.5 text-xs font-black transition fine:hover:bg-[#201211]/[0.12]';
+  // 播種面板是一條印花布（上下兩道梳線）；裡面的選項是切角的小布片，選中與「播種」是黃銅牌 —— globals.css 的 .mcl-*
+  const patch = 'mcl-cut bg-[#201211]/[0.07] transition fine:hover:bg-[#201211]/[0.12]';
+  const chip = `${patch} px-3 py-1.5 text-xs font-black`;
 
   return (
-    <div className="flex w-full flex-col gap-3 rounded-2xl bg-[#201211]/[0.05] p-3">
+    <div className="mcl-cloth flex w-full flex-col gap-3 px-3 py-4">
       <div className="flex items-center justify-between gap-2">
         <p className="text-sm font-black">{fill(t.editorTitle, { cell: cellName(from, t), n: order.length })}</p>
         <button type="button" onClick={onSuggest} className={`flex items-center gap-1 ${chip}`}>
@@ -65,7 +67,7 @@ export default function OrderEditor({
         <div className="mt-1.5 flex flex-wrap gap-2" role="radiogroup" aria-label={t.whoLast}>
           {owners.map((o) => (
             <button key={o} type="button" role="radio" aria-checked={o === last} aria-label={names[o]} onClick={() => onLast(o)}
-              className={`flex items-center gap-1.5 rounded-full py-1 pl-1 pr-3 text-xs font-black transition ${o === last ? 'bg-[#201211] text-[#ebd2cb]' : 'bg-[#201211]/[0.07] fine:hover:bg-[#201211]/[0.12]'}`}>
+              className={`flex items-center gap-1.5 py-1 pl-1.5 pr-3 text-xs font-black ${o === last ? 'mcl-plaque' : patch}`}>
               <PieceDisc seat={o} size="1.75rem" />
               <span className="max-w-[5.5rem] truncate">{names[o]}</span>
             </button>
@@ -83,7 +85,7 @@ export default function OrderEditor({
               <li key={i}>
                 <button type="button" onClick={() => onSlot(i)} aria-pressed={sel === i}
                   aria-label={`${i + 1}. ${names[o]} → ${cellName(dest, t)}`}
-                  className={`flex flex-col items-center gap-1 rounded-xl px-1 pb-1 pt-1.5 transition ${sel === i ? '-translate-y-0.5 bg-[#201211]/[0.14]' : 'fine:hover:bg-[#201211]/[0.07]'}`}>
+                  className={`mcl-cut flex flex-col items-center gap-1 px-1 pb-1 pt-1.5 transition ${sel === i ? '-translate-y-0.5 bg-[#201211]/[0.14]' : 'fine:hover:bg-[#201211]/[0.07]'}`}>
                   <PieceDisc seat={o} size={isLast ? '2.1rem' : '1.7rem'} ring={sel === i ? 'selected' : isLast ? 'last' : undefined} />
                   <DestChip cell={dest} t={t} />
                 </button>
@@ -124,16 +126,16 @@ export default function OrderEditor({
       )}
 
       {endsText && (
-        <p className="flex items-center gap-2 rounded-xl bg-[#201211] px-3 py-2 text-xs font-black text-[#ebd2cb]">
+        <p className="mcl-cut flex items-center gap-2 bg-[#201211] px-3 py-2 text-xs font-black text-[#ebd2cb]">
           <LuTriangleAlert aria-hidden="true" className="shrink-0 text-base" />{endsText}
         </p>
       )}
 
       <div className="grid grid-cols-2 gap-2">
         <button type="button" onClick={onCancel}
-          className="h-12 rounded-2xl bg-[#201211]/[0.07] text-sm font-black transition fine:hover:bg-[#201211]/[0.12]">{t.cancel}</button>
+          className={`${patch} h-12 text-sm font-black`}>{t.cancel}</button>
         <button type="button" onClick={onSow} disabled={preview.colour === null}
-          className="h-12 rounded-2xl bg-[#201211] text-sm font-black text-[#ebd2cb] transition active:scale-[0.98] disabled:opacity-40">{t.sow}</button>
+          className="mcl-plaque h-12 text-sm font-black active:scale-[0.98] disabled:opacity-40">{t.sow}</button>
       </div>
     </div>
   );

@@ -3,7 +3,6 @@ import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore
 import { GiExitDoor, GiLaurelCrown, GiRuleBook, GiScales } from 'react-icons/gi';
 import { LuCircleHelp, LuHouse, LuSlidersHorizontal } from 'react-icons/lu';
 import Modal from '@/components/Modal';
-import Button from '@/components/Button';
 import { useTransition } from '@/contexts/TransitionContext';
 import { fill, useTextTable } from '@/i18n/gameText';
 import { localePath, type Locale } from '@/i18n/locales';
@@ -14,7 +13,7 @@ import {
 } from '@/games/balance-mancala/engine';
 import { chooseMove, choosePlacement, personalityOf, suggestColour, suggestMove } from '@/games/balance-mancala/ai';
 import { humanSeatsOf, type MatchSetup } from './match';
-import { BRASS, DISH_BG, WOOD, cellName, seatLook } from './palette';
+import { BRASS, DISH_BG, MCL_BAND, MCL_PANEL, WOOD, cellName, seatLook } from './palette';
 import MancalaFrame from './MancalaFrame';
 import MancalaRing, { type RingMark } from './MancalaRing';
 import ScorePanel from './ScorePanel';
@@ -218,15 +217,16 @@ export default function MancalaPlay({ locale, setup, onSettings, onAgain }: {
   };
 
   // 布上一層淡墨，沒有框線（全站的次要按鈕）
-  const round = 'grid size-11 place-items-center rounded-full bg-[#201211]/[0.07] text-xl text-ink-soft transition fine:hover:bg-[#201211]/[0.12]';
-  const wide = 'flex h-11 items-center justify-center gap-2 rounded-2xl bg-[#201211]/[0.07] text-sm font-black transition fine:hover:bg-[#201211]/[0.12]';
+  // 角落的小鈕是切角的淡布片（黃銅留給主要動作），寬的是一條印花布（上下兩道梳線）—— globals.css 的 .mcl-*
+  const round = 'mcl-cut grid size-11 place-items-center bg-[#201211]/[0.07] text-xl text-ink-soft transition fine:hover:bg-[#201211]/[0.12]';
+  const wide = 'mcl-cloth flex h-11 items-center justify-center gap-2 text-sm font-black';
 
   const center = over ? (
     <>
       <GiLaurelCrown aria-hidden="true" style={{ color: BRASS, width: '11cqw', height: '11cqw' }} />
       <p className="mt-[1cqw] font-black leading-tight" style={{ fontSize: '3.6cqw' }}>{t.over}</p>
       {endClosed && (
-        <button type="button" onClick={() => setEndClosed(false)} className="mt-[2cqw] rounded-full bg-[#fef2ec] px-[3cqw] py-[1.2cqw] font-black text-[#201211]" style={{ fontSize: '3cqw' }}>
+        <button type="button" onClick={() => setEndClosed(false)} className="mcl-plaque mt-[2cqw] px-[3cqw] py-[1.2cqw] font-black" style={{ fontSize: '3cqw' }}>
           {t.results}
         </button>
       )}
@@ -301,34 +301,33 @@ export default function MancalaPlay({ locale, setup, onSettings, onAgain }: {
       </div>
 
       <Modal isOpen={helpOpen} onClose={() => setHelpOpen(false)} title={t.rulesHeading} kicker={t.title}
-        icon={GiRuleBook} band={{ style: { backgroundColor: WOOD }, fg: 'text-[#fef2ec]' }} panelClassName="!bg-[#ebd2cb]">
+        icon={GiRuleBook} band={MCL_BAND} panelClassName={MCL_PANEL}>
         <MancalaRules t={t} />
       </Modal>
 
       <Modal isOpen={leaving !== null} onClose={() => setLeaving(null)} title={t.leaveTitle} icon={GiExitDoor}
-        band={{ className: 'bg-[#201211]', fg: 'text-[#ebd2cb]' }} panelClassName="!bg-[#ebd2cb]"
+        band={MCL_BAND} panelClassName={MCL_PANEL}
         footer={
           <>
-            <Button color="bg-[#201211]/[0.07] text-[#201211]" handleClickEvent={() => setLeaving(null)}>{t.stay}</Button>
-            <Button color="bg-[#201211] text-[#ebd2cb]" handleClickEvent={() => {
+            <button type="button" className="mcl-cloth flex-1 py-3.5 font-black" onClick={() => setLeaving(null)}>{t.stay}</button>
+            <button type="button" className="mcl-plaque flex-1 py-3.5 font-black" onClick={() => {
               const where = leaving;
               setLeaving(null);
               if (where === 'home') home(); else onSettings();
-            }}>{t.leave}</Button>
+            }}>{t.leave}</button>
           </>
         }>
         <p className="text-sm leading-relaxed">{t.leaveBody}</p>
       </Modal>
 
       <Modal isOpen={over && !endClosed} onClose={() => setEndClosed(true)} title={endTitle} kicker={t.gameOver}
-        icon={soleWinner === null ? GiScales : GiLaurelCrown} panelClassName="!bg-[#ebd2cb]"
-        band={soleWinner === null
-          ? { className: 'bg-[#201211]', fg: 'text-[#ebd2cb]' }
-          : { style: { backgroundColor: seatLook(soleWinner).bg }, fg: seatLook(soleWinner).fgClass }}
+        icon={soleWinner === null ? GiScales : GiLaurelCrown} panelClassName={MCL_PANEL}
+        // 標題不用色帶（兩道梳線）；勝方的顏色放在下面那一列，滿色放大
+        band={MCL_BAND}
         footer={
           <>
-            <Button color="bg-[#201211]/[0.07] text-[#201211]" handleClickEvent={onSettings}>{t.settings}</Button>
-            <Button color="bg-[#201211] text-[#ebd2cb]" handleClickEvent={onAgain}>{t.again}</Button>
+            <button type="button" className="mcl-cloth flex-1 py-3.5 font-black" onClick={onSettings}>{t.settings}</button>
+            <button type="button" className="mcl-plaque flex-1 py-3.5 font-black" onClick={onAgain}>{t.again}</button>
           </>
         }>
         {endReason && <p className="text-sm leading-relaxed">{endReason}</p>}
@@ -337,7 +336,7 @@ export default function MancalaPlay({ locale, setup, onSettings, onAgain }: {
             const win = r.rank === 1;
             const look = seatLook(r.seat);
             return (
-              <li key={r.seat} className={`flex items-center gap-3 rounded-2xl px-3 ${win ? 'py-3' : 'bg-[#201211]/[0.05] py-2 text-ink-soft'}`}
+              <li key={r.seat} className={`flex items-center gap-3 px-3 ${win ? 'py-3 [clip-path:polygon(7px_0,calc(100%-7px)_0,100%_7px,100%_calc(100%-7px),calc(100%-7px)_100%,7px_100%,0_calc(100%-7px),0_7px)]' : 'mcl-cloth py-2.5 text-ink-soft'}`}
                 style={win ? { background: look.bg, color: look.fg } : undefined}>
                 <span className="w-12 shrink-0 text-xs font-black">{fill(t.rank, { n: r.rank })}</span>
                 <PieceDisc seat={r.seat} size={win ? '2rem' : '1.5rem'} className={win ? '' : 'opacity-50'} />

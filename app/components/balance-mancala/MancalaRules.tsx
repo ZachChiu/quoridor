@@ -7,12 +7,12 @@ export default function MancalaRules({ t }: { t: BalanceMancalaText }) {
       <ol className="flex flex-col gap-2.5">
         {t.rules.map((rule, i) => (
           <li key={i} className="flex gap-3 text-sm leading-relaxed">
-            <span aria-hidden="true" className="grid size-6 shrink-0 place-items-center rounded-full bg-[#201211] text-xs font-black text-[#ebd2cb]">{i + 1}</span>
+            <span aria-hidden="true" className="mcl-plaque is-small grid size-6 shrink-0 place-items-center text-xs font-black">{i + 1}</span>
             <span>{rule}</span>
           </li>
         ))}
       </ol>
-      <p className="rounded-xl bg-[#201211]/[0.06] px-4 py-3 text-center text-base font-black">{t.example}</p>
+      <p className="mcl-cloth p-4 text-center text-base font-black">{t.example}</p>
       <p className="text-xs leading-relaxed text-ink-soft">{t.showNote}</p>
       <p className="text-[10px] leading-relaxed text-ink-soft">{t.credit}</p>
     </div>
