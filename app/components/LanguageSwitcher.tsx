@@ -35,7 +35,8 @@ import { useLanguageSwitch } from '@/hook/useLanguageSwitch';
  * 一個只在正式站對、開發時看起來像壞掉的動畫不值得留著。換語言一次
  * 造訪頂多做一次，整頁重載本來就正常。
  */
-export default function LanguageSwitcher({ onDark = false, skin = 'default' }: { onDark?: boolean; skin?: 'default' | 'bagh' } = {}) {
+/** `buttonClassName`：只換圓鈕本身的配色（各遊戲自己的底色上），彈窗照 skin */
+export default function LanguageSwitcher({ onDark = false, skin = 'default', buttonClassName }: { onDark?: boolean; skin?: 'default' | 'bagh'; buttonClassName?: string } = {}) {
   const bagh = skin === 'bagh';
   const t = useMessages();
   // 停在同一頁換、bfcache 還原時關掉選單、已經是這個語言就只關掉：行為與平台共用（見 useLanguageSwitch）
@@ -49,7 +50,8 @@ export default function LanguageSwitcher({ onDark = false, skin = 'default' }: {
         aria-label={t.nav.language}
         aria-haspopup="dialog"
         className={`relative grid size-10 place-items-center rounded-full text-xl transition after:absolute after:-inset-0.5 after:content-[''] active:scale-95 ${
-          bagh ? 'bg-[#fbf4e1] text-tile-ink ring-2 ring-[#5b6620] hover:bg-[#f4e8cc]'
+          buttonClassName ? buttonClassName
+          : bagh ? 'bg-[#fbf4e1] text-tile-ink ring-2 ring-[#5b6620] hover:bg-[#f4e8cc]'
           : onDark
             ? 'bg-tile-cream/[0.16] text-tile-cream hover:bg-tile-cream/[0.26]'
             : 'bg-tile-ink/[0.06] text-ink-soft hover:bg-tile-ink/[0.12]'
