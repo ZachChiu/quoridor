@@ -850,7 +850,7 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
 
   // ─── 連線模式：初始化中 / 錯誤 ─────────────────────────────────────────────
   if (isOnline && phase === 'initializing') {
-    return <Connecting label={g.play.connecting} />;
+    return <Connecting label={g.play.connecting} kicker={g.waiting.kicker} />;
   }
 
   if (isOnline && phase === 'error' && error) {
