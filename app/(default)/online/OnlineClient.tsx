@@ -89,7 +89,7 @@ export default function OnlineClient() {
     );
   }
 
-  if ('create' in target) return <Connecting label={g.play.connecting} />;
+  if ('create' in target) return <Connecting label={g.play.connecting} kicker={g.waiting.kicker} />;
 
   /*
     沒有 roomId 就不能渲染 PlayClient。

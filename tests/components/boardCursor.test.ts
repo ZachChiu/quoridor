@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { isCursorKey, nextCursor, type Cursor } from '@/components/boardCursor';
+import { isCursorKey, nearestEmpty, nextCursor, nextEmptyCell, type Cursor } from '@/components/boardCursor';
 
 const SIZE = 7;
 const at = (row: number, col: number): Cursor => ({ row, col });
@@ -70,5 +70,43 @@ describe('nextCursor · 不同盤面大小', () => {
     expect(nextCursor(at(1, 0), 'End', { size: 3 })).toEqual(at(1, 2));
     expect(nextCursor(at(1, 1), 'End', { size: 3, ctrl: true })).toEqual(at(2, 2));
     expect(nextCursor(at(2, 2), 'ArrowDown', { size: 3 })).toEqual(at(2, 2));
+  });
+});
+
+describe('手機擺棋子的虛棋子', () => {
+  const empty = () => Array.from({ length: SIZE }, () => Array<string | null>(SIZE).fill(null));
+
+  it('空盤放在正中央', () => {
+    expect(nearestEmpty(empty())).toEqual(at(3, 3));
+  });
+
+  it('中央被佔了，找最近的空格（同距離先上、先左）', () => {
+    const b = empty();
+    b[3][3] = 'A';
+    expect(nearestEmpty(b)).toEqual(at(2, 3));
+    b[2][3] = 'B';
+    expect(nearestEmpty(b)).toEqual(at(3, 2));
+  });
+
+  it('整盤都滿了就沒有位置', () => {
+    const b = empty().map((r) => r.map(() => 'A'));
+    expect(nearestEmpty(b)).toBeNull();
+  });
+
+  it('方向鍵跳到那個方向上的下一個空格，中間的棋子跳過去', () => {
+    const b = empty();
+    b[3][4] = 'A';
+    b[3][5] = 'B';
+    expect(nextEmptyCell(b, at(3, 3), 'right')).toEqual(at(3, 6));
+    expect(nextEmptyCell(b, at(3, 3), 'top')).toEqual(at(2, 3));
+  });
+
+  it('到邊上都沒有空格就不動（回傳 null，按鈕停用）', () => {
+    const b = empty();
+    b[3][5] = 'A';
+    b[3][6] = 'B';
+    expect(nextEmptyCell(b, at(3, 4), 'right')).toBeNull();
+    expect(nextEmptyCell(b, at(0, 0), 'top')).toBeNull();
+    expect(nextEmptyCell(b, at(0, 0), 'left')).toBeNull();
   });
 });

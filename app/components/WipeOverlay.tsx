@@ -42,6 +42,8 @@ export type Wipe = {
    * 放在裡面的話會被那個只有幾十 px 的起點方框夾住，四個字斷成直排。
    */
   big?: boolean;
+  /** big 大標底下的一行小字（連線開場的「你是藍方」） */
+  sub?: string;
   iconColor?: string;
   fg?: string;
 };
@@ -282,8 +284,9 @@ const WipeOverlay: React.FC<Props> = ({ phase, wipe, onDone }) => {
           className="pointer-events-none absolute inset-0 flex items-center justify-center px-6"
           style={{ color: wipe.fg, opacity: phase === 'cover' ? 0 : 1 }}
         >
-          <span className="whitespace-nowrap text-center font-[family-name:var(--font-app)] text-4xl font-black tracking-tight md:text-6xl">
-            {wipe.label}
+          <span className="flex flex-col items-center gap-3 text-center font-[family-name:var(--font-app)] font-black">
+            <span className="whitespace-nowrap text-4xl tracking-tight md:text-6xl">{wipe.label}</span>
+            {wipe.sub && <span className="whitespace-nowrap text-xl md:text-2xl">{wipe.sub}</span>}
           </span>
         </div>
       )}

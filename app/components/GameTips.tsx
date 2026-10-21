@@ -6,6 +6,8 @@ import { useGameText } from '@/i18n/LocaleProvider';
 import { fmt } from '@/i18n/content/game';
 
 interface Props {
+  /** 這台裝置上的人坐哪一方（連線、跟 AI 下）。輪到他時寫「輪到你了」而不是「紅方」 */
+  me?: PlayerKey;
   isPlacingChess: boolean;
   currentPlayer: Player;
   winingStatus: (Player | 'draw')[];
@@ -51,7 +53,7 @@ interface Props {
  * 所以兩邊都找得到，也不必為手機再擺一顆。
  */
 export default React.memo(function GameTips({
-  isPlacingChess, currentPlayer, winingStatus, breakWallCountObj, aiThinking,
+  me, isPlacingChess, currentPlayer, winingStatus, breakWallCountObj, aiThinking,
   selected, remainSteps = 0, onWallStep, onShowResult, playersNum,
 }: Props) {
   const g = useGameText();
@@ -65,13 +67,13 @@ export default React.memo(function GameTips({
       const names = winingStatus.map(w => g.players[w as PlayerKey]).filter(Boolean);
       return winingStatus[0] === 'draw' ? g.tips.over : fmt(g.tips.overWin, { names: names.join(g.players.and) });
     }
-    const who = p ? g.players[p] : '';
+    const who = p ? (p === me ? g.tips.yourTurn : g.players[p]) : '';
     if (aiThinking) return fmt(g.tips.thinking, { who });
     if (isPlacingChess) return fmt(g.tips.placing, { who });
     // 還沒選棋子就先講「移動棋子」；選了之後改報還剩幾格，走完再改報該蓋牆了
     if (!selected) return fmt(g.tips.moving, { who });
     return `${who} · ${onWallStep ? g.pad.hintWall : fmt(g.pad.remain, { n: remainSteps })}`;
-  }, [isPlacingChess, over, winingStatus, p, aiThinking, selected, onWallStep, remainSteps, g]);
+  }, [isPlacingChess, over, winingStatus, p, me, aiThinking, selected, onWallStep, remainSteps, g]);
 
   /*
     手指裝置上不出現：它說的三件事（輪到誰、現在該做什麼、還有沒有破牆）

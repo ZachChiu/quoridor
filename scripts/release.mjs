@@ -130,11 +130,13 @@ pkg.version = version;
 writeFileSync(pkgPath, `${JSON.stringify(pkg, null, 2)}\n`);
 run(`git add package.json`);
 
-const msgFile = new URL("../.git/RELEASE_MSG", import.meta.url);
+// 訊息檔的位置要問 git：在 git worktree 裡 .git 是一個指向真正資料夾的檔案，寫死 .git/RELEASE_MSG 會 ENOTDIR
+// （2026-10-22 在 worktree 打 v26.10.5 時停在 merge 一半，沒有 tag、沒有推出去）
+const msgFile = sh("git rev-parse --git-path RELEASE_MSG");
 writeFileSync(msgFile, `${subject}\n\n${body}\n\nMerge branch '${source}'\n`);
 // wrap 的情況 main 已經退回上一版，這裡才做那次 merge（帶著版號一起 commit）
-run(wrap ? `git merge --no-ff --no-edit -F .git/RELEASE_MSG ${source}` : `git commit -F .git/RELEASE_MSG`);
-run(`git tag -a ${tag} -F .git/RELEASE_MSG`);
+run(wrap ? `git merge --no-ff --no-edit -F "${msgFile}" ${source}` : `git commit -F "${msgFile}"`);
+run(`git tag -a ${tag} -F "${msgFile}"`);
 
 if (noPush) {
   console.log(`\n  ✓ 本機已打好 ${tag}。推上去：git push --follow-tags\n`);
