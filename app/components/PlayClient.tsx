@@ -276,9 +276,8 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
 
     ── 對齊 ───────────────────────────────────────────────────────
     直式靠下：留白全部集中到上方，那裡本來就要放按鈕與比分。
-    下邊距 = 控制盤高 + 5rem。那 5rem 裡放步驟標（26px），上下各留 27px ——
-    棋盤下緣、步驟標、控制盤上緣線三者等距。提示句是絕對定位浮在步驟標
-    上方的，不佔這條流，所以有沒有它都不會改變這個距離。
+    棋盤、步驟標、控制盤排成一欄（見下一段的間距）。提示句是絕對定位浮在步驟標
+    上方的，不佔這條流，所以有沒有它都不會改變這個距離 —— 但那段間距要放得下它。
     橫式靠右：貼著控制盤，左下那塊空地讓給比分。
 
     ── 為什麼 coarse 要能蓋掉 md ──────────────────────────────────
@@ -288,9 +287,12 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
   */
   /*
     ── 直式是真的「排在一起」，不是各自定位 ────────────────────────
-    這一層是 flex column：棋盤 → gap 16px → 步驟提示，整欄靠下，
-    下邊距只留控制盤高度 + 16px。於是三者的間距就是同一個 gap，
-    不用推算、也不會因為量到 padding box 還是 border box 而差 2px。
+    這一層是 flex column：棋盤 → gap 20px → 步驟提示，整欄靠下，
+    下邊距留控制盤高度 + 12px。不用推算、也不會因為量到 padding box 還是 border box 而差 2px。
+
+    上下不等距是刻意的：步驟標上方要放得下偶爾出現的提示句（「等對手下」，13px 高＋3px），
+    先前兩邊都是 16px，那句擠不下、上緣被棋盤的外框蓋掉（2026-10-22 Zach 在 iPhone 上看到）。
+    多給上面 4px、從下面拿回來，總高不變，棋盤一點都不用縮；步驟標本來就是控制盤的標籤，靠近它也對。
 
     先前是「棋盤靠下 + 一個算出來的大 padding」配「提示絕對定位掛在
     控制盤上緣」—— 兩套機制湊出來的距離，改一邊就要記得改另一邊。
@@ -298,7 +300,7 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
     橫式維持靠右貼著控制盤（提示在控制盤內部，是那一欄的標籤）。
   */
   const boardArea = padGone ? ''
-    : 'coarse:justify-end coarse:gap-4 coarse:pb-[calc(var(--wall-pad-h)+1rem)] '
+    : 'coarse:justify-end coarse:gap-5 coarse:pb-[calc(var(--wall-pad-h)+0.75rem)] '
       + 'coarse-land:items-end coarse-land:justify-center coarse-land:gap-0 coarse-land:pb-0 '
       + 'coarse-land:pr-[calc(var(--wall-pad-w)+0.75rem)]';
 
@@ -321,7 +323,7 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
         iPhone SE（375x667）實測：只扣 9rem 的話棋盤落在 y=64，
         而按鈕到 y=72，整整壓過去 8px。
 
-        直式：控制盤 + 16px + 步驟標 26px + 16px + 按鈕 72px + 呼吸 18px ≈ 9.25rem
+        直式：控制盤 + 12px + 步驟標 26px + 20px + 按鈕 72px + 呼吸 18px ≈ 9.25rem
         橫式：控制盤 + 按鈕欄 72px + 左右呼吸 40px ≈ 7rem
         大螢幕不受影響（那邊是 90dvw / 86dvh 先封頂）。
       */
@@ -1024,7 +1026,7 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
             />
           </div>
 
-          {/* 直式的步驟提示：排在棋盤與控制盤之間的文件流上，上下各 16px（外層的 gap）。
+          {/* 直式的步驟提示：排在棋盤與控制盤之間的文件流上，離棋盤 20px（外層的 gap）、離控制盤 12px。
               橫式那顆在控制盤內部（見 WallDirectionPad），所以這顆只在直式顯示。 */}
           {!padGone && state.currentPlayer && (
             <TurnGuide

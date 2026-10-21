@@ -68,7 +68,7 @@ export default function TurnGuide({ placing, myTurn, selected, onWallStep, break
     <div
       /*
         ── 直式：排在文件流裡 ──────────────────────────────────────
-        由 PlayClient 夾在棋盤與控制盤之間，距離就是那一層的 gap（16px），
+        由 PlayClient 夾在棋盤與控制盤之間，離棋盤是那一層的 gap（20px），
         不用任何定位、也不用算。先前是絕對定位在控制盤上緣往外掛，
         上下距離得自己推算 —— 而 `bottom-full` 量的是 padding box、
         那條看得見的線卻是 2px 的邊框，光這一點就錯了 2px。
@@ -78,11 +78,13 @@ export default function TurnGuide({ placing, myTurn, selected, onWallStep, break
 
         提示句一律絕對定位浮在步驟標外側（直式上方、橫式下方）——
         它有時候在、有時候不在，排進流裡會把步驟標推來推去。
+        直式時它佔的是棋盤與步驟標之間那 20px：行高 13px＋下距 3px，離棋盤外框還有 4px。
+        先前是預設行高 16.5px＋4px，比當時的 16px 間距還高，字的上緣被棋盤外框蓋掉。
       */
       className={`pointer-events-none relative z-10 flex flex-col items-center ${className}`}
     >
       {aside && (
-        <span className="absolute bottom-full mb-1 whitespace-nowrap text-[11px] font-bold text-ink-soft
+        <span className="absolute bottom-full mb-[3px] whitespace-nowrap text-[11px] font-bold leading-[13px] text-ink-soft
                          landscape:bottom-auto landscape:top-full landscape:mb-0 landscape:mt-1">
           {aside}
         </span>
