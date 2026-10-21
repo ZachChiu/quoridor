@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react';
-import { GiHut, GiTabletopPlayers } from 'react-icons/gi';
+import { GiHouse, GiTabletopPlayers } from 'react-icons/gi';
 import TutorialBoard from '@/components/TutorialBoard';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import TransitionLink from '@/components/TransitionLink';
@@ -65,7 +65,7 @@ export default function RulesView({ locale }: { locale: Locale }) {
             aria-label={t.nav.backHome}
             className="grid size-11 shrink-0 place-items-center rounded-full bg-primary-50 text-xl text-tile-ink shadow-[0_1px_6px_rgba(20,16,16,0.12)] ring-2 ring-tile-ink/10 transition hover:brightness-95"
           >
-            <GiHut />
+            <GiHouse />
           </TransitionLink>
           <span className="min-w-0 flex-1 truncate text-sm font-black">{t.rules.metaTitle}</span>
           <LanguageSwitcher />

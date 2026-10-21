@@ -4,6 +4,8 @@ import type { Player } from "@/types/chessboard";
 import { useGameText } from '@/i18n/LocaleProvider';
 
 interface Props {
+  /** 這台裝置上的人坐哪一方（連線、跟 AI 下）。本機對戰沒有 */
+  me?: PlayerKey;
   isLock: boolean;
   currentPlayer: Player;
   uniqTerritories: { A: string[]; B: string[], C?: string[] };
@@ -37,8 +39,12 @@ interface Props {
  *
  * 用 CSS 斷點而不是 prop，是因為這站是靜態匯出：JS 判斷裝置要等
  * hydration 之後才成立，手機重整會先畫一次桌機版再跳。
+ *
+ * ── 自己那塊標「你」 ──────────────────────────────────────────────
+ * 連線時兩邊原本都看不出自己是紅是藍（Zach 10/22 回報）。桌機寫在長條裡（「你 · 已佔領」），
+ * 手指直式寫在磚的正下方、橫式寫在右邊（磚是直排的，下面緊接著下一塊）。
  */
-export default React.memo(function GameStatus({ isLock, currentPlayer, uniqTerritories, playersNum }: Props) {
+export default React.memo(function GameStatus({ me, isLock, currentPlayer, uniqTerritories, playersNum }: Props) {
   const g = useGameText();
   const players: PlayerKey[] = playersNum === 3 ? ['A', 'B', 'C'] : ['A', 'B'];
 
@@ -54,7 +60,7 @@ export default React.memo(function GameStatus({ isLock, currentPlayer, uniqTerri
         return (
           <div
             key={p}
-            className={`flex items-center justify-between gap-4 rounded-2xl px-[18px] py-3 text-[15px]
+            className={`relative flex items-center justify-between gap-4 rounded-2xl px-[18px] py-3 text-[15px]
                         font-black tabular-nums transition-all
                         coarse:justify-center coarse:gap-0 coarse:rounded-[14px] coarse:p-0
                         coarse-land:h-12 coarse-land:w-[52px]
@@ -63,7 +69,13 @@ export default React.memo(function GameStatus({ isLock, currentPlayer, uniqTerri
             }`}
             style={{ backgroundColor: playerVar(p) }}
           >
-            <span className="coarse:hidden">{g.status.claimed}</span>
+            <span className="coarse:hidden">{p === me ? `${g.status.you} · ${g.status.claimed}` : g.status.claimed}</span>
+            {p === me && (
+              <span className="absolute left-1/2 top-full mt-1 hidden -translate-x-1/2 whitespace-nowrap text-[11px] font-black leading-none text-ink-soft
+                               coarse:block coarse-land:left-full coarse-land:top-1/2 coarse-land:ml-1.5 coarse-land:mt-0 coarse-land:-translate-y-1/2 coarse-land:translate-x-0">
+                {g.status.you}
+              </span>
+            )}
             <span className={`leading-none coarse:m-auto coarse:translate-y-[-0.08em]
                               coarse-land:text-[22px] ${active ? 'text-[22px]' : 'text-xl'}`}>
               {uniqTerritories[p]?.length || 0}

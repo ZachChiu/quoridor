@@ -2,14 +2,14 @@
 import { useState, useEffect, useMemo, useCallback, useReducer, useRef } from "react";
 // 小圓鈕與首頁磁磚用同一套圖示（game-icons 實心）——
 // 同一件事在兩個地方長得不一樣，會讓人以為那是兩個不同的東西。
-import { GiHut, GiRuleBook } from "react-icons/gi";
+import { GiHouse, GiRuleBook } from "react-icons/gi";
 import { LuFlag } from "react-icons/lu";
 import Link from 'next/link';
 import Chessboard from "@/components/Chessboard";
 import ChampionModal from "@/components/ChampionModal";
 import GameStatus from "@/components/GameStatus";
 import GameTips from "@/components/GameTips";
-import IconButton from "@/components/IconButton";
+import IconButton, { HOVER_TIP } from "@/components/IconButton";
 import WaitingRoom from "@/components/WaitingRoom";
 import { useAiOpponent } from "@/hook/useAiOpponent";
 import { playerKeys } from "@/game/territory";
@@ -403,6 +403,12 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
     [aiDifficulty, playersNum]
   );
   const isAiTurn = aiPlayers.includes(state.currentPlayer);
+  /*
+    這台裝置上的人坐哪一方：連線是自己的座位、跟 AI 下是 A；本機對戰沒有（大家輪流用同一台）。
+    連線時兩邊原本都看不出自己是紅是藍 —— 控制盤中央甚至畫的是輪到的人（Zach 10/22 回報）。
+    比分上那塊標「你」、電腦版提示寫「紅方（你）」、控制盤中央畫自己的顏色、開場那一下寫「你是藍方」。
+  */
+  const me: PlayerKey | undefined = isOnline ? myPlayerKey ?? undefined : aiDifficulty ? 'A' : undefined;
 
   // 只有輪到我的時候才能操作（遊戲結束、或輪到 AI 時一律鎖定）
   const isMyTurn = useMemo(() => {
@@ -456,7 +462,6 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
       track('game_start', gaBase);
     }
     if (isLock && !prev.ended && once('end')) {
-      const me = isOnline ? myPlayerKey : aiDifficulty ? 'A' : null;
       const tie = outcome.length > 1;
       track('game_end', {
         ...gaBase,
@@ -585,6 +590,7 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
                 y: window.innerHeight / 2,
                 color: assignedKey ? playerVar(assignedKey) : 'rgb(var(--tile-ink))',
                 label: g.play.gameStart,
+                sub: fmt(g.play.youAre, { side: g.players[assignedKey] }),
                 fg: 'rgb(var(--tile-cream))',
                 big: true,
               }, {
@@ -899,7 +905,7 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
                 // 這顆鈕本來就是圓的，圓角給半徑即可 —— 於是它是
                 // 「圓脹大、再縮回圓」，沒有多餘的方轉圓。
                 from: { width: r.width, height: r.height, radius: r.width / 2 },
-                icon: GiHut,
+                icon: GiHouse,
                 // 這顆鈕的圖示只有 24px，寫死 text-7xl 會變成一顆比按鈕
                 // 還大的房子憑空冒出來 —— 量它真正的尺寸。
                 iconSize: iconH,
@@ -920,10 +926,12 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
             if (saveKey) clearSavedGame(saveKey);
             goHome(guardOnTopRef.current);
           }}
-          className="rounded-full bg-primary-50 p-3.5 text-2xl text-tile-ink transition hover:brightness-95 active:scale-95">
-          <GiHut />
+          className="group relative rounded-full bg-primary-50 p-3.5 text-2xl text-tile-ink transition hover:brightness-95 active:scale-95">
+          {/* 簡單的房子（Zach 10/22：茅屋 GiHut 換回 GiHouse）；電腦版 hover 顯示是什麼 */}
+          <GiHouse />
+          <span aria-hidden="true" className={HOVER_TIP}>{g.play.home}</span>
         </button>
-        <IconButton color="bg-primary-50 text-tile-ink" handleClickEvent={handleRuleBtnOpen} label={g.play.howToPlay}>
+        <IconButton color="bg-primary-50 text-tile-ink" handleClickEvent={handleRuleBtnOpen} label={g.play.howToPlay} tip={g.play.howToPlay}>
           <GiRuleBook />
         </IconButton>
       </div>
@@ -931,6 +939,7 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
       {/* 連線模式：等待畫面 */}
       {isOnline && phase === 'waiting' && (
         <WaitingRoom
+          me={me}
           joinedCount={joinedCount}
           totalCount={totalCount}
           onShare={() => setShareModalOpen(true)}
@@ -941,6 +950,7 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
       {(!isOnline || phase === 'playing') && (
         <>
           <GameStatus
+            me={me}
             isLock={isLock}
             currentPlayer={state.currentPlayer}
             uniqTerritories={territories.owned}
@@ -956,6 +966,7 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
             同一件事講兩次只是多一個浮在畫面上的東西。
           */}
           <GameTips
+            me={me}
             isPlacingChess={isPlacing}
             currentPlayer={state.currentPlayer}
             winingStatus={outcome}
@@ -991,6 +1002,7 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
           <div className={`flex flex-1 flex-col items-center justify-center self-stretch ${boardArea}`}>
           <div className={`chessboard-container ${boardBox}`}>
             <Chessboard
+              me={me}
               size={BOARD_SIZE}
               board={state.board}
               verticalWalls={state.verticalWalls}

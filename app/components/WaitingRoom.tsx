@@ -3,8 +3,11 @@ import React from 'react';
 import { LuShare2 } from 'react-icons/lu';
 import { playerVar, type PlayerKey } from '@/config/players';
 import { useGameText } from '@/i18n/LocaleProvider';
+import { fmt } from '@/i18n/content/game';
 
 interface Props {
+  /** 自己的座位 —— 底下寫「紅方（你）」，等人的時候就知道自己是哪一方 */
+  me?: PlayerKey;
   joinedCount: number;
   totalCount: number;
   onShare: () => void;
@@ -33,7 +36,7 @@ const SEATS: PlayerKey[] = ['A', 'B', 'C'];
  * 一起閃是「這裡有東西在動」，依序才讀得出「下一個是這個位子」。
  * 已入座的球：朋友坐下那一刻彈一下，之後輕輕浮動（動畫見 globals.css）。
  */
-const WaitingRoom: React.FC<Props> = ({ joinedCount, totalCount, onShare }) => {
+const WaitingRoom: React.FC<Props> = ({ me, joinedCount, totalCount, onShare }) => {
   const g = useGameText();
   /*
     面板給固定寬度：不給的話它會縮到剛好包住那顆按鈕，左右各只剩一點點，
@@ -64,7 +67,7 @@ const WaitingRoom: React.FC<Props> = ({ joinedCount, totalCount, onShare }) => {
                 />
               )}
               <span className={`text-xs font-bold ${joined ? '' : 'text-ink-soft'}`}>
-                {joined ? g.players[p] : g.share.waiting}
+                {joined ? (p === me ? fmt(g.tips.you, { who: g.players[p] }) : g.players[p]) : g.share.waiting}
               </span>
             </div>
           );

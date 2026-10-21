@@ -30,9 +30,13 @@ export type GameText = {
     breakWall: string; breakPick: string; breakNone: string;
     breakUp: string; breakDown: string; breakLeft: string; breakRight: string;
     hintWait: string;
+    /** 手機擺棋子：✓ 把那顆虛的棋子放下去 */
+    placeHere: string;
   };
   tips: {
     over: string; overWin: string; thinking: string; placing: string; moving: string;
+    /** 連線時輪到自己：「紅方（你）」 */
+    you: string;
     breakLeft: string; breakNone: string;
   };
   champion: {
@@ -56,12 +60,15 @@ export type GameText = {
   breakWall: { heading: string; kicker: string; cancel: string; confirm: string; body: string };
   surrender: { label: string; heading: string; kicker: string; cancel: string; confirm: string; body: string; bodyThree: string };
   leave: { heading: string; kicker: string; body: string; bodyOnline: string; cancel: string; confirm: string };
-  status: { claimed: string };
+  /** you：連線時自己那塊比分底下的「你」 */
+  status: { claimed: string; you: string };
   play: {
     noRoom: string; roomFull: string; playerName: string; connectFail: string;
     noRoomBody: string; roomFullBody: string; connectFailBody: string; reload: string;
     home: string; howToPlay: string; unfinished: string; connecting: string; backHome: string;
     badLink: string; badLinkBody: string; gameStart: string;
+    /** 連線時「你是藍方」：開場那一下與等人的畫面 */
+    youAre: string;
   };
 };
 
@@ -83,11 +90,11 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       heading: '築牆方向', top: '上方', bottom: '下方', left: '左方', right: '右方',
       pick: '選一個方向築牆', pending: '要在{side}築牆', choose: '選擇{side}', confirm: '確定築牆',
     step1: '① 移動', step2: '② 築牆', stepPlace: '放棋子', remain: '還可走 {n} 格', noMove: '不移動也可以', done: '完成這一步', pickPiece: '選一顆棋子', switchPiece: '換下一顆棋子', redo: '重來這一步', moveUp: '往上移動', moveDown: '往下移動', moveLeft: '往左移動', moveRight: '往右移動', wallUp: '在上方築牆', wallDown: '在下方築牆', wallLeft: '在左方築牆', wallRight: '在右方築牆', hintMove: '先移動棋子（或不動）', hintWall: '再選一道牆', hintReady: '按 ✓ 完成這一步',
-    breakWall: '破牆', breakUp: '打破上方的牆', breakDown: '打破下方的牆', breakLeft: '打破左方的牆', breakRight: '打破右方的牆', breakPick: '選一道要打破的牆', breakNone: '這一局的破牆已經用掉了', hintWait: '等對手下',
+    breakWall: '破牆', breakUp: '打破上方的牆', breakDown: '打破下方的牆', breakLeft: '打破左方的牆', breakRight: '打破右方的牆', breakPick: '選一道要打破的牆', breakNone: '這一局的破牆已經用掉了', hintWait: '等對手下', placeHere: '放在這裡',
     },
     tips: {
       over: '遊戲結束！', overWin: '遊戲結束！{names}勝利！', thinking: '{who} 思考中…',
-      placing: '{who} · 放置棋子', moving: '{who} · 移動棋子',
+      placing: '{who} · 放置棋子', moving: '{who} · 移動棋子', you: '{who}（你）',
       breakLeft: '還有一次破牆機會', breakNone: '沒有破牆機會',
     },
     champion: {
@@ -133,7 +140,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       body: '這一局到此結束，你判負。',
       bodyThree: '這一局到此結束，你判負。另外兩位照目前的地盤決定勝負。',
     },
-    status: { claimed: '已佔領' },
+    status: { claimed: '已佔領', you: '你' },
     play: {
       noRoom: '不存在的對局', roomFull: '房間已滿，無法加入', playerName: '玩家 {id}',
       connectFail: '連不上房間',
@@ -142,7 +149,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       connectFailBody: '可能是網路不穩。重新整理再試一次——已經下的每一手都存在房間裡。',
       reload: '重新整理', home: '回首頁', howToPlay: '遊玩方式',
       unfinished: '未結束', connecting: '正在連線…', backHome: '返回首頁',
-      badLink: '這個連結沒有指向任何對局', gameStart: '遊戲開始',
+      badLink: '這個連結沒有指向任何對局', gameStart: '遊戲開始', youAre: '你是{side}',
       badLinkBody: '邀請連結可能被截斷了。跟對方要一次完整的連結，或回首頁開一間新的。',
     },
   },
@@ -160,11 +167,11 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       heading: 'Wall direction', top: 'above', bottom: 'below', left: 'the left', right: 'the right',
       pick: 'Pick a direction', pending: 'Building {side}', choose: 'Choose {side}', confirm: 'Build the wall',
     step1: '1 Move', step2: '2 Wall', stepPlace: 'Place a piece', remain: '{n} squares left', noMove: 'staying put is fine', done: 'Finish this turn', pickPiece: 'Pick a piece', switchPiece: 'Switch to your next piece', redo: 'Start this turn over', moveUp: 'Move up', moveDown: 'Move down', moveLeft: 'Move left', moveRight: 'Move right', wallUp: 'Build a wall above', wallDown: 'Build a wall below', wallLeft: 'Build a wall to the left', wallRight: 'Build a wall to the right', hintMove: 'Move your piece (or stay put)', hintWall: 'Now pick a wall', hintReady: 'Press ✓ to finish',
-    breakWall: 'Break a wall', breakUp: 'Break the wall above', breakDown: 'Break the wall below', breakLeft: 'Break the wall to the left', breakRight: 'Break the wall to the right', breakPick: 'Pick a wall to break', breakNone: 'You have used your wall break', hintWait: 'Waiting for your opponent',
+    breakWall: 'Break a wall', breakUp: 'Break the wall above', breakDown: 'Break the wall below', breakLeft: 'Break the wall to the left', breakRight: 'Break the wall to the right', breakPick: 'Pick a wall to break', breakNone: 'You have used your wall break', hintWait: 'Waiting for your opponent', placeHere: 'Place here',
     },
     tips: {
       over: 'Game over', overWin: 'Game over — {names} wins!', thinking: '{who} is thinking…',
-      placing: '{who} · place a piece', moving: '{who} · move a piece',
+      placing: '{who} · place a piece', moving: '{who} · move a piece', you: '{who} (you)',
       breakLeft: 'One wall break left', breakNone: 'No wall break left',
     },
     champion: {
@@ -210,7 +217,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       body: 'The game ends here and you lose.',
       bodyThree: 'The game ends here and you lose. The other two are ranked by the territory they hold right now.',
     },
-    status: { claimed: 'Territory' },
+    status: { claimed: 'Territory', you: 'You' },
     play: {
       noRoom: 'No such game', roomFull: 'This room is full', playerName: 'Player {id}',
       connectFail: 'Could not reach the room',
@@ -219,7 +226,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       connectFailBody: 'Your connection may be unstable. Reload and try again — every move so far is saved in the room.',
       reload: 'Reload', home: 'Home', howToPlay: 'How to play',
       unfinished: 'unfinished', connecting: 'Connecting…', backHome: 'Back to home',
-      badLink: 'This link does not point to a game', gameStart: 'Game start',
+      badLink: 'This link does not point to a game', gameStart: 'Game start', youAre: "You're {side}",
       badLinkBody: 'The invite link may have been cut short. Ask for the full link again, or go home and open a new room.',
     },
   },
@@ -237,11 +244,11 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       heading: '壁の向き', top: '上', bottom: '下', left: '左', right: '右',
       pick: '向きを選んでください', pending: '{side}に壁を作ります', choose: '{side}を選ぶ', confirm: '壁を作る',
     step1: '① 移動', step2: '② 壁', stepPlace: '駒を置く', remain: 'あと {n} マス', noMove: '動かさなくてもよい', done: 'この手を確定', pickPiece: '駒を選ぶ', switchPiece: '次の駒に切り替える', redo: 'この手をやり直す', moveUp: '上へ移動', moveDown: '下へ移動', moveLeft: '左へ移動', moveRight: '右へ移動', wallUp: '上に壁を作る', wallDown: '下に壁を作る', wallLeft: '左に壁を作る', wallRight: '右に壁を作る', hintMove: 'まず駒を動かす（動かさなくてもよい）', hintWall: '次に壁を選ぶ', hintReady: '✓ で確定',
-    breakWall: '壁を壊す', breakUp: '上の壁を壊す', breakDown: '下の壁を壊す', breakLeft: '左の壁を壊す', breakRight: '右の壁を壊す', breakPick: '壊す壁を選ぶ', breakNone: '壁を壊す回数は使い切りました', hintWait: '相手の番です',
+    breakWall: '壁を壊す', breakUp: '上の壁を壊す', breakDown: '下の壁を壊す', breakLeft: '左の壁を壊す', breakRight: '右の壁を壊す', breakPick: '壊す壁を選ぶ', breakNone: '壁を壊す回数は使い切りました', hintWait: '相手の番です', placeHere: 'ここに置く',
     },
     tips: {
       over: 'ゲーム終了', overWin: 'ゲーム終了 —— {names}の勝ち！', thinking: '{who} が考えています…',
-      placing: '{who} · 駒を置く', moving: '{who} · 駒を動かす',
+      placing: '{who} · 駒を置く', moving: '{who} · 駒を動かす', you: '{who}（あなた）',
       breakLeft: '壁を壊せる回数：あと1回', breakNone: '壁を壊せる回数：なし',
     },
     champion: {
@@ -287,7 +294,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       body: 'この一局はここで終わり、あなたの負けになります。',
       bodyThree: 'この一局はここで終わり、あなたの負けになります。残りの2人は今の陣地で勝敗を決めます。',
     },
-    status: { claimed: '陣地' },
+    status: { claimed: '陣地', you: 'あなた' },
     play: {
       noRoom: 'その対局は存在しません', roomFull: 'この部屋は満員です', playerName: 'プレイヤー {id}',
       connectFail: '部屋に接続できませんでした',
@@ -296,7 +303,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       connectFailBody: '通信が不安定な可能性があります。再読み込みしてもう一度お試しください。これまでの手はすべて部屋に保存されています。',
       reload: '再読み込み', home: 'ホーム', howToPlay: '遊び方',
       unfinished: '未完了', connecting: '接続中…', backHome: 'ホームに戻る',
-      badLink: 'このリンクはどの対局も指していません', gameStart: 'ゲームスタート',
+      badLink: 'このリンクはどの対局も指していません', gameStart: 'ゲームスタート', youAre: 'あなたは{side}',
       badLinkBody: '招待リンクが途中で切れている可能性があります。完全なリンクをもう一度もらうか、ホームから新しい部屋を作ってください。',
     },
   },
@@ -314,11 +321,11 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       heading: '벽 방향', top: '위', bottom: '아래', left: '왼쪽', right: '오른쪽',
       pick: '방향을 고르세요', pending: '{side}에 벽을 세웁니다', choose: '{side} 선택', confirm: '벽 세우기',
     step1: '① 이동', step2: '② 벽', stepPlace: '말 놓기', remain: '{n}칸 남음', noMove: '움직이지 않아도 됩니다', done: '이 수 완료', pickPiece: '말 고르기', switchPiece: '다음 말로 바꾸기', redo: '이 수 다시', moveUp: '위로 이동', moveDown: '아래로 이동', moveLeft: '왼쪽으로 이동', moveRight: '오른쪽으로 이동', wallUp: '위에 벽 세우기', wallDown: '아래에 벽 세우기', wallLeft: '왼쪽에 벽 세우기', wallRight: '오른쪽에 벽 세우기', hintMove: '먼저 말을 움직이세요 (안 움직여도 됩니다)', hintWall: '이제 벽을 고르세요', hintReady: '✓ 를 누르면 완료',
-    breakWall: '벽 부수기', breakUp: '위쪽 벽 부수기', breakDown: '아래쪽 벽 부수기', breakLeft: '왼쪽 벽 부수기', breakRight: '오른쪽 벽 부수기', breakPick: '부술 벽을 고르세요', breakNone: '벽 부수기를 이미 사용했습니다', hintWait: '상대 차례입니다',
+    breakWall: '벽 부수기', breakUp: '위쪽 벽 부수기', breakDown: '아래쪽 벽 부수기', breakLeft: '왼쪽 벽 부수기', breakRight: '오른쪽 벽 부수기', breakPick: '부술 벽을 고르세요', breakNone: '벽 부수기를 이미 사용했습니다', hintWait: '상대 차례입니다', placeHere: '여기에 놓기',
     },
     tips: {
       over: '게임 종료', overWin: '게임 종료 —— {names} 승리!', thinking: '{who} 생각 중…',
-      placing: '{who} · 말 놓기', moving: '{who} · 말 이동',
+      placing: '{who} · 말 놓기', moving: '{who} · 말 이동', you: '{who} (나)',
       breakLeft: '벽 부수기 1회 남음', breakNone: '벽 부수기 없음',
     },
     champion: {
@@ -364,7 +371,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       body: '이번 판은 여기서 끝나고 패배로 처리됩니다.',
       bodyThree: '이번 판은 여기서 끝나고 패배로 처리됩니다. 나머지 두 사람은 현재 영역으로 승부를 가립니다.',
     },
-    status: { claimed: '영역' },
+    status: { claimed: '영역', you: '나' },
     play: {
       noRoom: '존재하지 않는 대국입니다', roomFull: '방이 가득 찼습니다', playerName: '플레이어 {id}',
       connectFail: '방에 연결하지 못했습니다',
@@ -373,7 +380,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       connectFailBody: '네트워크가 불안정할 수 있습니다. 새로고침 후 다시 시도해 주세요. 지금까지의 수는 모두 방에 저장되어 있습니다.',
       reload: '새로고침', home: '홈', howToPlay: '플레이 방법',
       unfinished: '미완료', connecting: '연결 중…', backHome: '홈으로',
-      badLink: '이 링크는 어떤 대국도 가리키지 않습니다', gameStart: '게임 시작',
+      badLink: '이 링크는 어떤 대국도 가리키지 않습니다', gameStart: '게임 시작', youAre: '내 색은 {side}',
       badLinkBody: '초대 링크가 중간에 잘렸을 수 있습니다. 전체 링크를 다시 받거나, 홈에서 새 방을 만들어 주세요.',
     },
   },
@@ -395,11 +402,11 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       wallUp: '在上方筑墙', wallDown: '在下方筑墙', wallLeft: '在左侧筑墙', wallRight: '在右侧筑墙',
       hintMove: '先移动棋子（也可以不动）', hintWall: '再选一道墙', hintReady: '按 ✓ 完成这一步',
       breakWall: '破墙', breakUp: '拆掉上方的墙', breakDown: '拆掉下方的墙', breakLeft: '拆掉左侧的墙', breakRight: '拆掉右侧的墙',
-      breakPick: '选一道要拆掉的墙', breakNone: '这一局的破墙机会已经用掉了', hintWait: '等对手下',
+      breakPick: '选一道要拆掉的墙', breakNone: '这一局的破墙机会已经用掉了', hintWait: '等对手下', placeHere: '放在这里',
     },
     tips: {
       over: '游戏结束！', overWin: '游戏结束！{names}获胜！', thinking: '{who} 思考中…',
-      placing: '{who} · 放棋子', moving: '{who} · 移动棋子',
+      placing: '{who} · 放棋子', moving: '{who} · 移动棋子', you: '{who}（你）',
       breakLeft: '还有一次破墙机会', breakNone: '没有破墙机会',
     },
     champion: {
@@ -445,7 +452,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       body: '这一局到此结束，判你输。',
       bodyThree: '这一局到此结束，判你输。另外两位按目前的地盘决定胜负。',
     },
-    status: { claimed: '已占领' },
+    status: { claimed: '已占领', you: '你' },
     play: {
       noRoom: '对局不存在', roomFull: '房间已满，无法加入', playerName: '玩家 {id}',
       connectFail: '连不上房间',
@@ -454,7 +461,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       connectFailBody: '可能是网络不稳定。刷新再试一次，已经下过的每一步都保存在房间里。',
       reload: '刷新', home: '返回首页', howToPlay: '玩法说明',
       unfinished: '未结束', connecting: '正在连接…', backHome: '返回首页',
-      badLink: '这个链接没有指向任何对局', gameStart: '游戏开始',
+      badLink: '这个链接没有指向任何对局', gameStart: '游戏开始', youAre: '你是{side}',
       badLinkBody: '邀请链接可能被截断了。请对方再发一次完整的链接，或者回首页新开一个房间。',
     },
   },
@@ -477,11 +484,11 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       wallUp: 'สร้างกำแพงด้านบน', wallDown: 'สร้างกำแพงด้านล่าง', wallLeft: 'สร้างกำแพงด้านซ้าย', wallRight: 'สร้างกำแพงด้านขวา',
       hintMove: 'เดินหมากก่อน (หรือไม่เดินก็ได้)', hintWall: 'แล้วเลือกกำแพงหนึ่งด้าน', hintReady: 'กด ✓ เพื่อจบตานี้',
       breakWall: 'ทำลายกำแพง', breakUp: 'ทำลายกำแพงด้านบน', breakDown: 'ทำลายกำแพงด้านล่าง', breakLeft: 'ทำลายกำแพงด้านซ้าย', breakRight: 'ทำลายกำแพงด้านขวา',
-      breakPick: 'เลือกกำแพงที่จะทำลาย', breakNone: 'ใช้สิทธิ์ทำลายกำแพงของเกมนี้ไปแล้ว', hintWait: 'รออีกฝ่ายเดิน',
+      breakPick: 'เลือกกำแพงที่จะทำลาย', breakNone: 'ใช้สิทธิ์ทำลายกำแพงของเกมนี้ไปแล้ว', hintWait: 'รออีกฝ่ายเดิน', placeHere: 'วางตรงนี้',
     },
     tips: {
       over: 'จบเกม!', overWin: 'จบเกม! {names}ชนะ!', thinking: '{who} กำลังคิด…',
-      placing: '{who} · วางหมาก', moving: '{who} · เดินหมาก',
+      placing: '{who} · วางหมาก', moving: '{who} · เดินหมาก', you: '{who} (คุณ)',
       breakLeft: 'ยังทำลายกำแพงได้อีก 1 ครั้ง', breakNone: 'ไม่มีสิทธิ์ทำลายกำแพงแล้ว',
     },
     champion: {
@@ -527,7 +534,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       body: 'เกมนี้จบลงที่นี่ และคุณเป็นฝ่ายแพ้',
       bodyThree: 'เกมนี้จบลงที่นี่ และคุณเป็นฝ่ายแพ้ ส่วนอีกสองคนจะตัดสินแพ้ชนะจากพื้นที่ที่มีอยู่ตอนนี้',
     },
-    status: { claimed: 'พื้นที่' },
+    status: { claimed: 'พื้นที่', you: 'คุณ' },
     play: {
       noRoom: 'ไม่พบเกมนี้', roomFull: 'ห้องเต็มแล้ว เข้าร่วมไม่ได้', playerName: 'ผู้เล่น {id}',
       connectFail: 'เชื่อมต่อห้องไม่ได้',
@@ -536,7 +543,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       connectFailBody: 'อินเทอร์เน็ตอาจไม่เสถียร ลองรีเฟรชอีกครั้ง ทุกตาที่เล่นไปแล้วถูกบันทึกไว้ในห้อง',
       reload: 'รีเฟรช', home: 'กลับหน้าแรก', howToPlay: 'วิธีเล่น',
       unfinished: 'ยังไม่จบ', connecting: 'กำลังเชื่อมต่อ…', backHome: 'กลับหน้าแรก',
-      badLink: 'ลิงก์นี้ไม่ได้ชี้ไปยังเกมใด', gameStart: 'เริ่มเกม',
+      badLink: 'ลิงก์นี้ไม่ได้ชี้ไปยังเกมใด', gameStart: 'เริ่มเกม', youAre: 'คุณคือ{side}',
       badLinkBody: 'ลิงก์เชิญอาจถูกตัด ขอลิงก์ฉบับเต็มจากอีกฝ่ายอีกครั้ง หรือกลับหน้าแรกเพื่อสร้างห้องใหม่',
     },
   },
