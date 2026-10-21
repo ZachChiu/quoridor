@@ -40,9 +40,11 @@ interface Props {
  * 用 CSS 斷點而不是 prop，是因為這站是靜態匯出：JS 判斷裝置要等
  * hydration 之後才成立，手機重整會先畫一次桌機版再跳。
  *
- * ── 自己那塊標「你」 ──────────────────────────────────────────────
- * 連線時兩邊原本都看不出自己是紅是藍（Zach 10/22 回報）。桌機寫在長條裡（「你 · 已佔領」），
- * 手指直式寫在磚的正下方、橫式寫在右邊（磚是直排的，下面緊接著下一塊）。
+ * ── 自己那塊多一圈框 ──────────────────────────────────────────────
+ * 連線時兩邊原本都看不出自己是紅是藍（Zach 10/22 回報）。試過在磚底下寫「你」，太直白；
+ * Zach 從六種做法裡選了這個：自己那塊外面一圈自己的顏色，中間留一道縫（outline＋offset，縫透出頁面底色）。
+ * 輪到誰照舊是「那塊變大」—— 框講「哪塊是你」、大小講「輪到誰」，各講一件事。
+ * 塊與塊之間的距離加到 12px，框才不會貼到隔壁那塊。讀屏另外念「你」。
  */
 export default React.memo(function GameStatus({ me, isLock, currentPlayer, uniqTerritories, playersNum }: Props) {
   const g = useGameText();
@@ -50,10 +52,10 @@ export default React.memo(function GameStatus({ me, isLock, currentPlayer, uniqT
 
   return (
     <div
-      className="fixed right-5 top-5 z-40 flex flex-col items-end gap-2
+      className="fixed right-5 top-5 z-40 flex flex-col items-end gap-3
                  coarse:flex-row coarse:items-center
                  coarse-land:bottom-5 coarse-land:left-5 coarse-land:right-auto coarse-land:top-auto
-                 coarse-land:flex-col coarse-land:items-start coarse-land:gap-1.5"
+                 coarse-land:flex-col coarse-land:items-start coarse-land:gap-3"
     >
       {players.map((p) => {
         const active = !isLock && currentPlayer === p;
@@ -67,15 +69,13 @@ export default React.memo(function GameStatus({ me, isLock, currentPlayer, uniqT
                         ${PLAYER_ON[p]} ${active ? 'animate-active-bar' : ''} ${
               active ? 'w-40 coarse:h-12 coarse:w-14' : 'w-[8.75rem] coarse:h-11 coarse:w-12'
             }`}
-            style={{ backgroundColor: playerVar(p) }}
+            style={{
+              backgroundColor: playerVar(p),
+              ...(p === me ? { outline: `3px solid ${playerVar(p)}`, outlineOffset: '3px' } : null),
+            }}
           >
-            <span className="coarse:hidden">{p === me ? `${g.status.you} · ${g.status.claimed}` : g.status.claimed}</span>
-            {p === me && (
-              <span className="absolute left-1/2 top-full mt-1 hidden -translate-x-1/2 whitespace-nowrap text-[11px] font-black leading-none text-ink-soft
-                               coarse:block coarse-land:left-full coarse-land:top-1/2 coarse-land:ml-1.5 coarse-land:mt-0 coarse-land:-translate-y-1/2 coarse-land:translate-x-0">
-                {g.status.you}
-              </span>
-            )}
+            <span className="coarse:hidden">{g.status.claimed}</span>
+            {p === me && <span className="sr-only">{g.status.you}</span>}
             <span className={`leading-none coarse:m-auto coarse:translate-y-[-0.08em]
                               coarse-land:text-[22px] ${active ? 'text-[22px]' : 'text-xl'}`}>
               {uniqTerritories[p]?.length || 0}

@@ -3,10 +3,9 @@ import React from 'react';
 import { LuShare2 } from 'react-icons/lu';
 import { playerVar, type PlayerKey } from '@/config/players';
 import { useGameText } from '@/i18n/LocaleProvider';
-import { fmt } from '@/i18n/content/game';
 
 interface Props {
-  /** 自己的座位 —— 底下寫「紅方（你）」，等人的時候就知道自己是哪一方 */
+  /** 自己的座位 —— 那顆多一圈框（跟對局中比分的標示一樣），等人的時候就知道自己是哪一方 */
   me?: PlayerKey;
   joinedCount: number;
   totalCount: number;
@@ -57,7 +56,8 @@ const WaitingRoom: React.FC<Props> = ({ me, joinedCount, totalCount, onShare }) 
               {joined ? (
                 // 外層浮動、內層彈跳：兩個都動 transform，分開才不會互相蓋掉
                 <div className="animate-seat-idle" style={{ animationDelay: `${i * 0.3}s` }}>
-                  <div className="animate-seat-join size-12 rounded-full" style={{ backgroundColor: playerVar(p) }} />
+                  <div className="animate-seat-join size-12 rounded-full"
+                    style={{ backgroundColor: playerVar(p), ...(p === me ? { outline: `3px solid ${playerVar(p)}`, outlineOffset: '3px' } : null) }} />
                 </div>
               ) : (
                 <div
@@ -67,7 +67,8 @@ const WaitingRoom: React.FC<Props> = ({ me, joinedCount, totalCount, onShare }) 
                 />
               )}
               <span className={`text-xs font-bold ${joined ? '' : 'text-ink-soft'}`}>
-                {joined ? (p === me ? fmt(g.tips.you, { who: g.players[p] }) : g.players[p]) : g.share.waiting}
+                {joined ? g.players[p] : g.share.waiting}
+                {joined && p === me && <span className="sr-only">（{g.status.you}）</span>}
               </span>
             </div>
           );

@@ -6,7 +6,7 @@ import { useGameText } from '@/i18n/LocaleProvider';
 import { fmt } from '@/i18n/content/game';
 
 interface Props {
-  /** 這台裝置上的人坐哪一方（連線、跟 AI 下）。輪到他時寫「紅方（你）」 */
+  /** 這台裝置上的人坐哪一方（連線、跟 AI 下）。輪到他時寫「輪到你了」而不是「紅方」 */
   me?: PlayerKey;
   isPlacingChess: boolean;
   currentPlayer: Player;
@@ -67,7 +67,7 @@ export default React.memo(function GameTips({
       const names = winingStatus.map(w => g.players[w as PlayerKey]).filter(Boolean);
       return winingStatus[0] === 'draw' ? g.tips.over : fmt(g.tips.overWin, { names: names.join(g.players.and) });
     }
-    const who = p ? (p === me ? fmt(g.tips.you, { who: g.players[p] }) : g.players[p]) : '';
+    const who = p ? (p === me ? g.tips.yourTurn : g.players[p]) : '';
     if (aiThinking) return fmt(g.tips.thinking, { who });
     if (isPlacingChess) return fmt(g.tips.placing, { who });
     // 還沒選棋子就先講「移動棋子」；選了之後改報還剩幾格，走完再改報該蓋牆了

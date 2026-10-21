@@ -2,8 +2,8 @@
 import { useState, useEffect, useMemo, useCallback, useReducer, useRef } from "react";
 // 小圓鈕與首頁磁磚用同一套圖示（game-icons 實心）——
 // 同一件事在兩個地方長得不一樣，會讓人以為那是兩個不同的東西。
-import { GiHouse, GiRuleBook } from "react-icons/gi";
-import { LuFlag } from "react-icons/lu";
+import { GiRuleBook } from "react-icons/gi";
+import { LuFlag, LuHouse } from "react-icons/lu";
 import Link from 'next/link';
 import Chessboard from "@/components/Chessboard";
 import ChampionModal from "@/components/ChampionModal";
@@ -406,7 +406,7 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
   /*
     這台裝置上的人坐哪一方：連線是自己的座位、跟 AI 下是 A；本機對戰沒有（大家輪流用同一台）。
     連線時兩邊原本都看不出自己是紅是藍 —— 控制盤中央甚至畫的是輪到的人（Zach 10/22 回報）。
-    比分上那塊標「你」、電腦版提示寫「紅方（你）」、控制盤中央畫自己的顏色、開場那一下寫「你是藍方」。
+    比分上自己那塊多一圈框、電腦版輪到自己時寫「輪到你了」、控制盤中央畫自己的顏色、開場那一下寫「你是藍方」。
   */
   const me: PlayerKey | undefined = isOnline ? myPlayerKey ?? undefined : aiDifficulty ? 'A' : undefined;
 
@@ -905,7 +905,7 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
                 // 這顆鈕本來就是圓的，圓角給半徑即可 —— 於是它是
                 // 「圓脹大、再縮回圓」，沒有多餘的方轉圓。
                 from: { width: r.width, height: r.height, radius: r.width / 2 },
-                icon: GiHouse,
+                icon: LuHouse,
                 // 這顆鈕的圖示只有 24px，寫死 text-7xl 會變成一顆比按鈕
                 // 還大的房子憑空冒出來 —— 量它真正的尺寸。
                 iconSize: iconH,
@@ -927,8 +927,8 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
             goHome(guardOnTopRef.current);
           }}
           className="group relative rounded-full bg-primary-50 p-3.5 text-2xl text-tile-ink transition hover:brightness-95 active:scale-95">
-          {/* 簡單的房子（Zach 10/22：茅屋 GiHut 換回 GiHouse）；電腦版 hover 顯示是什麼 */}
-          <GiHouse />
+          {/* 線條房子 LuHouse（Zach 10/22 從 18 個候選挑的；先前是茅屋 GiHut、再之前是 GiHouse）；電腦版 hover 顯示是什麼 */}
+          <LuHouse />
           <span aria-hidden="true" className={HOVER_TIP}>{g.play.home}</span>
         </button>
         <IconButton color="bg-primary-50 text-tile-ink" handleClickEvent={handleRuleBtnOpen} label={g.play.howToPlay} tip={g.play.howToPlay}>

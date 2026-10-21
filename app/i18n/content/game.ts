@@ -35,8 +35,8 @@ export type GameText = {
   };
   tips: {
     over: string; overWin: string; thinking: string; placing: string; moving: string;
-    /** 連線時輪到自己：「紅方（你）」 */
-    you: string;
+    /** 連線、跟 AI 下時輪到自己：取代「紅方」那幾個字（「輪到你了 · 移動棋子」） */
+    yourTurn: string;
     breakLeft: string; breakNone: string;
   };
   champion: {
@@ -60,7 +60,7 @@ export type GameText = {
   breakWall: { heading: string; kicker: string; cancel: string; confirm: string; body: string };
   surrender: { label: string; heading: string; kicker: string; cancel: string; confirm: string; body: string; bodyThree: string };
   leave: { heading: string; kicker: string; body: string; bodyOnline: string; cancel: string; confirm: string };
-  /** you：連線時自己那塊比分底下的「你」 */
+  /** you：自己那塊比分給讀屏念的「你」（畫面上是一圈框，不寫字） */
   status: { claimed: string; you: string };
   play: {
     noRoom: string; roomFull: string; playerName: string; connectFail: string;
@@ -94,7 +94,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
     },
     tips: {
       over: '遊戲結束！', overWin: '遊戲結束！{names}勝利！', thinking: '{who} 思考中…',
-      placing: '{who} · 放置棋子', moving: '{who} · 移動棋子', you: '{who}（你）',
+      placing: '{who} · 放置棋子', moving: '{who} · 移動棋子', yourTurn: '輪到你了',
       breakLeft: '還有一次破牆機會', breakNone: '沒有破牆機會',
     },
     champion: {
@@ -171,7 +171,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
     },
     tips: {
       over: 'Game over', overWin: 'Game over — {names} wins!', thinking: '{who} is thinking…',
-      placing: '{who} · place a piece', moving: '{who} · move a piece', you: '{who} (you)',
+      placing: '{who} · place a piece', moving: '{who} · move a piece', yourTurn: 'Your turn',
       breakLeft: 'One wall break left', breakNone: 'No wall break left',
     },
     champion: {
@@ -248,7 +248,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
     },
     tips: {
       over: 'ゲーム終了', overWin: 'ゲーム終了 —— {names}の勝ち！', thinking: '{who} が考えています…',
-      placing: '{who} · 駒を置く', moving: '{who} · 駒を動かす', you: '{who}（あなた）',
+      placing: '{who} · 駒を置く', moving: '{who} · 駒を動かす', yourTurn: 'あなたの番',
       breakLeft: '壁を壊せる回数：あと1回', breakNone: '壁を壊せる回数：なし',
     },
     champion: {
@@ -325,7 +325,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
     },
     tips: {
       over: '게임 종료', overWin: '게임 종료 —— {names} 승리!', thinking: '{who} 생각 중…',
-      placing: '{who} · 말 놓기', moving: '{who} · 말 이동', you: '{who} (나)',
+      placing: '{who} · 말 놓기', moving: '{who} · 말 이동', yourTurn: '내 차례',
       breakLeft: '벽 부수기 1회 남음', breakNone: '벽 부수기 없음',
     },
     champion: {
@@ -406,7 +406,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
     },
     tips: {
       over: '游戏结束！', overWin: '游戏结束！{names}获胜！', thinking: '{who} 思考中…',
-      placing: '{who} · 放棋子', moving: '{who} · 移动棋子', you: '{who}（你）',
+      placing: '{who} · 放棋子', moving: '{who} · 移动棋子', yourTurn: '轮到你了',
       breakLeft: '还有一次破墙机会', breakNone: '没有破墙机会',
     },
     champion: {
@@ -488,7 +488,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
     },
     tips: {
       over: 'จบเกม!', overWin: 'จบเกม! {names}ชนะ!', thinking: '{who} กำลังคิด…',
-      placing: '{who} · วางหมาก', moving: '{who} · เดินหมาก', you: '{who} (คุณ)',
+      placing: '{who} · วางหมาก', moving: '{who} · เดินหมาก', yourTurn: 'ตาคุณ',
       breakLeft: 'ยังทำลายกำแพงได้อีก 1 ครั้ง', breakNone: 'ไม่มีสิทธิ์ทำลายกำแพงแล้ว',
     },
     champion: {
