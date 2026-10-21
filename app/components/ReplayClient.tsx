@@ -1,8 +1,7 @@
 'use client';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { GiHut } from 'react-icons/gi';
-import { LuChevronFirst, LuChevronLast, LuChevronLeft, LuChevronRight, LuPause, LuPlay } from 'react-icons/lu';
+import { LuChevronFirst, LuChevronLast, LuChevronLeft, LuChevronRight, LuHouse, LuPause, LuPlay } from 'react-icons/lu';
 import Chessboard from '@/components/Chessboard';
 import GameStatus from '@/components/GameStatus';
 import { BOARD_SIZE, replay } from '@/game/engine';
@@ -123,7 +122,7 @@ export default function ReplayClient() {
     <>
       <Link href={localePath(locale, wallGo())} aria-label={t.nav.backHome}
             className="fixed left-5 top-5 z-50 grid size-12 place-items-center rounded-full bg-primary-50 text-2xl text-tile-ink transition hover:brightness-95">
-        <GiHut />
+        <LuHouse />
       </Link>
 
       <GameStatus

@@ -2,14 +2,14 @@
 import { useState, useEffect, useMemo, useCallback, useReducer, useRef } from "react";
 // 小圓鈕與首頁磁磚用同一套圖示（game-icons 實心）——
 // 同一件事在兩個地方長得不一樣，會讓人以為那是兩個不同的東西。
-import { GiHut, GiRuleBook } from "react-icons/gi";
-import { LuFlag } from "react-icons/lu";
+import { GiRuleBook } from "react-icons/gi";
+import { LuFlag, LuHouse } from "react-icons/lu";
 import Link from 'next/link';
 import Chessboard from "@/components/Chessboard";
 import ChampionModal from "@/components/ChampionModal";
 import GameStatus from "@/components/GameStatus";
 import GameTips from "@/components/GameTips";
-import IconButton from "@/components/IconButton";
+import IconButton, { HOVER_TIP } from "@/components/IconButton";
 import WaitingRoom from "@/components/WaitingRoom";
 import { useAiOpponent } from "@/hook/useAiOpponent";
 import { playerKeys } from "@/game/territory";
@@ -277,9 +277,8 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
 
     ── 對齊 ───────────────────────────────────────────────────────
     直式靠下：留白全部集中到上方，那裡本來就要放按鈕與比分。
-    下邊距 = 控制盤高 + 5rem。那 5rem 裡放步驟標（26px），上下各留 27px ——
-    棋盤下緣、步驟標、控制盤上緣線三者等距。提示句是絕對定位浮在步驟標
-    上方的，不佔這條流，所以有沒有它都不會改變這個距離。
+    棋盤、步驟標、控制盤排成一欄（見下一段的間距）。提示句是絕對定位浮在步驟標
+    上方的，不佔這條流，所以有沒有它都不會改變這個距離 —— 但那段間距要放得下它。
     橫式靠右：貼著控制盤，左下那塊空地讓給比分。
 
     ── 為什麼 coarse 要能蓋掉 md ──────────────────────────────────
@@ -289,9 +288,12 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
   */
   /*
     ── 直式是真的「排在一起」，不是各自定位 ────────────────────────
-    這一層是 flex column：棋盤 → gap 16px → 步驟提示，整欄靠下，
-    下邊距只留控制盤高度 + 16px。於是三者的間距就是同一個 gap，
-    不用推算、也不會因為量到 padding box 還是 border box 而差 2px。
+    這一層是 flex column：棋盤 → gap 20px → 步驟提示，整欄靠下，
+    下邊距留控制盤高度 + 12px。不用推算、也不會因為量到 padding box 還是 border box 而差 2px。
+
+    上下不等距是刻意的：步驟標上方要放得下偶爾出現的提示句（「等對手下」，13px 高＋3px），
+    先前兩邊都是 16px，那句擠不下、上緣被棋盤的外框蓋掉（2026-10-22 Zach 在 iPhone 上看到）。
+    多給上面 4px、從下面拿回來，總高不變，棋盤一點都不用縮；步驟標本來就是控制盤的標籤，靠近它也對。
 
     先前是「棋盤靠下 + 一個算出來的大 padding」配「提示絕對定位掛在
     控制盤上緣」—— 兩套機制湊出來的距離，改一邊就要記得改另一邊。
@@ -299,7 +301,7 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
     橫式維持靠右貼著控制盤（提示在控制盤內部，是那一欄的標籤）。
   */
   const boardArea = padGone ? ''
-    : 'coarse:justify-end coarse:gap-4 coarse:pb-[calc(var(--wall-pad-h)+1rem)] '
+    : 'coarse:justify-end coarse:gap-5 coarse:pb-[calc(var(--wall-pad-h)+0.75rem)] '
       + 'coarse-land:items-end coarse-land:justify-center coarse-land:gap-0 coarse-land:pb-0 '
       + 'coarse-land:pr-[calc(var(--wall-pad-w)+0.75rem)]';
 
@@ -322,7 +324,7 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
         iPhone SE（375x667）實測：只扣 9rem 的話棋盤落在 y=64，
         而按鈕到 y=72，整整壓過去 8px。
 
-        直式：控制盤 + 16px + 步驟標 26px + 16px + 按鈕 72px + 呼吸 18px ≈ 9.25rem
+        直式：控制盤 + 12px + 步驟標 26px + 20px + 按鈕 72px + 呼吸 18px ≈ 9.25rem
         橫式：控制盤 + 按鈕欄 72px + 左右呼吸 40px ≈ 7rem
         大螢幕不受影響（那邊是 90dvw / 86dvh 先封頂）。
       */
@@ -415,6 +417,12 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
     [aiDifficulty, playersNum]
   );
   const isAiTurn = aiPlayers.includes(state.currentPlayer);
+  /*
+    這台裝置上的人坐哪一方：連線是自己的座位、跟 AI 下是 A；本機對戰沒有（大家輪流用同一台）。
+    連線時兩邊原本都看不出自己是紅是藍 —— 控制盤中央甚至畫的是輪到的人（Zach 10/22 回報）。
+    比分上自己那塊多一圈框、電腦版輪到自己時寫「輪到你了」、控制盤中央畫自己的顏色、開場那一下寫「你是藍方」。
+  */
+  const me: PlayerKey | undefined = isOnline ? myPlayerKey ?? undefined : aiDifficulty ? 'A' : undefined;
 
   // 只有輪到我的時候才能操作（遊戲結束、或輪到 AI 時一律鎖定）
   const isMyTurn = useMemo(() => {
@@ -468,7 +476,6 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
       track('game_start', gaBase);
     }
     if (isLock && !prev.ended && once('end')) {
-      const me = isOnline ? myPlayerKey : aiDifficulty ? 'A' : null;
       const tie = outcome.length > 1;
       track('game_end', {
         ...gaBase,
@@ -597,6 +604,7 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
                 y: window.innerHeight / 2,
                 color: assignedKey ? playerVar(assignedKey) : 'rgb(var(--tile-ink))',
                 label: g.play.gameStart,
+                sub: fmt(g.play.youAre, { side: g.players[assignedKey] }),
                 fg: 'rgb(var(--tile-cream))',
                 big: true,
               }, {
@@ -856,7 +864,7 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
 
   // ─── 連線模式：初始化中 / 錯誤 ─────────────────────────────────────────────
   if (isOnline && phase === 'initializing') {
-    return <Connecting label={g.play.connecting} />;
+    return <Connecting label={g.play.connecting} kicker={g.waiting.kicker} />;
   }
 
   if (isOnline && phase === 'error' && error) {
@@ -911,7 +919,7 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
                 // 這顆鈕本來就是圓的，圓角給半徑即可 —— 於是它是
                 // 「圓脹大、再縮回圓」，沒有多餘的方轉圓。
                 from: { width: r.width, height: r.height, radius: r.width / 2 },
-                icon: GiHut,
+                icon: LuHouse,
                 // 這顆鈕的圖示只有 24px，寫死 text-7xl 會變成一顆比按鈕
                 // 還大的房子憑空冒出來 —— 量它真正的尺寸。
                 iconSize: iconH,
@@ -932,10 +940,12 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
             if (saveKey) clearSavedGame(saveKey);
             goHome(guardOnTopRef.current);
           }}
-          className="rounded-full bg-primary-50 p-3.5 text-2xl text-tile-ink transition hover:brightness-95 active:scale-95">
-          <GiHut />
+          className="group relative rounded-full bg-primary-50 p-3.5 text-2xl text-tile-ink transition hover:brightness-95 active:scale-95">
+          {/* 線條房子 LuHouse（Zach 10/22 從 18 個候選挑的；先前是茅屋 GiHut、再之前是 GiHouse）；電腦版 hover 顯示是什麼 */}
+          <LuHouse />
+          <span aria-hidden="true" className={HOVER_TIP}>{g.play.home}</span>
         </button>
-        <IconButton color="bg-primary-50 text-tile-ink" handleClickEvent={handleRuleBtnOpen} label={g.play.howToPlay}>
+        <IconButton color="bg-primary-50 text-tile-ink" handleClickEvent={handleRuleBtnOpen} label={g.play.howToPlay} tip={g.play.howToPlay}>
           <GiRuleBook />
         </IconButton>
       </div>
@@ -943,6 +953,7 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
       {/* 連線模式：等待畫面 */}
       {isOnline && phase === 'waiting' && (
         <WaitingRoom
+          me={me}
           joinedCount={joinedCount}
           totalCount={totalCount}
           onShare={() => setShareModalOpen(true)}
@@ -953,6 +964,7 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
       {(!isOnline || phase === 'playing') && (
         <>
           <GameStatus
+            me={me}
             isLock={isLock}
             currentPlayer={state.currentPlayer}
             uniqTerritories={territories.owned}
@@ -968,6 +980,7 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
             同一件事講兩次只是多一個浮在畫面上的東西。
           */}
           <GameTips
+            me={me}
             isPlacingChess={isPlacing}
             currentPlayer={state.currentPlayer}
             winingStatus={outcome}
@@ -1003,6 +1016,7 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
           <div className={`flex flex-1 flex-col items-center justify-center self-stretch ${boardArea}`}>
           <div className={`chessboard-container ${boardBox}`}>
             <Chessboard
+              me={me}
               size={BOARD_SIZE}
               board={state.board}
               verticalWalls={state.verticalWalls}
@@ -1038,7 +1052,7 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
             />
           </div>
 
-          {/* 直式的步驟提示：排在棋盤與控制盤之間的文件流上，上下各 16px（外層的 gap）。
+          {/* 直式的步驟提示：排在棋盤與控制盤之間的文件流上，離棋盤 20px（外層的 gap）、離控制盤 12px。
               橫式那顆在控制盤內部（見 WallDirectionPad），所以這顆只在直式顯示。 */}
           {!padGone && state.currentPlayer && (
             <TurnGuide

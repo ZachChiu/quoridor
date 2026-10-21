@@ -31,8 +31,22 @@ import TurnGuide from './TurnGuide';
  * 七成畫面。改成直向排在右邊，棋盤才有地方站。
  */
 type Props = {
-  /** 開局擺子階段：整組停用，只顯示提示 */
+  /**
+   * 輪到我擺棋子：方向鍵移動盤面上那顆虛的棋子、✓ 放下去（見下面 placeMovable／onPlaceMove／onPlace），
+   * 其餘（牆、重來、投降、換棋子）停用。
+   */
   placing: boolean;
+  /** 擺棋子時四個方向上還有沒有空格可以移過去 */
+  placeMovable?: Record<Direction, boolean>;
+  onPlaceMove?: (dir: Direction) => void;
+  /** 把虛的那顆放下去 */
+  onPlace?: () => void;
+  /**
+   * 中央那顆棋子的顏色：這台裝置上的人自己的顏色（連線、跟 AI 下）。本機對戰是輪到的人。
+   * 不跟 color（輪到的人）共用 —— 連線時藍方在等紅方，控制盤中央出現紅色棋子，
+   * 看起來像自己是紅方（Zach 10/22 回報）。
+   */
+  pieceColor?: string;
   /** 有沒有選中棋子 */
   selected: boolean;
   movable: Record<Direction, boolean>;
@@ -110,7 +124,7 @@ const CORNER = {
 const DIRS: Direction[] = ['top', 'bottom', 'left', 'right'];
 
 export default function WallDirectionPad({
-  placing, selected, movable, buildable, breakable, breaksLeft,
+  placing, placeMovable, onPlaceMove, onPlace, pieceColor, selected, movable, buildable, breakable, breaksLeft,
   pending, onPick, onMove, onBreak, onConfirm, onRedo, onSurrender, dirty, color, myTurn, remainSteps,
   breakMode, onToggleBreak, onWallStep, canSwitch, onSwitchPiece,
 }: Props) {
@@ -183,9 +197,9 @@ export default function WallDirectionPad({
             <button
               key={`m-${dir}`}
               type="button"
-              disabled={placing || !selected || breakMode || !movable[dir]}
+              disabled={placing ? !placeMovable?.[dir] : !selected || breakMode || !movable[dir]}
               aria-label={moveLabel[dir]}
-              onClick={() => onMove(dir)}
+              onClick={() => (placing ? onPlaceMove?.(dir) : onMove(dir))}
               className={`${MOVE_POS[dir]} grid place-items-center rounded-xl bg-tile-ink/[0.07] text-tile-ink transition enabled:active:scale-95 disabled:opacity-20`}
             >
               <svg viewBox="0 0 24 24" className="size-6" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -231,9 +245,9 @@ export default function WallDirectionPad({
           </button>
           <button
             type="button"
-            disabled={!pending}
-            aria-label={g.pad.done}
-            onClick={onConfirm}
+            disabled={placing ? !onPlace : !pending}
+            aria-label={placing ? g.pad.placeHere : g.pad.done}
+            onClick={placing ? onPlace : onConfirm}
             className={`${CORNER.confirm} grid size-11 place-items-center rounded-xl bg-tile-ink text-2xl text-tile-cream transition enabled:active:scale-95 disabled:opacity-20`}
           >
             <LuCheck />
@@ -297,13 +311,14 @@ export default function WallDirectionPad({
               className="grid size-10 place-items-center rounded-full transition-colors"
               style={{ backgroundColor: canSwitch ? `color-mix(in srgb, ${color} ${selected ? 28 : 16}%, transparent)` : 'transparent' }}
             >
-              {/* 開局擺子時不畫：那時控制盤整組停用，中央浮一顆淡色棋子
-                  看起來像在暗示「要把棋子放在這裡」（Zach 回報，不要）。
-                  其餘時候一律實色，不再用淡色表示「還沒選」—— 淡色棋子
-                  讀起來就是預覽／提示。選了沒選改由外圈的深淺表示。 */}
-              {!placing && (
-                <span className="block size-6 rounded-full" style={{ backgroundColor: color }} />
-              )}
+              {/* 一律畫自己的顏色（pieceColor），實色 —— 不用淡色表示「還沒選」，淡色棋子讀起來是預覽。
+                  選了沒選由外圈的深淺表示；還沒輪到自己（對手的回合、AI 在想）整顆淡下去，跟其他停用的鍵一樣。
+                  先前開局擺子時不畫：那時控制盤整組停用，中央浮一顆淡色棋子像在暗示「放這裡」（Zach 回報）。
+                  現在擺子改成用方向鍵移動盤面上那顆虛的、按 ✓ 放下（Zach 10/22 要的），中央這顆就是要放的那顆。 */}
+              <span
+                className="block size-6 rounded-full transition-opacity"
+                style={{ backgroundColor: pieceColor ?? color, opacity: myTurn ? 1 : 0.35 }}
+              />
             </span>
           </button>
         </div>

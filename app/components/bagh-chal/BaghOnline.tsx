@@ -2,7 +2,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { LuCheck, LuCopy, LuShare2 } from 'react-icons/lu';
-import Connecting from '@/components/Connecting';
 import StatusScreen from '@/components/StatusScreen';
 import { useUser } from '@/contexts/UserContext';
 import { useWebShare, share } from '@/hook/useWebShare';
@@ -144,7 +143,15 @@ function Session({ locale, hash }: { locale: Locale; hash: string }) {
     );
   }
   if (!roomId || !me || !room) {
-    return <BaghFrame variant="play" className="items-center justify-center"><Connecting label={g.play.connecting} /></BaghFrame>;
+    // 不用共用的 Connecting：那是 Wall Go 的紙色面板加紅藍兩顆棋子（v26.10.5），放在虎羊棋裡顏色不對。這裡維持一顆小轉圈加一行字
+    return (
+      <BaghFrame variant="play" className="items-center justify-center">
+        <div className="flex items-center gap-3 text-lg" role="status">
+          <div className="size-4 animate-spin rounded-full border-2 border-tile-ink border-t-transparent" aria-hidden="true" />
+          {g.play.connecting}
+        </div>
+      </BaghFrame>
+    );
   }
 
   if (!room.players?.[other(me)]) {

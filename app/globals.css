@@ -253,6 +253,13 @@ body {
 }
 .animate-seat-idle { animation: seat-idle 2.4s ease-in-out infinite; }
 
+/* 連線中（Connecting）：紅、藍兩顆輪流跳一下（第二顆晚半拍），像在等對方接球 */
+@keyframes connect-hop {
+  0%, 60%, 100% { transform: translateY(0); }
+  30%           { transform: translateY(-14px); }
+}
+.animate-connect-hop { animation: connect-hop 1s cubic-bezier(0.3, 0.7, 0.4, 1) infinite; }
+
 .animate-pulse-shine {
   animation: breathe 1.5s ease-in-out infinite, shine 1s ease-in-out infinite;
 }
@@ -388,6 +395,7 @@ body {
   .animate-seat-wait,
   .animate-seat-join,
   .animate-seat-idle,
+  .animate-connect-hop,
   .tile-icon-anim {
     animation: none !important;
     transition: none !important;

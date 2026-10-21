@@ -49,6 +49,8 @@ export type Wipe = {
    * 縮回卡片的位置會像「又回到平台」，淡出才是「打開之後就在遊戲裡了」（Zach 指定）。
    */
   exit?: 'shrink' | 'fade';
+  /** big 大標底下的一行小字（連線開場的「你是藍方」） */
+  sub?: string;
   iconColor?: string;
   fg?: string;
   /**
@@ -359,8 +361,9 @@ const WipeOverlay: React.FC<Props> = ({ phase, wipe, onDone }) => {
           className="pointer-events-none absolute inset-0 flex items-center justify-center px-6"
           style={{ color: wipe.fg, opacity: phase === 'cover' ? 0 : 1 }}
         >
-          <span className="whitespace-nowrap text-center font-[family-name:var(--font-app)] text-4xl font-black tracking-tight md:text-6xl">
-            {wipe.label}
+          <span className="flex flex-col items-center gap-3 text-center font-[family-name:var(--font-app)] font-black">
+            <span className="whitespace-nowrap text-4xl tracking-tight md:text-6xl">{wipe.label}</span>
+            {wipe.sub && <span className="whitespace-nowrap text-xl md:text-2xl">{wipe.sub}</span>}
           </span>
         </div>
       )}

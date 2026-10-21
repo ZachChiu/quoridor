@@ -20,7 +20,7 @@ import { useCoarsePointer } from "@/hook/useCoarsePointer";
 import { boardSignature, diffBoard, territoryWave, newWall, pathBetween } from "./boardMotion";
 import { useGameText } from '@/i18n/LocaleProvider';
 import { fmt } from '@/i18n/content/game';
-import { isCursorKey, nextCursor } from '@/components/boardCursor';
+import { isCursorKey, nearestEmpty, nextCursor, nextEmptyCell } from '@/components/boardCursor';
 
 type Props = {
   size: number;
@@ -75,6 +75,11 @@ type Props = {
    * null＝沒得換（不是我的回合、已經走過、只剩這一顆）。
    */
   nextPiece?: Move | null;
+  /**
+   * 這台裝置上的人坐哪一方（連線是自己的座位、跟 AI 下是 A）。本機對戰沒有 —— 大家輪流用同一台。
+   * 控制盤中央的棋子畫這一方的顏色，不畫輪到的人。
+   */
+  me?: Player;
 };
 
 export default React.memo(function Chessboard({
@@ -108,6 +113,7 @@ export default React.memo(function Chessboard({
   selectable,
   breakSlots,
   nextPiece = null,
+  me,
 }: Props) {
   const canBreakAt = (row: number, col: number, dir: 'H' | 'V') =>
     !breakSlots || breakSlots.has(`${row},${col},${dir}`);
@@ -169,6 +175,18 @@ export default React.memo(function Chessboard({
   }, [size]);
 
   const isCoarse = useCoarsePointer();
+
+  /*
+    手機擺棋子：盤面中央先放一顆虛的（自己的顏色），用控制盤的方向鍵移、按 ✓ 放下去（Zach 10/22 要的）。
+    直接點格子照舊會放。只在手指裝置上畫 —— 滑鼠有 hover 預覽。
+    位置只活在「這一次擺子」：盤面上的棋子數一變（自己放了、對手放了），就回到中央重新開始。
+    跳格的規則在 boardCursor（nearestEmpty／nextEmptyCell），那邊有測試。
+  */
+  const pieceCount = useMemo(() => board.reduce((n, row) => n + row.filter(Boolean).length, 0), [board]);
+  const [ghost, setGhost] = useState<{ n: number; row: number; col: number } | null>(null);
+  const placeCursor = !isLock && isPlacingChess
+    ? (ghost && ghost.n === pieceCount && !board[ghost.row]?.[ghost.col] ? ghost : nearestEmpty(board))
+    : null;
 
   // 換一格、或換人下之後清掉還沒確認的方向：由持有 pendingWall 的 PlayClient 負責（在這裡改父層狀態會被 React 擋）
 
@@ -608,6 +626,14 @@ export default React.memo(function Chessboard({
                     );
                   })()}
 
+                  {/* 手機擺棋子時那顆虛的：半透明＋同色虛線框，控制盤的方向鍵移動它、✓ 放下去 */}
+                  {!cellPlayer && placeCursor?.row === rowIndex && placeCursor.col === colIndex && currentPlayer && (
+                    <div
+                      className="pointer-events-none absolute z-20 hidden size-3/5 rounded-full border-[3px] border-dashed coarse:block"
+                      style={{ borderColor: PLAYER_VAR[currentPlayer], backgroundColor: `color-mix(in srgb, ${PLAYER_VAR[currentPlayer]} 30%, transparent)` }}
+                    />
+                  )}
+
                   {/* 放置時的預覽棋子。只給滑鼠（fine）：觸控沒有真正的 hover，
                       手機點過的格子會一直停在 :hover，一進對局就在手指剛才的位置
                       浮一顆淡色棋子（Zach 回報）。手機上有灰點就夠了。 */}
@@ -774,6 +800,19 @@ export default React.memo(function Chessboard({
         return (
           <WallDirectionPad
             placing={isPlacingChess}
+            placeMovable={placeCursor ? {
+              top: !!nextEmptyCell(board, placeCursor, 'top'),
+              bottom: !!nextEmptyCell(board, placeCursor, 'bottom'),
+              left: !!nextEmptyCell(board, placeCursor, 'left'),
+              right: !!nextEmptyCell(board, placeCursor, 'right'),
+            } : none}
+            onPlaceMove={(dir) => {
+              if (!placeCursor) return;
+              const next = nextEmptyCell(board, placeCursor, dir);
+              if (next) setGhost({ n: pieceCount, ...next });
+            }}
+            onPlace={placeCursor ? () => setChessPosition(placeCursor.row, placeCursor.col) : undefined}
+            pieceColor={PLAYER_VAR[(me ?? currentPlayer) as Exclude<Player, null>]}
             selected={!!sel}
             movable={sel ? {
               top: availableMoves.some((m) => m.row === sel.row - 1 && m.col === sel.col),

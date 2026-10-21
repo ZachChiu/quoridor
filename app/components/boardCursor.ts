@@ -43,3 +43,39 @@ export function nextCursor(
   }
   return null;
 }
+
+/*
+  手機擺棋子時盤面上那顆虛的棋子（Chessboard 的 placeCursor）。
+
+  一開始在正中央；中央被佔了就找最近的空格（距離由近到遠，同距離先上後下、先左後右，結果固定）。
+  控制盤的方向鍵一次跳到那個方向上的**下一個空格** —— 中間隔著棋子就跳過去；
+  一路到邊上都沒有空格就不動，那顆方向鍵停用。
+*/
+export type Dir = 'top' | 'bottom' | 'left' | 'right';
+const DIR_STEP: Record<Dir, [number, number]> = { top: [-1, 0], bottom: [1, 0], left: [0, -1], right: [0, 1] };
+
+/** 離 from（預設正中央）最近的空格；整盤都滿了回傳 null */
+export function nearestEmpty(board: ReadonlyArray<ReadonlyArray<unknown>>, from?: Cursor): Cursor | null {
+  const size = board.length;
+  const o = from ?? { row: Math.floor(size / 2), col: Math.floor(size / 2) };
+  let best: Cursor | null = null;
+  let bestD = Infinity;
+  for (let row = 0; row < size; row++) {
+    for (let col = 0; col < size; col++) {
+      if (board[row][col]) continue;
+      const d = Math.abs(row - o.row) + Math.abs(col - o.col);
+      if (d < bestD) { best = { row, col }; bestD = d; }
+    }
+  }
+  return best;
+}
+
+/** 從 from 往 dir 走，遇到的第一個空格；沒有就回傳 null */
+export function nextEmptyCell(board: ReadonlyArray<ReadonlyArray<unknown>>, from: Cursor, dir: Dir): Cursor | null {
+  const size = board.length;
+  const [dr, dc] = DIR_STEP[dir];
+  for (let row = from.row + dr, col = from.col + dc; row >= 0 && col >= 0 && row < size && col < size; row += dr, col += dc) {
+    if (!board[row][col]) return { row, col };
+  }
+  return null;
+}

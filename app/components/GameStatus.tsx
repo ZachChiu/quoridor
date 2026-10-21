@@ -4,6 +4,8 @@ import type { Player } from "@/types/chessboard";
 import { useGameText } from '@/i18n/LocaleProvider';
 
 interface Props {
+  /** 這台裝置上的人坐哪一方（連線、跟 AI 下）。本機對戰沒有 */
+  me?: PlayerKey;
   isLock: boolean;
   currentPlayer: Player;
   uniqTerritories: { A: string[]; B: string[], C?: string[] };
@@ -37,33 +39,43 @@ interface Props {
  *
  * 用 CSS 斷點而不是 prop，是因為這站是靜態匯出：JS 判斷裝置要等
  * hydration 之後才成立，手機重整會先畫一次桌機版再跳。
+ *
+ * ── 自己那塊多一圈框 ──────────────────────────────────────────────
+ * 連線時兩邊原本都看不出自己是紅是藍（Zach 10/22 回報）。試過在磚底下寫「你」，太直白；
+ * Zach 從六種做法裡選了這個：自己那塊外面一圈自己的顏色，中間留一道縫（outline＋offset，縫透出頁面底色）。
+ * 輪到誰照舊是「那塊變大」—— 框講「哪塊是你」、大小講「輪到誰」，各講一件事。
+ * 塊與塊之間的距離加到 12px，框才不會貼到隔壁那塊。讀屏另外念「你」。
  */
-export default React.memo(function GameStatus({ isLock, currentPlayer, uniqTerritories, playersNum }: Props) {
+export default React.memo(function GameStatus({ me, isLock, currentPlayer, uniqTerritories, playersNum }: Props) {
   const g = useGameText();
   const players: PlayerKey[] = playersNum === 3 ? ['A', 'B', 'C'] : ['A', 'B'];
 
   return (
     <div
-      className="fixed right-5 top-5 z-40 flex flex-col items-end gap-2
+      className="fixed right-5 top-5 z-40 flex flex-col items-end gap-3
                  coarse:flex-row coarse:items-center
                  coarse-land:bottom-5 coarse-land:left-5 coarse-land:right-auto coarse-land:top-auto
-                 coarse-land:flex-col coarse-land:items-start coarse-land:gap-1.5"
+                 coarse-land:flex-col coarse-land:items-start coarse-land:gap-3"
     >
       {players.map((p) => {
         const active = !isLock && currentPlayer === p;
         return (
           <div
             key={p}
-            className={`flex items-center justify-between gap-4 rounded-2xl px-[18px] py-3 text-[15px]
+            className={`relative flex items-center justify-between gap-4 rounded-2xl px-[18px] py-3 text-[15px]
                         font-black tabular-nums transition-all
                         coarse:justify-center coarse:gap-0 coarse:rounded-[14px] coarse:p-0
                         coarse-land:h-12 coarse-land:w-[52px]
                         ${PLAYER_ON[p]} ${active ? 'animate-active-bar' : ''} ${
               active ? 'w-40 coarse:h-12 coarse:w-14' : 'w-[8.75rem] coarse:h-11 coarse:w-12'
             }`}
-            style={{ backgroundColor: playerVar(p) }}
+            style={{
+              backgroundColor: playerVar(p),
+              ...(p === me ? { outline: `3px solid ${playerVar(p)}`, outlineOffset: '3px' } : null),
+            }}
           >
             <span className="coarse:hidden">{g.status.claimed}</span>
+            {p === me && <span className="sr-only">{g.status.you}</span>}
             <span className={`leading-none coarse:m-auto coarse:translate-y-[-0.08em]
                               coarse-land:text-[22px] ${active ? 'text-[22px]' : 'text-xl'}`}>
               {uniqTerritories[p]?.length || 0}
