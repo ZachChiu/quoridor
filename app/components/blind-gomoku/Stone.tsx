@@ -4,31 +4,35 @@ import { SHAPE_OF, type Shape, type Side, type StoneColor } from '@/games/blind-
 /**
  * 棋子的畫法：盲棋的「彩色面」（顏色＋形狀）與底面的「黑白面」。
  *
- * 七個顏色都量過（scratch 腳本，WCAG 相對亮度與 OKLCH）：
- * - 疊在棋盤底 #faf7f0 上都 ≥ 3:1（WCAG 圖形元件）；子上的米白形狀對比同一個數字
- * - OKLCH 彩度都 ≥ 0.125（CLAUDE.md 的下限）
- * - 黃色用不了亮黃：亮黃在米白上不到 2:1，只能壓成金黃（3.2:1）。形狀才是真正的身分，顏色是輔助
+ * 七個顏色取自 19 世紀朝鮮拼布包袱巾（조각보，芝加哥藝術博物館 145403，公有領域）的布塊 ——
+ * 彩色的棋子就是一塊塊布，結算時翻開露出黑白。疊在白絲棋盤 #f2e4c9 上的對比（WCAG 相對亮度）：
  *
- *   紅 #d03a35 4.5:1 · 橙 #c86400 3.7:1 · 黃 #a68800 3.2:1 · 綠 #0e8142 4.6:1
- *   藍 #2463c7 5.3:1 · 紫 #8a4cc0 5.1:1 · 粉紅 #c8337c 4.7:1
+ *   絳紅 #983c4a 5.3:1 · 珊瑚 #b35e40 3.7:1 · 檸檬黃 #dfda24 1.1:1 · 青綠 #046161 5.7:1
+ *   深藍 #0b2859 9.9:1 · 紫 #46246b 9:1 · 桃紅 #be3479 4.1:1
  *
- * 白子在米白棋盤上沒有對比，所以多一圈細的深色邊（不是粗描邊：約 1.5px）。
+ * 黃色是包袱巾裡的檸檬黃，本來就亮：每顆子都有一圈黑絲細邊（像布塊之間的縫線），黃子靠這圈邊站在盤上，
+ * 形狀也改用黑絲色。形狀才是真正的身分（色盲用），顏色是輔助。
+ * 翻開後的白子是包袱巾裡最亮的白絲 #ebe1cf，跟棋盤差不多亮，靠一圈黑絲邊分出來。
  */
 export const STONE_HEX: Record<StoneColor, string> = {
-  red: '#d03a35',
-  orange: '#c86400',
-  yellow: '#a68800',
-  green: '#0e8142',
-  blue: '#2463c7',
-  purple: '#8a4cc0',
-  pink: '#c8337c',
+  red: '#983c4a',
+  orange: '#b35e40',
+  yellow: '#dfda24',
+  green: '#046161',
+  blue: '#0b2859',
+  purple: '#46246b',
+  pink: '#be3479',
 };
 
-/** 這款遊戲的主色（平台卡片同一個粉紅）。米白字只有 3.5:1，上面一律放深墨字（5.0:1） */
-export const KEY_HEX = '#e8457f';
-const INK = '#141010';
-const CREAM = '#faf7f0';
-const EDGE = '#3a322c';
+/** 這款遊戲的主色：包袱巾裡最多的青綠布。白絲字放在上面 5.7:1 */
+export const KEY_HEX = '#046161';
+/** 黑絲 */
+const INK = '#2a2525';
+/** 白絲 */
+const CREAM = '#f2e4c9';
+const EDGE = '#2a2525';
+/** 亮的布（黃）上面的形狀用黑絲色，其他用白絲色 */
+const LIGHT: ReadonlySet<StoneColor> = new Set(['yellow']);
 
 function starPoints(cx: number, cy: number, outer: number, inner: number): string {
   return Array.from({ length: 10 }, (_, i) => {
@@ -56,8 +60,8 @@ export function ShapeMark({ shape, fill }: { shape: Shape; fill: string }) {
 export function ColorFace({ color, className = 'size-full' }: { color: StoneColor; className?: string }) {
   return (
     <svg viewBox="0 0 100 100" className={className} aria-hidden="true">
-      <circle cx="50" cy="50" r="50" fill={STONE_HEX[color]} />
-      <ShapeMark shape={SHAPE_OF[color]} fill={CREAM} />
+      <circle cx="50" cy="50" r="47.5" fill={STONE_HEX[color]} stroke={EDGE} strokeWidth="5" />
+      <ShapeMark shape={SHAPE_OF[color]} fill={LIGHT.has(color) ? INK : CREAM} />
     </svg>
   );
 }
@@ -68,7 +72,7 @@ export function SideFace({ side, className = 'size-full' }: { side: Side; classN
     <svg viewBox="0 0 100 100" className={className} aria-hidden="true">
       {side === 'black'
         ? <circle cx="50" cy="50" r="50" fill={INK} />
-        : <circle cx="50" cy="50" r="46" fill="#ffffff" stroke={EDGE} strokeWidth="8" />}
+        : <circle cx="50" cy="50" r="46" fill="#ebe1cf" stroke={EDGE} strokeWidth="8" />}
     </svg>
   );
 }
@@ -84,7 +88,7 @@ export function BlackStoneIcon(props: IconBaseProps) {
 export function WhiteStoneIcon(props: IconBaseProps) {
   return (
     <svg viewBox="0 0 100 100" width="1em" height="1em" className={props.className} aria-hidden="true">
-      <circle cx="50" cy="50" r="44" fill="#ffffff" stroke={EDGE} strokeWidth="7" />
+      <circle cx="50" cy="50" r="44" fill="#ebe1cf" stroke={EDGE} strokeWidth="7" />
     </svg>
   );
 }
@@ -93,7 +97,7 @@ export function PairStonesIcon(props: IconBaseProps) {
   return (
     <svg viewBox="0 0 100 100" width="1em" height="1em" className={props.className} aria-hidden="true">
       <circle cx="34" cy="50" r="26" fill={INK} />
-      <circle cx="68" cy="50" r="24" fill="#ffffff" stroke={EDGE} strokeWidth="6" />
+      <circle cx="68" cy="50" r="24" fill="#ebe1cf" stroke={EDGE} strokeWidth="6" />
     </svg>
   );
 }

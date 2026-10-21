@@ -37,7 +37,7 @@ const FACE: CSSProperties = { position: 'absolute', inset: 0, backfaceVisibility
 function GridLines() {
   return (
     <svg viewBox={`0 0 ${SIZE} ${SIZE}`} className="absolute inset-0 size-full" aria-hidden="true">
-      <g stroke="rgb(var(--board-line))" strokeOpacity={0.55} strokeWidth={0.04}>
+      <g stroke="#2a2525" strokeOpacity={0.5} strokeWidth={0.04}>
         {Array.from({ length: SIZE }, (_, i) => (
           <g key={i}>
             <line x1={0.5} y1={i + 0.5} x2={SIZE - 0.5} y2={i + 0.5} />
@@ -45,8 +45,8 @@ function GridLines() {
           </g>
         ))}
       </g>
-      <rect x={0.5} y={0.5} width={SIZE - 1} height={SIZE - 1} fill="none" stroke="rgb(var(--board-line))" strokeWidth={0.07} />
-      {STAR_POINTS.map(([r, c]) => <circle key={`${r}-${c}`} cx={c + 0.5} cy={r + 0.5} r={0.12} fill="rgb(var(--board-line))" />)}
+      <rect x={0.5} y={0.5} width={SIZE - 1} height={SIZE - 1} fill="none" stroke="#2a2525" strokeWidth={0.07} />
+      {STAR_POINTS.map(([r, c]) => <circle key={`${r}-${c}`} cx={c + 0.5} cy={r + 0.5} r={0.12} fill="#2a2525" />)}
     </svg>
   );
 }
@@ -226,7 +226,8 @@ export function GomokuBoard({ board, moves, blind, revealed, aim, ghost, glow, l
   };
 
   return (
-    <div className="w-full rounded-3xl bg-primary-50 p-[2.5%]">
+    // 棋盤是一塊淺一階的白絲（包袱巾裡的白絲），線是黑絲色；不另外加框
+    <div className="w-full rounded-md bg-[#f2e4c9] p-[2.5%]">
       <div
         ref={squareRef}
         role="application"

@@ -180,7 +180,7 @@ players/{ A?, B?, C? }/{ uid, displayName, joinedAt }
 
   - 九子棋：試做中，視覺在 `feat/game-nine-mens-morris`。
 
-  - 盲眼五子棋：試做中，視覺在 `feat/game-blind-gomoku`。
+  - 盲眼五子棋（`feat/game-blind-gomoku`）：原件是朝鮮拼布包袱巾 조각보；最外緣布條拼的寬邊（`.gmk-frame`）；主視覺是包袱巾 `pojagi.webp`，七色棋子是一塊塊布。
 
   - 騎士巡邏：試做中，視覺在 `feat/game-knights-tour`。
 

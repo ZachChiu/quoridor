@@ -91,7 +91,8 @@ export const SEASONS: Season[] = [
       { name: 'Scale Game' },
       { name: 'Montage' },
       { name: 'Four Player Three in a Row' },
-      { name: 'Blind Gomoku' },
+      { name: 'Blind Gomoku', playable: routes.BLIND_GOMOKU,
+        look: { card: 'bg-[#046161] text-[#f2e4c9]', wipe: '#046161', art: '/games/blind-gomoku/pojagi.webp', cover: true } },
       // （盲眼五子棋與九子棋各自的分支會改上下這兩行，中間隔這一行，依序合併才不會衝突）
       { name: "Nine Men's Morris" },
       { name: 'Hexagon' },

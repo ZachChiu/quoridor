@@ -26,7 +26,7 @@ const cell = (n: number) => `${((n + 0.5) / N) * 100}%`;
 
 function MiniBoard({ view, line = false, ring = [] }: { view: 'side' | 'color'; line?: boolean; ring?: [number, number][] }) {
   return (
-    <div className="mx-auto w-full max-w-[220px] rounded-2xl bg-primary-50 p-[4%]" aria-hidden="true">
+    <div className="mx-auto w-full max-w-[220px] rounded-md bg-[#e4d6bb] p-[4%]" aria-hidden="true">
       <div className="relative aspect-square w-full">
         <svg viewBox={`0 0 ${N} ${N}`} className="absolute inset-0 size-full">
           <g stroke="rgb(var(--board-line))" strokeOpacity={0.55} strokeWidth={0.045}>

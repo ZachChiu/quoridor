@@ -15,6 +15,7 @@ import { GomokuBoard, Ghost, revealMs } from './GomokuBoard';
 import { ColorPicker } from './ColorPicker';
 import { HowToPlay, colorName } from './HowToPlay';
 import { BlackStoneIcon, KEY_HEX, PairStonesIcon, SideFace, WhiteStoneIcon } from './Stone';
+import GomokuFrame from './GomokuFrame';
 import { useGomokuAi } from './useGomokuAi';
 import type { GomokuMode } from './modeHash';
 
@@ -119,7 +120,7 @@ export default function GomokuPlay({ mode, onMenu }: { mode: GomokuMode; onMenu:
 
   const band = game.winner === 'black' ? { className: 'bg-tile-ink', fg: 'text-tile-cream' }
     : game.winner === 'white' ? { className: 'bg-white', fg: 'text-tile-ink' }
-    : { style: { background: KEY_HEX }, fg: 'text-tile-ink' };
+    : { style: { background: KEY_HEX }, fg: 'text-[#f2e4c9]' };
 
   const round = 'grid size-11 shrink-0 place-items-center rounded-full bg-tile-ink/[0.07] text-xl text-ink-soft transition fine:hover:bg-tile-ink/[0.12] disabled:opacity-35';
   const wide = 'flex h-12 items-center justify-center gap-2 rounded-2xl bg-tile-ink/[0.07] text-sm font-black text-tile-ink transition fine:hover:bg-tile-ink/[0.12] disabled:opacity-35';
@@ -150,7 +151,7 @@ export default function GomokuPlay({ mode, onMenu }: { mode: GomokuMode; onMenu:
   );
 
   return (
-    <div className="flex min-h-dvh flex-col items-center px-4 pb-5 pt-3 font-[family-name:var(--font-app)] lg:flex-row lg:items-center lg:justify-center lg:gap-12 lg:py-8">
+    <GomokuFrame className="items-center px-4 pb-5 pt-3 lg:flex-row lg:items-center lg:justify-center lg:gap-12 lg:py-8">
       {/* 手機的上方一排 */}
       <div className="flex w-full max-w-[520px] items-center justify-between gap-2 lg:hidden">
         <button type="button" onClick={onMenu} aria-label={t.menu} className={round}><LuHouse aria-hidden="true" /></button>
@@ -221,14 +222,14 @@ export default function GomokuPlay({ mode, onMenu }: { mode: GomokuMode; onMenu:
       </aside>
 
       <Modal isOpen={helpOpen} onClose={() => setHelpOpen(false)} title={t.rules} kicker={t.title}
-        icon={GiRuleBook} band={{ className: 'bg-tile-forest', fg: 'text-tile-cream' }}>
+        icon={GiRuleBook} band={{ style: { background: KEY_HEX }, fg: 'text-[#f2e4c9]' }} panelClassName="!bg-[#f2e4c9]">
         <HowToPlay t={t} prev={ui.prev} next={ui.next} done={ui.close} onDone={() => setHelpOpen(false)} />
       </Modal>
 
       {/* 關掉結算還留在棋盤上，可以看翻開後的盤面；下面換成換模式／再來一局 */}
       <Modal isOpen={resultOpen} onClose={() => setResultOpen(false)} title={resultTitle} kicker={t.title}
         icon={game.winner === 'black' ? BlackStoneIcon : game.winner === 'white' ? WhiteStoneIcon : PairStonesIcon}
-        band={band}
+        band={band} panelClassName="!bg-[#f2e4c9]"
         footer={
           <>
             <Button color="bg-tile-ink/[0.07] text-tile-ink" handleClickEvent={onMenu}>{t.menu}</Button>
@@ -238,6 +239,6 @@ export default function GomokuPlay({ mode, onMenu }: { mode: GomokuMode; onMenu:
         <p className="text-sm leading-relaxed">{resultBody}</p>
         {blind && <p className="mt-2 text-sm leading-relaxed">{t.revealBody}</p>}
       </Modal>
-    </div>
+    </GomokuFrame>
   );
 }
