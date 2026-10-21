@@ -12,6 +12,7 @@ import type { Difficulty } from '@/games/nine-mens-morris/ai';
 import { TEXT } from '@/games/nine-mens-morris/text';
 import { BlackPieceIcon, PieceGlyph, WhitePieceIcon } from './MorrisBoard';
 import MorrisFrame from './MorrisFrame';
+import { MORRIS_BAND, MORRIS_PANEL } from './ui';
 import MorrisWordmark from './MorrisWordmark';
 import { MorrisRulesModal } from './MorrisRules';
 import type { MorrisMode } from './session';
@@ -20,10 +21,25 @@ import type { MorrisMode } from './session';
 const ART = '/games/nine-mens-morris/libro.webp';
 const LEVELS: Difficulty[] = ['easy', 'normal', 'hard'];
 
+/** 骰子面：難度用一、二、三點（《遊戲之書》有一半在講骰子遊戲）。朱紅點、墨線框 */
+function DiePips({ n }: { n: 1 | 2 | 3 }) {
+  const pips = n === 1 ? [[12, 12]] : n === 2 ? [[7, 7], [17, 17]] : [[6, 6], [12, 12], [18, 18]];
+  return (
+    <svg viewBox="0 0 24 24" className="size-7" aria-hidden="true">
+      <rect x="1.5" y="1.5" width="21" height="21" rx="4" fill="#eee0c4" stroke="#1e120a" strokeWidth="1.6" />
+      {pips.map(([x, y]) => <circle key={`${x}-${y}`} cx={x} cy={y} r="2.4" fill="#c54915" />)}
+    </svg>
+  );
+}
+
+
 /**
  * 九子棋的開場：選模式。整頁就是《遊戲之書》那幅插圖（MorrisFrame：群青底、最外緣一圈朱紅框），
- * 上面是標題、哥德字標與插圖本身，下面是模式清單 —— 羊皮紙色的卡片、沒有框線；
- * 主要的「跟 AI 下」深墨、其餘羊皮紙（照 Wall Go：主要深墨、次要中性）。
+ * 上面是標題、哥德字標與插圖本身，下面是模式清單。
+ *
+ * 介面照手抄本做（globals.css 的 .nmm-*，Zach 10/22：每款的按鈕要有自己的樣子）：卡片是拱頂的羊皮紙、
+ * 內側一道朱紅細線；模式前面一格上色首字（朱紅、群青交替）；先後手是朱紅的小拱；節目規則的開關是一顆蠟封；
+ * 難度用骰子點數；說明與連結前面是朱紅的段落符 ¶。
  * 插圖是唯一會縮的東西（高度跟著 dvh），手機一個畫面放得下；桌機改成左右兩欄。
  *
  * 中日韓的標題是當地名字，英文名用哥德字標排在下面；英文、泰文的標題本來就是英文名，字標直接當標題。
@@ -37,7 +53,7 @@ export default function MorrisSetup({ locale, onStart }: { locale: Locale; onSta
   const [helpOpen, setHelpOpen] = useState(false);
   const levels = [m.solo.level1, m.solo.level2, m.solo.level3];
 
-  const row = 'flex w-full items-center gap-3 rounded-2xl bg-[#eee0c4] px-4 py-3 text-left text-[#1e120a] transition hover:bg-[#e3c99c]';
+  const row = 'nmm-arch is-small flex w-full items-center gap-3 px-4 pb-3 pt-4 text-left';
   // 標題本來就是英文名（英文、泰文）就讓字標當標題，不重複寫兩次
   const latinTitle = /^[ -~’]+$/.test(t.title);
 
@@ -71,27 +87,28 @@ export default function MorrisSetup({ locale, onStart }: { locale: Locale; onSta
         </header>
 
         <div className="flex flex-col gap-3 lg:w-[400px] lg:justify-center">
-          {/* 主要模式：深墨。先後手直接是兩顆按鈕，按下去再選難度 */}
-          <div className="rounded-2xl bg-[#1e120a] p-4 text-[#eee0c4]">
+          {/* 主要模式：一塊拱頂的羊皮紙，前面朱紅的首字；先後手直接是兩個朱紅的小拱，按下去再選難度 */}
+          <div className="nmm-arch px-4 pb-4 pt-7">
             <div className="flex items-center gap-3">
-              <GiBrain aria-hidden="true" className="shrink-0 text-3xl" />
+              <span className="nmm-initial" aria-hidden="true"><GiBrain /></span>
               <div className="min-w-0">
                 <p className="text-lg font-black leading-tight">{t.vsAi}</p>
-                <p className="text-xs font-bold opacity-75">{t.vsAiNote}</p>
+                <p className="text-xs font-bold text-ink-soft">{t.vsAiNote}</p>
               </div>
             </div>
             <div className="mt-3 grid grid-cols-2 gap-2">
               {(['black', 'white'] as const).map((s) => (
                 <button key={s} type="button" onClick={() => setSide(s)}
-                  className="flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#eee0c4] px-2 py-2.5 text-sm font-black text-[#1e120a] transition hover:bg-[#e3c99c] active:scale-[0.97]">
-                  <PieceGlyph side={s} className="size-5 shrink-0" />{s === 'black' ? t.first : t.second}
+                  className="nmm-arch is-small is-red flex min-h-12 items-center justify-center gap-2 px-2 pb-2.5 pt-3.5 text-sm font-black active:scale-[0.97]">
+                  <span className="grid size-6 shrink-0 place-items-center rounded-full bg-[#eee0c4]"><PieceGlyph side={s} className="size-[1.1rem]" /></span>
+                  {s === 'black' ? t.first : t.second}
                 </button>
               ))}
             </div>
           </div>
 
           <button type="button" onClick={() => onStart({ kind: 'local' }, showRules)} className={`${row} active:scale-[0.99]`}>
-            <GiTabletopPlayers aria-hidden="true" className="shrink-0 text-3xl" />
+            <span className="nmm-initial is-blue" aria-hidden="true"><GiTabletopPlayers /></span>
             <span className="min-w-0 flex-1">
               <span className="block text-base font-black">{t.local}</span>
               <span className="block text-xs font-bold text-ink-soft">{t.localNote}</span>
@@ -104,29 +121,25 @@ export default function MorrisSetup({ locale, onStart }: { locale: Locale; onSta
               <span className="block text-base font-black">{t.showRules}</span>
               <span className="block text-xs font-bold text-ink-soft">{t.showRulesNote}</span>
             </span>
-            <span aria-hidden="true" className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${showRules ? 'bg-[#4b4577]' : 'bg-[#1e120a]/20'}`}>
-              <span className={`absolute top-1 size-5 rounded-full bg-[#eee0c4] transition-all ${showRules ? 'left-6' : 'left-1'}`} />
-            </span>
+            {/* 開關是一顆蠟封：關＝空印，開＝朱紅封蠟 */}
+            <span aria-hidden="true" className={`nmm-seal ${showRules ? 'is-on' : ''}`}>✓</span>
           </button>
 
-          <button type="button" onClick={() => setHelpOpen(true)} className="self-center rounded-full px-4 py-2 text-sm font-black text-[#eee0c4] underline decoration-2 underline-offset-4 transition hover:text-white">
+          <button type="button" onClick={() => setHelpOpen(true)} className="nmm-pilcrow self-center px-4 py-2 text-sm font-black text-[#eee0c4] underline decoration-2 underline-offset-4 transition [--nmm-rubric:#eee0c4] hover:text-white">
             {t.howTo}
           </button>
         </div>
       </main>
 
       <Modal isOpen={!!side} onClose={() => setSide(null)} title={m.ui.pickLevel} kicker={side === 'white' ? t.second : t.first}
-        icon={side === 'white' ? WhitePieceIcon : BlackPieceIcon} band={{ className: 'bg-[#4b4577]', fg: 'text-[#eee0c4]' }}
-        panelClassName="!bg-[#eee0c4]">
-        {/* 跟共用的 DifficultyButtons 同一個樣子，點數用插圖的群青（一個面板一個色相） */}
+        icon={side === 'white' ? WhitePieceIcon : BlackPieceIcon} band={MORRIS_BAND} panelClassName={MORRIS_PANEL}>
+        {/* 三個拱，各畫一面骰子：一點、二點、三點 */}
         <div className="grid w-full grid-cols-3 gap-3">
           {LEVELS.map((d, i) => (
             <button key={d} type="button"
               onClick={() => { if (side) onStart({ kind: 'ai', human: side, difficulty: d }, showRules); setSide(null); }}
-              className="flex flex-col items-center gap-3 rounded-2xl bg-[#1e120a]/[0.07] py-5 text-xl font-black text-[#1e120a] transition hover:bg-[#1e120a]/[0.12] active:scale-[0.97]">
-              <span className="flex gap-1.5" aria-hidden="true">
-                {LEVELS.map((_, dot) => <span key={dot} className={`size-2.5 rounded-full ${dot <= i ? 'bg-[#4b4577]' : 'bg-[#1e120a]/15'}`} />)}
-              </span>
+              className="nmm-arch is-small flex flex-col items-center gap-2.5 pb-4 pt-6 text-xl font-black active:scale-[0.97]">
+              <DiePips n={(i + 1) as 1 | 2 | 3} />
               {levels[i]}
             </button>
           ))}

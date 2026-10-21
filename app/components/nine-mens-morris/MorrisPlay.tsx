@@ -3,7 +3,6 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { GiScales } from 'react-icons/gi';
 import { LuArrowLeft, LuCircleHelp, LuHouse, LuRotateCcw, LuUndo2 } from 'react-icons/lu';
 import Modal from '@/components/Modal';
-import Button from '@/components/Button';
 import { useTransition } from '@/contexts/TransitionContext';
 import { useMessages } from '@/i18n/LocaleProvider';
 import { fill, useTextTable } from '@/i18n/gameText';
@@ -17,6 +16,7 @@ import { chooseTurn } from '@/games/nine-mens-morris/ai';
 import { TEXT } from '@/games/nine-mens-morris/text';
 import { BlackPieceIcon, MorrisBoard, PieceGlyph, WhitePieceIcon } from './MorrisBoard';
 import MorrisFrame from './MorrisFrame';
+import { MORRIS_BAND, MORRIS_PANEL } from './ui';
 import { MorrisRulesModal } from './MorrisRules';
 import { clearSession, saveSession, type Session } from './session';
 
@@ -158,10 +158,10 @@ export default function MorrisPlay({ locale, session, onMenu }: { locale: Locale
     : selected !== null ? t.hint.moveSelected
     : phase === 'fly' ? t.hint.fly : t.hint.move;
 
-  // 群青底上的按鈕一律羊皮紙色、沒有框線（照 Wall Go 的次要按鈕：中性、安靜）
-  const round = 'grid size-11 shrink-0 place-items-center rounded-full bg-[#eee0c4] text-xl text-[#1e120a] transition hover:bg-[#e3c99c] disabled:opacity-40';
-  const wide = 'flex h-12 items-center justify-center gap-2 rounded-2xl bg-[#eee0c4] px-2 text-sm font-black text-[#1e120a] transition hover:bg-[#e3c99c] disabled:opacity-40';
-  const stacked = 'flex h-14 flex-col items-center justify-center gap-0.5 rounded-2xl bg-[#eee0c4] px-1 text-xs font-black text-[#1e120a] transition hover:bg-[#e3c99c] disabled:opacity-40 [&_svg]:text-lg';
+  // 群青底上的按鈕是拱頂的羊皮紙小拱（手抄本插圖框的形狀，globals.css 的 .nmm-arch）
+  const round = 'nmm-arch is-small grid size-11 shrink-0 place-items-center pt-1 text-xl disabled:opacity-40';
+  const wide = 'nmm-arch is-small flex h-12 items-center justify-center gap-2 px-2 pt-1 text-sm font-black disabled:opacity-40';
+  const stacked = 'nmm-arch is-small flex h-14 flex-col items-center justify-center gap-0.5 px-1 pt-1.5 text-xs font-black disabled:opacity-40 [&_svg]:text-lg';
 
   // 兩方的狀態：輪到的那方亮成羊皮紙（墨字），另一方淡淡的半透明。棋子放在羊皮紙小圓上，亮暗都看得清楚
   const statusCards = (
@@ -171,7 +171,7 @@ export default function MorrisPlay({ locale, session, onMenu }: { locale: Locale
         const onBoard = countOnBoard(game.board, s);
         const hand = game.inHand[s];
         return (
-          <div key={s} className={`flex min-w-0 flex-col gap-1 rounded-2xl px-3.5 py-2.5 ${active ? 'bg-[#eee0c4] text-[#1e120a]' : 'bg-[#eee0c4]/[0.14] text-[#eee0c4]/85'}`}>
+          <div key={s} className={`nmm-arch is-small flex min-w-0 flex-col gap-1 px-3.5 pb-2.5 pt-3.5 ${active ? 'is-on' : 'is-dim'}`}>
             <p className="flex min-w-0 items-center gap-2 text-sm font-bold">
               <span className="grid size-7 shrink-0 place-items-center rounded-full bg-[#eee0c4]"><PieceGlyph side={s} className="size-5" /></span>
               <span className="truncate">{label(s)}</span>
@@ -191,7 +191,7 @@ export default function MorrisPlay({ locale, session, onMenu }: { locale: Locale
     <div className="flex min-h-[3.25rem] w-full flex-col items-center gap-1 text-center lg:items-start lg:text-left" aria-live="polite">
       <div className="flex items-center gap-2">
         {!game.winner && (
-          <span className={`rounded-full px-2.5 py-0.5 text-xs font-black ${phase === 'remove' ? 'bg-[#eee0c4] text-[#1e120a]' : 'bg-[#eee0c4]/[0.16] text-[#eee0c4]'}`}>
+          <span className={`rounded-[3px] px-2.5 py-0.5 text-xs font-black ${phase === 'remove' ? 'bg-[#c54915] text-[#eee0c4]' : 'bg-[#eee0c4]/[0.16] text-[#eee0c4]'}`}>
             {t.phase[phase]}
           </span>
         )}
@@ -254,12 +254,11 @@ export default function MorrisPlay({ locale, session, onMenu }: { locale: Locale
 
       <Modal isOpen={!!game.winner && closedFor !== game} onClose={() => setClosedFor(game)} title={resultTitle} kicker={t.title}
         icon={game.winner === 'draw' ? GiScales : game.winner === 'white' ? WhitePieceIcon : BlackPieceIcon}
-        band={game.winner === 'draw' ? { className: 'bg-[#1e120a]', fg: 'text-[#eee0c4]' } : { className: 'bg-[#4b4577]', fg: 'text-[#eee0c4]' }}
-        panelClassName="!bg-[#eee0c4]"
+        band={MORRIS_BAND} panelClassName={MORRIS_PANEL}
         footer={
           <>
-            <Button color="bg-[#1e120a]/[0.08] text-[#1e120a]" handleClickEvent={onMenu}>{t.menu}</Button>
-            <Button color="bg-[#1e120a] text-[#eee0c4]" handleClickEvent={restart}>{t.again}</Button>
+            <button type="button" onClick={onMenu} className="nmm-arch is-small flex-1 pb-3 pt-4 font-black">{t.menu}</button>
+            <button type="button" onClick={restart} className="nmm-arch is-small is-red flex-1 pb-3 pt-4 font-black">{t.again}</button>
           </>
         }>
         <p className="text-sm leading-relaxed text-[#1e120a]">{resultBody}</p>

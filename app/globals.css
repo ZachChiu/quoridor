@@ -537,6 +537,35 @@ html:has(.nmm-root), body:has(.nmm-root) { background: #c54915; }
   background-position: 0 0, 17px 17px;
 }
 
+/* 九子棋的介面零件：照《遊戲之書》（1283）的手抄本 —— 拱頂的插圖框、朱紅與群青交替的上色首字、朱紅的段落符 ¶、
+   蠟封；難度用骰子點數（這本書有一半在講骰子遊戲）。只換形狀、材質與記號，不疊花紋：裝飾仍只有最外緣的朱紅框。
+   顏色同 components/nine-mens-morris/palette.ts。 */
+/* 拱頂的羊皮紙：上緣是圓拱，內側一道朱紅細線順著拱走（插圖框的那條線） */
+.nmm-arch {
+  /* 水平半徑用 50%（不是 999px）：半徑加起來超過寬度時，瀏覽器會把所有半徑等比例縮小，垂直那一邊也跟著縮成幾乎方角 */
+  border-radius: 50% 50% 6px 6px / 2.4rem 2.4rem 6px 6px; background: #eee0c4; color: #1e120a;
+  box-shadow: inset 0 0 0 2px #c54915, inset 0 0 0 4px #eee0c4, inset 0 0 0 5px rgb(197 73 21 / 0.35);
+  transition: background-color 0.15s, color 0.15s, box-shadow 0.15s, filter 0.15s;
+}
+.nmm-arch.is-small { border-radius: 50% 50% 5px 5px / 1.3rem 1.3rem 5px 5px; }
+@media (pointer: fine) { .nmm-arch:hover:not(:disabled) { background: #e3c99c; } }
+/* 主要動作：朱紅的拱、羊皮紙字（先手／後手、再來一局） */
+.nmm-arch.is-red { background: #c54915; color: #eee0c4; box-shadow: inset 0 0 0 3px #c54915, inset 0 0 0 4.5px rgb(238 224 196 / 0.7); }
+@media (pointer: fine) { .nmm-arch.is-red:hover:not(:disabled) { background: #c54915; filter: brightness(1.08); } }
+/* 輪到的那方：拱內側換成朱紅粗線 */
+.nmm-arch.is-on { box-shadow: inset 0 0 0 3px #c54915, inset 0 0 0 5px #eee0c4, inset 0 0 0 6px #c54915; }
+/* 沒輪到的那方：群青底上半透明的拱 */
+.nmm-arch.is-dim { background: rgb(238 224 196 / 0.14); color: rgb(238 224 196 / 0.85); box-shadow: inset 0 0 0 1.5px rgb(238 224 196 / 0.3); }
+/* 上色首字：一格方塊，朱紅與群青交替，放圖示（手抄本段落開頭那個上了色的大字） */
+.nmm-initial { display: grid; place-items: center; width: 2.75rem; height: 2.75rem; flex: none; border-radius: 3px; background: #c54915; color: #eee0c4; font-size: 1.6rem; }
+.nmm-initial.is-blue { background: #4b4577; }
+/* 段落符 ¶：羊皮紙上是朱紅，群青底上改用羊皮紙色（朱紅疊群青只有 1.8:1） */
+.nmm-pilcrow::before { content: '\00B6'; color: var(--nmm-rubric, #c54915); font-weight: 900; margin-right: 0.3em; }
+/* 蠟封開關：關＝一圈淡墨線的空印，開＝朱紅的封蠟 */
+.nmm-seal { position: relative; display: grid; place-items: center; width: 2rem; height: 2rem; flex: none; border-radius: 50%;
+  box-shadow: inset 0 0 0 2px rgb(30 18 10 / 0.3); color: transparent; font-weight: 900; transition: background-color 0.15s, box-shadow 0.15s, color 0.15s; }
+.nmm-seal.is-on { background: #c54915; color: #eee0c4; box-shadow: 0 0 0 3px rgb(197 73 21 / 0.28); }
+
 /* ▸ 盲眼五子棋（feat/game-blind-gomoku） */
 
 /* ▸ 騎士巡邏（feat/game-knights-tour） */
