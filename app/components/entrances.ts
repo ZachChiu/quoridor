@@ -30,7 +30,7 @@ const LOADERS: Record<string, () => Promise<{ default: EntranceScene }>> = {
 
   // 九子棋（feat/game-nine-mens-morris 打開這一行）
 
-  // 盲眼五子棋（feat/game-blind-gomoku 打開這一行）
+  'blind-gomoku': () => import('./blind-gomoku/Entrance'),
 
   // 騎士巡邏（feat/game-knights-tour 打開這一行）
 
