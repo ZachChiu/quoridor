@@ -16,13 +16,14 @@ import type { OnlineFailReason, OnlineStep } from '@/types/online';
  *
  * ── 在 GA 後台要做的事 ────────────────────────────────────────────
  * 參數要在「管理 → 自訂定義」註冊成自訂維度（或指標）才能在報表裡篩選。
- * 清單見 CLAUDE.md〈數據分析〉。
+ * 清單見 CLAUDE.md〈數據分析〉。參數名稱不能用 GA 保留給流量來源的 source／medium／campaign／term／content：
+ * GA4 會拿它們蓋掉這個工作階段的來源（mode_select 帶過 source=home，Google 搜尋進來的被記成「home」）。
  */
 export type GameModeParam = 'local' | 'solo' | 'online';
 
 type Events = {
   /** 首頁（或 /solo 頁）選了一個模式。是「想玩」，不是「開始玩」 */
-  mode_select: { mode: GameModeParam; players: 2 | 3; difficulty?: Difficulty; source: 'home' | 'solo_page' };
+  mode_select: { mode: GameModeParam; players: 2 | 3; difficulty?: Difficulty; entry: 'home' | 'solo_page' };
   /** 連線房開好了（還沒有人加入） */
   room_created: { players: 2 | 3 };
   /**
@@ -59,8 +60,8 @@ type Events = {
   locale_switch: { from: string; to: string };
   /** 打開首頁的「聯絡我們」 */
   contact_open: Record<string, never>;
-  /** 送出回饋。source：對局後的回饋（game）或首頁的聯絡我們（contact） */
-  feedback_send: { source: 'game' | 'contact'; rating?: number };
+  /** 送出回饋。entry：對局後的回饋（game）或首頁的聯絡我們（contact） */
+  feedback_send: { entry: 'game' | 'contact'; rating?: number };
 };
 
 export type AnalyticsEvent = keyof Events;

@@ -242,7 +242,7 @@ GA 由 `app/shell.tsx` 的 `<GoogleAnalytics>` 載入（只有 `NEXT_PUBLIC_APP_
 
 | 事件 | 什麼時候 | 參數 |
 |---|---|---|
-| `mode_select` | 首頁磁磚或 `/solo` 頁選了模式（想玩） | mode、players、difficulty、source |
+| `mode_select` | 首頁磁磚或 `/solo` 頁選了模式（想玩） | mode、players、difficulty、entry |
 | `room_created` | 連線房開好 | players |
 | `game_start` | 本機／單人擺下第一顆棋；連線人到齊開始擺棋 | mode、players、difficulty |
 | `game_end` | 分出勝負 | mode、players、difficulty、result、winner、ended、turns、duration_sec |
@@ -251,12 +251,13 @@ GA 由 `app/shell.tsx` 的 `<GoogleAnalytics>` 載入（只有 `NEXT_PUBLIC_APP_
 | `share_room_link` | 分享房間連結 | method |
 | `tutorial_close` | 關掉遊玩方式 | step、steps、finished |
 | `locale_switch` | 切語系 | from、to |
-| `contact_open` / `feedback_send` | 聯絡我們、送出回饋 | source、rating |
+| `contact_open` / `feedback_send` | 聯絡我們、送出回饋 | entry、rating |
 
 - `game_start` / `game_end` 看**狀態轉變**而不是按鈕；第一次觀察到的狀態不送（重整後從棋譜重建的「已開始／已結束」不是這次發生的），連線另用 sessionStorage 去重。連線局每位玩家各送一次，所以是「人次」不是「局數」。投降不另外送，會以 `game_end` 的 `ended: 'resign'` 出現。
 - **`page_view` 交給 GA 自己算**（首次載入由 config、站內換頁由加強型評估的「依瀏覽器記錄事件」）。不要再手動送 —— 以前的 `AnalyticsProvider` 就是這樣讓每次瀏覽都算兩次。
-- 參數要在 GA 後台「管理 → 自訂定義」註冊才看得到：維度 `mode`、`players`、`difficulty`、`source`、`result`、`winner`、`ended`、`reason`、`fail_step`、`method`、`from`、`to`、`finished`；指標 `turns`、`duration_sec`、`step`、`rating`。
+- 參數要在 GA 後台「管理 → 自訂定義」註冊才看得到：維度 `mode`、`players`、`difficulty`、`entry`、`result`、`winner`、`ended`、`reason`、`fail_step`、`method`、`from`、`to`、`finished`；指標 `turns`、`duration_sec`、`step`、`rating`。
 - **參數名稱在維度與指標之間不能重複**：`step` 已經是 `tutorial_close` 的指標，所以連線失敗的步驟叫 `fail_step`。新增參數前先看這份清單。
+- **不能用 GA 保留給流量來源的名稱**：`source`、`medium`、`campaign`、`term`、`content`（還有 `gclid`、`utm_*` 這類）。GA4 會把它們當成這個工作階段的來源 —— 2026-10 `mode_select` 帶 `source=home`，Google 搜尋進來的工作階段被記成來源「home」（大腦從 BigQuery 查到：10/22 的 22 個工作階段有 8 個），所以改名 `entry`。`from` 也不要拿來當入口：它已經是 `locale_switch` 的「從哪個語系」。
 
 ## 打版（`npm run release`）
 
