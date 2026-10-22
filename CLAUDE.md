@@ -178,7 +178,7 @@ players/{ A?, B?, C? }/{ uid, displayName, joinedAt }
   主視覺與平台卡片都是原件本身。每款在自己的 `feat/game-<id>` 分支（一款一款上線）；下面每款一段，**段與段之間留空行**，
   各分支改的是自己那一段，依序合併才不會衝突（globals.css 底部的五個標記、catalog.ts 的寫法也是同一個道理）。
 
-  - 九子棋（`feat/game-nine-mens-morris`）：原件是《遊戲之書》（1283）的插圖；最外緣朱紅框、四角畫叉（`.nmm-frame`），群青底撒白點（`.nmm-field`）；主視覺是插圖 `libro.webp`、Grenze Gotisch 字標。
+  - 九子棋（`feat/game-nine-mens-morris`）：原件是《遊戲之書》（1283）的插圖；最外緣朱紅框、四角小方塊裡一朵四瓣小花（`.nmm-frame`；原本畫叉，右上角像關閉鈕，換掉了），群青底撒白點（`.nmm-field`）；主視覺是插圖 `libro.webp`、Grenze Gotisch 字標。
 
   - 盲眼五子棋：試做中，視覺在 `feat/game-blind-gomoku`。
 

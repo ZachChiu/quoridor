@@ -519,13 +519,13 @@ html:has(.bagh-root), body:has(.bagh-root) { background: #e3a43c; }
 
 /* ▸ 九子棋（feat/game-nine-mens-morris） */
 /* 九子棋（MorrisFrame）：整頁是《遊戲之書》那幅插圖。顏色取自插圖，見 components/nine-mens-morris/palette.ts。
-   .nmm-frame：最外緣一圈插圖的朱紅框、內側一條羊皮紙色細線、四角畫了叉的小方塊 —— 唯一的裝飾，只有這一層。
+   .nmm-frame：最外緣一圈插圖的朱紅框、內側一條羊皮紙色細線、四角的小方塊裡一朵四瓣小花（插圖框角的小圓飾；原本畫叉，右上角那個貼著聯絡鈕像關閉鈕，10/22 換掉） —— 唯一的裝飾，只有這一層。
    border-image 畫在邊框裡，內容永遠蓋不到；邊段是均勻的帶子，stretch 不會變形。
    .nmm-field：群青底撒細白點（插圖的底就是這樣），兩層錯開的點陣，很淡。 */
 html:has(.nmm-root), body:has(.nmm-root) { background: #c54915; }
 .nmm-frame {
   border: var(--nmm-frame, 12px) solid #c54915;
-  border-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 36 36'%3E%3Cpath fill='%23c54915' d='M0 0H36V8.5H0Z M0 27.5H36V36H0Z M0 0H8.5V36H0Z M27.5 0H36V36H27.5Z'/%3E%3Cpath fill='%23eee0c4' d='M8.5 8.5H27.5V10H8.5Z M8.5 26H27.5V27.5H8.5Z M8.5 8.5H10V27.5H8.5Z M26 8.5H27.5V27.5H26Z'/%3E%3Cg fill='%23c54915'%3E%3Crect width='12' height='12'/%3E%3Crect x='24' width='12' height='12'/%3E%3Crect y='24' width='12' height='12'/%3E%3Crect x='24' y='24' width='12' height='12'/%3E%3C/g%3E%3Cpath stroke='%23eee0c4' stroke-width='1.7' stroke-linecap='round' d='M2.5 2.5L9.5 9.5M9.5 2.5L2.5 9.5M26.5 2.5L33.5 9.5M33.5 2.5L26.5 9.5M2.5 26.5L9.5 33.5M9.5 26.5L2.5 33.5M26.5 26.5L33.5 33.5M33.5 26.5L26.5 33.5'/%3E%3C/svg%3E") 12 / var(--nmm-frame, 12px) stretch;
+  border-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 36 36'%3E%3Cpath fill='%23c54915' d='M0 0H36V8.5H0Z M0 27.5H36V36H0Z M0 0H8.5V36H0Z M27.5 0H36V36H27.5Z'/%3E%3Cpath fill='%23eee0c4' d='M8.5 8.5H27.5V10H8.5Z M8.5 26H27.5V27.5H8.5Z M8.5 8.5H10V27.5H8.5Z M26 8.5H27.5V27.5H26Z'/%3E%3Cg fill='%23c54915'%3E%3Crect width='12' height='12'/%3E%3Crect x='24' width='12' height='12'/%3E%3Crect y='24' width='12' height='12'/%3E%3Crect x='24' y='24' width='12' height='12'/%3E%3C/g%3E%3Cg fill='%23eee0c4'%3E%3Ccircle cx='3.9' cy='6' r='1.8'/%3E%3Ccircle cx='8.1' cy='6' r='1.8'/%3E%3Ccircle cx='6' cy='3.9' r='1.8'/%3E%3Ccircle cx='6' cy='8.1' r='1.8'/%3E%3Ccircle cx='27.9' cy='6' r='1.8'/%3E%3Ccircle cx='32.1' cy='6' r='1.8'/%3E%3Ccircle cx='30' cy='3.9' r='1.8'/%3E%3Ccircle cx='30' cy='8.1' r='1.8'/%3E%3Ccircle cx='3.9' cy='30' r='1.8'/%3E%3Ccircle cx='8.1' cy='30' r='1.8'/%3E%3Ccircle cx='6' cy='27.9' r='1.8'/%3E%3Ccircle cx='6' cy='32.1' r='1.8'/%3E%3Ccircle cx='27.9' cy='30' r='1.8'/%3E%3Ccircle cx='32.1' cy='30' r='1.8'/%3E%3Ccircle cx='30' cy='27.9' r='1.8'/%3E%3Ccircle cx='30' cy='32.1' r='1.8'/%3E%3C/g%3E%3Cg fill='%23c54915'%3E%3Ccircle cx='6' cy='6' r='.85'/%3E%3Ccircle cx='30' cy='6' r='.85'/%3E%3Ccircle cx='6' cy='30' r='.85'/%3E%3Ccircle cx='30' cy='30' r='.85'/%3E%3C/g%3E%3C/svg%3E") 12 / var(--nmm-frame, 12px) stretch;
 }
 @media (max-width: 640px) { .nmm-frame { --nmm-frame: 9px; } }
 .nmm-field {
