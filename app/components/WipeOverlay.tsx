@@ -4,6 +4,7 @@ import { useIsoLayoutEffect } from '@/hook/useIsoLayoutEffect';
 import { CSS_IN_OUT_CUBIC, inOutCubic, outCubic, scaleKeyframes } from './wipeKeyframes';
 import type { IconType } from 'react-icons';
 import Door from './Doors';
+import { entranceOf } from './entrances';
 
 export type WipePhase = 'cover' | 'uncover';
 
@@ -54,10 +55,14 @@ export type Wipe = {
   iconColor?: string;
   fg?: string;
   /**
-   * 換一種形式：兩扇紐瓦爾木窗門關上、換好頁再往外推開（虎羊棋，2026-10-20 Zach 指定）。
-   * 這時 x／y／from／icon 都用不到，color 是門後的底色。見下方 DOORS。
+   * 換一種形式：
+   * - doors：兩扇紐瓦爾木窗門關上、換好頁再往外推開（虎羊棋，2026-10-20 Zach 指定）。見下方 DOORS。
+   * - scene：那款遊戲自己的進場（`scene` 是 components/entrances.ts 的 id），畫面與動畫都由它自己決定。
+   * 這兩種的 x／y／from／icon 都用不到。
    */
-  kind?: 'doors';
+  kind?: 'doors' | 'scene';
+  /** kind 為 scene 時，進場的 id（同 catalog 的 look.entrance） */
+  scene?: string;
 };
 
 /** 木窗門：只用在從平台卡片進虎羊棋的那一下（WipeLink doors）。虎羊棋裡面換頁不播轉場（2026-10-22 Zach） */
@@ -176,6 +181,17 @@ const WipeOverlay: React.FC<Props> = ({ phase, wipe, onDone }) => {
       return () => { cancelled = true; anims.forEach((a) => a.cancel()); };
     }
 
+    // 那款遊戲自己的進場：畫面在 render 時已經由它的 Scene 畫好，這裡只播它給的動畫
+    if (wipe.kind === 'scene') {
+      const scene = wipe.scene ? entranceOf(wipe.scene) : undefined;
+      if (!scene || typeof root.animate !== 'function') { doneRef.current(); return; }
+      const anims = scene.play(root, phase);
+      if (!anims.length) { doneRef.current(); return; }
+      let cancelled = false;
+      Promise.all(anims.map((a) => a.finished)).then(() => { if (!cancelled) doneRef.current(); }).catch(() => {});
+      return () => { cancelled = true; anims.forEach((a) => a.cancel()); };
+    }
+
     const shape = root.querySelector<HTMLElement>('[data-shape]');
     if (!shape || typeof shape.animate !== 'function') { doneRef.current(); return; }
     const face = root.querySelector<HTMLElement>('[data-face]');
@@ -276,6 +292,15 @@ const WipeOverlay: React.FC<Props> = ({ phase, wipe, onDone }) => {
             <div data-shade className="absolute inset-0 bg-black" style={{ opacity: phase === 'cover' ? 0.7 : 0 }} />
           </div>
         ))}
+      </div>
+    );
+  }
+
+  if (wipe.kind === 'scene') {
+    const Scene = wipe.scene ? entranceOf(wipe.scene)?.Scene : undefined;
+    return (
+      <div ref={rootRef} className="cover-viewport z-[60] overflow-hidden" style={{ position: 'absolute' }} aria-hidden="true">
+        {Scene && <Scene phase={phase} />}
       </div>
     );
   }

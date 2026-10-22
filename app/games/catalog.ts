@@ -28,6 +28,11 @@ export type GameLook = {
   cover?: boolean;
   /** 點進去走木窗門轉場而不是擴散色塊（虎羊棋） */
   doors?: boolean;
+  /**
+   * 點進去播這款自己的進場（components/entrances.ts 的 id）；還沒載好就退回擴散 wipe 的顏色。
+   * 2026-10-22 Zach：「為啥每一個進場都跟 Wall Go 一樣」—— 有自己識別的遊戲，進場也要有自己的樣子。
+   */
+  entrance?: string;
 };
 
 export type CatalogGame = {

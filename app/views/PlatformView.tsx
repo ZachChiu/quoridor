@@ -137,9 +137,9 @@ function GameCard({ game, locale, playable, guide }: {
 
   if (game.playable && game.look) {
     // 能玩的遊戲用自己的識別（主色＋主視覺），點進去擴散自己的顏色
-    const { card, wipe, art, cover, doors } = game.look;
+    const { card, wipe, art, cover, doors, entrance } = game.look;
     return (
-      <WipeLink href={localePath(locale, game.playable)} color={wipe} doors={doors} aria-label={name} className={`${CARD} ${card}`}>
+      <WipeLink href={localePath(locale, game.playable)} color={wipe} doors={doors} entrance={entrance} aria-label={name} className={`${CARD} ${card}`}>
         {cover ? (
           <>
             {/* AI 畫的橫幅插畫鋪滿；名字壓在底部的黑色漸層上 */}
