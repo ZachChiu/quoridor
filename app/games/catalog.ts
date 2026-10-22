@@ -64,7 +64,7 @@ export const SEASONS: Season[] = [
       { name: 'Remove One' },
       { name: 'Unknown' },
       { name: 'Time Auction', playable: routes.TIME_AUCTION,
-        look: { card: 'bg-[#92383a] text-[#ebe1b8]', wipe: '#ebe1b8', art: '/games/time-auction/auction.webp', cover: true } },
+        look: { card: 'bg-[#92383a] text-[#ebe1b8]', wipe: '#ebe1b8', art: '/games/time-auction/auction.webp', cover: true, entrance: 'time-auction' } },
       { name: 'Halloween Monster' },
       { name: "Sniper Hold'em" },
       { name: 'Treasure Island' },
