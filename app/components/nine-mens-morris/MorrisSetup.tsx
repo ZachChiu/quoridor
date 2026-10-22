@@ -59,7 +59,7 @@ export default function MorrisSetup({ locale, onStart }: { locale: Locale; onSta
 
   return (
     <MorrisFrame className="nmm-setup items-center px-4 pb-6 pt-[3.75rem] lg:justify-center lg:py-10">
-      <PlatformCorner locale={locale} buttonClassName="bg-[#eee0c4] text-[#1e120a] hover:bg-[#e3c99c]" />
+      <PlatformCorner locale={locale} buttonClassName="bg-[#eee0c4] text-[#1e120a] hover:bg-[#e3c99c]" offset="calc(var(--nmm-frame, 12px) + 6px)" />
       <main className="flex w-full max-w-[440px] flex-col gap-4 lg:max-w-[980px] lg:flex-row lg:items-center lg:gap-12">
         <header className="flex flex-col items-center text-center lg:flex-1 lg:items-start lg:text-left">
           <p className="text-xs font-bold tracking-wide text-[#eee0c4]/80 [@media(max-height:700px)]:hidden">{t.tags}</p>
