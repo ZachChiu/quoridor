@@ -69,7 +69,7 @@ export const SEASONS: Season[] = [
       { name: 'Treasure Island' },
       { name: 'Triple Dice' },
       { name: 'Balance Mancala', playable: routes.BALANCE_MANCALA,
-        look: { card: 'bg-[#ebd2cb] text-[#201211]', wipe: '#ebd2cb', art: '/games/balance-mancala/card.webp', cover: true } },
+        look: { card: 'bg-[#ebd2cb] text-[#201211]', wipe: '#ebd2cb', art: '/games/balance-mancala/card.webp', cover: true, entrance: 'balance-mancala' } },
       { name: 'Doubt and Bet' },
       { name: 'Equation Pyramid' },
       { name: 'Big Small' },
