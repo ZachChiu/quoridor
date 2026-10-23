@@ -11,12 +11,13 @@ import { NEUTRAL_FILL } from '@/components/neutralZone';
  * 泰文的疊字也排得對（satori 排不對，見 scripts/lib/chrome-text.mjs）。
  *
  * 視覺照站上的平塗撞色：實色底、900 字重、沒有陰影也沒有漸層。
+ * 三種比例都是**整張勝方色**（平局、多人同勝是深墨），品牌與 QR 放在最下面一塊紙色上 ——
+ * 原本只有 9:16 是滿版，4:5、1:1 是上面一條色帶、下面米灰底（Zach 10/24：「4:5、1:1 也可以變底色全部都紅或藍嗎」）。
  * 地盤用 -100 的淡色（同 OG 圖）—— 對局畫面用的 -50 縮成聊天室縮圖就看不見了。
  */
 
 /* 色票與 app/globals.css 同源。Canvas 吃不到 CSS 變數，改了那邊記得回來對一次。 */
 const C = {
-  ground: '#e8e1d7',
   cream: '#faf7f0',
   ink: '#141010',
   inkSoft: '#6b5c4d',
@@ -181,10 +182,10 @@ function ranking(d: ResultCardData): Rank[] {
 }
 
 /**
- * 一排比分。勝方滿色、輸家淡灰（跟結算視窗一樣）；自己那塊外面多一圈自己的顏色、中間留縫。
- * `onDark`：底下是勝方色帶時，輸家改用米白的淡色，不然淡灰疊在色帶上看起來髒。
+ * 一排比分，疊在勝方色的底上：勝方是米白底、勝方色字（紅疊紅會不見），輸家是米白的淡色塊、淡字、一顆色點；
+ * 自己那塊外面多一圈米白的框、中間留縫（對局中是自己的顏色，這裡底已經是顏色了）。
  */
-function scores(ctx: CanvasRenderingContext2D, d: ResultCardData, cx: number, y: number, h: number, maxW: number, onDark = false) {
+function scores(ctx: CanvasRenderingContext2D, d: ResultCardData, cx: number, y: number, h: number, maxW: number) {
   const list = ranking(d);
   const gapX = h * 0.28;
   const w = Math.min((maxW - gapX * (list.length - 1)) / list.length, h * 3.4);
@@ -192,18 +193,17 @@ function scores(ctx: CanvasRenderingContext2D, d: ResultCardData, cx: number, y:
   for (const { player, count, won } of list) {
     if (player === d.me) {
       const ring = Math.max(4, h * 0.05);
-      ctx.strokeStyle = onDark ? C.cream : C.player[player];
+      ctx.strokeStyle = C.cream;
       ctx.lineWidth = ring;
       rr(ctx, x - ring * 1.6, y - ring * 1.6, w + ring * 3.2, h + ring * 3.2, h * 0.3 + ring * 1.6);
       ctx.stroke();
     }
-    // 色帶上（9:16 整張都是勝方色）勝方反過來：米白底、勝方色字，不然紅疊紅就不見了
-    const bg = won ? (onDark ? C.cream : C.player[player]) : onDark ? 'rgba(250,247,240,0.16)' : 'rgba(20,16,16,0.05)';
-    const fg = won ? (onDark ? C.player[player] : C.cream) : onDark ? 'rgba(250,247,240,0.7)' : 'rgba(20,16,16,0.45)';
+    const bg = won ? C.cream : 'rgba(250,247,240,0.16)';
+    const fg = won ? C.player[player] : 'rgba(250,247,240,0.7)';
     fill(ctx, bg, x, y, w, h, h * 0.3);
     if (!won) {
       ctx.fillStyle = C.player[player];
-      ctx.globalAlpha = onDark ? 0.9 : 0.45;
+      ctx.globalAlpha = 0.9;
       ctx.beginPath();
       ctx.arc(x + h * 0.34, y + h / 2, h * 0.09, 0, Math.PI * 2);
       ctx.fill();
@@ -262,49 +262,50 @@ function bandColor(d: ResultCardData) {
   三種版型都不寫「掃碼來跟我下一局」這類邀請句（Zach 10/23 拿掉的）：QR 與網址留著，讓看到的人自己掃。
 */
 
-/** 4:5 直式。上面勝方色帶寫結果，盤面壓在色帶下緣，底下比分、最下面品牌＋QR。 */
+/** 最下面那塊紙色：左邊站名、出處、網址三行，右邊 QR。三種比例共用，只差尺寸 */
+function footer(ctx: CanvasRenderingContext2D, d: ResultCardData, y: number, h: number, o: { brand: number; small: number; qr: number }) {
+  const w = 1080; // 三種比例都是 1080 寬
+  fill(ctx, C.cream, 60, y, w - 120, h, 36);
+  const left = 110, max = w - 120 - 50 - o.qr - 80;
+  // 三行在紙色塊裡垂直置中
+  const block = o.brand + o.small * 2 * 1.75;
+  const top = y + (h - block) / 2;
+  brand(ctx, d, left, top + o.brand * 0.86, o.brand, max);
+  text(ctx, d.font, d.text.from, left, top + o.brand + o.small * 1.55, { size: o.small, weight: 700, color: C.inkSoft, max });
+  text(ctx, d.font, d.text.host, left, top + o.brand + o.small * 3.3, { size: o.small, weight: 700, color: C.inkSoft, max });
+  if (d.qr) qr(ctx, d, w - 110 - o.qr, y + (h - o.qr) / 2, o.qr);
+}
+
+/** 4:5 直式。跟 9:16 同一個順序：結果、比分、盤面、最下面紙色一塊放品牌＋QR。 */
 function poster(ctx: CanvasRenderingContext2D, d: ResultCardData) {
   const { w, h } = CARD_SIZE.poster;
-  fill(ctx, C.ground, 0, 0, w, h);
-  fill(ctx, bandColor(d), 0, 0, w, 400);
-  text(ctx, d.font, d.text.kicker, w / 2, 112, { size: 36, color: C.cream, alpha: 0.75, align: 'center', max: 900 });
-  text(ctx, d.font, d.text.title, w / 2, 250, { size: 128, color: C.cream, align: 'center', max: 940 });
-  board(ctx, d, 200, 320, 680);
-  scores(ctx, d, w / 2, 1040, 104, 920);
-  // 左邊三行：站名、出處、網址；右邊 QR
-  brand(ctx, d, 80, 1226, 52, 720);
-  text(ctx, d.font, d.text.from, 80, 1268, { size: 24, weight: 700, color: C.inkSoft, max: 720 });
-  text(ctx, d.font, d.text.host, 80, 1306, { size: 24, weight: 700, color: C.inkSoft, max: 720 });
-  if (d.qr) qr(ctx, d, w - 80 - 150, 1170, 150);
+  fill(ctx, bandColor(d), 0, 0, w, h);
+  text(ctx, d.font, d.text.kicker, w / 2, 108, { size: 36, color: C.cream, alpha: 0.75, align: 'center', max: 900 });
+  text(ctx, d.font, d.text.title, w / 2, 232, { size: 120, color: C.cream, align: 'center', max: 940 });
+  scores(ctx, d, w / 2, 286, 96, 920);
+  board(ctx, d, 230, 430, 620);
+  footer(ctx, d, 1100, 190, { brand: 46, small: 24, qr: 150 });
 }
 
 /**
- * 1:1。左邊大盤面、右邊一欄結果＋比分直排，最下面品牌。
+ * 1:1。左邊大盤面、右邊一欄比分直排，最下面紙色一塊放品牌＋QR。
  * 標題與盤面之間要留空：先前標題字的下緣直接壓到盤面的外框（Zach 10/23：「1:1 的有點卡到文字」）。
  */
 function square(ctx: CanvasRenderingContext2D, d: ResultCardData) {
-  const { w, h } = CARD_SIZE.square;
-  fill(ctx, C.ground, 0, 0, w, h);
-  fill(ctx, bandColor(d), 0, 0, w, 270);
+  const { w } = CARD_SIZE.square;
+  fill(ctx, bandColor(d), 0, 0, w, w);
   text(ctx, d.font, d.text.kicker, 72, 82, { size: 30, color: C.cream, alpha: 0.75, max: 936 });
   text(ctx, d.font, d.text.title, 72, 180, { size: 86, color: C.cream, max: 936 });
-  board(ctx, d, 72, 232, 578);
-  // 右欄：比分直排
-  const list = ranking(d);
-  const colX = 720, colW = 288;
-  let y = 300;
-  for (const r of list) {
-    // 一次畫一塊；勝負照整局的 winners 判斷（輸家才會是淡的）
+  board(ctx, d, 72, 226, 580);
+  // 右欄：比分直排，一次畫一塊；勝負照整局的 winners 判斷（輸家才會是淡的）
+  const colX = 712, colW = 300;
+  let y = 290;
+  for (const r of ranking(d)) {
     const one: ResultCardData = { ...d, owned: { [r.player]: r.count } };
     scores(ctx, one, colX + colW / 2, y, r.won ? 110 : 80, colW);
     y += (r.won ? 110 : 80) + 26;
   }
-  brand(ctx, d, 72, 930, 48, 600);
-  text(ctx, d.font, d.text.from, 72, 976, { size: 24, weight: 700, color: C.inkSoft, max: 600 });
-  text(ctx, d.font, d.text.host, 72, 1022, { size: 26, color: C.inkSoft });
-  if (d.qr) {
-    qr(ctx, d, colX + colW - 170, h - 72 - 170, 170);
-  }
+  footer(ctx, d, 850, 170, { brand: 44, small: 22, qr: 136 });
 }
 
 /** 9:16 限時動態。滿版勝方色、超大結果，盤面在中間，最下面一塊紙色放品牌＋大 QR。 */
@@ -313,19 +314,13 @@ function story(ctx: CanvasRenderingContext2D, d: ResultCardData) {
   fill(ctx, bandColor(d), 0, 0, w, h);
   text(ctx, d.font, d.text.kicker, w / 2, 250, { size: 40, color: C.cream, alpha: 0.75, align: 'center', max: 940 });
   text(ctx, d.font, d.text.title, w / 2, 420, { size: 150, color: C.cream, align: 'center', max: 960 });
-  scores(ctx, d, w / 2, 500, 110, 960, true);
+  scores(ctx, d, w / 2, 500, 110, 960);
   board(ctx, d, 110, 680, 860);
-  // 底部一塊紙色：品牌、出處、網址＋QR
-  fill(ctx, C.cream, 60, 1600, w - 120, 260, 36);
-  brand(ctx, d, 110, 1706, 50, 620);
-  text(ctx, d.font, d.text.from, 110, 1762, { size: 28, weight: 700, color: C.inkSoft, max: 620 });
-  text(ctx, d.font, d.text.host, 110, 1808, { size: 28, weight: 700, color: C.inkSoft, max: 620 });
-  if (d.qr) qr(ctx, d, w - 110 - 200, 1630, 200);
+  footer(ctx, d, 1600, 260, { brand: 50, small: 28, qr: 200 });
 }
 
 const DRAW: Record<CardLayout, (ctx: CanvasRenderingContext2D, d: ResultCardData) => void> = { poster, square, story };
 
-/** 畫到一張新的 canvas 上。 */
 /**
  * 畫到一張新的 canvas 上。scale < 1 給畫面上的預覽用：照顯示的大小重新畫一次，
  * 不要拿 1080 寬的大圖讓瀏覽器縮 —— 縮太多倍時細的格線會一條有一條沒有（Zach 10/23：「在更小的地方渲染會怪怪」）。
