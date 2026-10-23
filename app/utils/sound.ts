@@ -10,7 +10,7 @@
  * - 分頁在背景時 AudioContext 照樣會響 —— 「輪到你了」的提示音就是為了這個。
  */
 
-export type Sfx = 'turn' | 'place' | 'wall' | 'nudge' | 'start' | 'win' | 'lose';
+export type Sfx = 'turn' | 'remind' | 'place' | 'wall' | 'nudge' | 'start' | 'win' | 'lose';
 export type SoundPrefs = { sfx: boolean };
 
 const KEY = 'wallgo:sound';
@@ -127,6 +127,10 @@ export function playSfx(name: Sfx) {
       tone(t, NOTE(88), 0.25, 0.05, 'sine');
       tone(t + 0.13, NOTE(81), 0.8, 0.24, 'sine');
       tone(t + 0.13, NOTE(93), 0.35, 0.05, 'sine');
+      break;
+    case 'remind': // 輪到你很久了：同一聲叮咚，小聲一半、不帶泛音，聽得出是同一件事
+      tone(t, NOTE(76), 0.5, 0.11, 'sine');
+      tone(t + 0.13, NOTE(81), 0.8, 0.12, 'sine');
       break;
     case 'place': // 棋子放上木盤：短促的「篤」
       knock(t, 900, 0.06, 0.9);

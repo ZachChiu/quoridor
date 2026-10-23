@@ -99,6 +99,9 @@ interface PlayClientProps {
 /** 本機／單人的累計時間存在這個分頁裡（跟棋譜一樣，重整接得回來） */
 const clockKey = (saveKey: string) => `${saveKey}:clock`;
 
+/** 輪到自己多久沒碰畫面就再提醒一次（見「很久沒下的提醒」） */
+const REMIND_MS = 60_000;
+
 /** Chessboard 的方向語彙 → engine 的牆方向。 */
 const toWallDir = (direction: Direction): WallDir =>
   direction === 'top' || direction === 'bottom' ? 'H' : 'V';
@@ -486,7 +489,36 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
     本機對戰大家輪流用同一台，沒有「自己」，只有顏色、不脹。
   */
   const turnColor = !isLock && state.currentPlayer && (!isOnline || phase === 'playing') ? playerVar(state.currentPlayer) : null;
-  const turnPulse = me && isMyTurn ? state.turns.length + state.openingPlacements.length + 1 : 0;
+
+  /*
+    很久沒下的提醒（連線，Zach 10/23）：輪到自己、超過 1 分鐘沒碰畫面（沒點、沒按鍵），再小聲叮咚一次、外圈再脹一次。
+    一個回合只提醒一次；還在想、點了棋子或走了一步就重新計時。對手按的「催一下」是另一回事，兩個並存。
+    分頁在背景時照樣會響（AudioContext 不停；背景分頁的計時器頭 5 分鐘仍是一秒的精度）。
+  */
+  const myTurnKey = isOnline && phase === 'playing' && isMyTurn && !isLock
+    ? state.turns.length + state.openingPlacements.length : null;
+  const [remindedAt, setRemindedAt] = useState<number | null>(null);
+  useEffect(() => {
+    if (myTurnKey === null) return;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const rearm = () => { clearTimeout(timer); timer = setTimeout(fire, REMIND_MS); };
+    const unlisten = () => {
+      window.removeEventListener('pointerdown', rearm, true);
+      window.removeEventListener('keydown', rearm, true);
+    };
+    function fire() {
+      unlisten();
+      playSfx('remind');
+      setRemindedAt(myTurnKey);
+    }
+    rearm();
+    window.addEventListener('pointerdown', rearm, true);
+    window.addEventListener('keydown', rearm, true);
+    return () => { clearTimeout(timer); unlisten(); };
+  }, [myTurnKey]);
+  const reminded = myTurnKey !== null && remindedAt === myTurnKey;
+  // 每個回合一個數字，提醒時再加一 —— Chessboard 看到數字變了就脹一次
+  const turnPulse = me && isMyTurn ? (state.turns.length + state.openingPlacements.length + 1) * 2 + (reminded ? 1 : 0) : 0;
 
   // ─── 催一下（連線，Zach 10/23）──────────────────────────────────────────────
   /*
