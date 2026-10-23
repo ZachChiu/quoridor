@@ -17,6 +17,7 @@ export type RoomPlayer = {
  *   currentPlayer 'A' | 'B' | 'C'
  *   players       { A?, B?, C? }
  *   wgf           string  — 最新完整 WGF 棋譜字串
+ *   presence      { A?, B?, C? } — true 連著、number 斷線的時間（見 gameService 的 trackPresence）
  */
 export type Room = {
   id: string;
@@ -27,4 +28,6 @@ export type Room = {
   players: Partial<Record<'A' | 'B' | 'C', RoomPlayer>>;
   wgf: string;
   winners?: ('A' | 'B' | 'C' | 'draw')[];
+  /** 沒有這一項（或沒有某個座位）＝不知道，不是斷線 */
+  presence?: Partial<Record<'A' | 'B' | 'C', true | number>>;
 };

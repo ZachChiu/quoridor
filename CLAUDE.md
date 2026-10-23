@@ -97,6 +97,7 @@ zh-TW 不加前綴（`app/(default)/`），en / ja / ko / zh-Hans / th 加前綴
 ```
 id, playersNum, status, createdAt, currentPlayer, wgf, winners?
 players/{ A?, B?, C? }/{ uid, displayName, joinedAt }
+presence/{ A?, B?, C? }   true＝連著、number＝斷線的時間；沒有＝不知道（舊版程式），不能當成斷線
 ```
 
 `status` 生命週期：`waiting` → `opening` → `playing` → `finished`
@@ -104,6 +105,9 @@ players/{ A?, B?, C? }/{ uid, displayName, joinedAt }
 - `app/utils/firebase.ts` — Firebase **惰性**初始化。匯出 `getFirebaseAuth()` / `getFirebaseDb()` 兩個 async 函式，內部以動態 import 載入 SDK 並用 Promise 記憶化。首頁與 `/local` 不會下載 Firebase（約 75 KB gzip）
 - `app/utils/gameService.ts` — `createRoom`, `joinRoom`, `getRoom`, `subscribeRoom`, `updateGameState`, `setRoomWinner`
 - `app/types/room.ts` — `Room`, `RoomPlayer`, `RoomStatus` 型別
+- **在線狀態**（2026-10-23）：`gameService.trackPresence` 照 Firebase 官方的做法 —— 先登記 `onDisconnect` 寫斷線時間、伺服器收下才標成 `true`；關分頁、手機收到背景、網路斷掉時由伺服器寫斷線。畫面在 `hook/useRoomPresence.ts`：**斷線滿 3 秒才顯示**（有人重新整理時不閃）、回來立刻拿掉；斷線的對手在比分那塊掛一顆拔插頭的小圓（`GameStatus`），輪到他時提示句寫「藍方暫時離線」，自己斷線寫「連線中斷，正在重新連線…」。從等人開始回報，結束後停（結算會 `releaseConnection`）。規則要 Zach 先在 Console 發布；沒發布時寫入被拒、什麼都不顯示，不會出錯
+- **分頁標題提醒**：`hook/useTitleAlert.ts`，連線時輪到自己、分頁在背景，標題輪流換成「● 輪到你了」。只有電腦版看得到；手機切到別的 App 時網頁沒有任何辦法提醒（推播要 Service Worker＋能發送的後端，靜態站做不到）
+- **本機測連線**：`NEXT_PUBLIC_FIREBASE_EMULATOR=1` 時 `firebase.ts` 改連 Firebase 模擬器（auth 9099、database 9000，要裝 Java）。在線狀態、斷線、規則只能真的開兩個瀏覽器（兩個身分）連一次才驗得到，不要拿正式資料庫試
 - 首頁右上角水平並排「聯絡我們」與語言切換（40px、離邊 10px）。標題上方有一塊直式才有、可收縮（flex-shrink）的留白：畫面夠高時把標題推到圓鈕下面，不夠高時自己縮掉，不會多出捲軸；640–680 高的舊手機再把標題縮到 6.5dvh。直排、拆到左上都試過，Zach 覺得不好看
 - `HomeClient.tsx` — 連線磁磚**按下去立刻**跳轉 `/online#new=2|3`，不在首頁等建房（手機沒有滑過磁磚的預熱，先前會有 2 秒多畫面不動）。滑過或 focus 磁磚時仍呼叫 `ensureUser()` 預熱登入
 - `app/(default)/online/OnlineClient.tsx` — 解析 hash（`parseOnlineHash`）：`#roomId=` 進房；`#new=` 就地開房（初始棋譜用 `toWgf(createGame(n))`），開好後 `replaceState` 換網址 —— 重新整理才不會再開一間；都不是就顯示「連結不完整」，不會退化成本機對戰

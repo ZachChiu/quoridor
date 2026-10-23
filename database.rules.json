@@ -20,6 +20,9 @@
       **將來做回合倒數時要改這條**：逾時代打是別人替輪到的人寫。
     - currentPlayer / status / winners：任一在座玩家。winners 必須能由投降的人
       自己寫 —— 投降是唯一不能從棋譜推導的結束方式
+    - presence（2026-10 加）：每個座位只有本人能寫，值只能是 true（連著）或時間戳記（斷線的時間）。
+      斷線那一筆是伺服器的 onDisconnect 寫的，但規則照樣檢查 —— 登記的時候一次、真的斷線時再一次。
+      這段規則先發布、程式後上線都沒關係：舊程式不寫 presence；新程式寫入被拒時也只是不顯示在線狀態
     - 房間多出來的欄位一律拒絕（$other）。新增欄位要先改這裡
 
     ── 回饋 ─────────────────────────────────────────────────────────
@@ -80,6 +83,12 @@
         "winners": {
           ".write": "auth != null && (data.parent().child('players/A/uid').val() === auth.uid || data.parent().child('players/B/uid').val() === auth.uid || data.parent().child('players/C/uid').val() === auth.uid)",
           "$index": { ".validate": "newData.val() === 'A' || newData.val() === 'B' || newData.val() === 'C' || newData.val() === 'draw'" }
+        },
+        "presence": {
+          "$seat": {
+            ".write": "auth != null && ($seat === 'A' || $seat === 'B' || $seat === 'C') && data.parent().parent().child('players').child($seat).child('uid').val() === auth.uid",
+            ".validate": "newData.val() === true || (newData.isNumber() && newData.val() <= now)"
+          }
         },
         "$other": { ".validate": false }
       }

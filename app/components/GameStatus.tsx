@@ -2,6 +2,7 @@ import React from "react";
 import { PLAYER_ON, playerVar, type PlayerKey } from "@/config/players";
 import type { Player } from "@/types/chessboard";
 import { useGameText } from '@/i18n/LocaleProvider';
+import { GiUnplugged } from 'react-icons/gi';
 
 interface Props {
   /** 這台裝置上的人坐哪一方（連線、跟 AI 下）。本機對戰沒有 */
@@ -10,6 +11,8 @@ interface Props {
   currentPlayer: Player;
   uniqTerritories: { A: string[]; B: string[], C?: string[] };
   playersNum: number;
+  /** 連線時斷線的對手（已經等過幾秒、確定不是重新整理） */
+  away?: PlayerKey[];
 }
 
 /**
@@ -45,8 +48,12 @@ interface Props {
  * Zach 從六種做法裡選了這個：自己那塊外面一圈自己的顏色，中間留一道縫（outline＋offset，縫透出頁面底色）。
  * 輪到誰照舊是「那塊變大」—— 框講「哪塊是你」、大小講「輪到誰」，各講一件事。
  * 塊與塊之間的距離加到 12px，框才不會貼到隔壁那塊。讀屏另外念「你」。
+ *
+ * ── 斷線的對手掛一顆拔掉插頭的小圓 ────────────────────────────────
+ * 釘在那塊的右上角，深墨底、外面一圈頁面底色把它跟磚分開。不淡化整塊（理由見上）、
+ * 也不在磚上寫字 —— 手機上那塊只放得下一個數字。輪到他的時候，提示句另外會寫「藍方暫時離線」。
  */
-export default React.memo(function GameStatus({ me, isLock, currentPlayer, uniqTerritories, playersNum }: Props) {
+export default React.memo(function GameStatus({ me, isLock, currentPlayer, uniqTerritories, playersNum, away }: Props) {
   const g = useGameText();
   const players: PlayerKey[] = playersNum === 3 ? ['A', 'B', 'C'] : ['A', 'B'];
 
@@ -76,6 +83,12 @@ export default React.memo(function GameStatus({ me, isLock, currentPlayer, uniqT
           >
             <span className="coarse:hidden">{g.status.claimed}</span>
             {p === me && <span className="sr-only">{g.status.you}</span>}
+            {away?.includes(p) && (
+              <span className="absolute -right-2 -top-2 grid size-6 place-items-center rounded-full bg-tile-ink text-[13px] text-tile-cream ring ring-primary-50">
+                <GiUnplugged aria-hidden="true" />
+                <span className="sr-only">{g.status.away}</span>
+              </span>
+            )}
             <span className={`leading-none coarse:m-auto coarse:translate-y-[-0.08em]
                               coarse-land:text-[22px] ${active ? 'text-[22px]' : 'text-xl'}`}>
               {uniqTerritories[p]?.length || 0}

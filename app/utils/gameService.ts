@@ -179,6 +179,75 @@ export function subscribeRoom(
   };
 }
 
+// ─── 在線狀態 ─────────────────────────────────────────────────────────────────
+
+/**
+ * 回報自己這個座位在不在線：`rooms/{roomId}/presence/{seat}`。
+ *
+ *   true    連著
+ *   number  斷線的時間（伺服器時間）
+ *   沒有    不知道 —— 對方還在跑舊版程式、或規則還沒發布。畫面上**不能**當成斷線，
+ *           否則上線那一刻所有人都會看到對手「離線」
+ *
+ * 斷線由伺服器的 onDisconnect 寫：關分頁、手機把瀏覽器收到背景、網路斷掉，
+ * 伺服器偵測到連線沒了就把座位改成時間戳記（瀏覽器自己根本來不及說再見）。
+ * 網路回來時 SDK 會自己重連，`.info/connected` 變回 true 就再登記一次。
+ *
+ * 寫入失敗一律吞掉：在線狀態是附加資訊，規則還沒發布時也不該讓對局出錯。
+ *
+ * @param onConnection - 自己的連線狀態變了（給「連線中斷，重新連線中」用）。
+ * @returns 停止回報。會順便把座位標成離開 —— 站內換頁時連線還在，
+ *          onDisconnect 不會觸發，不自己標的話對手會一直看到「在線」。
+ */
+export function trackPresence(
+  roomId: string,
+  seat: 'A' | 'B' | 'C',
+  onConnection: (connected: boolean) => void
+): () => void {
+  let cancelled = false;
+  let stop: (() => void) | null = null;
+
+  void (async () => {
+    const { ref, onValue, onDisconnect, set, serverTimestamp, db } = await rtdb();
+    if (cancelled) return;
+
+    const mine = ref(db, `rooms/${roomId}/presence/${seat}`);
+    let connected = false;
+
+    // 先登記「斷線時要寫什麼」，伺服器收下之後才標成在線。
+    // 反過來的話，兩步之間剛好斷掉，座位就會永遠掛著「在線」。
+    const markOnline = () => {
+      onDisconnect(mine).set(serverTimestamp())
+        .then(() => set(mine, true))
+        .catch(() => {});
+    };
+
+    const offConnected = onValue(ref(db, '.info/connected'), (snap) => {
+      connected = snap.val() === true;
+      onConnection(connected);
+      if (connected) markOnline();
+    });
+
+    // 同一個人開了兩個分頁：關掉其中一個，伺服器會把座位標成斷線。
+    // 還開著的那個分頁看到了就補回來（對手那邊頂多閃一下，而且有延遲才顯示）。
+    const offMine = onValue(mine, (snap) => {
+      if (connected && snap.exists() && snap.val() !== true) markOnline();
+    });
+
+    stop = () => {
+      offConnected();
+      offMine();
+      onDisconnect(mine).cancel().catch(() => {});
+      set(mine, serverTimestamp()).catch(() => {});
+    };
+  })();
+
+  return () => {
+    cancelled = true;
+    stop?.();
+  };
+}
+
 // ─── 意見回饋 ─────────────────────────────────────────────────────────────────
 
 

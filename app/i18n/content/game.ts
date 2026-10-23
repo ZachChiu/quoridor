@@ -60,8 +60,8 @@ export type GameText = {
   breakWall: { heading: string; kicker: string; cancel: string; confirm: string; body: string };
   surrender: { label: string; heading: string; kicker: string; cancel: string; confirm: string; body: string; bodyThree: string };
   leave: { heading: string; kicker: string; body: string; bodyOnline: string; cancel: string; confirm: string };
-  /** you：自己那塊比分給讀屏念的「你」（畫面上是一圈框，不寫字） */
-  status: { claimed: string; you: string };
+  /** you：自己那塊比分給讀屏念的「你」（畫面上是一圈框，不寫字）；away：對手那塊斷線時給讀屏念的（畫面上是一顆小記號） */
+  status: { claimed: string; you: string; away: string };
   play: {
     noRoom: string; roomFull: string; playerName: string; connectFail: string;
     noRoomBody: string; roomFullBody: string; connectFailBody: string; reload: string;
@@ -69,6 +69,10 @@ export type GameText = {
     badLink: string; badLinkBody: string; gameStart: string;
     /** 連線時「你是藍方」：開場那一下與等人的畫面 */
     youAre: string;
+    /** 連線時輪到的那一方斷線了（取代「等對手下」） */
+    away: string;
+    /** 自己斷線了。這時下的那一手會先存著，連回來才送出 */
+    reconnecting: string;
   };
 };
 
@@ -140,7 +144,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       body: '這一局到此結束，你判負。',
       bodyThree: '這一局到此結束，你判負。另外兩位照目前的地盤決定勝負。',
     },
-    status: { claimed: '已佔領', you: '你' },
+    status: { claimed: '已佔領', you: '你', away: '離線' },
     play: {
       noRoom: '不存在的對局', roomFull: '房間已滿，無法加入', playerName: '玩家 {id}',
       connectFail: '連不上房間',
@@ -150,6 +154,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       reload: '重新整理', home: '回首頁', howToPlay: '遊玩方式',
       unfinished: '未結束', connecting: '正在連線…', backHome: '返回首頁',
       badLink: '這個連結沒有指向任何對局', gameStart: '遊戲開始', youAre: '你是{side}',
+      away: '{who}暫時離線', reconnecting: '連線中斷，正在重新連線…',
       badLinkBody: '邀請連結可能被截斷了。跟對方要一次完整的連結，或回首頁開一間新的。',
     },
   },
@@ -217,7 +222,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       body: 'The game ends here and you lose.',
       bodyThree: 'The game ends here and you lose. The other two are ranked by the territory they hold right now.',
     },
-    status: { claimed: 'Territory', you: 'You' },
+    status: { claimed: 'Territory', you: 'You', away: 'Offline' },
     play: {
       noRoom: 'No such game', roomFull: 'This room is full', playerName: 'Player {id}',
       connectFail: 'Could not reach the room',
@@ -227,6 +232,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       reload: 'Reload', home: 'Home', howToPlay: 'How to play',
       unfinished: 'unfinished', connecting: 'Connecting…', backHome: 'Back to home',
       badLink: 'This link does not point to a game', gameStart: 'Game start', youAre: "You're {side}",
+      away: '{who} is offline', reconnecting: 'Connection lost — reconnecting…',
       badLinkBody: 'The invite link may have been cut short. Ask for the full link again, or go home and open a new room.',
     },
   },
@@ -294,7 +300,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       body: 'この一局はここで終わり、あなたの負けになります。',
       bodyThree: 'この一局はここで終わり、あなたの負けになります。残りの2人は今の陣地で勝敗を決めます。',
     },
-    status: { claimed: '陣地', you: 'あなた' },
+    status: { claimed: '陣地', you: 'あなた', away: 'オフライン' },
     play: {
       noRoom: 'その対局は存在しません', roomFull: 'この部屋は満員です', playerName: 'プレイヤー {id}',
       connectFail: '部屋に接続できませんでした',
@@ -304,6 +310,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       reload: '再読み込み', home: 'ホーム', howToPlay: '遊び方',
       unfinished: '未完了', connecting: '接続中…', backHome: 'ホームに戻る',
       badLink: 'このリンクはどの対局も指していません', gameStart: 'ゲームスタート', youAre: 'あなたは{side}',
+      away: '{who}がオフラインです', reconnecting: '接続が切れました。再接続中…',
       badLinkBody: '招待リンクが途中で切れている可能性があります。完全なリンクをもう一度もらうか、ホームから新しい部屋を作ってください。',
     },
   },
@@ -371,7 +378,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       body: '이번 판은 여기서 끝나고 패배로 처리됩니다.',
       bodyThree: '이번 판은 여기서 끝나고 패배로 처리됩니다. 나머지 두 사람은 현재 영역으로 승부를 가립니다.',
     },
-    status: { claimed: '영역', you: '나' },
+    status: { claimed: '영역', you: '나', away: '오프라인' },
     play: {
       noRoom: '존재하지 않는 대국입니다', roomFull: '방이 가득 찼습니다', playerName: '플레이어 {id}',
       connectFail: '방에 연결하지 못했습니다',
@@ -381,6 +388,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       reload: '새로고침', home: '홈', howToPlay: '플레이 방법',
       unfinished: '미완료', connecting: '연결 중…', backHome: '홈으로',
       badLink: '이 링크는 어떤 대국도 가리키지 않습니다', gameStart: '게임 시작', youAre: '내 색은 {side}',
+      away: '{who} 오프라인', reconnecting: '연결이 끊겼습니다. 다시 연결하는 중…',
       badLinkBody: '초대 링크가 중간에 잘렸을 수 있습니다. 전체 링크를 다시 받거나, 홈에서 새 방을 만들어 주세요.',
     },
   },
@@ -452,7 +460,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       body: '这一局到此结束，判你输。',
       bodyThree: '这一局到此结束，判你输。另外两位按目前的地盘决定胜负。',
     },
-    status: { claimed: '已占领', you: '你' },
+    status: { claimed: '已占领', you: '你', away: '离线' },
     play: {
       noRoom: '对局不存在', roomFull: '房间已满，无法加入', playerName: '玩家 {id}',
       connectFail: '连不上房间',
@@ -462,6 +470,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       reload: '刷新', home: '返回首页', howToPlay: '玩法说明',
       unfinished: '未结束', connecting: '正在连接…', backHome: '返回首页',
       badLink: '这个链接没有指向任何对局', gameStart: '游戏开始', youAre: '你是{side}',
+      away: '{who}暂时离线', reconnecting: '连接中断，正在重新连接…',
       badLinkBody: '邀请链接可能被截断了。请对方再发一次完整的链接，或者回首页新开一个房间。',
     },
   },
@@ -534,7 +543,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       body: 'เกมนี้จบลงที่นี่ และคุณเป็นฝ่ายแพ้',
       bodyThree: 'เกมนี้จบลงที่นี่ และคุณเป็นฝ่ายแพ้ ส่วนอีกสองคนจะตัดสินแพ้ชนะจากพื้นที่ที่มีอยู่ตอนนี้',
     },
-    status: { claimed: 'พื้นที่', you: 'คุณ' },
+    status: { claimed: 'พื้นที่', you: 'คุณ', away: 'ออฟไลน์' },
     play: {
       noRoom: 'ไม่พบเกมนี้', roomFull: 'ห้องเต็มแล้ว เข้าร่วมไม่ได้', playerName: 'ผู้เล่น {id}',
       connectFail: 'เชื่อมต่อห้องไม่ได้',
@@ -544,6 +553,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       reload: 'รีเฟรช', home: 'กลับหน้าแรก', howToPlay: 'วิธีเล่น',
       unfinished: 'ยังไม่จบ', connecting: 'กำลังเชื่อมต่อ…', backHome: 'กลับหน้าแรก',
       badLink: 'ลิงก์นี้ไม่ได้ชี้ไปยังเกมใด', gameStart: 'เริ่มเกม', youAre: 'คุณคือ{side}',
+      away: '{who}ออฟไลน์อยู่', reconnecting: 'การเชื่อมต่อหลุด กำลังเชื่อมต่อใหม่…',
       badLinkBody: 'ลิงก์เชิญอาจถูกตัด ขอลิงก์ฉบับเต็มจากอีกฝ่ายอีกครั้ง หรือกลับหน้าแรกเพื่อสร้างห้องใหม่',
     },
   },

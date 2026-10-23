@@ -12,6 +12,8 @@ import GameTips from "@/components/GameTips";
 import IconButton, { HOVER_TIP } from "@/components/IconButton";
 import WaitingRoom from "@/components/WaitingRoom";
 import { useAiOpponent } from "@/hook/useAiOpponent";
+import { useRoomPresence } from "@/hook/useRoomPresence";
+import { useTitleAlert } from "@/hook/useTitleAlert";
 import { playerKeys } from "@/game/territory";
 import { playerVar } from "@/config/players";
 import { shouldPushWgf } from "@/utils/wgfSync";
@@ -416,6 +418,24 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
     if (!isOnline || !myPlayerKey) return true;
     return state.currentPlayer === myPlayerKey;
   }, [isLock, isAiTurn, isOnline, myPlayerKey, state.currentPlayer]);
+
+  /*
+    連線時誰斷線了。從等人的時候就開始回報 —— 房主傳完連結常常切去 LINE 等，
+    朋友進來時才知道房主在不在。結束後就停（結算會把資料庫連線還回去，見下方 releaseConnection）。
+
+    斷線的提示句蓋過「等對手下」：對手不在的時候，那句話是在叫人等一個不會來的回合。
+  */
+  const { selfOffline, away } = useRoomPresence(
+    roomId, myPlayerKey, room,
+    isOnline && (phase === 'waiting' || phase === 'playing') && !isLock,
+  );
+  const currentAway = state.currentPlayer && away.includes(state.currentPlayer) ? state.currentPlayer : null;
+  const presenceNotice = selfOffline ? g.play.reconnecting
+    : currentAway ? fmt(g.play.away, { who: g.players[currentAway] })
+    : null;
+
+  // 分頁在背景、輪到自己時，分頁標題輪流換成「輪到你了」（只有電腦版看得到分頁標題）
+  useTitleAlert(isOnline && phase === 'playing' && isMyTurn, g.tips.yourTurn);
 
   // ─── 數據分析 ───────────────────────────────────────────────────────────────
   /*
@@ -955,6 +975,7 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
             currentPlayer={state.currentPlayer}
             uniqTerritories={territories.owned}
             playersNum={playersNum}
+            away={away}
           />
 
           {/*
@@ -977,6 +998,7 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
             onWallStep={onWallStep}
             playersNum={playersNum}
             onShowResult={() => setChampionDismissed(false)}
+            notice={presenceNotice}
           />
 
           {/* 桌機的投降。手機在控制盤的左上角，那裡已經有一顆；
@@ -1003,6 +1025,7 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
           <div className={`chessboard-container ${boardBox}`}>
             <Chessboard
               me={me}
+              notice={presenceNotice}
               size={BOARD_SIZE}
               board={state.board}
               verticalWalls={state.verticalWalls}
@@ -1050,6 +1073,7 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
               breakMode={breakMode}
               remainSteps={state.remainSteps}
               color={playerVar(state.currentPlayer)}
+              notice={presenceNotice}
             />
           )}
           </div>

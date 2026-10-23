@@ -41,14 +41,17 @@ type Props = {
   breakMode: boolean;
   remainSteps: number;
   color: string;
+  /** 連線狀況（自己斷線、輪到的對手斷線）。有的話蓋過其他提示 —— 那時「等對手下」是錯的 */
+  notice?: string | null;
   /** 由掛載點決定定位與顯示條件 —— 直式排在文件流裡，橫式收在控制盤內 */
   className?: string;
 };
 
-export default function TurnGuide({ placing, myTurn, selected, onWallStep, breakMode, remainSteps, color, className = '' }: Props) {
+export default function TurnGuide({ placing, myTurn, selected, onWallStep, breakMode, remainSteps, color, notice, className = '' }: Props) {
   const g = useGameText();
 
-  const aside = !myTurn ? g.pad.hintWait
+  const aside = notice ? notice
+    : !myTurn ? g.pad.hintWait
     : breakMode ? g.pad.breakPick
     : null;
 

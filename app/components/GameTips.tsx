@@ -28,6 +28,8 @@ interface Props {
    * 同一件事有兩個來源，遲早會對不上。
    */
   playersNum: number;
+  /** 連線狀況（自己斷線、輪到的對手斷線）。有的話取代「藍方 · 移動棋子」那一行 */
+  notice?: string | null;
 }
 
 /**
@@ -54,7 +56,7 @@ interface Props {
  */
 export default React.memo(function GameTips({
   me, isPlacingChess, currentPlayer, winingStatus, breakWallCountObj, aiThinking,
-  selected, remainSteps = 0, onWallStep, onShowResult, playersNum,
+  selected, remainSteps = 0, onWallStep, onShowResult, playersNum, notice,
 }: Props) {
   const g = useGameText();
   const over = winingStatus.length > 0;
@@ -113,7 +115,7 @@ export default React.memo(function GameTips({
           <span className={onWallStep ? '' : 'opacity-55'}>{g.pad.step2}</span>
         </span>
       )}
-      <span className={steps ? 'text-[15px] font-bold opacity-85' : 'text-base'}>{tipText}</span>
+      <span className={steps ? 'text-[15px] font-bold opacity-85' : 'text-base'}>{!over && notice ? notice : tipText}</span>
       {breakWallText && <span className="text-xs font-bold opacity-80">{breakWallText}</span>}
     </>
   );

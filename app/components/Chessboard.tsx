@@ -80,6 +80,8 @@ type Props = {
    * 控制盤中央的棋子畫這一方的顏色，不畫輪到的人。
    */
   me?: Player;
+  /** 連線狀況的提示（自己斷線、輪到的對手斷線），交給控制盤上的 TurnGuide */
+  notice?: string | null;
 };
 
 export default React.memo(function Chessboard({
@@ -114,7 +116,10 @@ export default React.memo(function Chessboard({
   breakSlots,
   nextPiece = null,
   me,
+  notice,
 }: Props) {
+  // 這台裝置上的人現在能不能動（連線時對手在下、AI 在想都不能）。控制盤用的是同一個判斷
+  const canAct = myTurn ?? (!isLock && !!currentPlayer);
   const canBreakAt = (row: number, col: number, dir: 'H' | 'V') =>
     !breakSlots || breakSlots.has(`${row},${col},${dir}`);
   // const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
@@ -509,9 +514,11 @@ export default React.memo(function Chessboard({
               const territoryClass = !isPlacingChess && territory ? cellBgMapping[territory] : null;
               const territoryDelay = terr.wave[`${rowIndex},${colIndex}`];
 
-              if (!isLock && (isPlacingChess && !cellPlayer)) {
+              // 手指游標只給「按了會有反應」的格子：連線時對手在下、或 AI 在想，
+              // 對方的棋子雖然是輪到的那一方，按了也沒用（Zach 10/23 回報）
+              if (canAct && isPlacingChess && !cellPlayer) {
                 cellClass.push('cursor-pointer');
-              } else if (!isLock && !isPlacingChess && (isTurn || isAvailableMove)) {
+              } else if (canAct && !isPlacingChess && (isTurn || isAvailableMove)) {
                 cellClass.push('cursor-pointer');
               }
 
@@ -865,9 +872,10 @@ export default React.memo(function Chessboard({
               setPendingWall(null);
             }}
             dirty={turnDirty}
-            myTurn={myTurn ?? (!isLock && !!currentPlayer)}
+            myTurn={canAct}
             remainSteps={remainSteps}
             color={PLAYER_VAR[currentPlayer]}
+            notice={notice}
           />
         );
       })()}
