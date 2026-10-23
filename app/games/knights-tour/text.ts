@@ -1,10 +1,10 @@
 import type { Locale } from '@/i18n/locales';
 
 /**
- * 騎士巡邏的文案（六個語系）。寫法照 app/i18n/gameText.ts 的規定：語系 key 在兩格縮排、
+ * 騎士巡遊的文案（六個語系）。寫法照 app/i18n/gameText.ts 的規定：語系 key 在兩格縮排、
  * 依 'zh-TW' → en → ja → ko → 'zh-Hans' → th 排，字型子集腳本靠這個切字。
  *
- * 遊戲名：繁中「騎士巡邏」、簡中「骑士巡逻」、日文「ナイトツアー」、韓文「기사의 여행」（節目的韓文名，
+ * 遊戲名：繁中「騎士巡遊」、簡中「骑士巡游」（節目相關報導的寫法；原本用數學條目的「騎士巡邏」，10/24 照 Netflix 版本改，見 glossary〈遊戲名〉）、日文「ナイトツアー」、韓文「기사의 여행」（節目的韓文名，
  * 也是韓國人實際搜的字）。泰文用「ทางเดินม้า」—— 泰文維基〈ปัญหาทางเดินม้าหมากรุก〉與朱拉隆功大學的
  * 論文都這樣叫；「การเดินม้า」是「騎士怎麼走」，不是巡邏。英文名在其他語系當副標。
  * 棋子：騎士／骑士、knight、ナイト、나이트、ม้า。「走日字」是中文講馬步的慣用說法。
@@ -80,9 +80,9 @@ export type KnightsText = {
 
 export const TEXT = {
   'zh-TW': {
-    title: '騎士巡邏',
+    title: '騎士巡遊',
     subtitle: "Knight's Tour",
-    metaTitle: "騎士巡邏 Knight's Tour 線上玩",
+    metaTitle: "騎士巡遊 Knight's Tour 線上玩",
     metaDescription: '用西洋棋的騎士走遍棋盤每一格，每格只能走一次。照《魔鬼的計謀：死亡密室》的規則挑戰 6×6 → 7×7 → 8×8、總時限 60 分鐘；也能自選 5×5 到 10×10 練習，可以悔棋、看提示。免下載、免註冊。',
     tagline: '騎士走遍每一格，每格只能經過一次',
     figCaption: '歐拉 1759 年論文裡的走法',
@@ -363,9 +363,9 @@ export const TEXT = {
     board: '판',
   },
   'zh-Hans': {
-    title: '骑士巡逻',
+    title: '骑士巡游',
     subtitle: "Knight's Tour",
-    metaTitle: "骑士巡逻 Knight's Tour 在线玩",
+    metaTitle: "骑士巡游 Knight's Tour 在线玩",
     metaDescription: '用国际象棋的骑士走遍棋盘每一格，每格只能走一次。照《魔鬼的计谋：死亡密室》的规则挑战 6×6 → 7×7 → 8×8，总时限 60 分钟；也能自选 5×5 到 10×10 练习，可以悔棋、看提示。免下载、免注册。',
     tagline: '骑士走遍每一格，每格只能经过一次',
     figCaption: '欧拉 1759 年论文里的走法',
