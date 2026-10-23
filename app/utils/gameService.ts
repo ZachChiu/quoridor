@@ -37,6 +37,16 @@ async function rtdb() {
   return { ...mod, db };
 }
 
+/*
+  伺服器時間。累計思考時間要拿「現在」去減 `turnAt`（伺服器寫的），
+  兩台裝置的時鐘可能差好幾秒甚至幾分鐘 —— 用本機時間減會算出負的或多出一大截。
+  SDK 會告訴我們本機跟伺服器差多少（.info/serverTimeOffset），加回去就好。
+  只在進了房間時才開始聽（subscribeRoom），送回饋之類的單次寫入用不到。
+*/
+let serverOffset = 0;
+let offsetWatched = false;
+export const serverNow = () => Date.now() + serverOffset;
+
 /**
  * 把資料庫連線還回去。
  *
@@ -110,10 +120,53 @@ export async function joinRoom(
 export async function updateGameState(
   roomId: string,
   wgf: string,
-  currentPlayer: 'A' | 'B' | 'C'
+  currentPlayer: 'A' | 'B' | 'C',
+  /** 剛下完的人、他累計到現在的思考時間（毫秒）。見 PlayClient 的累計時間 */
+  clock?: { seat: 'A' | 'B' | 'C'; ms: number }
 ): Promise<void> {
-  const { ref, update, db } = await rtdb();
+  const { ref, update, serverTimestamp, db } = await rtdb();
+  /*
+    思考時間、下一手從什麼時候開始算（turnAt）、清掉對手看得到的草稿 ——
+    **跟棋譜分開寫，而且先寫**：
+    - 分開：一次 update 是全有或全無，這幾個欄位的規則還沒發布時，整包會被拒，棋譜也跟著送不出去。
+      分開寫的話，最壞只是時間沒記到，對局照常。
+    - 先寫：規則看的是「寫入前輪到誰」。棋譜一寫，輪到的人就換了，這時才寫自己的時間會被拒。
+    同一個客戶端的寫入，伺服器照送出的順序套用。
+  */
+  update(ref(db, `rooms/${roomId}`), {
+    turnAt: serverTimestamp(),
+    draft: null,
+    ...(clock ? { [`clock/${clock.seat}`]: Math.round(clock.ms) } : {}),
+  }).catch(() => {});
   await update(ref(db, `rooms/${roomId}`), { wgf, currentPlayer });
+}
+
+/**
+ * 對手看得到的「這一手正在想什麼」：選了哪顆棋、走到哪、手機上預覽中的牆。
+ * 只有輪到的人能寫；回合結束時 updateGameState 會清掉。寫入失敗（規則還沒發布）就算了。
+ *
+ * piece 是那顆棋子在 pieceIndex 裡的序號 —— 對手那邊的盤面還停在這一手開始時，
+ * 用序號找得到「原本在哪」，再把它畫到 at。
+ */
+export type Draft = { by: 'A' | 'B' | 'C'; piece: number; at: string; wall?: string };
+
+export async function setDraft(roomId: string, draft: Draft | null): Promise<void> {
+  const { ref, set, db } = await rtdb();
+  await set(ref(db, `rooms/${roomId}/draft`), draft).catch(() => {});
+}
+
+/**
+ * 催輪到的人。伺服器規則擋 15 秒冷卻、擋自己催自己（見 database.rules.json）。
+ * 回傳有沒有成功 —— 冷卻中或規則還沒發布都是 false。
+ */
+export async function sendNudge(roomId: string, by: 'A' | 'B' | 'C'): Promise<boolean> {
+  const { ref, set, serverTimestamp, db } = await rtdb();
+  try {
+    await set(ref(db, `rooms/${roomId}/nudge`), { by, at: serverTimestamp() });
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 /**
@@ -166,6 +219,10 @@ export function subscribeRoom(
     const { ref, onValue, off, db } = await rtdb();
     if (cancelled) return;
 
+    if (!offsetWatched) {
+      offsetWatched = true;
+      onValue(ref(db, '.info/serverTimeOffset'), (snap) => { serverOffset = Number(snap.val()) || 0; });
+    }
     const roomRef = ref(db, `rooms/${roomId}`);
     onValue(roomRef, (snap) => {
       callback(snap.exists() ? (snap.val() as Room) : null);
@@ -176,6 +233,75 @@ export function subscribeRoom(
   return () => {
     cancelled = true;
     detach?.();
+  };
+}
+
+// ─── 在線狀態 ─────────────────────────────────────────────────────────────────
+
+/**
+ * 回報自己這個座位在不在線：`rooms/{roomId}/presence/{seat}`。
+ *
+ *   true    連著
+ *   number  斷線的時間（伺服器時間）
+ *   沒有    不知道 —— 對方還在跑舊版程式、或規則還沒發布。畫面上**不能**當成斷線，
+ *           否則上線那一刻所有人都會看到對手「離線」
+ *
+ * 斷線由伺服器的 onDisconnect 寫：關分頁、手機把瀏覽器收到背景、網路斷掉，
+ * 伺服器偵測到連線沒了就把座位改成時間戳記（瀏覽器自己根本來不及說再見）。
+ * 網路回來時 SDK 會自己重連，`.info/connected` 變回 true 就再登記一次。
+ *
+ * 寫入失敗一律吞掉：在線狀態是附加資訊，規則還沒發布時也不該讓對局出錯。
+ *
+ * @param onConnection - 自己的連線狀態變了（給「連線中斷，重新連線中」用）。
+ * @returns 停止回報。會順便把座位標成離開 —— 站內換頁時連線還在，
+ *          onDisconnect 不會觸發，不自己標的話對手會一直看到「在線」。
+ */
+export function trackPresence(
+  roomId: string,
+  seat: 'A' | 'B' | 'C',
+  onConnection: (connected: boolean) => void
+): () => void {
+  let cancelled = false;
+  let stop: (() => void) | null = null;
+
+  void (async () => {
+    const { ref, onValue, onDisconnect, set, serverTimestamp, db } = await rtdb();
+    if (cancelled) return;
+
+    const mine = ref(db, `rooms/${roomId}/presence/${seat}`);
+    let connected = false;
+
+    // 先登記「斷線時要寫什麼」，伺服器收下之後才標成在線。
+    // 反過來的話，兩步之間剛好斷掉，座位就會永遠掛著「在線」。
+    const markOnline = () => {
+      onDisconnect(mine).set(serverTimestamp())
+        .then(() => set(mine, true))
+        .catch(() => {});
+    };
+
+    const offConnected = onValue(ref(db, '.info/connected'), (snap) => {
+      connected = snap.val() === true;
+      onConnection(connected);
+      if (connected) markOnline();
+    });
+
+    // 同一個人開了兩個分頁：關掉其中一個，伺服器會把座位標成斷線。
+    // 還開著的那個分頁看到了就補回來（對手那邊頂多閃一下，而且有延遲才顯示）。
+    const offMine = onValue(mine, (snap) => {
+      if (connected && snap.exists() && snap.val() !== true) markOnline();
+    });
+
+    stop = () => {
+      offConnected();
+      offMine();
+      onDisconnect(mine).cancel().catch(() => {});
+      set(mine, serverTimestamp()).catch(() => {});
+    };
+  })();
+
+  return () => {
+    cancelled = true;
+    stop?.();
   };
 }
 

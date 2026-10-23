@@ -357,6 +357,27 @@ body {
 }
 .animate-dot-pop { animation: dot-pop 170ms var(--mo-snap) both; }
 
+/* 輪到誰：棋盤外圈一層那一方顏色的淡陰影（Zach 10/23 的提議）。
+   先前多一圈 5px 的實色框，Zach 說只要淡淡的陰影就好 —— 框等於又多一塊色，畫面會亂。
+   顏色由 --turn-color 給，換人時用 transition 換色；輪到自己的那一下陰影稍微濃一下再退回來 ——
+   由 Chessboard 用 element.animate() 播（每次都要能重播，切 class 做不到）。
+   全站其他地方沒有陰影，這是唯一的例外：它不是在模擬光源，是「現在是誰」的訊號。 */
+.board-turn {
+  box-shadow: 0 0 32px 2px color-mix(in srgb, var(--turn-color) 26%, transparent);
+  transition: box-shadow 320ms var(--mo-out);
+}
+
+/* 對手正在想：他選中的那顆棋子往四面擠來擠去，像在推牆。 */
+@keyframes piece-push {
+  0%, 100% { transform: translate(0, 0) scale(1, 1); }
+  18% { transform: translate(9%, 0) scale(0.84, 1.12); }
+  32% { transform: translate(0, 0) scale(1, 1); }
+  50% { transform: translate(0, -9%) scale(1.12, 0.84); }
+  64% { transform: translate(0, 0) scale(1, 1); }
+  82% { transform: translate(-9%, 0) scale(0.84, 1.12); }
+}
+.animate-piece-push { animation: piece-push 1.6s ease-in-out infinite; }
+
 /* 首頁磁磚的圖示。hover 只有桌機有，所以這裡純粹是額外的討喜，
    不承擔任何說明責任 —— 手機上看不到也不會少懂什麼。 */
 @keyframes icon-nudge {
@@ -383,6 +404,7 @@ body {
   .animate-wall-v,
   .animate-territory,
   .animate-dot-pop,
+  .animate-piece-push,
   .animate-seat-wait,
   .animate-seat-join,
   .animate-seat-idle,

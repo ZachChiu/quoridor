@@ -2,8 +2,7 @@
 import { useState, useEffect, useMemo, useCallback, useReducer, useRef } from "react";
 // 小圓鈕與首頁磁磚用同一套圖示（game-icons 實心）——
 // 同一件事在兩個地方長得不一樣，會讓人以為那是兩個不同的東西。
-import { GiRuleBook } from "react-icons/gi";
-import { LuFlag, LuHouse } from "react-icons/lu";
+import { LuCircleHelp, LuFlag, LuHouse, LuUndo2 } from "react-icons/lu";
 import Link from 'next/link';
 import Chessboard from "@/components/Chessboard";
 import ChampionModal from "@/components/ChampionModal";
@@ -12,6 +11,14 @@ import GameTips from "@/components/GameTips";
 import IconButton, { HOVER_TIP } from "@/components/IconButton";
 import WaitingRoom from "@/components/WaitingRoom";
 import { useAiOpponent } from "@/hook/useAiOpponent";
+import { useRoomPresence } from "@/hook/useRoomPresence";
+import { useTitleAlert } from "@/hook/useTitleAlert";
+import { useSound } from "@/hook/useSound";
+import { buzz, playSfx } from "@/utils/sound";
+import SoundButton from "@/components/SoundButton";
+import { type ShareCardInput } from "@/components/ResultCard";
+import { type LiveClock } from "@/utils/clock";
+import type { GhostWall } from "@/components/Chessboard";
 import { playerKeys } from "@/game/territory";
 import { playerVar } from "@/config/players";
 import { shouldPushWgf } from "@/utils/wgfSync";
@@ -31,7 +38,10 @@ import { useIsoLayoutEffect } from "@/hook/useIsoLayoutEffect";
 
 import type { Direction } from "@/types/chessboard";
 
-import { joinRoom, getRoom, subscribeRoom, updateGameState, setRoomWinner, sendFeedback, releaseConnection } from '@/utils/gameService';
+import {
+  joinRoom, getRoom, subscribeRoom, updateGameState, setRoomWinner, sendFeedback, releaseConnection,
+  sendNudge, setDraft, serverNow, type Draft,
+} from '@/utils/gameService';
 import { atStep, describeOnlineError, reportOnlineError } from '@/utils/onlineError';
 import { useUser } from '@/contexts/UserContext';
 import type { Room, RoomPlayer } from '@/types/room';
@@ -59,7 +69,7 @@ import {
 import { evaluate, resignOutcome, type Outcome } from "@/game/score";
 import type { GameState, PlayerKey, WallDir } from "@/game/types";
 import type { Turn } from "@/game/engine";
-import { useGameText, useLocale } from '@/i18n/LocaleProvider';
+import { useGameText, useLocale, useMessages } from '@/i18n/LocaleProvider';
 import { localePath } from '@/i18n/locales';
 import { roomShareUrl } from '@/utils/gameMode';
 import { fmt } from '@/i18n/content/game';
@@ -85,6 +95,12 @@ interface PlayClientProps {
    */
   aiDifficulty?: Difficulty | null;
 }
+
+/** 本機／單人的累計時間存在這個分頁裡（跟棋譜一樣，重整接得回來） */
+const clockKey = (saveKey: string) => `${saveKey}:clock`;
+
+/** 輪到自己多久沒碰畫面就再提醒一次（見「很久沒下的提醒」） */
+const REMIND_MS = 60_000;
 
 /** Chessboard 的方向語彙 → engine 的牆方向。 */
 const toWallDir = (direction: Direction): WallDir =>
@@ -235,8 +251,12 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
 
   const isLock = outcome.length > 0;
   const isPlacing = isPlacingPhase(state);
+  const started = hasStarted(state);
+  // 中立區長草（見 components/neutralGrass.ts）
+  const neutralCells = useMemo(() => new Set(territories.neutral), [territories.neutral]);
 
   const g = useGameText();
+  const t = useMessages();
 
   /*
     ── 版面靠 CSS 斷點分岔，不靠 JS ────────────────────────────────
@@ -338,6 +358,13 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
     與其讓同一件事在三個地方各存一份，不如提到唯一持有狀態的這一層。
   */
   const [pendingWall, setPendingWall] = useState<Direction | null>(null);
+  // 換一格、或換人下之後，還沒確認的方向就不再成立
+  const wallCtx = state.selected ? `${state.selected.row},${state.selected.col},${state.currentPlayer}` : '';
+  const [lastWallCtx, setLastWallCtx] = useState(wallCtx);
+  if (lastWallCtx !== wallCtx) {
+    setLastWallCtx(wallCtx);
+    setPendingWall(null);
+  }
   const [breakMode, setBreakMode] = useState(false);
 
   const onWallStep = useMemo(
@@ -417,6 +444,235 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
     return state.currentPlayer === myPlayerKey;
   }, [isLock, isAiTurn, isOnline, myPlayerKey, state.currentPlayer]);
 
+  /*
+    連線時誰斷線了。從等人的時候就開始回報 —— 房主傳完連結常常切去 LINE 等，
+    朋友進來時才知道房主在不在。結束後就停（結算會把資料庫連線還回去，見下方 releaseConnection）。
+
+    斷線的提示句蓋過「等對手下」：對手不在的時候，那句話是在叫人等一個不會來的回合。
+  */
+  const { selfOffline, away } = useRoomPresence(
+    roomId, myPlayerKey, room,
+    isOnline && (phase === 'waiting' || phase === 'playing') && !isLock,
+  );
+  const currentAway = state.currentPlayer && away.includes(state.currentPlayer) ? state.currentPlayer : null;
+  const presenceNotice = selfOffline ? g.play.reconnecting
+    : currentAway ? fmt(g.play.away, { who: g.players[currentAway] })
+    : null;
+
+  // 分頁在背景、輪到自己時，分頁標題輪流換成「輪到你了」（只有電腦版看得到分頁標題）
+  useTitleAlert(isOnline && phase === 'playing' && isMyTurn, g.tips.yourTurn);
+
+  // ─── 聲音（見 utils/sound.ts）──────────────────────────────────────────────
+  const { prefs: soundPrefs, setPrefs: setSoundPrefs } = useSound();
+  /*
+    什麼時候響：牆蓋下去（回合數 +1）、開局擺下一顆、輪到自己（只有連線 —— 那才是放在背景等的情況）、分出勝負。
+    看的是狀態的轉變，第一次觀察到的不算（重整、進房時從棋譜重建的不是這次發生的）。
+  */
+  const soundSeen = useRef<{ turns: number; opening: number; mine: boolean; lock: boolean } | null>(null);
+  useEffect(() => {
+    if (isOnline && phase !== 'playing') return;
+    const now = { turns: state.turns.length, opening: state.openingPlacements.length, mine: isMyTurn, lock: isLock };
+    const prev = soundSeen.current;
+    soundSeen.current = now;
+    if (!prev) return;
+    if (now.turns === prev.turns + 1) playSfx('wall');
+    else if (now.opening === prev.opening + 1) playSfx('place');
+    // 對手的牆聲先響完，再提醒輪到你
+    if (isOnline && now.mine && !prev.mine && !now.lock) setTimeout(() => playSfx('turn'), 260);
+    if (now.lock && !prev.lock) playSfx(!me || outcome.includes(me) ? 'win' : 'lose');
+    // 只看這幾個值的轉變；outcome 與 me 是當下讀的
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.turns.length, state.openingPlacements.length, isMyTurn, isLock, phase, isOnline]);
+
+  /*
+    輪到誰：棋盤外圈一圈那一方顏色的光（Zach 10/23 的提議）。輪到這台裝置上的人時再脹一次（turnPulse 一變就播）。
+    本機對戰大家輪流用同一台，沒有「自己」，只有顏色、不脹。
+  */
+  const turnColor = !isLock && state.currentPlayer && (!isOnline || phase === 'playing') ? playerVar(state.currentPlayer) : null;
+
+  /*
+    很久沒下的提醒（連線，Zach 10/23）：輪到自己、超過 1 分鐘沒碰畫面（沒點、沒按鍵），再小聲叮咚一次、外圈再脹一次。
+    一個回合只提醒一次；還在想、點了棋子或走了一步就重新計時。對手按的「催一下」是另一回事，兩個並存。
+    分頁在背景時照樣會響（AudioContext 不停；背景分頁的計時器頭 5 分鐘仍是一秒的精度）。
+  */
+  const myTurnKey = isOnline && phase === 'playing' && isMyTurn && !isLock
+    ? state.turns.length + state.openingPlacements.length : null;
+  const [remindedAt, setRemindedAt] = useState<number | null>(null);
+  useEffect(() => {
+    if (myTurnKey === null) return;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const rearm = () => { clearTimeout(timer); timer = setTimeout(fire, REMIND_MS); };
+    const unlisten = () => {
+      window.removeEventListener('pointerdown', rearm, true);
+      window.removeEventListener('keydown', rearm, true);
+    };
+    function fire() {
+      unlisten();
+      playSfx('remind');
+      setRemindedAt(myTurnKey);
+    }
+    rearm();
+    window.addEventListener('pointerdown', rearm, true);
+    window.addEventListener('keydown', rearm, true);
+    return () => { clearTimeout(timer); unlisten(); };
+  }, [myTurnKey]);
+  const reminded = myTurnKey !== null && remindedAt === myTurnKey;
+  // 每個回合一個數字，提醒時再加一 —— Chessboard 看到數字變了就脹一次
+  const turnPulse = me && isMyTurn ? (state.turns.length + state.openingPlacements.length + 1) * 2 + (reminded ? 1 : 0) : 0;
+
+  // ─── 催一下（連線，Zach 10/23）──────────────────────────────────────────────
+  /*
+    還沒輪到自己的人可以催輪到的人：對方的棋盤抖一下、敲門聲、手機震一下、提示列寫「紅方在催你」。
+    15 秒冷卻由資料庫規則擋（見 database.rules.json），按鈕這邊同步灰掉 15 秒。
+    被催的判斷用「上一次看到的 nudge.at」在 render 時比對 —— 第一次看到的不算（進房前的舊紀錄）。
+  */
+  const [nudged, setNudged] = useState(false);
+  const canNudge = isOnline && phase === 'playing' && !isLock && !!myPlayerKey && !isMyTurn
+    && !!state.currentPlayer && state.currentPlayer !== myPlayerKey;
+  const onNudge = useCallback(() => {
+    if (!roomId || !myPlayerKey) return;
+    setNudged(true);
+    setTimeout(() => setNudged(false), 15000);
+    void sendNudge(roomId, myPlayerKey).then((ok) => {
+      if (ok) track('nudge_send', { players: (playersNum === 3 ? 3 : 2) as 2 | 3 });
+    });
+  }, [roomId, myPlayerKey, playersNum]);
+
+  const nudgeAt = room?.nudge?.at ?? 0;
+  const [seenNudge, setSeenNudge] = useState<number | null>(null);
+  const [shake, setShake] = useState(0);
+  const [nudgeFrom, setNudgeFrom] = useState<PlayerKey | null>(null);
+  if (isOnline && room && seenNudge !== nudgeAt) {
+    setSeenNudge(nudgeAt);
+    const by = room.nudge?.by;
+    if (seenNudge !== null && by && by !== myPlayerKey && state.currentPlayer === myPlayerKey && !isLock) {
+      setShake((n) => n + 1);
+      setNudgeFrom(by);
+    }
+  }
+  useEffect(() => {
+    if (!shake) return;
+    playSfx('nudge');
+    buzz([90, 70, 90]);
+    const t = setTimeout(() => setNudgeFrom(null), 3500);
+    return () => clearTimeout(t);
+  }, [shake]);
+  // 被催的那句跟斷線提示走同一個位置；斷線比較要緊，排前面
+  const notice = presenceNotice ?? (nudgeFrom ? fmt(g.nudge.received, { who: g.players[nudgeFrom] }) : null);
+
+  // ─── 累計思考時間（Zach 10/23：不限時，只記整場各自想了多久）─────────────────
+  /*
+    連線：記在房間的 clock/{座位}，下完一手的人自己加上去（見寫路徑）。起點 turnAt 是伺服器時間，
+    減的時候也用伺服器時間（serverNow），兩台裝置的時鐘差多少都不影響。
+    本機／單人：這台裝置自己記，輪到的人一換就把上一位的時間加上去；存在 sessionStorage，重整接得回來。
+  */
+  const clockPlayer = !isOnline && !isLock ? state.currentPlayer : null;
+  const [localClock, setLocalClock] = useState<{ p: PlayerKey | null; at: number; acc: Partial<Record<PlayerKey, number>> }>(
+    { p: null, at: 0, acc: {} },
+  );
+  useEffect(() => {
+    if (isOnline) return;
+    // 放進 timeout：在 effect 本體裡同步 setState 會多 render 一輪（react-hooks/set-state-in-effect）
+    const id = setTimeout(() => setLocalClock((c) => {
+      const now = Date.now();
+      // 第一次才去讀暫存（不能在 useState 的初值讀：伺服器端沒有 sessionStorage，hydrate 會對不上）
+      let base = c.acc;
+      if (!c.at && saveKey) {
+        try { base = JSON.parse(sessionStorage.getItem(clockKey(saveKey)) ?? '{}'); } catch { /* 無痕模式 */ }
+      }
+      // 新的一局（重新開始）：從零算
+      const acc = started ? { ...base } : {};
+      if (started && c.p && c.at) acc[c.p] = (acc[c.p] ?? 0) + (now - c.at);
+      // 掛載那一下棋譜可能還沒接回來（started 還是 false），那時不能把暫存洗掉
+      if (saveKey && (started || c.at)) {
+        try { sessionStorage.setItem(clockKey(saveKey), JSON.stringify(acc)); } catch { /* 無痕模式 */ }
+      }
+      return { p: clockPlayer, at: now, acc };
+    }), 0);
+    return () => clearTimeout(id);
+  }, [clockPlayer, started, isOnline, saveKey]);
+
+  // 對局中走秒的時鐘，交給比分那塊自己每秒更新（不讓整個 PlayClient 每秒重畫）
+  const roomTurnAt = room?.turnAt;
+  const roomClock = room?.clock;
+  const roomMover = room?.currentPlayer as PlayerKey | undefined;
+  const liveClock = useMemo<LiveClock | undefined>(() => {
+    if (isOnline) {
+      if (!roomTurnAt) return undefined;
+      return { acc: roomClock ?? {}, running: isLock ? null : roomMover ?? null, since: roomTurnAt, now: serverNow };
+    }
+    if (!started || !localClock.at) return undefined;
+    return { acc: localClock.acc, running: localClock.p, since: localClock.at, now: Date.now };
+  }, [isOnline, roomTurnAt, roomClock, roomMover, isLock, started, localClock]);
+
+  // 分享圖要的東西（見 ResultCard）。只在結束後才用得到
+  const shareInput = useMemo<ShareCardInput>(() => ({
+    state,
+    ownerByCell: territories.ownerByCell,
+    neutral: territories.neutral,
+    winners: outcome as (PlayerKey | 'draw')[],
+    owned: Object.fromEntries(playerKeys(playersNum).map((p) => [p, territories.owned[p]?.length ?? 0])),
+    me,
+    modeLabel: isOnline ? t.online.metaTitle
+      : aiDifficulty ? `${t.home.solo} · ${t.solo[aiDifficulty === 'easy' ? 'level1' : aiDifficulty === 'normal' ? 'level2' : 'level3']}`
+      : t.local.metaTitle,
+  }), [state, territories, outcome, playersNum, me, isOnline, aiDifficulty, t]);
+
+  // 「已經動過」= 這一回合有動作、或步數被用掉、或選了棋子。三者任一成立，「重來」就該是可按的。
+  const turnDirty = state.currentTurnActions.length > 0 || state.remainSteps < 2 || !!state.selected;
+
+  // ─── 對手正在想什麼（連線，Zach 10/23：「顯示對方的棋子正在推擠擠壓牆」）────────
+  /*
+    輪到的人每動一下（選了哪顆、走到哪、手機上預覽中的牆）就寫進 rooms/{id}/draft，
+    其他人的盤面上那顆棋子會移過去、在原地擠來擠去，預覽中的牆半透明地閃。
+    寫入節流 150ms；回合結束時 updateGameState 會一起清掉。
+  */
+  const pendingSlot = useMemo(() => {
+    const sel = state.selected;
+    if (!sel || !pendingWall) return undefined;
+    if (pendingWall === 'top') return `${sel.row - 1},${sel.col},H`;
+    if (pendingWall === 'bottom') return `${sel.row},${sel.col},H`;
+    if (pendingWall === 'left') return `${sel.row},${sel.col - 1},V`;
+    return `${sel.row},${sel.col},V`;
+  }, [state.selected, pendingWall]);
+  const myDraft = useMemo<Draft | null>(() => {
+    if (!isOnline || !isMyTurn || isPlacing || !myPlayerKey || !state.selected) return null;
+    const sel = state.selected;
+    const piece = state.pieceIndex[myPlayerKey]?.findIndex((q) => q.row === sel.row && q.col === sel.col) ?? -1;
+    if (piece < 0) return null;
+    return { by: myPlayerKey, piece, at: `${sel.row},${sel.col}`, ...(pendingSlot ? { wall: pendingSlot } : {}) };
+  }, [isOnline, isMyTurn, isPlacing, myPlayerKey, state.selected, state.pieceIndex, pendingSlot]);
+  const draftJson = myDraft ? JSON.stringify(myDraft) : '';
+  const sentDraft = useRef('');
+  useEffect(() => {
+    if (!roomId || !isMyTurn || draftJson === sentDraft.current) return;
+    const t = setTimeout(() => {
+      sentDraft.current = draftJson;
+      void setDraft(roomId, draftJson ? JSON.parse(draftJson) : null);
+    }, 150);
+    return () => clearTimeout(t);
+  }, [roomId, isMyTurn, draftJson]);
+  // 換人之後重新開始比對（下一手第一次選棋一定要送）
+  useEffect(() => { if (!isMyTurn) sentDraft.current = ''; }, [isMyTurn]);
+
+  const theirDraft = isOnline && !isMyTurn && !isLock && room?.draft && room.draft.by === state.currentPlayer ? room.draft : null;
+  const preview = useMemo(() => {
+    if (!theirDraft) return null;
+    const from = state.pieceIndex[theirDraft.by]?.[theirDraft.piece];
+    const [r, c] = theirDraft.at.split(',').map(Number);
+    if (!from || !Number.isInteger(r) || !Number.isInteger(c) || r < 0 || c < 0 || r >= BOARD_SIZE || c >= BOARD_SIZE) return null;
+    const moved = from.row !== r || from.col !== c;
+    if (moved && state.board[r][c]) return null; // 對不上（棋譜已經往前走了）就不畫
+    const board = !moved ? state.board : state.board.map((row, ri) => row.map((cell, ci) =>
+      ri === from.row && ci === from.col ? null : ri === r && ci === c ? theirDraft.by : cell));
+    let wall: GhostWall | null = null;
+    if (theirDraft.wall) {
+      const [wr, wc, wd] = theirDraft.wall.split(',');
+      if (wd === 'H' || wd === 'V') wall = { row: Number(wr), col: Number(wc), dir: wd, color: playerVar(theirDraft.by) };
+    }
+    return { board, pushing: { row: r, col: c }, wall };
+  }, [theirDraft, state.pieceIndex, state.board]);
+
   // ─── 數據分析 ───────────────────────────────────────────────────────────────
   /*
     game_start / game_end 看的是「狀態的轉變」，不是按鈕：
@@ -435,7 +691,6 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
     () => ({ mode: gaMode, players: (playersNum === 3 ? 3 : 2) as 2 | 3, difficulty: aiDifficulty ?? undefined }),
     [gaMode, playersNum, aiDifficulty],
   );
-  const started = hasStarted(state);
   const gaSeenRef = useRef<{ started: boolean; ended: boolean } | null>(null);
   const startedAtRef = useRef<number | null>(null);
   useEffect(() => {
@@ -649,6 +904,10 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
     // 加進依賴不會讓這個連線 effect 重跑。flash 是 useCallback([])，同理。
   }, [isOnline, roomId, ensureUser, g, flash]);
 
+  // 寫路徑要讀房間的 turnAt／clock，但不該因為房間每次更新就重跑
+  const roomRef = useRef<Room | null>(null);
+  useEffect(() => { roomRef.current = room; });
+
   // 讀路徑：Firebase 上的 WGF 有變且非自己寫入的，就從空棋盤完整重建
   useEffect(() => {
     if (!isOnline || !room?.wgf || room.wgf === lastAppliedWgf.current) return;
@@ -671,7 +930,15 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
       localWgf: wgf, lastApplied: lastAppliedWgf.current,
     })) return;
     lastAppliedWgf.current = wgf;
-    lastWrite.current = updateGameState(roomId, wgf, state.currentPlayer).catch(() => {});
+    // 下完這一手的是自己（只有輪到的人改得了棋譜）：把這一手想了多久加進自己的累計時間
+    const r = roomRef.current;
+    const mover = myPlayerKey;
+    const clock = r?.turnAt && mover && r.currentPlayer === mover
+      ? { seat: mover, ms: (r.clock?.[mover] ?? 0) + Math.min(Math.max(serverNow() - r.turnAt, 0), 3600_000) }
+      : undefined;
+    lastWrite.current = updateGameState(roomId, wgf, state.currentPlayer, clock).catch(() => {});
+    // myPlayerKey 在連線後就不再變；room 走 ref，不讓每次房間更新都重跑
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state, isOnline, roomId]);
 
   // 遊戲結束時寫入勝者資訊。平常由房主（A）負責；投降的人不論是誰都要寫 ——
@@ -883,7 +1150,9 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
           已經有兩到三個玩家色在跑，操作鈕再各帶一個色相就是五個色相同時
           在搶注意力。它們是「離開這一局」的出口，本來就不該比盤面搶眼。
           也不用深墨 —— 那在奶油底上太重。 */}
-      <div className={`fixed left-5 top-5 z-50 flex flex-row gap-3 ${topButtons}`}>
+      {/* 手指裝置上三顆縮成 44px（蘋果建議的最小觸控尺寸）、間距 8px：多了喇叭之後，
+          三人局在 375 寬的手機上第三顆會壓到比分（實測右緣 200px、比分從 200px 開始） */}
+      <div className={`fixed left-5 top-5 z-50 flex flex-row gap-3 coarse:gap-2 coarse:[&>button]:p-2.5 ${topButtons}`}>
         <button
           type="button"
           aria-label={g.play.home}
@@ -931,9 +1200,15 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
           <LuHouse />
           <span aria-hidden="true" className={HOVER_TIP}>{g.play.home}</span>
         </button>
+        {/*
+          左上三顆（房子、遊玩方式、喇叭）統一用 Lucide 線條（Zach 10/23 從四種做法挑 B）：先前是線條房子＋實心書本骰子＋實心喇叭，
+          三種畫法混在一起，書本在 24px 時細節糊成一團、認不出是什麼。遊玩方式用問號 —— 跟首頁「遊戲規則」磁磚的書本脫鉤是刻意的：
+          那塊是大色塊（照全站規則用實心剪影）、去的是規則頁；這顆是對局中的說明。
+        */}
         <IconButton color="bg-primary-50 text-tile-ink" handleClickEvent={handleRuleBtnOpen} label={g.play.howToPlay} tip={g.play.howToPlay}>
-          <GiRuleBook />
+          <LuCircleHelp />
         </IconButton>
+        <SoundButton prefs={soundPrefs} setPrefs={setSoundPrefs} />
       </div>
 
       {/* 連線模式：等待畫面 */}
@@ -955,6 +1230,8 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
             currentPlayer={state.currentPlayer}
             uniqTerritories={territories.owned}
             playersNum={playersNum}
+            away={away}
+            clock={liveClock}
           />
 
           {/*
@@ -977,6 +1254,9 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
             onWallStep={onWallStep}
             playersNum={playersNum}
             onShowResult={() => setChampionDismissed(false)}
+            notice={notice}
+            onNudge={canNudge ? onNudge : undefined}
+            nudged={nudged}
           />
 
           {/* 桌機的投降。手機在控制盤的左上角，那裡已經有一顆；
@@ -987,24 +1267,49 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
               紙色而非磚紅 —— 它要能被找到，但不該比盤面搶眼；
               真正的警告留在按下去之後的確認 Modal 上。 */}
           {!isLock && !isPlacing && (
-            <button
-              type="button"
-              onClick={() => setSurrenderOpen(true)}
-              className="fixed bottom-5 left-5 z-40 flex items-center gap-2 rounded-full bg-primary-50
-                         px-[18px] py-3 text-[15px] font-black text-ink-soft transition
-                         hover:text-tile-ink active:scale-95 lg:bottom-[5dvh] coarse:hidden"
-            >
-              <LuFlag className="text-xl" />
-              {g.surrender.label}
-            </button>
+            <div className="fixed bottom-5 left-5 z-40 flex items-center gap-2 lg:bottom-[5dvh] coarse:hidden">
+              <button
+                type="button"
+                onClick={() => setSurrenderOpen(true)}
+                className="flex items-center gap-2 rounded-full bg-primary-50 px-[18px] py-3 text-[15px] font-black text-ink-soft transition
+                           hover:text-tile-ink active:scale-95"
+              >
+                <LuFlag className="text-xl" />
+                {g.surrender.label}
+              </button>
+              {/*
+                桌機的「重來這一步」（Zach 10/23：只移動了、還沒蓋牆，想反悔）。手機在控制盤左下角已經有一顆。
+                只有這一手動過才出現；牆一蓋下去回合就結束了，那就不是這顆管的。
+              */}
+              {isMyTurn && turnDirty && (
+                <button
+                  type="button"
+                  onClick={() => dispatch({ type: 'cancelTurn' })}
+                  className="flex items-center gap-2 rounded-full bg-primary-50 px-[18px] py-3 text-[15px] font-black text-ink-soft transition
+                             hover:text-tile-ink active:scale-95"
+                >
+                  <LuUndo2 className="text-xl" />
+                  {g.pad.redo}
+                </button>
+              )}
+            </div>
           )}
 
           <div className={`flex flex-1 flex-col items-center justify-center self-stretch ${boardArea}`}>
           <div className={`chessboard-container ${boardBox}`}>
             <Chessboard
               me={me}
+              notice={notice}
+              neutral={neutralCells}
+              turnColor={turnColor}
+              turnPulse={turnPulse}
+              shake={shake}
+              pushing={preview?.pushing}
+              ghostWall={preview?.wall}
+              onNudge={canNudge ? onNudge : undefined}
+              nudged={nudged}
               size={BOARD_SIZE}
-              board={state.board}
+              board={preview?.board ?? state.board}
               verticalWalls={state.verticalWalls}
               horizontalWalls={state.horizontalWalls}
               currentPlayer={state.currentPlayer}
@@ -1034,7 +1339,7 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
             onWallStep={onWallStep}
             // 「已經動過」= 這一回合有動作、或步數被用掉、或選了棋子。
             // 三者任一成立，「重來」就該是可按的。
-            turnDirty={state.currentTurnActions.length > 0 || state.remainSteps < 2 || !!state.selected}
+            turnDirty={turnDirty}
             />
           </div>
 
@@ -1050,6 +1355,9 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
               breakMode={breakMode}
               remainSteps={state.remainSteps}
               color={playerVar(state.currentPlayer)}
+              notice={notice}
+              onNudge={canNudge ? onNudge : undefined}
+              nudged={nudged}
             />
           )}
           </div>
@@ -1061,6 +1369,7 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
             onClose={() => setChampionDismissed(true)}
             onRestart={isOnline ? undefined : restartGame}
             onFeedback={() => { setChampionDismissed(true); setFeedbackOpen(true); }}
+            card={shareInput}
           />
 
           {/*
