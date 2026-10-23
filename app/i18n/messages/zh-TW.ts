@@ -54,14 +54,14 @@ const zhTW = {
     guide: '規則整理中',
     disclaimer: '非官方粉絲作品，與 Netflix 及節目製作方無關。',
   },
-  /** Bagh Chal（虎羊棋）。名稱照 glossary：遊戲名保留 Bagh Chal，中文副名「虎羊棋」是描述，不是官方譯名 */
+  /** Bagh Chal。中文名照節目用「尼泊爾虎棋」（Zach 10/24：遊戲命名用 Netflix 版本，見 glossary）；「虎羊棋」留在說明與規則頁的名字由來 */
   baghChal: {
-    metaTitle: 'Bagh Chal 虎羊棋 線上免費玩',
-    metaDescription: 'Netflix《魔鬼的計謀》第 2 季決賽的 Bagh Chal（虎羊棋），尼泊爾的傳統棋。4 隻老虎對 20 隻羊：老虎吃掉 5 隻羊就贏，羊把老虎全部困住就贏。可以跟 AI 下或兩人同一台玩，免下載、免註冊。',
-    ogTitle: 'Bagh Chal 虎羊棋 線上免費玩',
+    metaTitle: 'Bagh Chal 尼泊爾虎棋 線上免費玩',
+    metaDescription: 'Netflix《魔鬼的計謀》第 2 季決賽的尼泊爾虎棋（Bagh Chal，也叫虎羊棋），尼泊爾的傳統棋。4 隻老虎對 20 隻羊：老虎吃掉 5 隻羊就贏，羊把老虎全部困住就贏。可以跟 AI 下或兩人同一台玩，免下載、免註冊。',
+    ogTitle: 'Bagh Chal 尼泊爾虎棋 線上免費玩',
     ogDescription: '4 隻老虎對 20 隻羊的尼泊爾傳統棋，《魔鬼的計謀》第 2 季決賽。免下載、免註冊。',
     title: 'Bagh Chal',
-    subtitle: '虎羊棋',
+    subtitle: '尼泊爾虎棋',
     tagline: '4 隻老虎對 20 隻羊',
     local: '本機對戰',
     vsAi: '跟 AI 下',
@@ -79,6 +79,8 @@ const zhTW = {
     thinking: 'AI 思考中…',
     goatsInHand: '還有 {n} 隻羊要放',
     captured: '吃掉 {n} / 5',
+    /** 結算分享圖上的手數 */
+    cardMoves: '共 {n} 手',
     undo: '悔棋',
     restart: '重來',
     menu: '換模式',
@@ -93,7 +95,7 @@ const zhTW = {
     inviteHeading: '把連結傳給朋友',
     inviteBody: '對方打開連結就會加入。你當{me}，對方當{them}。',
     waitingOpponent: '等對方加入…',
-    shareText: '來跟我下 Bagh Chal 虎羊棋',
+    shareText: '來跟我下尼泊爾虎棋 Bagh Chal',
     opponentTurn: '輪到對方',
     youAre: '你是{side}',
     pickSide: '你要當哪一邊？',
@@ -105,8 +107,8 @@ const zhTW = {
     rulesLink: '怎麼玩？看規則',
     rulesCta: '回首頁選玩法',
     onlineTitle: '連線對戰',
-    rulesMetaTitle: 'Bagh Chal 虎羊棋規則與玩法',
-    rulesMetaDescription: 'Bagh Chal（虎羊棋）完整規則：5×5 棋盤、4 隻老虎對 20 隻羊、放羊、老虎跳吃、羊把老虎困住。附圖一步一步說明，《魔鬼的計謀》第 2 季決賽的遊戲。',
+    rulesMetaTitle: '尼泊爾虎棋 Bagh Chal 規則與玩法',
+    rulesMetaDescription: '尼泊爾虎棋（Bagh Chal，也叫虎羊棋）完整規則：5×5 棋盤、4 隻老虎對 20 隻羊、放羊、老虎跳吃、羊把老虎困住。附圖一步一步說明，《魔鬼的計謀》第 2 季決賽的遊戲。',
     rulesHeading: '怎麼玩',
     rules: [
       '棋盤是 5×5 個交叉點，沿著線走。斜線只經過一部分的點。',
@@ -116,6 +118,7 @@ const zhTW = {
       '老虎吃掉 5 隻羊就贏；羊把所有老虎困到動不了就贏。',
     ],
     showNote: '《魔鬼的計謀》第 2 季決賽的第二戰就是 Bagh Chal：兩位決賽者在兩個棋盤上同時下，各當一邊的老虎與羊。',
+    nameNote: '名字：節目裡的中文是「尼泊爾虎棋」。Bagh Chal 是尼泊爾語（बाघचाल），意思是「老虎的走法」；也有人照棋子叫它虎羊棋。',
   },
   rules: {
     kicker: '遊玩方式',

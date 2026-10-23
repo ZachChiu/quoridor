@@ -2,21 +2,24 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { LuCircleHelp, LuHouse, LuRotateCcw, LuUndo2, LuVolume2, LuVolumeX } from 'react-icons/lu';
 import Modal from '@/components/Modal';
+import { ShareResultModal, useShareCard } from '@/components/ShareResultModal';
+import { fmt as fill } from '@/i18n/content/game';
 import { useRouter } from 'next/navigation';
 import { useGameText, useMessages } from '@/i18n/LocaleProvider';
 import { useSound } from '@/hook/useSound';
-import { playSfx } from '@/utils/sound';
+import { playBagh } from './sounds';
 import { localePath, type Locale } from '@/i18n/locales';
-import { BAGH_CHAL } from '@/i18n/routes';
+import { BAGH_CHAL, baghChal } from '@/i18n/routes';
 import { createGame, legalMoves, applyMove, undo, GOATS, type BaghState, type Point, type Side, type Move } from '@/games/bagh-chal/engine';
 import { chooseMove, type Difficulty } from '@/games/bagh-chal/ai';
 import { BaghBoard } from './BaghBoard';
 import { GoatToken, RulesToken, TigerToken } from './tokens';
 import { RulesStepsPaged } from './BaghRulesSteps';
 import BaghFrame from './BaghFrame';
-import { BAGH_PRIMARY, BAGH_ROUND, BAGH_SECONDARY } from './styles';
+import { BAGH_ROUND, BAGH_SECONDARY } from './styles';
 import BaghWordmark from './BaghWordmark';
 import { labelled } from './BaghUi';
+import { BAGH_CARD_IMAGES, drawBaghCard } from './shareCard';
 
 export type BaghMode =
   | { kind: 'local' }
@@ -66,7 +69,8 @@ export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghM
 
   const restart = () => { setGame(createGame()); setSelected(null); };
   // 連線局沒有悔棋與重來（要兩個人都同意，先不做）；結束後「再來一局」是再開一間房、重新傳連結
-  const [endClosed, setEndClosed] = useState(false);
+  // 結算關掉之後停在終局的盤面上（記住是哪一局關的，重來就是新的一局）
+  const [closedFor, setClosedFor] = useState<BaghState | null>(null);
   const again = mode.kind === 'online' ? mode.newRoom : restart;
   const side = (s: Side) => (s === 'tiger' ? b.tiger : b.goat);
   const whoAmI = mode.kind === 'local' ? '' : mode.kind === 'online' ? b.youAre.replace('{side}', side(mode.human)) : labelled(locale, b.playAs, side(mode.human));
@@ -81,13 +85,13 @@ export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghM
     if (game.history.length !== prev + 1) return;
     // 虎羊棋自己的一套（不是 Wall Go 的木頭聲，Zach 10/24）：羊是頸上的銅鈴、老虎是手鼓、吃羊加一聲低吼
     const m = game.history[game.history.length - 1];
-    playSfx(m.kind === 'jump' ? 'baghCapture' : m.kind === 'place' ? 'baghPlace' : game.board[m.to] === 'T' ? 'baghTiger' : 'baghGoat');
+    playBagh(m.kind === 'jump' ? 'capture' : m.kind === 'place' ? 'place' : game.board[m.to] === 'T' ? 'tiger' : 'goat');
     if (game.winner) {
       const won = mode.kind === 'local' || game.winner === mode.human;
-      window.setTimeout(() => playSfx(won ? 'baghWin' : 'baghLose'), 480);
+      window.setTimeout(() => playBagh(won ? 'win' : 'lose'), 480);
     } else if (mode.kind === 'online' && game.turn === mode.human) {
       // 對方下完、換你：分頁在背景也聽得到
-      window.setTimeout(() => playSfx('baghTurn'), 360);
+      window.setTimeout(() => playBagh('turn'), 360);
     }
   }, [game, mode]);
   // 虎羊棋裡面換頁不播轉場（木窗門只留在從平台卡片進來的那一下）
@@ -131,9 +135,37 @@ export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghM
   const hint = game.winner || locked ? ''
     : game.turn === 'tiger' ? b.hintTiger
     : game.goatsInHand > 0 ? b.hintPlace : b.hintGoat;
-  const result = game.winner === 'tiger' ? { title: b.winTiger, body: b.winTigerBody, band: 'bg-[#e3a43c]', fg: 'text-tile-ink' }
-    : game.winner === 'goat' ? { title: b.winGoat, body: b.winGoatBody, band: 'bg-[#5b6620]', fg: 'text-tile-cream' }
-    : { title: b.draw, body: b.drawBody, band: 'bg-tile-ink', fg: 'text-tile-cream' };
+  const result = game.winner === 'tiger' ? { title: b.winTiger, body: b.winTigerBody }
+    : game.winner === 'goat' ? { title: b.winGoat, body: b.winGoatBody }
+    : { title: b.draw, body: b.drawBody };
+
+  // 結算就是分享圖（Zach 10/24：「結尾 Modal 一樣做成可分享的圖片」），圖長得像這款自己的頁面（shareCard.ts）
+  const endOpen = !!game.winner && closedFor !== game;
+  const modeLabel = mode.kind === 'local' ? b.local : mode.kind === 'online' ? b.onlineTitle : b.vsAi;
+  const card = {
+    board: game.board, winner: game.winner ?? 'draw', captured: game.captured, plies: game.history.length,
+    text: {
+      kicker: `${g.champion.matchOver} · ${modeLabel}`,
+      title: result.title,
+      name: `${b.title} ${b.subtitle}`,
+      capturedLabel: `${b.tiger} ${fmt(b.captured, game.captured)}`,
+      moves: fmt(b.cardMoves, game.history.length),
+      brand: `${b.title} ${b.subtitle}`,
+      from: fill(g.share.cardFrom, { show: t.meta.showName }),
+      host: new URL(process.env.SITE_URL || 'https://quoridorgame.com').host,
+    },
+  } as const;
+  const font = typeof document === 'undefined' ? 'system-ui' : getComputedStyle(document.documentElement).getPropertyValue('--font-app').trim() || 'system-ui';
+  const share = useShareCard({
+    isOpen: endOpen,
+    draw: drawBaghCard({ ...card, font }),
+    contentKey: JSON.stringify(card),
+    fileName: 'bagh-chal',
+    homePath: localePath(locale, baghChal()),
+    campaign: 'bagh-chal',
+    fonts: [{ font: `900 40px ${font}`, text: card.text.title + card.text.name }, { font: `700 40px ${font}`, text: card.text.kicker + card.text.from }],
+    images: BAGH_CARD_IMAGES,
+  });
 
   // 虎羊棋自己的按鈕（BaghUi）：紙色底、橄欖綠外圈的圓鈕，深墨框的寬鈕 —— 不沿用 Wall Go 的灰色無框鈕
   const round = BAGH_ROUND;
@@ -234,16 +266,16 @@ export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghM
         <RulesStepsPaged rules={b.rules} prev={t.ui.prev} next={t.ui.next} done={t.ui.close} onDone={() => setHelpOpen(false)} />
       </Modal>
 
-      <Modal skin="bagh" isOpen={!!game.winner && !(online && endClosed)} onClose={online ? () => setEndClosed(true) : restart} title={result.title}
-        icon={game.winner === 'goat' ? GoatToken : TigerToken} band={{ className: result.band, fg: result.fg }}
-        footer={
-          <>
-            <button type="button" onClick={home} className={`${BAGH_SECONDARY} flex-1`}>{b.menu}</button>
-            <button type="button" onClick={again} className={`${BAGH_PRIMARY} flex-1`}>{b.again}</button>
-          </>
-        }>
-        <p className="text-sm leading-relaxed">{result.body}</p>
-      </Modal>
+      {/* 關掉就留在終局的盤面上看（跟 Wall Go 一樣）；再來一局在圖下面 */}
+      <ShareResultModal isOpen={endOpen} onClose={() => setClosedFor(game)} title={result.title} card={share}
+        onRestart={again} restartLabel={b.again} srText={`${result.title} ${result.body} ${card.text.capturedLabel} · ${card.text.moves}`}
+        frameClassName=""
+        classes={{
+          primary: 'bagh-totem-on bg-[#5b6620] text-[#fbf4e1] hover:bg-[#4d5719]',
+          secondary: 'bagh-line bg-[#f2e4c4] text-tile-ink hover:bg-[#ead8ad]',
+          toggle: 'bg-[#fbf4e1]/15', toggleOn: 'bg-[#e3a43c] text-tile-ink', toggleOff: 'text-[#fbf4e1]/75 hover:text-[#fbf4e1]',
+          button: 'font-black', placeholder: 'bg-[#e3a43c]/30',
+        }} />
     </div>
     </BaghFrame>
   );

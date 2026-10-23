@@ -218,7 +218,7 @@ function Waiting({ me, url, home }: { me: Side; url: string; home: string }) {
         </div>
 
         <div className="flex w-full flex-col gap-2.5">
-          <div className="flex items-center gap-2 rounded-xl bg-[#f2e4c4] p-2 pl-4 text-left">
+          <div className="bagh-line flex items-center gap-2 bg-[#f2e4c4] p-1.5 pl-3 text-left">
             <span className="flex-1 select-all truncate font-mono text-sm">{url}</span>
             <button type="button" onClick={copy} aria-label={copied ? g.share.copied : g.share.copyAria}
               className={`${BAGH_PRIMARY} shrink-0 gap-1.5 px-3 py-2 text-sm`}>

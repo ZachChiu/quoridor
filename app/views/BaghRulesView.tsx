@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { RulesStepsList } from '@/components/bagh-chal/BaghRulesSteps';
 import BaghFrame from '@/components/bagh-chal/BaghFrame';
 import BaghWordmark from '@/components/bagh-chal/BaghWordmark';
-import { BAGH_PRIMARY, BAGH_ROUND } from '@/components/bagh-chal/styles';
+import { BAGH_CORNER, BAGH_PRIMARY, BAGH_ROUND } from '@/components/bagh-chal/styles';
 import { getMessages } from '@/i18n';
 import { localePath, type Locale } from '@/i18n/locales';
 import { baghChal } from '@/i18n/routes';
@@ -28,7 +28,7 @@ export default function BaghRulesView({ locale }: { locale: Locale }) {
           <span className="flex min-w-0 flex-1 items-center gap-2 truncate text-sm font-black">
             <BaghWordmark className="h-5 w-auto shrink-0" />{b.subtitle}
           </span>
-          <LanguageSwitcher skin="bagh" />
+          <LanguageSwitcher theme={BAGH_CORNER} />
         </div>
       </header>
 
@@ -37,6 +37,8 @@ export default function BaghRulesView({ locale }: { locale: Locale }) {
         <h1 className="mt-1 text-[clamp(1.75rem,7vw,3rem)] font-black leading-[1.1] tracking-tight">{b.rulesMetaTitle}</h1>
         <div className="mt-6"><RulesStepsList rules={b.rules} /></div>
         <p className="mt-6 text-sm leading-relaxed text-ink-soft">{b.showNote}</p>
+        {/* 名字的由來（Zach 10/24：遊戲命名用 Netflix 版本，可以在遊戲規則裡面介紹） */}
+        <p className="mt-2 text-sm leading-relaxed text-ink-soft">{b.nameNote}</p>
         <Link href={localePath(locale, baghChal())} className={`${BAGH_PRIMARY} mt-8 h-14 text-base`}>
           <LuHouse aria-hidden="true" className="text-xl" />{b.rulesCta}
         </Link>

@@ -71,6 +71,8 @@ const en: Messages = {
     thinking: 'AI is thinking…',
     goatsInHand: '{n} goats left to place',
     captured: 'Captured {n} / 5',
+    /** 結算分享圖上的手數 */
+    cardMoves: '{n} moves',
     undo: 'Undo',
     restart: 'Restart',
     menu: 'Change mode',
@@ -108,6 +110,7 @@ const en: Messages = {
       'Tigers win by capturing five goats; goats win by leaving no tiger able to move.',
     ],
     showNote: "Bagh Chal was the second game of The Devil's Plan season 2 final: the two finalists played on two boards at once, each playing tigers on one and goats on the other.",
+    nameNote: 'The name: Bagh Chal (बाघचाल) is Nepali for “tiger moves”. It is also known as Tigers and Goats.',
   },
   rules: {
     kicker: 'How to play',

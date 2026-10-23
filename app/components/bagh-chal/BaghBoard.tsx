@@ -6,7 +6,7 @@ import { BAGH } from './palette';
 import { playIdle } from './idleMotion';
 
 /**
- * Bagh Chal 的棋盤。對局用的 BaghBoard（交叉點是按鈕）、規則說明用的 MiniBoard 與首頁的 ShowcaseBoard（靜態）共用同一套畫法。
+ * Bagh Chal 的棋盤。對局用的 BaghBoard（交叉點是按鈕）與規則說明用的 MiniBoard 共用同一套畫法。
  *
  * 長相取自尼泊爾的印刷棋盤（Wikimedia Commons 那張）：紙色盤面、細墨線。老虎追羊的飾帶畫在整頁的畫框上（BaghFrame），
  * 棋盤自己只留一道橄欖綠粗框與番紅花內線 —— 兩層飾帶疊在一起太花，而且手機上會把盤面擠小
@@ -222,43 +222,6 @@ export function MiniBoard({ rows, marks = {}, victims = [] }: {
               {ch === 'T' && <TigerPiece />}
               {ch === 'G' && <GoatPiece ring={victims.includes(p) ? 'victim' : undefined} />}
               {ch === '.' && mark && <Marker kind={mark} />}
-            </span>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-/**
- * 遊戲首頁桌機左邊那張：跟對局一樣的棋盤，4 隻老虎在四個角、20 隻羊排滿，中間留一個空點。
- * 原本是一張 AI 畫的整面印刷棋盤（擺法不是真的局面），Zach 10/24：改成目前真實的棋盤樣式、擺上全部的老虎跟羊。
- * 羊偶爾自己動一下（同對局的閒置動作），首頁才不會是一張死圖。
- */
-export function ShowcaseBoard({ className = '' }: { className?: string }) {
-  const squareRef = useRef<HTMLDivElement>(null);
-  const cells = 'TGGGTGGGGGGG.GGGGGGGTGGGT'.split('') as ('T' | 'G' | '.')[];
-  useEffect(() => {
-    const root = squareRef.current;
-    if (!root || reducedMotion()) return;
-    const board: Cell[] = cells.map((c) => (c === '.' ? null : c));
-    let id = 0;
-    const tick = () => { id = window.setTimeout(() => { playIdle(root, board, Math.random() < 0.5 ? 'goat' : 'tiger'); tick(); }, 1600 + Math.random() * 2000); };
-    tick();
-    return () => window.clearTimeout(id);
-    // cells 是常數
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-  return (
-    <div aria-hidden="true" className={`rounded-xl border-[6px] border-[#5b6620] bg-[#fbf4e1] shadow-[inset_0_0_0_2px_#e3a43c] ${className}`}>
-      <div ref={squareRef} className="relative aspect-square w-full">
-        <BoardLines />
-        {cells.map((ch, p) => {
-          const { x, y } = xy(p);
-          return (
-            <span key={p} data-point={p} className={SEAT} style={{ left: `${x}%`, top: `${y}%` }}>
-              {ch === 'T' && <TigerPiece />}
-              {ch === 'G' && <GoatPiece />}
             </span>
           );
         })}
