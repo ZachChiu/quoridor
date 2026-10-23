@@ -97,6 +97,7 @@ export function computeTerritories(state: GameState): TerritoryResult {
   const ownerByCell: Record<string, PlayerKey> = {};
   const neutral: string[] = [];
   const contested: string[] = [];
+  const frozen: string[] = [];
   const reach = Object.fromEntries(keys.map((k) => [k, 0])) as Record<PlayerKey, number>;
   const regionSizes = Object.fromEntries(keys.map((k) => [k, [] as number[]])) as Record<
     PlayerKey,
@@ -139,7 +140,7 @@ export function computeTerritories(state: GameState): TerritoryResult {
         if (occupant in reach) reach[occupant] += cells.length;
       }
 
-      // 爭奪中的區域若無人能動，它就永遠不會再改變 —— 視為已定局。
+      // 爭奪中的區域若無人能動，它就永遠不會再改變 —— 視為已定局（計分見下面「凍結」那段）。
       //
       // 這在導入「零步移動需能離開再回來」之後成為必要：兩顆敵方棋子被封在
       // 同一個小區域且都無路可走時，舊規則還能靠原地蓋牆把區域切開，新規則不行。
@@ -169,10 +170,30 @@ export function computeTerritories(state: GameState): TerritoryResult {
         owned[ownerKey].push(...cells);
         regionSizes[ownerKey].push(cells.length);
         for (const cell of cells) ownerByCell[cell] = ownerKey;
-      } else if (occupants.size > 1) {
-        // 多方共存。只有「還有人能動」的區域才算未定，否則已凍結。
-        if (anyPieceCanMove) hasContestedRegion = true;
+      } else if (occupants.size > 1 && anyPieceCanMove) {
+        // 多方共存、還有人能動：勝負未定
+        hasContestedRegion = true;
         contested.push(...cells);
+      } else if (occupants.size > 1) {
+        /*
+          凍結：多方共存、誰都動不了，也不能原地蓋牆把它切開（零步移動需能離開再回來）。
+          這種區域一定格格都站著棋子 —— 只要有一格空著，旁邊那顆棋子就走得過去，就不算凍結。
+
+          計分：**每顆棋子算自己站的那一格**，等於「從中間切開」的結果。
+          先前整塊不算任何人的分，兩方都白白損失；2026-10-24 Zach 在連線對局裡遇到
+          紅藍各一顆被封在同一個兩格口袋（「看起來應該要是兩人一人一格」），從兩種改法裡選了這個：
+          另一種是允許走不動的棋子原地蓋牆，但會連動選子、跳過、終局與電腦對手，
+          而且以前因凍結而結束的棋譜重播後會變成沒結束。這裡只改計分，走法與終局都不變。
+        */
+        frozen.push(...cells);
+        for (const cell of cells) {
+          const [r, c] = cell.split(',').map(Number);
+          const piece = board[r][c];
+          if (!piece) { neutral.push(cell); continue; }
+          owned[piece].push(cell);
+          regionSizes[piece].push(1);
+          ownerByCell[cell] = piece;
+        }
       } else {
         // 完全沒有棋子：已永久不屬於任何人
         neutral.push(...cells);
@@ -190,7 +211,7 @@ export function computeTerritories(state: GameState): TerritoryResult {
 
   for (const key of keys) regionSizes[key].sort((a, b) => b - a);
 
-  return { owned, ownerByCell, neutral, contested, settled, reach, regionSizes };
+  return { owned, ownerByCell, neutral, contested, frozen, settled, reach, regionSizes };
 }
 
 /**

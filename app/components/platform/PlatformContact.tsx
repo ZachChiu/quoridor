@@ -33,7 +33,7 @@ export default function PlatformContact() {
   const submit = async () => {
     if (!canSend) return;
     setState('sending');
-    track('feedback_send', { source: 'platform' });
+    track('feedback_send', { entry: 'platform' });
     try {
       const uid = await ensureUser();
       await sendContact({
