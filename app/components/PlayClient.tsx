@@ -2,8 +2,7 @@
 import { useState, useEffect, useMemo, useCallback, useReducer, useRef } from "react";
 // 小圓鈕與首頁磁磚用同一套圖示（game-icons 實心）——
 // 同一件事在兩個地方長得不一樣，會讓人以為那是兩個不同的東西。
-import { GiRuleBook } from "react-icons/gi";
-import { LuFlag, LuHouse, LuUndo2 } from "react-icons/lu";
+import { LuCircleHelp, LuFlag, LuHouse, LuUndo2 } from "react-icons/lu";
 import Link from 'next/link';
 import Chessboard from "@/components/Chessboard";
 import ChampionModal from "@/components/ChampionModal";
@@ -1174,8 +1173,13 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
           <LuHouse />
           <span aria-hidden="true" className={HOVER_TIP}>{g.play.home}</span>
         </button>
+        {/*
+          左上三顆（房子、遊玩方式、喇叭）統一用 Lucide 線條（Zach 10/23 從四種做法挑 B）：先前是線條房子＋實心書本骰子＋實心喇叭，
+          三種畫法混在一起，書本在 24px 時細節糊成一團、認不出是什麼。遊玩方式用問號 —— 跟首頁「遊戲規則」磁磚的書本脫鉤是刻意的：
+          那塊是大色塊（照全站規則用實心剪影）、去的是規則頁；這顆是對局中的說明。
+        */}
         <IconButton color="bg-primary-50 text-tile-ink" handleClickEvent={handleRuleBtnOpen} label={g.play.howToPlay} tip={g.play.howToPlay}>
-          <GiRuleBook />
+          <LuCircleHelp />
         </IconButton>
         <SoundButton prefs={soundPrefs} setPrefs={setSoundPrefs} />
       </div>

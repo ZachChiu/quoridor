@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { GiSpeaker, GiSpeakerOff } from 'react-icons/gi';
+import { LuVolume2, LuVolumeX } from 'react-icons/lu';
 import { useGameText } from '@/i18n/LocaleProvider';
 import { HOVER_TIP } from './IconButton';
 import type { SoundPrefs } from '@/utils/sound';
@@ -9,7 +9,7 @@ import type { SoundPrefs } from '@/utils/sound';
 /**
  * 對局左上角的喇叭（Zach 10/23）：點開一小塊，音效、音樂各一個開關。
  * 兩個都關時圖示換成打叉的喇叭，一眼看得出這局是安靜的。
- * 跟旁邊的首頁、遊玩方式同一個紙色。
+ * 跟旁邊的首頁、遊玩方式同一個紙色、同一套 Lucide 線條圖示（Zach 10/23 選的 B）。
  */
 export default function SoundButton({ prefs, setPrefs }: {
   prefs: SoundPrefs;
@@ -43,7 +43,7 @@ export default function SoundButton({ prefs, setPrefs }: {
         onClick={() => setOpen((o) => !o)}
         className="group relative rounded-full bg-primary-50 p-3.5 text-2xl text-tile-ink transition hover:brightness-95 active:scale-95 coarse:p-2.5"
       >
-        {silent ? <GiSpeakerOff /> : <GiSpeaker />}
+        {silent ? <LuVolumeX /> : <LuVolume2 />}
         {!open && <span aria-hidden="true" className={HOVER_TIP}>{g.sound.button}</span>}
       </button>
       {open && (
