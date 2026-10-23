@@ -22,6 +22,7 @@ import { useGameText } from '@/i18n/LocaleProvider';
 import { fmt } from '@/i18n/content/game';
 import { isCursorKey, nearestEmpty, nextCursor, nextEmptyCell } from '@/components/boardCursor';
 import { NEUTRAL_FILL } from '@/components/neutralZone';
+import { playIdle, type IdleScene } from '@/components/idleMotion';
 
 /** 對手還沒蓋下去、正在考慮的那道牆（連線時即時看到）。dir：H＝那一格的下緣、V＝右緣 */
 export type GhostWall = { row: number; col: number; dir: 'H' | 'V'; color: string };
@@ -178,6 +179,30 @@ export default React.memo(function Chessboard({
       { duration: 560, easing: 'ease-out' },
     );
   }, [shake]);
+
+  /*
+    旁邊有牆的閒置棋子偶爾自己動一下（推牆、撞一下、敲敲…，見 idleMotion.ts）。每 2.5–5.5 秒挑一顆。
+    盤面放在 ref 裡給計時器讀，計時器只在掛載時建立一次 —— 每走一步就重設的話，常下的人永遠看不到。
+    選中的那顆、對手正在動的那顆不動；減少動態效果時整個關掉；分頁在背景時跳過。
+  */
+  const idleScene = useRef<IdleScene>({ board, walls: { h: horizontalWalls, v: verticalWalls }, skip: [] });
+  useEffect(() => {
+    idleScene.current = {
+      board,
+      walls: { h: horizontalWalls, v: verticalWalls },
+      skip: [selectedChess, pushing].filter((m) => !!m).map((m) => `${m!.row},${m!.col}`),
+    };
+  });
+  useEffect(() => {
+    if (reducedMotion()) return;
+    let timer = 0;
+    const tick = () => {
+      timer = window.setTimeout(tick, 2500 + Math.random() * 3000);
+      if (document.visibilityState === 'visible') playIdle(frameRef.current, idleScene.current);
+    };
+    timer = window.setTimeout(tick, 1500 + Math.random() * 2000);
+    return () => window.clearTimeout(timer);
+  }, []);
   const canBreakAt = (row: number, col: number, dir: 'H' | 'V') =>
     !breakSlots || breakSlots.has(`${row},${col},${dir}`);
   // const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
@@ -695,6 +720,7 @@ export default React.memo(function Chessboard({
                         style={vars}
                       >
                         <div
+                          data-piece
                           className={`size-3/5 rounded-full ${
                             pushing?.row === rowIndex && pushing.col === colIndex ? 'animate-piece-push'
                             : isPieceActive ? 'animate-pulse-shine' : ''
@@ -780,6 +806,7 @@ export default React.memo(function Chessboard({
                   */}
                   {hasHorizontalWallPlayer && (
                     <div
+                      data-wall={`h:${rowIndex},${colIndex}`}
                       className={`absolute inset-x-[-3px] bottom-[calc(var(--board-gap)*-0.5)] z-20 h-[var(--board-wall)] translate-y-1/2 rounded-full ${
                         walls.fresh === `h:${rowIndex * size + colIndex}` ? 'animate-wall-h' : ''
                       }`}
@@ -799,6 +826,7 @@ export default React.memo(function Chessboard({
                   )}
                   {hasVerticalWall && (
                     <div
+                      data-wall={`v:${rowIndex},${colIndex}`}
                       className={`absolute inset-y-[-3px] right-[calc(var(--board-gap)*-0.5)] z-20 w-[var(--board-wall)] translate-x-1/2 rounded-full ${
                         walls.fresh === `v:${rowIndex * size + colIndex}` ? 'animate-wall-v' : ''
                       }`}
