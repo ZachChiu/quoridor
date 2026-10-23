@@ -65,7 +65,7 @@ export const SEASONS: Season[] = [
       { name: 'Remove One', names: { 'zh-TW': '移除一個', 'zh-Hans': '移除一个' } },
       { name: 'Unknown', names: { 'zh-TW': '未知', 'zh-Hans': '未知' } },
       { name: 'Time Auction', names: { 'zh-TW': '時間拍賣', 'zh-Hans': '时间拍卖' }, playable: routes.TIME_AUCTION,
-        look: { card: 'bg-[#92383a] text-[#ebe1b8]', wipe: '#ebe1b8', art: '/games/time-auction/auction.webp', cover: true, entrance: 'time-auction' } },,
+        look: { card: 'bg-[#92383a] text-[#ebe1b8]', wipe: '#ebe1b8', art: '/games/time-auction/auction.webp', cover: true, entrance: 'time-auction' } },
       { name: 'Halloween Monster', names: { 'zh-TW': '萬聖節怪物', 'zh-Hans': '万圣节怪物' } },
       { name: "Sniper Hold'em", names: { 'zh-TW': '撲克精準玩家', 'zh-Hans': '扑克精准玩家' } },
       { name: 'Treasure Island', names: { 'zh-TW': '寶藏島', 'zh-Hans': '宝藏岛' } },
