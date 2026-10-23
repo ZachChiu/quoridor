@@ -54,6 +54,13 @@ type Events = {
   online_error: { reason: 'noRoom' | 'roomFull' | OnlineFailReason; fail_step?: OnlineStep };
   /** 分享房間連結 */
   share_room_link: { method: 'native' | 'copy' };
+  /**
+   * 結算的分享圖。用 GA4 建議的 share 事件（大腦 10/23 建議）：
+   * method＝叫出系統分享（native）或存成檔案（download）；item_id＝哪一種比例。
+   */
+  share: { method: 'native' | 'download'; content_type: 'result_card'; item_id: 'poster' | 'square' | 'story' };
+  /** 連線時催輪到的人 */
+  nudge_send: { players: 2 | 3 };
   /** 關掉遊玩方式。step 從 1 起算；finished＝有沒有看到最後一步 */
   tutorial_close: { step: number; steps: number; finished: boolean };
   /** 切換語系 */

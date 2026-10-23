@@ -23,6 +23,10 @@
     - presence（2026-10 加）：每個座位只有本人能寫，值只能是 true（連著）或時間戳記（斷線的時間）。
       斷線那一筆是伺服器的 onDisconnect 寫的，但規則照樣檢查 —— 登記的時候一次、真的斷線時再一次。
       這段規則先發布、程式後上線都沒關係：舊程式不寫 presence；新程式寫入被拒時也只是不顯示在線狀態
+    - clock / turnAt / draft（2026-10-23 加）：累計思考時間、輪到現在這個人的時間、這一手正在想什麼。
+      都只有「寫入前輪到的那個人」能寫：clock 只能寫自己的、只能變大；turnAt 只能是伺服器的現在；
+      draft 的 by 必須是輪到的人。程式把這幾個跟棋譜分開寫，規則還沒發布時只是沒有時間、看不到草稿，對局照常
+    - nudge（同日）：在座、而且不是輪到的人才能催；15 秒冷卻由這裡擋（at 必須是伺服器的現在）
     - 房間多出來的欄位一律拒絕（$other）。新增欄位要先改這裡
 
     ── 回饋 ─────────────────────────────────────────────────────────
@@ -83,6 +87,32 @@
         "winners": {
           ".write": "auth != null && (data.parent().child('players/A/uid').val() === auth.uid || data.parent().child('players/B/uid').val() === auth.uid || data.parent().child('players/C/uid').val() === auth.uid)",
           "$index": { ".validate": "newData.val() === 'A' || newData.val() === 'B' || newData.val() === 'C' || newData.val() === 'draw'" }
+        },
+        "turnAt": {
+          ".write": "auth != null && data.parent().child('currentPlayer').exists() && data.parent().child('players').child(data.parent().child('currentPlayer').val()).child('uid').val() === auth.uid",
+          ".validate": "newData.val() === now"
+        },
+        "clock": {
+          "$seat": {
+            ".write": "auth != null && ($seat === 'A' || $seat === 'B' || $seat === 'C') && data.parent().parent().child('currentPlayer').val() === $seat && data.parent().parent().child('players').child($seat).child('uid').val() === auth.uid",
+            ".validate": "newData.isNumber() && newData.val() >= (data.exists() ? data.val() : 0) && newData.val() < 86400000"
+          }
+        },
+        "draft": {
+          ".write": "auth != null && data.parent().child('currentPlayer').exists() && data.parent().child('players').child(data.parent().child('currentPlayer').val()).child('uid').val() === auth.uid",
+          ".validate": "newData.hasChildren(['by', 'piece', 'at']) && newData.child('by').val() === data.parent().child('currentPlayer').val()",
+          "by": { ".validate": "newData.isString()" },
+          "piece": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() < 8" },
+          "at": { ".validate": "newData.isString() && newData.val().length <= 5" },
+          "wall": { ".validate": "newData.isString() && newData.val().length <= 7" },
+          "$other": { ".validate": false }
+        },
+        "nudge": {
+          ".write": "auth != null && newData.exists() && (!data.exists() || now > data.child('at').val() + 15000)",
+          ".validate": "newData.hasChildren(['by', 'at']) && newData.child('at').val() === now && newData.child('by').val() !== data.parent().child('currentPlayer').val() && data.parent().child('players').child(newData.child('by').val()).child('uid').val() === auth.uid",
+          "by": { ".validate": "newData.val() === 'A' || newData.val() === 'B' || newData.val() === 'C'" },
+          "at": { ".validate": "newData.isNumber()" },
+          "$other": { ".validate": false }
         },
         "presence": {
           "$seat": {

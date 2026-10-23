@@ -2,6 +2,7 @@ import React, { useMemo } from "react";
 import { PLAYER_ON, playerVar, type PlayerKey } from "@/config/players";
 import type { Player } from "@/types/chessboard";
 import { GiLaurelCrown } from 'react-icons/gi';
+import { LuBellRing } from 'react-icons/lu';
 import { useGameText } from '@/i18n/LocaleProvider';
 import { fmt } from '@/i18n/content/game';
 
@@ -30,6 +31,9 @@ interface Props {
   playersNum: number;
   /** 連線狀況（自己斷線、輪到的對手斷線）。有的話取代「藍方 · 移動棋子」那一行 */
   notice?: string | null;
+  /** 連線、還沒輪到自己時催輪到的人（Zach 10/23）。nudged＝剛催過，15 秒內不能再按 */
+  onNudge?: () => void;
+  nudged?: boolean;
 }
 
 /**
@@ -56,7 +60,7 @@ interface Props {
  */
 export default React.memo(function GameTips({
   me, isPlacingChess, currentPlayer, winingStatus, breakWallCountObj, aiThinking,
-  selected, remainSteps = 0, onWallStep, onShowResult, playersNum, notice,
+  selected, remainSteps = 0, onWallStep, onShowResult, playersNum, notice, onNudge, nudged,
 }: Props) {
   const g = useGameText();
   const over = winingStatus.length > 0;
@@ -117,6 +121,19 @@ export default React.memo(function GameTips({
       )}
       <span className={steps ? 'text-[15px] font-bold opacity-85' : 'text-base'}>{!over && notice ? notice : tipText}</span>
       {breakWallText && <span className="text-xs font-bold opacity-80">{breakWallText}</span>}
+      {/* 催一下：這塊是輪到的那一方的顏色，按鈕用米白底 —— 色塊上唯一的中性 */}
+      {onNudge && !over && (
+        <button
+          type="button"
+          onClick={onNudge}
+          disabled={nudged}
+          className="mt-1 flex items-center gap-1.5 rounded-full bg-tile-cream px-3.5 py-1.5 text-sm font-black text-tile-ink transition
+                     hover:brightness-95 active:scale-95 disabled:opacity-60"
+        >
+          <LuBellRing aria-hidden="true" />
+          {nudged ? g.nudge.sent : g.nudge.button}
+        </button>
+      )}
     </>
   );
 

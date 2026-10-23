@@ -2,6 +2,7 @@
 import React from 'react';
 import { useGameText } from '@/i18n/LocaleProvider';
 import { fmt } from '@/i18n/content/game';
+import { LuBellRing } from 'react-icons/lu';
 
 /**
  * 回合指引：「① 移動 › ② 築牆」兩顆步驟標。
@@ -45,9 +46,15 @@ type Props = {
   notice?: string | null;
   /** 由掛載點決定定位與顯示條件 —— 直式排在文件流裡，橫式收在控制盤內 */
   className?: string;
+  /**
+   * 連線、還沒輪到自己時的「催一下」（Zach 10/23）。有給就取代步驟標 ——
+   * 那時「① 移動 › ② 築牆」講的是對手的步驟，對這台手機上的人沒有用；換成按鈕，高度也一樣。
+   */
+  onNudge?: () => void;
+  nudged?: boolean;
 };
 
-export default function TurnGuide({ placing, myTurn, selected, onWallStep, breakMode, remainSteps, color, notice, className = '' }: Props) {
+export default function TurnGuide({ placing, myTurn, selected, onWallStep, breakMode, remainSteps, color, notice, className = '', onNudge, nudged }: Props) {
   const g = useGameText();
 
   const aside = notice ? notice
@@ -93,7 +100,17 @@ export default function TurnGuide({ placing, myTurn, selected, onWallStep, break
         </span>
       )}
       <div className="flex items-center gap-2 text-xs font-black landscape:gap-1.5 landscape:text-[11px]">
-        {placing ? chip(g.pad.stepPlace, myTurn) : (
+        {onNudge && !myTurn ? (
+          <button
+            type="button"
+            onClick={onNudge}
+            disabled={nudged}
+            className="pointer-events-auto flex min-h-6 items-center gap-1.5 rounded-full bg-tile-ink px-3 py-[5px] text-tile-cream transition active:scale-95 disabled:opacity-50"
+          >
+            <LuBellRing aria-hidden="true" />
+            {nudged ? g.nudge.sent : g.nudge.button}
+          </button>
+        ) : placing ? chip(g.pad.stepPlace, myTurn) : (
           <>
             {chip(g.pad.step1, !onWallStep && !breakMode,
               remainSteps > 0 && !onWallStep && !breakMode && selected ? (

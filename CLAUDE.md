@@ -84,6 +84,8 @@ zh-TW 不加前綴（`app/(default)/`），en / ja / ko / zh-Hans / th 加前綴
 棋盤渲染：`app/components/Chessboard.tsx`（2D，目前使用中）。
 
 手機（`coarse`）底部是 `WallDirectionPad` 控制盤：內圈箭頭移動、外圈長條蓋牆、四角是投降／破牆／重來／完成。
+**外圈長條按下去就直接蓋**（2026-10-23 Zach 選的 A），不必再按 ✓；盤面上 9px 的牆邊照舊先預覽、再按長條或 ✓ 送出（那裡才是真的會點錯的地方）。
+電腦版左下角投降旁邊有「重來這一步」（只移動了、還沒蓋牆時才出現；手機在控制盤左下角）。
 **中央那顆棋子可以按**：按一下選第一顆，再按依棋子編號換下一顆（engine 的 `nextSelectablePiece`），
 整個回合不必點盤面；點盤面的方式照舊保留。規則同 `selectPiece`：走過就不能換（要換請按重來）、
 被圍死的棋子跳過。中央那顆一律是**這台裝置上的人自己的顏色**（連線是自己的座位、跟 AI 下是 A；本機對戰才是輪到的人），還沒輪到自己就淡下去 —— 先前畫輪到的人，藍方在等紅方時控制盤中央是紅色（2026-10-22 Zach 回報）。
@@ -98,6 +100,10 @@ zh-TW 不加前綴（`app/(default)/`），en / ja / ko / zh-Hans / th 加前綴
 id, playersNum, status, createdAt, currentPlayer, wgf, winners?
 players/{ A?, B?, C? }/{ uid, displayName, joinedAt }
 presence/{ A?, B?, C? }   true＝連著、number＝斷線的時間；沒有＝不知道（舊版程式），不能當成斷線
+clock/{ A?, B?, C? }      各方累計的思考時間（毫秒），下完一手的人自己加上去
+turnAt                    輪到現在這個人的時間（伺服器時間）
+draft { by, piece, at, wall? }   輪到的人這一手正在動哪顆、走到哪、手機上預覽中的牆
+nudge { by, at }          最近一次「催一下」
 ```
 
 `status` 生命週期：`waiting` → `opening` → `playing` → `finished`
@@ -107,6 +113,11 @@ presence/{ A?, B?, C? }   true＝連著、number＝斷線的時間；沒有＝�
 - `app/types/room.ts` — `Room`, `RoomPlayer`, `RoomStatus` 型別
 - **在線狀態**（2026-10-23）：`gameService.trackPresence` 照 Firebase 官方的做法 —— 先登記 `onDisconnect` 寫斷線時間、伺服器收下才標成 `true`；關分頁、手機收到背景、網路斷掉時由伺服器寫斷線。畫面在 `hook/useRoomPresence.ts`：**斷線滿 3 秒才顯示**（有人重新整理時不閃）、回來立刻拿掉；斷線的對手在比分那塊掛一顆拔插頭的小圓（`GameStatus`），輪到他時提示句寫「藍方暫時離線」，自己斷線寫「連線中斷，正在重新連線…」。從等人開始回報，結束後停（結算會 `releaseConnection`）。規則要 Zach 先在 Console 發布；沒發布時寫入被拒、什麼都不顯示，不會出錯
 - **分頁標題提醒**：`hook/useTitleAlert.ts`，連線時輪到自己、分頁在背景，標題輪流換成「● 輪到你了」。只有電腦版看得到；手機切到別的 App 時網頁沒有任何辦法提醒（推播要 Service Worker＋能發送的後端，靜態站做不到）
+- **輪到誰**（2026-10-23，Zach 的提議）：棋盤外圈一圈輪到那一方顏色的光（`.board-turn`），輪到這台裝置上的人時再用 `element.animate()` 脹一次。**這是全站唯一的陰影**，不是在模擬光源，是「現在是誰」的訊號。連線時還有提示音（見下）
+- **催一下**（同日）：連線時還沒輪到的人可以催輪到的人 —— 對方棋盤抖一下（只動 transform，不會推開旁邊的東西）、敲門聲、手機震一下（跟著音效開關走）、提示列寫「紅方在催你」。15 秒冷卻由資料庫規則擋。電腦版按鈕在右下提示塊裡，手機在棋盤下方取代步驟標
+- **看得到對手在想什麼**（同日）：輪到的人選棋、走一步、手機預覽牆時寫 `draft`（節流 150ms），其他人的盤面上那顆棋子移過去、原地擠來擠去（`.animate-piece-push`），預覽的牆半透明地閃。回合結束 `updateGameState` 一起清掉。只是預覽，盤面的真相仍然只有棋譜
+- **累計思考時間**（同日，Zach：「不做限制時間，記他整場總共耗時多久」）：連線記在 `clock/`，起點 `turnAt` 是伺服器時間、減的時候用 `serverNow()`（加上 `.info/serverTimeOffset`），兩台裝置的時鐘差多少都不影響；本機／單人由這台裝置記、存 sessionStorage。只在結算與分享圖上顯示
+- **`clock`／`turnAt`／`draft` 跟棋譜分開寫、而且先寫**：規則看的是「寫入前輪到誰」，棋譜一寫輪到的人就換了；分開寫是因為規則還沒發布時整包會被拒，那樣棋譜也送不出去
 - **本機測連線**：`NEXT_PUBLIC_FIREBASE_EMULATOR=1` 時 `firebase.ts` 改連 Firebase 模擬器（auth 9099、database 9000，要裝 Java）。在線狀態、斷線、規則只能真的開兩個瀏覽器（兩個身分）連一次才驗得到，不要拿正式資料庫試
 - 首頁右上角水平並排「聯絡我們」與語言切換（40px、離邊 10px）。標題上方有一塊直式才有、可收縮（flex-shrink）的留白：畫面夠高時把標題推到圓鈕下面，不夠高時自己縮掉，不會多出捲軸；640–680 高的舊手機再把標題縮到 6.5dvh。直排、拆到左上都試過，Zach 覺得不好看
 - `HomeClient.tsx` — 連線磁磚**按下去立刻**跳轉 `/online#new=2|3`，不在首頁等建房（手機沒有滑過磁磚的預熱，先前會有 2 秒多畫面不動）。滑過或 focus 磁磚時仍呼叫 `ensureUser()` 預熱登入
@@ -167,6 +178,16 @@ presence/{ A?, B?, C? }   true＝連著、number＝斷線的時間；沒有＝�
 - **棋盤**：外圍那圈 9px 是「牆」不是裝飾邊框（規則裡棋盤外緣本身就算一道牆）。
   牆的位移一律 `calc(var(--board-gap) * -0.5)` —— 對齊的是格線中心而不是格子邊，
   兩者差半個格縫，寫死會漂掉。
+  **中立區反灰**（被牆圍住、裡面沒有棋子、永遠不計分的格子）：`#ccc9c3`，深墨 20% 疊在米白格上，比格線深一階（`components/neutralZone.ts`）。
+  2026-10-23 試過長一叢草，Zach 選反灰。分享圖用同一個灰。
+- **聲音**（`utils/sound.ts`，2026-10-23）：**全部用 Web Audio 當場合成，沒有音檔**（節目配樂一律不能用；出處見 `docs/sound.md`）。
+  音效預設開、音樂預設關，對局左上角的喇叭點開兩個開關（存 localStorage）。使用者點過頁面之前不出聲（瀏覽器規定）。
+  響的時機：牆蓋下去、開局擺子、連線輪到自己（分頁在背景也會響）、被催、分出勝負。
+  手指裝置上左上角三顆縮成 44px、間距 8px：三人局在 375 寬的手機上第三顆會壓到比分。
+- **分享戰績**（`ShareCardModal`＋`utils/resultCard.ts`，2026-10-23）：結算按「分享戰績」，在瀏覽器裡用 Canvas 畫一張圖（4:5／1:1／9:16），
+  盤面、比分、思考時間、站名、網址，加一個掃了到首頁的 QR（`uqr`，帶 `utm_source=result_card&utm_medium=share`）。
+  出處寫「靈感來自《節目名》」，**不寫 Netflix、不放節目的 logo／主視覺／截圖**（看起來像官方合作，大腦 10/23）。
+  能分享檔案就叫系統分享面板，不行就存檔；App 內建瀏覽器兩個都可能不給，預覽本身是一張 `<img>`，長按可以存。
 - **字型子集**由 `scripts/build-font-subset.mjs` 從原始碼推導（註解會先剝掉），**在本機用 harfbuzz（subset-font）切**：
   繁中（zh-TW、en）、簡中、泰文各一份，依語系區塊分開收字；日文、韓文刻意用系統字型（用繁中字型顯示日文漢字字形不對）。
   CSS 依 `<html lang>` 換 `--font-app`（`:root:lang(...)`），沒用到的 @font-face 不會下載。
@@ -253,6 +274,8 @@ GA 由 `app/shell.tsx` 的 `<GoogleAnalytics>` 載入（只有 `NEXT_PUBLIC_APP_
 | `game_restart` | 結算按再來一局 | mode、players、difficulty |
 | `online_error` | 連線失敗 | reason、fail_step |
 | `share_room_link` | 分享房間連結 | method |
+| `share` | 結算的分享圖（GA4 建議事件） | method（native／download）、content_type（result_card）、item_id（poster／square／story） |
+| `nudge_send` | 連線時催輪到的人 | players |
 | `tutorial_close` | 關掉遊玩方式 | step、steps、finished |
 | `locale_switch` | 切語系 | from、to |
 | `contact_open` / `feedback_send` | 聯絡我們、送出回饋 | entry、rating |
@@ -260,6 +283,7 @@ GA 由 `app/shell.tsx` 的 `<GoogleAnalytics>` 載入（只有 `NEXT_PUBLIC_APP_
 - `game_start` / `game_end` 看**狀態轉變**而不是按鈕；第一次觀察到的狀態不送（重整後從棋譜重建的「已開始／已結束」不是這次發生的），連線另用 sessionStorage 去重。連線局每位玩家各送一次，所以是「人次」不是「局數」。投降不另外送，會以 `game_end` 的 `ended: 'resign'` 出現。
 - **`page_view` 交給 GA 自己算**（首次載入由 config、站內換頁由加強型評估的「依瀏覽器記錄事件」）。不要再手動送 —— 以前的 `AnalyticsProvider` 就是這樣讓每次瀏覽都算兩次。
 - 參數要在 GA 後台「管理 → 自訂定義」註冊才看得到：維度 `mode`、`players`、`difficulty`、`entry`、`result`、`winner`、`ended`、`reason`、`fail_step`、`method`、`from`、`to`、`finished`；指標 `turns`、`duration_sec`、`step`、`rating`。
+  `share` 的 `content_type`、`item_id` 是 GA4 建議事件的標準參數，後台有沒有內建維度要上線後確認，沒有再註冊。
 - **參數名稱在維度與指標之間不能重複**：`step` 已經是 `tutorial_close` 的指標，所以連線失敗的步驟叫 `fail_step`。新增參數前先看這份清單。
 - **不能用 GA 保留給流量來源的名稱**：`source`、`medium`、`campaign`、`term`、`content`（還有 `gclid`、`utm_*` 這類）。GA4 會把它們當成這個工作階段的來源 —— 2026-10 `mode_select` 帶 `source=home`，Google 搜尋進來的工作階段被記成來源「home」（大腦從 BigQuery 查到：10/22 的 22 個工作階段有 8 個），所以改名 `entry`。`from` 也不要拿來當入口：它已經是 `locale_switch` 的「從哪個語系」。
 

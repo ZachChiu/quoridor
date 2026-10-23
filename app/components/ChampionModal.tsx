@@ -19,6 +19,10 @@ interface ChampionModalProps {
   onRestart?: () => void;
   /** 打開回饋表單。剛玩完是唯一還記得剛剛發生什麼的時刻。 */
   onFeedback?: () => void;
+  /** 打開分享圖（見 ShareCardModal） */
+  onShare?: () => void;
+  /** 各方累計的思考時間，排好版的字（3:12） */
+  times?: Partial<Record<PlayerKey, string>>;
 }
 
 /**
@@ -29,7 +33,7 @@ interface ChampionModalProps {
  * 不必再用文字解釋誰是誰。並列冠軍或平局沒有單一勝方，色帶回到深墨。
  */
 const ChampionModal: React.FC<ChampionModalProps> = ({
-  winners, isOpen, uniqTerritories, onClose, onRestart, onFeedback,
+  winners, isOpen, uniqTerritories, onClose, onRestart, onFeedback, onShare, times,
 }) => {
   const g = useGameText();
   const isDraw = !winners?.length || winners[0] === 'draw';
@@ -91,9 +95,21 @@ const ChampionModal: React.FC<ChampionModalProps> = ({
               {g.champion.seeBoard}
             </Button>
           </div>
-          {/* 深墨：不屬於任何玩家，放在勝方色帶與比分條旁邊永遠不會撞色。 */}
-          {onRestart && (
-            <Button color="bg-tile-ink text-tile-cream" handleClickEvent={onRestart}>{g.champion.playAgain}</Button>
+          {/*
+            深墨：不屬於任何玩家，放在勝方色帶與比分條旁邊永遠不會撞色。
+            分享戰績：本機／單人跟「再來一局」並排、退一階成次要灰；連線沒有再來一局，它就是主要動作。
+          */}
+          {(onRestart || onShare) && (
+            <div className="flex gap-3">
+              {onShare && (
+                <Button color={onRestart ? 'bg-tile-ink/[0.07] text-tile-ink' : 'bg-tile-ink text-tile-cream'} handleClickEvent={onShare}>
+                  {g.share.card}
+                </Button>
+              )}
+              {onRestart && (
+                <Button color="bg-tile-ink text-tile-cream" handleClickEvent={onRestart}>{g.champion.playAgain}</Button>
+              )}
+            </div>
           )}
         </div>
       }
@@ -117,7 +133,10 @@ const ChampionModal: React.FC<ChampionModalProps> = ({
                 className="flex items-center gap-3 rounded-xl bg-tile-ink/[0.04] px-4 py-2 text-sm font-bold tabular-nums text-tile-ink/45"
               >
                 <span className="size-2.5 shrink-0 rounded-full opacity-40" style={{ backgroundColor: playerVar(player) }} aria-hidden="true" />
-                <span className="flex-1">{g.players[player]}</span>
+                <span className="flex-1">
+                  {g.players[player]}
+                  {times?.[player] && <span className="ml-2 text-xs">{g.clock.label} {times[player]}</span>}
+                </span>
                 <span className="text-lg leading-none">{count}</span>
                 <span className="text-xs font-bold">{g.champion.squares}</span>
               </div>
@@ -133,7 +152,11 @@ const ChampionModal: React.FC<ChampionModalProps> = ({
             >
               {/* 標題色帶已經有桂冠，這裡不再放同一個圖示；「勝方」留給螢幕報讀 */}
               {!isDraw && <span className="sr-only">{g.champion.winner}</span>}
-              <span className="flex-1">{g.players[player]}</span>
+              <span className="flex flex-1 flex-col">
+                {g.players[player]}
+                {/* 累計思考時間（不限時，只記錄 —— Zach 10/23） */}
+                {times?.[player] && <span className="text-xs font-bold opacity-80">{g.clock.label} {times[player]}</span>}
+              </span>
               <span className={`leading-none ${isDraw ? 'text-2xl' : 'text-5xl'}`}>{count}</span>
               <span className="text-xs font-bold opacity-80">{g.champion.squares}</span>
             </div>

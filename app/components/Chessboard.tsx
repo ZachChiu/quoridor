@@ -21,6 +21,13 @@ import { boardSignature, diffBoard, territoryWave, newWall, pathBetween } from "
 import { useGameText } from '@/i18n/LocaleProvider';
 import { fmt } from '@/i18n/content/game';
 import { isCursorKey, nearestEmpty, nextCursor, nextEmptyCell } from '@/components/boardCursor';
+import { NEUTRAL_FILL } from '@/components/neutralZone';
+
+/** 對手還沒蓋下去、正在考慮的那道牆（連線時即時看到）。dir：H＝那一格的下緣、V＝右緣 */
+export type GhostWall = { row: number; col: number; dir: 'H' | 'V'; color: string };
+
+const reducedMotion = () =>
+  typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 type Props = {
   size: number;
@@ -82,6 +89,20 @@ type Props = {
   me?: Player;
   /** 連線狀況的提示（自己斷線、輪到的對手斷線），交給控制盤上的 TurnGuide */
   notice?: string | null;
+  /** 中立區（`row,col`）：被牆圍住、裡面沒有棋子的格子，反灰 */
+  neutral?: Set<string>;
+  /** 輪到的那一方的顏色。有給就在棋盤外圈打一圈那個顏色的光 */
+  turnColor?: string | null;
+  /** 每次輪到這台裝置上的人就 +1：光圈脹一次 */
+  turnPulse?: number;
+  /** 每次被催就 +1：整塊棋盤抖一下 */
+  shake?: number;
+  /** 對手正在動的那顆棋子（連線時即時看到）：擠來擠去像在推牆 */
+  pushing?: Move | null;
+  ghostWall?: GhostWall | null;
+  /** 催一下，交給控制盤裡的 TurnGuide（橫式） */
+  onNudge?: () => void;
+  nudged?: boolean;
 };
 
 export default React.memo(function Chessboard({
@@ -117,9 +138,46 @@ export default React.memo(function Chessboard({
   nextPiece = null,
   me,
   notice,
+  neutral,
+  turnColor,
+  turnPulse = 0,
+  shake = 0,
+  pushing,
+  ghostWall,
+  onNudge,
+  nudged,
 }: Props) {
   // 這台裝置上的人現在能不能動（連線時對手在下、AI 在想都不能）。控制盤用的是同一個判斷
   const canAct = myTurn ?? (!isLock && !!currentPlayer);
+
+  /*
+    光圈脹一次、被催時抖一下：用 element.animate()，同一個值再來一次也能重播
+    （切 class 的話第二次不會動），而且只動 transform／opacity，交給合成執行緒跑。
+  */
+  const frameRef = useRef<HTMLDivElement>(null);
+  const pulseRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!turnPulse || reducedMotion()) return;
+    pulseRef.current?.animate(
+      [{ opacity: 0, transform: 'scale(0.97)' }, { opacity: 1, transform: 'scale(1.03)', offset: 0.3 }, { opacity: 0, transform: 'scale(1.08)' }],
+      { duration: 1000, easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)' },
+    );
+  }, [turnPulse]);
+  useEffect(() => {
+    if (!shake || reducedMotion()) return;
+    frameRef.current?.animate(
+      [
+        { transform: 'translateX(0) rotate(0)' },
+        { transform: 'translateX(-10px) rotate(-1deg)', offset: 0.15 },
+        { transform: 'translateX(9px) rotate(0.8deg)', offset: 0.3 },
+        { transform: 'translateX(-7px) rotate(-0.6deg)', offset: 0.45 },
+        { transform: 'translateX(5px) rotate(0.4deg)', offset: 0.6 },
+        { transform: 'translateX(-3px) rotate(-0.2deg)', offset: 0.75 },
+        { transform: 'translateX(0) rotate(0)' },
+      ],
+      { duration: 560, easing: 'ease-out' },
+    );
+  }, [shake]);
   const canBreakAt = (row: number, col: number, dir: 'H' | 'V') =>
     !breakSlots || breakSlots.has(`${row},${col},${dir}`);
   // const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
@@ -193,13 +251,8 @@ export default React.memo(function Chessboard({
     ? (ghost && ghost.n === pieceCount && !board[ghost.row]?.[ghost.col] ? ghost : nearestEmpty(board))
     : null;
 
-  // 換一格、或換人下之後，還沒確認的方向就不再成立。
-  const wallCtx = selectedChess ? `${selectedChess.row},${selectedChess.col},${currentPlayer}` : '';
-  const [lastWallCtx, setLastWallCtx] = useState(wallCtx);
-  if (lastWallCtx !== wallCtx) {
-    setLastWallCtx(wallCtx);
-    setPendingWall(null);
-  }
+  // 換一格、或換人下之後，還沒確認的方向就不再成立 —— 這件事由 PlayClient 處理（pendingWall 是它的 state，
+  // 在這裡 render 時改它會變成「render 子元件時改父元件」，React 會警告）。
 
   /** 四個方向各自送出時的座標換算（牆存在「某一格的下緣／右緣」）。 */
   const commitWall = useCallback((row: number, col: number, dir: Direction) => {
@@ -461,9 +514,19 @@ export default React.memo(function Chessboard({
         {/* --board-wall 與 --board-gap 由 .board-frame 決定（globals.css）：
             棋盤小（手機）時外框與盤內的牆一起變細，兩者永遠一樣粗。 */}
         <div
+          ref={frameRef}
           className="board-frame relative size-full rounded-[var(--board-frame-r)] bg-board-line p-[var(--board-wall)]"
           style={{ '--board-frame-r': '1.4rem' } as React.CSSProperties}
         >
+        {/* 輪到誰的光：一層常駐、一層只在輪到自己時脹一次（見 globals.css 的 .board-turn） */}
+        {turnColor && (
+          <>
+            <div aria-hidden="true" className="board-turn pointer-events-none absolute inset-0 rounded-[inherit]"
+              style={{ '--turn-color': turnColor } as React.CSSProperties} />
+            <div ref={pulseRef} aria-hidden="true" className="pointer-events-none absolute inset-0 rounded-[inherit] opacity-0"
+              style={{ boxShadow: `0 0 0 12px color-mix(in srgb, ${turnColor} 50%, transparent), 0 0 80px 24px color-mix(in srgb, ${turnColor} 55%, transparent)` }} />
+          </>
+        )}
         {/* 欄數走 inline style 而不是 `grid-cols-${size}`：
             動態拼出來的 class 名稱 Tailwind 的靜態掃描看不到，之前是靠 safelist
             列舉 7/8/9 撐著 —— 盤面大小一旦改成別的值就會靜默壞掉。
@@ -632,7 +695,10 @@ export default React.memo(function Chessboard({
                         style={vars}
                       >
                         <div
-                          className={`size-3/5 rounded-full ${isPieceActive ? 'animate-pulse-shine' : ''}`}
+                          className={`size-3/5 rounded-full ${
+                            pushing?.row === rowIndex && pushing.col === colIndex ? 'animate-piece-push'
+                            : isPieceActive ? 'animate-pulse-shine' : ''
+                          }`}
                           style={{ backgroundColor: PLAYER_VAR[cellPlayer] }}
                         />
                       </div>
@@ -677,6 +743,32 @@ export default React.memo(function Chessboard({
                       兩者分開寫遲早會不一致。游標移上去時讓位給預覽棋子。 */}
                   {!isLock && isPlacingChess && !cellPlayer && (
                     <div className="absolute z-10 size-1/4 rounded-full bg-tile-ink/20 transition-opacity fine:group-hover:opacity-0" />
+                  )}
+
+                  {/* 中立區反灰（見 neutralZone.ts）。跟地盤同一個長出來的動畫，離左上角越遠越晚 */}
+                  {!isPlacingChess && neutral?.has(`${rowIndex},${colIndex}`) && (
+                    <div
+                      aria-hidden="true"
+                      className="animate-territory pointer-events-none absolute inset-0 z-0"
+                      style={{ backgroundColor: NEUTRAL_FILL, animationDelay: `${(rowIndex + colIndex) * 30}ms` }}
+                    />
+                  )}
+
+                  {/* 對手正在考慮的牆：他的顏色、半透明、一明一暗 */}
+                  {ghostWall?.row === rowIndex && ghostWall.col === colIndex && (
+                    ghostWall.dir === 'H' ? (
+                      <div
+                        aria-hidden="true"
+                        className="pointer-events-none absolute inset-x-[-3px] bottom-[calc(var(--board-gap)*-0.5)] z-20 h-[var(--board-wall)] translate-y-1/2 animate-pulse rounded-full opacity-50"
+                        style={{ backgroundColor: ghostWall.color }}
+                      />
+                    ) : (
+                      <div
+                        aria-hidden="true"
+                        className="pointer-events-none absolute inset-y-[-3px] right-[calc(var(--board-gap)*-0.5)] z-20 w-[var(--board-wall)] translate-x-1/2 animate-pulse rounded-full opacity-50"
+                        style={{ backgroundColor: ghostWall.color }}
+                      />
+                    )
                   )}
 
                   {/*
@@ -857,7 +949,12 @@ export default React.memo(function Chessboard({
               else onClickBreakWall(sel.row, sel.col, 'vertical');
             }}
             pending={pendingWall}
-            onPick={setPendingWall}
+            /*
+              控制盤外圈的長條按下去就直接蓋（Zach 10/23 選的）。
+              先前是「先選方向、再按 ✓」—— 長條有 32×26 那麼大，不會點錯，多按一下只是多一步。
+              盤面上那幾條 9px 的牆邊照舊先預覽（onWallEdge）：那裡才是真的會點錯的地方，預覽中的方向按長條或 ✓ 都能送出。
+            */
+            onPick={(dir) => { if (sel) commitWall(sel.row, sel.col, dir); }}
             onConfirm={() => { if (sel && pendingWall) commitWall(sel.row, sel.col, pendingWall); }}
             onRedo={() => { setPendingWall(null); cancelTurn?.(); }}
             breakMode={breakMode}
@@ -876,6 +973,8 @@ export default React.memo(function Chessboard({
             remainSteps={remainSteps}
             color={PLAYER_VAR[currentPlayer]}
             notice={notice}
+            onNudge={onNudge}
+            nudged={nudged}
           />
         );
       })()}
