@@ -460,8 +460,7 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
   useTitleAlert(isOnline && phase === 'playing' && isMyTurn, g.tips.yourTurn);
 
   // ─── 聲音（見 utils/sound.ts）──────────────────────────────────────────────
-  // 音樂只在對局進行中放：等人的時候、結算之後都停
-  const { prefs: soundPrefs, setPrefs: setSoundPrefs } = useSound(!isLock && (!isOnline || phase === 'playing'));
+  const { prefs: soundPrefs, setPrefs: setSoundPrefs } = useSound();
   /*
     什麼時候響：牆蓋下去（回合數 +1）、開局擺下一顆、輪到自己（只有連線 —— 那才是放在背景等的情況）、分出勝負。
     看的是狀態的轉變，第一次觀察到的不算（重整、進房時從棋譜重建的不是這次發生的）。

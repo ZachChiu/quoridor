@@ -60,7 +60,7 @@ export type GameText = {
     cardFrom: string; cardFormat: string;
   };
   /** 喇叭鈕：音效、音樂各一個開關 */
-  sound: { button: string; sfx: string; music: string };
+  sound: { button: string };
   /** 連線時催輪到的人。received 是被催的那邊看到的 */
   nudge: { button: string; sent: string; received: string };
   /** 累計思考時間（不限時，只記錄）；total 是整局時長，寫在桌機比分底下（Zach 10/23 從四種寫法挑「對局時長」） */
@@ -140,7 +140,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       save: '儲存圖片', shareImage: '分享圖片',
       holdToSave: '也可以長按圖片儲存', cardFrom: '靈感來自《{show}》', cardFormat: '圖片比例',
     },
-    sound: { button: '聲音', sfx: '音效', music: '音樂' },
+    sound: { button: '聲音' },
     nudge: { button: '催一下', sent: '催了！', received: '{who}在催你' },
     clock: { label: '思考時間', total: '對局時長' },
     waiting: { kicker: '連線對戰', heading: '等朋友進來', invite: '邀請朋友加入' },
@@ -223,7 +223,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       save: 'Save image', shareImage: 'Share image',
       holdToSave: 'You can also press and hold the image to save it', cardFrom: 'Inspired by {show}', cardFormat: 'Image size',
     },
-    sound: { button: 'Sound', sfx: 'Sound effects', music: 'Music' },
+    sound: { button: 'Sound' },
     nudge: { button: 'Nudge', sent: 'Nudged!', received: '{who} is nudging you' },
     clock: { label: 'Thinking time', total: 'Game time' },
     waiting: { kicker: 'Online play', heading: 'Waiting for a friend', invite: 'Invite a friend' },
@@ -306,7 +306,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       save: '画像を保存', shareImage: '画像をシェア',
       holdToSave: '画像を長押ししても保存できます', cardFrom: '『{show}』から生まれたゲーム', cardFormat: '画像の比率',
     },
-    sound: { button: 'サウンド', sfx: '効果音', music: '音楽' },
+    sound: { button: 'サウンド' },
     nudge: { button: 'せかす', sent: 'せかしました', received: '{who}がせかしています' },
     clock: { label: '考えた時間', total: '対局時間' },
     waiting: { kicker: 'オンライン対戦', heading: '友だちを待っています', invite: '友だちを招待' },
@@ -389,7 +389,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       save: '이미지 저장', shareImage: '이미지 공유',
       holdToSave: '이미지를 길게 눌러도 저장할 수 있어요', cardFrom: '〈{show}〉에서 영감을 받은 게임', cardFormat: '이미지 비율',
     },
-    sound: { button: '소리', sfx: '효과음', music: '음악' },
+    sound: { button: '소리' },
     nudge: { button: '재촉하기', sent: '재촉했어요', received: '{who} 쪽이 재촉해요' },
     clock: { label: '생각한 시간', total: '대국 시간' },
     waiting: { kicker: '온라인 대전', heading: '친구를 기다리는 중', invite: '친구 초대하기' },
@@ -476,7 +476,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       save: '保存图片', shareImage: '分享图片',
       holdToSave: '也可以长按图片保存', cardFrom: '灵感来自《{show}》', cardFormat: '图片比例',
     },
-    sound: { button: '声音', sfx: '音效', music: '音乐' },
+    sound: { button: '声音' },
     nudge: { button: '催一下', sent: '催了！', received: '{who}在催你' },
     clock: { label: '思考时间', total: '对局时长' },
     waiting: { kicker: '联机对战', heading: '等朋友进来', invite: '邀请朋友加入' },
@@ -564,7 +564,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       save: 'บันทึกรูป', shareImage: 'แชร์รูป',
       holdToSave: 'กดค้างที่รูปเพื่อบันทึกก็ได้', cardFrom: 'ได้แรงบันดาลใจจาก {show}', cardFormat: 'ขนาดรูป',
     },
-    sound: { button: 'เสียง', sfx: 'เสียงเอฟเฟกต์', music: 'เพลง' },
+    sound: { button: 'เสียง' },
     nudge: { button: 'เร่งหน่อย', sent: 'เร่งแล้ว!', received: '{who}กำลังเร่งคุณ' },
     clock: { label: 'เวลาคิด', total: 'เวลาทั้งเกม' },
     waiting: { kicker: 'เล่นออนไลน์', heading: 'รอเพื่อนเข้าห้อง', invite: 'ชวนเพื่อนมาเล่น' },

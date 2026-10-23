@@ -1,19 +1,20 @@
 /**
- * 音效與背景音樂。
+ * 音效。
  *
  * **全部用 Web Audio 當場合成，沒有任何音檔**：沒有授權問題（大腦 10/23：節目配樂一律不能用、
  * 音檔要寫出處），也不用多下載東西。出處寫在 docs/sound.md。
  *
- * - 音效預設開、音樂預設關（Zach 10/23：放一顆喇叭鈕，兩個都能關）。設定存 localStorage，只是這台裝置的偏好。
+ * - 預設開，對局左上角的喇叭一按就關（存 localStorage，只是這台裝置的偏好）。
+ * - **沒有背景音樂**：做過合成的與找過 Pixabay 的曲子，Zach 10/23 決定拔掉（「音樂功能拔掉，留下棋的聲音就好」）。
  * - 瀏覽器規定使用者點過頁面之前不能出聲。AudioContext 在第一次點擊／按鍵時才建立，之前呼叫 play 都安靜地略過。
  * - 分頁在背景時 AudioContext 照樣會響 —— 「輪到你了」的提示音就是為了這個。
  */
 
 export type Sfx = 'turn' | 'place' | 'wall' | 'nudge' | 'start' | 'win' | 'lose';
-export type SoundPrefs = { sfx: boolean; music: boolean };
+export type SoundPrefs = { sfx: boolean };
 
 const KEY = 'wallgo:sound';
-const DEFAULTS: SoundPrefs = { sfx: true, music: false };
+const DEFAULTS: SoundPrefs = { sfx: true };
 
 // ─── 偏好（給 useSyncExternalStore）──────────────────────────────────────────
 
@@ -63,7 +64,6 @@ export function armAudio() {
       master.connect(ctx.destination);
     }
     if (ctx.state === 'suspended') void ctx.resume();
-    if (pendingMusic) startMusic();
   };
   // capture：棋盤上的按鈕可能 stopPropagation
   window.addEventListener('pointerdown', unlock, { capture: true });
@@ -79,7 +79,7 @@ function ready(): AudioContext | null {
 // ─── 合成用的小零件 ────────────────────────────────────────────────────────────
 
 /** 一個有起音與衰減的音。type 決定音色：sine 圓、triangle 像木琴 */
-function tone(at: number, freq: number, dur: number, vol: number, type: OscillatorType = 'sine', out?: AudioNode) {
+function tone(at: number, freq: number, dur: number, vol: number, type: OscillatorType = 'sine') {
   const c = ctx!;
   const o = c.createOscillator();
   const g = c.createGain();
@@ -88,7 +88,7 @@ function tone(at: number, freq: number, dur: number, vol: number, type: Oscillat
   g.gain.setValueAtTime(0, at);
   g.gain.linearRampToValueAtTime(vol, at + 0.008);
   g.gain.exponentialRampToValueAtTime(0.0001, at + dur);
-  o.connect(g).connect(out ?? master!);
+  o.connect(g).connect(master!);
   o.start(at);
   o.stop(at + dur + 0.05);
 }
@@ -155,74 +155,6 @@ export function playSfx(name: Sfx) {
       tone(t + 0.18, NOTE(64), 0.8, 0.15, 'sine');
       break;
   }
-}
-
-// ─── 背景音樂：五聲音階的隨機漫步，底下一層慢慢呼吸的和聲 ───────────────────────
-
-let pendingMusic = false;
-let musicTimer: ReturnType<typeof setInterval> | null = null;
-let musicBus: GainNode | null = null;
-let pad: OscillatorNode[] = [];
-
-const SCALE = [60, 62, 64, 67, 69, 72, 74, 76, 79]; // C 大調五聲
-let step = 4;
-let nextAt = 0;
-
-function scheduleMusic() {
-  const c = ctx!;
-  // 往前排 1.5 秒，背景分頁的 timer 被節流到一秒一次也不會斷
-  while (nextAt < c.currentTime + 1.5) {
-    step = Math.max(0, Math.min(SCALE.length - 1, step + [-2, -1, -1, 0, 1, 1, 2][Math.floor(Math.random() * 7)]));
-    if (Math.random() > 0.18) {
-      tone(nextAt, NOTE(SCALE[step]), 1.8, 0.11, 'triangle', musicBus!);
-      if (Math.random() < 0.2) tone(nextAt + 0.02, NOTE(SCALE[step] - 12), 2.4, 0.06, 'sine', musicBus!);
-    }
-    nextAt += [0.6, 0.9, 0.9, 1.2][Math.floor(Math.random() * 4)];
-  }
-}
-
-export function startMusic() {
-  pendingMusic = true;
-  const c = ready();
-  if (!c || musicTimer) return;
-  musicBus = c.createGain();
-  musicBus.gain.setValueAtTime(0, c.currentTime);
-  musicBus.gain.linearRampToValueAtTime(0.5, c.currentTime + 2);
-  musicBus.connect(master!);
-  // 和聲墊底：C3＋G3，音量慢慢起伏
-  pad = [48, 55].map((n) => {
-    const o = c.createOscillator();
-    o.type = 'sine';
-    o.frequency.value = NOTE(n);
-    const g = c.createGain();
-    g.gain.value = 0.035;
-    const lfo = c.createOscillator();
-    lfo.frequency.value = 0.07 + Math.random() * 0.05;
-    const depth = c.createGain();
-    depth.gain.value = 0.025;
-    lfo.connect(depth).connect(g.gain);
-    o.connect(g).connect(musicBus!);
-    o.start(); lfo.start();
-    return o;
-  });
-  nextAt = c.currentTime + 0.3;
-  scheduleMusic();
-  musicTimer = setInterval(scheduleMusic, 400);
-}
-
-export function stopMusic() {
-  pendingMusic = false;
-  if (!musicTimer || !ctx || !musicBus) return;
-  clearInterval(musicTimer);
-  musicTimer = null;
-  const bus = musicBus;
-  const old = pad;
-  bus.gain.cancelScheduledValues(ctx.currentTime);
-  bus.gain.setValueAtTime(bus.gain.value, ctx.currentTime);
-  bus.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.6);
-  setTimeout(() => { old.forEach((o) => o.stop()); bus.disconnect(); }, 800);
-  musicBus = null;
-  pad = [];
 }
 
 /** 被催的時候手機震一下。跟著音效開關走 —— 關了聲音就是不想被打擾（大腦 10/23） */
