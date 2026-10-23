@@ -67,6 +67,10 @@ export type BlindGomokuText = {
   shapes: Record<Shape, string>;
   steps: string[];
   showNote: string;
+  /** 名字的由來（規則最後一段，glossary〈遊戲名〉：每款的規則最後寫節目裡叫什麼、原文是什麼） */
+  nameNote: string;
+  /** 分享圖「靈感來自《…》」的節目名：這款出自第 1 季，不能用 messages 的 showName（那是第 2 季的「死亡密室」） */
+  showName: string;
 };
 
 export const TEXT: TextTable<BlindGomokuText> = {
@@ -136,6 +140,8 @@ export const TEXT: TextTable<BlindGomokuText> = {
       '不能悔棋，也不能偷看。有人連成五子時，所有棋子一起翻開，揭曉黑白。',
     ],
     showNote: '出自《魔鬼的計謀》第一季：監獄密室裡的隱藏關，挑戰者跟 NPC 只下一局。節目裡有人斜著隔一格下，19 手就贏了。',
+    nameNote: '名字：節目裡的中文是「盲五子棋」，英文是 Blind Gomoku。Gomoku 就是五子棋，名字來自日文的「五目並べ」。',
+    showName: '魔鬼的計謀',
   },
   en: {
     metaTitle: 'Blind Gomoku: Five in a Row in Colour Only',
@@ -203,6 +209,8 @@ export const TEXT: TextTable<BlindGomokuText> = {
       'No undo, no peeking. When someone makes five in a row, every stone flips over to reveal black and white.',
     ],
     showNote: "From season 1 of The Devil's Plan: a hidden game in the prison room, one game against an NPC. On the show, one player won in 19 moves by playing diagonally with a gap.",
+    nameNote: 'The name: in Chinese the show calls it Mang Wuziqi, “blind five-in-a-row”. Gomoku (wuziqi in Chinese) comes from the Japanese gomokunarabe, “lining up five”.',
+    showName: "The Devil's Plan",
   },
   ja: {
     metaTitle: 'ブラインド五目並べ：色しか見えない五目並べ',
@@ -270,6 +278,8 @@ export const TEXT: TextTable<BlindGomokuText> = {
       '待ったなし、のぞき見なし。誰かが五つ並べたら、すべての石がめくれて黒白が明かされます。',
     ],
     showNote: '『悪魔の計略 ～デビルズ・プラン～』シーズン1、監獄の部屋の隠しゲーム。NPCと一局だけ打ちます。番組では、一つ空けて斜めに打った挑戦者が19手で勝ちました。',
+    nameNote: '名前：番組の中国語版では「盲五子棋」。五目並べは中国語で「五子棋」、英語では日本語から来た Gomoku と呼ばれます。',
+    showName: '悪魔の計略 ～デビルズ・プラン～',
   },
   ko: {
     metaTitle: '블라인드 오목: 색깔만 보이는 오목',
@@ -337,6 +347,8 @@ export const TEXT: TextTable<BlindGomokuText> = {
       '무르기도, 엿보기도 없어요. 누군가 오목을 완성하면 모든 돌이 뒤집혀 흑백이 드러나요.',
     ],
     showNote: '「데블스 플랜」 시즌 1 감옥 방의 히든 게임으로, NPC와 단 한 판을 둬요. 방송에서는 한 칸 띄워 대각선으로 둔 도전자가 19수 만에 이겼어요.',
+    nameNote: '이름: 중국어판 방송에서는 ‘盲五子棋’라고 불러요. 오목(五目)은 중국어로 ‘五子棋’, 일본어로 ‘고모쿠나라베(五目並べ)’이고, 영어 이름 Gomoku도 일본어에서 왔어요.',
+    showName: '데블스 플랜',
   },
   'zh-Hans': {
     metaTitle: '盲五子棋：只看得到颜色的五子棋',
@@ -404,6 +416,8 @@ export const TEXT: TextTable<BlindGomokuText> = {
       '不能悔棋，也不能偷看。有人连成五子时，所有棋子一起翻开，揭晓黑白。',
     ],
     showNote: '出自《魔鬼的计谋》第一季：监狱密室里的隐藏关，挑战者和 NPC 只下一局。节目里有人斜着隔一格下，19 手就赢了。',
+    nameNote: '名字：节目里的中文是“盲五子棋”，英文是 Blind Gomoku。Gomoku 就是五子棋，名字来自日文的“五目並べ”。',
+    showName: '魔鬼的计谋',
   },
   th: {
     metaTitle: 'โกโมกุปิดตา: โกโมกุที่เห็นแค่สี',
@@ -471,5 +485,7 @@ export const TEXT: TextTable<BlindGomokuText> = {
       'ย้อนไม่ได้ แอบดูไม่ได้ เมื่อมีคนเรียงครบห้า หมากทุกตัวจะพลิกเผยดำขาว',
     ],
     showNote: "มาจาก The Devil's Plan ซีซั่น 1: ด่านลับในห้องขัง เล่นกับ NPC แค่เกมเดียว ในรายการมีผู้เล่นชนะใน 19 ตาด้วยการวางทแยงเว้นช่อง",
+    nameNote: 'ชื่อ: ในภาษาจีน รายการเรียกเกมนี้ว่า Mang Wuziqi (โกโมกุปิดตา) ส่วนคำว่าโกโมกุ (Gomoku) มาจากภาษาญี่ปุ่น gomokunarabe แปลว่า “เรียงห้า”',
+    showName: "The Devil's Plan",
   },
 };

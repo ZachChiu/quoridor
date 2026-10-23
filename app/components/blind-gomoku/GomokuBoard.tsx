@@ -1,8 +1,9 @@
 'use client';
 import { memo, useEffect, useMemo, useRef, type CSSProperties, type ReactNode } from 'react';
 import { nextCursor } from '@/components/boardCursor';
-import { CENTER, SIZE, colOf, pointAt, rowOf, type Move, type Point, type Stone } from '@/games/blind-gomoku/engine';
+import { CENTER, SIZE, colOf, pointAt, rowOf, type Move, type Point, type Side, type Stone } from '@/games/blind-gomoku/engine';
 import { ColorFace, KEY_HEX, SideFace } from './Stone';
+import { celebrate, dip, playIdle, stopIdle } from './idleMotion';
 
 /**
  * 15×15 的棋盤。
@@ -16,6 +17,7 @@ import { ColorFace, KEY_HEX, SideFace } from './Stone';
  *
  * 子的翻面用 CSS 3D（兩面 backface-visibility: hidden），結算時依下子順序錯開翻；
  * 新子落下與電腦落子的發光用 Web Animations API（CLAUDE.md：不要每格用 JS 寫 style）。
+ * 子落下時壓一下布、旁邊的子跟著滑一下；一般模式等待那一方的子會自己動（見 idleMotion.ts，盲棋沒有）。
  */
 const pct = (cells: number) => `${(cells * 100) / SIZE}%`;
 const STONE = 0.9;
@@ -51,19 +53,27 @@ function GridLines() {
   );
 }
 
-/** 一顆子。掛載時彈一下（新落下的子）；盲棋時兩面，revealed 時翻到黑白那面 */
+/**
+ * 新落下的子：從手上（大一點、還沒落地）放下來，壓進白絲裡一點再彈回來 —— 布上的子，不是硬盤上的「喀」。
+ * 只動 transform／opacity；壓布那一下旁邊的子跟著滑（idleMotion 的 dip，用 translate，不會跟這裡互相蓋掉）。
+ */
+const DROP: Keyframe[] = [
+  { transform: 'scale(1.32)', opacity: 0 },
+  { transform: 'scale(1)', opacity: 1, offset: 0.4, easing: 'ease-in' },
+  { transform: 'scale(0.9)', offset: 0.6, easing: 'ease-out' },
+  { transform: 'scale(1.03)', offset: 0.82 },
+  { transform: 'scale(1)' },
+];
+
+/** 一顆子。掛載時落下（新落下的子）；盲棋時兩面，revealed 時翻到黑白那面 */
 function StoneView({ p, stone, blind, revealed, delay }: { p: Point; stone: Stone; blind: boolean; revealed: boolean; delay: number }) {
   const popRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    if (reducedMotion()) return;
-    popRef.current?.animate(
-      [{ transform: 'scale(0.4)', opacity: 0 }, { transform: 'scale(1)', opacity: 1 }],
-      { duration: 200, easing: 'cubic-bezier(0.34, 1.3, 0.64, 1)' },
-    );
+    popRef.current?.animate(reducedMotion() ? [{ opacity: 0 }, { opacity: 1 }] : DROP, { duration: reducedMotion() ? 150 : 340, easing: 'ease-out' });
   }, []);
   return (
-    <div className="pointer-events-none absolute" style={{ ...at(p), width: pct(STONE), height: pct(STONE), transform: 'translate(-50%, -50%)', perspective: '320px' }}>
-      <div ref={popRef} className="size-full">
+    <div data-p={p} className="pointer-events-none absolute" style={{ ...at(p), width: pct(STONE), height: pct(STONE), transform: 'translate(-50%, -50%)', perspective: '320px' }}>
+      <div ref={popRef} data-stone className="size-full">
         {blind ? (
           <div
             className="relative size-full ease-out motion-reduce:transition-none"
@@ -157,6 +167,8 @@ type Props = {
   lastMark: boolean;
   /** 連成的那一排（結算動畫跑完才給） */
   line: Point[] | null;
+  /** 閒置時會自己動的那一方（等待的一方）。盲棋與結束後是 null —— 只動一方等於告訴你哪些子是誰的 */
+  idle: Side | null;
   interactive: boolean;
   label: string;
   /** 讀屏用：某一點現在是什麼 */
@@ -165,8 +177,36 @@ type Props = {
   onPlace: (p: Point) => void;
 };
 
-export function GomokuBoard({ board, moves, blind, revealed, aim, ghost, glow, lastMark, line, interactive, label, describe, onAim, onPlace }: Props) {
+export function GomokuBoard({ board, moves, blind, revealed, aim, ghost, glow, lastMark, line, idle, interactive, label, describe, onAim, onPlace }: Props) {
   const squareRef = useRef<HTMLDivElement>(null);
+
+  // 剛好多一手：壓一下布，旁邊兩圈的子往新子滑一點（不分黑白；悔棋、重來不算）
+  const placed = useRef(moves.length);
+  useEffect(() => {
+    const prev = placed.current;
+    placed.current = moves.length;
+    const root = squareRef.current;
+    if (moves.length !== prev + 1 || !root || reducedMotion()) return;
+    dip(root, board, moves[moves.length - 1].at);
+  }, [moves, board]);
+
+  // 閒置：每 2.5–5.5 秒挑一顆等待那一方的子動一下。換手（board 變了）就把還在播的停掉
+  useEffect(() => {
+    const root = squareRef.current;
+    if (!idle || !root || reducedMotion()) return;
+    let id = 0;
+    const tick = () => { id = window.setTimeout(() => { playIdle(root, board, idle); tick(); }, 2500 + Math.random() * 3000); };
+    tick();
+    return () => { window.clearTimeout(id); stopIdle(root); };
+  }, [idle, board]);
+
+  // 連成五子：連線淡入之後，那一排依序跳一下
+  useEffect(() => {
+    const root = squareRef.current;
+    if (!line || !root || reducedMotion()) return;
+    const id = window.setTimeout(() => celebrate(root, line), 260);
+    return () => window.clearTimeout(id);
+  }, [line]);
   // 手指按下時的狀態：按在哪一點、按之前是不是已經瞄準那一點、中間有沒有滑到別點
   const pressRef = useRef<{ p: Point; armed: boolean; moved: boolean; mouse: boolean } | null>(null);
   const last = moves.length ? moves[moves.length - 1].at : null;

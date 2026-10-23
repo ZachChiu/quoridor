@@ -1,4 +1,3 @@
-import type { IconBaseProps } from 'react-icons';
 import { SHAPE_OF, type Shape, type Side, type StoneColor } from '@/games/blind-gomoku/engine';
 
 /**
@@ -27,12 +26,14 @@ export const STONE_HEX: Record<StoneColor, string> = {
 /** 這款遊戲的主色：包袱巾裡最多的青綠布。白絲字放在上面 5.7:1 */
 export const KEY_HEX = '#046161';
 /** 黑絲 */
-const INK = '#2a2525';
+export const INK = '#2a2525';
 /** 白絲 */
-const CREAM = '#f2e4c9';
+export const CREAM = '#f2e4c9';
+/** 翻開後的白子：包袱巾裡最亮的白絲 */
+export const WHITE_FACE = '#ebe1cf';
 const EDGE = '#2a2525';
 /** 亮的布（黃）上面的形狀用黑絲色，其他用白絲色 */
-const LIGHT: ReadonlySet<StoneColor> = new Set(['yellow']);
+export const LIGHT: ReadonlySet<StoneColor> = new Set(['yellow']);
 
 function starPoints(cx: number, cy: number, outer: number, inner: number): string {
   return Array.from({ length: 10 }, (_, i) => {
@@ -56,6 +57,19 @@ export function ShapeMark({ shape, fill }: { shape: Shape; fill: string }) {
   }
 }
 
+/** 形狀的路徑（同 ShapeMark，100×100 座標），分享圖用 canvas 的 Path2D 畫同一個形狀 */
+export function shapePath(shape: Shape): string {
+  switch (shape) {
+    case 'circle': return 'M69 50A19 19 0 1 1 31 50A19 19 0 1 1 69 50Z';
+    case 'triangle': return 'M50 25L74 67L26 67Z';
+    case 'square': return 'M31 31H69V69H31Z';
+    case 'diamond': return 'M50 24L76 50L50 76L24 50Z';
+    case 'star': return `M${STAR.replace(/ /g, 'L')}Z`;
+    case 'heart': return 'M50 74C27 58 23 41 33 33c7-6 15-3 17 4c2-7 10-10 17-4c10 8 6 25-17 41z';
+    case 'cross': return 'M42 26h16v16h16v16H58v16H42V58H26V42h16z';
+  }
+}
+
 /** 盲棋看到的那一面：顏色＋形狀 */
 export function ColorFace({ color, className = 'size-full' }: { color: StoneColor; className?: string }) {
   return (
@@ -72,32 +86,7 @@ export function SideFace({ side, className = 'size-full' }: { side: Side; classN
     <svg viewBox="0 0 100 100" className={className} aria-hidden="true">
       {side === 'black'
         ? <circle cx="50" cy="50" r="50" fill={INK} />
-        : <circle cx="50" cy="50" r="46" fill="#ebe1cf" stroke={EDGE} strokeWidth="8" />}
-    </svg>
-  );
-}
-
-/** Modal 標題列用的棋子圖示（Modal 的 icon 吃 react-icons 的 IconType） */
-export function BlackStoneIcon(props: IconBaseProps) {
-  return (
-    <svg viewBox="0 0 100 100" width="1em" height="1em" className={props.className} aria-hidden="true">
-      <circle cx="50" cy="50" r="44" fill={INK} stroke={CREAM} strokeWidth="6" />
-    </svg>
-  );
-}
-export function WhiteStoneIcon(props: IconBaseProps) {
-  return (
-    <svg viewBox="0 0 100 100" width="1em" height="1em" className={props.className} aria-hidden="true">
-      <circle cx="50" cy="50" r="44" fill="#ebe1cf" stroke={EDGE} strokeWidth="7" />
-    </svg>
-  );
-}
-/** 和局、說明的標題圖示：一黑一白兩顆子 */
-export function PairStonesIcon(props: IconBaseProps) {
-  return (
-    <svg viewBox="0 0 100 100" width="1em" height="1em" className={props.className} aria-hidden="true">
-      <circle cx="34" cy="50" r="26" fill={INK} />
-      <circle cx="68" cy="50" r="24" fill="#ebe1cf" stroke={EDGE} strokeWidth="6" />
+        : <circle cx="50" cy="50" r="46" fill={WHITE_FACE} stroke={EDGE} strokeWidth="8" />}
     </svg>
   );
 }

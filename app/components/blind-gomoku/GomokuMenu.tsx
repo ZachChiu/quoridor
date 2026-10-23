@@ -14,7 +14,7 @@ import { HowToPlay } from './HowToPlay';
 import { KEY_HEX } from './Stone';
 import GomokuFrame from './GomokuFrame';
 import { MENU_CLASS, type GomokuMode } from './modeHash';
-import { GMK_BAND, GMK_PANEL } from './palette';
+import { GMK_BAND, GMK_CORNER, GMK_PANEL } from './palette';
 
 /**
  * 選模式的畫面（/blind-gomoku 沒帶 hash 時）。整頁包在拼布畫框裡（GomokuFrame：最外緣一圈包袱巾的布條），
@@ -47,7 +47,8 @@ export default function GomokuMenu({ locale, onStart }: { locale: Locale; onStar
 
   return (
     <GomokuFrame className={`${MENU_CLASS} items-center px-4 pb-5 pt-14 lg:flex-row lg:items-center lg:justify-center lg:gap-12 lg:px-10 lg:py-16`}>
-      <PlatformCorner locale={locale} offset="calc(var(--gmk-frame, 26px) + 6px)" />
+      {/* 右上角的聯絡、語言：圓鈕與打開的彈窗都是這款自己的布（GMK_CORNER），不是 Wall Go 的奶油底＋深墨 */}
+      <PlatformCorner locale={locale} theme={GMK_CORNER} offset="calc(var(--gmk-frame, 26px) + 6px)" />
 
       <header className="flex w-full max-w-[440px] flex-col items-center text-center lg:max-w-[520px] lg:items-start lg:text-left">
         <p className="text-xs font-black tracking-wide text-ink-soft">{t.tags}</p>

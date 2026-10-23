@@ -1,38 +1,50 @@
 'use client';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { GiRuleBook } from 'react-icons/gi';
-import { LuCircleHelp, LuHouse, LuRotateCcw, LuUndo2 } from 'react-icons/lu';
+import { LuCircleHelp, LuHouse, LuRotateCcw, LuUndo2, LuVolume2, LuVolumeX } from 'react-icons/lu';
 import Modal from '@/components/Modal';
-import Button from '@/components/Button';
-import { useMessages } from '@/i18n/LocaleProvider';
+import { ShareResultModal, useShareCard } from '@/components/ShareResultModal';
+import { useGameText, useLocale, useMessages } from '@/i18n/LocaleProvider';
 import { fill, useTextTable } from '@/i18n/gameText';
+import { localePath } from '@/i18n/locales';
+import { BLIND_GOMOKU } from '@/i18n/routes';
+import { useSound } from '@/hook/useSound';
 import { TEXT } from '@/games/blind-gomoku/text';
 import {
-  COLORS, applyMove, createGame, isLegal, play, pointName, undo,
+  COLORS, applyMove, createGame, isLegal, lastColor, other, play, pointName, undo,
   type GomokuState, type Point, type StoneColor,
 } from '@/games/blind-gomoku/engine';
 import { GomokuBoard, Ghost, revealMs } from './GomokuBoard';
 import { ColorPicker } from './ColorPicker';
 import { HowToPlay, colorName } from './HowToPlay';
-import { BlackStoneIcon, PairStonesIcon, SideFace, WhiteStoneIcon } from './Stone';
+import { SideFace } from './Stone';
 import { GMK_BAND, GMK_PANEL } from './palette';
 import GomokuFrame from './GomokuFrame';
 import { useGomokuAi } from './useGomokuAi';
+import { colorString, playEnd, playPick, playReveal, playStone, stringOf } from './sounds';
+import { drawGomokuCard } from './shareCard';
 import type { GomokuMode } from './modeHash';
 
 /**
  * 盲眼五子棋的對局畫面。四種模式共用：盲棋／一般 × 對電腦／兩人同機。
  *
- * - 手機：上方一排小圓鈕（換模式、標題、說明、悔棋（只有一般模式）、重來），下面狀態、棋盤、選色盤與「下子」。
+ * - 手機：上方一排小圓鈕（換模式、聲音、標題、說明、重來），下面狀態、棋盤、選色盤與「下子」。
+ *   悔棋（只有一般模式）放在「下子」旁邊：上方加了聲音鈕之後再放悔棋，標題會被擠成「盲五…」
  *   390×844 一個畫面放得下，不捲動
  * - 桌機（lg）：棋盤在左，右邊一欄放狀態、選色盤與有字的按鈕
  *
  * 盲棋的規矩（docs/games-deep-s1.md §3 的建議）：沒有悔棋、沒有「停在子上偷看黑白」；
  * 電腦落子那顆亮一下就淡掉；結束時依下子順序把每顆子翻開，翻完才畫連線、跳結算。
+ *
+ * 聲音（sounds.ts）：每個顏色是一根伽倻琴的弦，AI 跟色時彈的就是你剛才那根；翻開時刮過整排弦。
+ * 結算就是分享圖（shareCard.ts，跟 Wall Go、尼泊爾虎棋一樣的做法），關掉之後停在翻開的終局盤面上。
  */
 export default function GomokuPlay({ mode, onMenu }: { mode: GomokuMode; onMenu: () => void }) {
   const t = useTextTable(TEXT);
   const ui = useMessages().ui;
+  const g = useGameText();
+  const locale = useLocale();
+  const { prefs: soundPrefs, setPrefs: setSoundPrefs } = useSound();
   const [game, setGame] = useState<GomokuState>(createGame);
   const [color, setColor] = useState<StoneColor>(COLORS[0]);
   const [aim, setAim] = useState<Point | null>(null);
@@ -59,19 +71,35 @@ export default function GomokuPlay({ mode, onMenu }: { mode: GomokuMode; onMenu:
   }, [aiTurn, level, game, ask, cancel]);
 
   // 分出勝負：盲棋先等最後一顆子落定、亮一下，再依序翻開；翻完才畫線、跳結算
+  // 聲音跟著走：翻開時刮過整排弦，連線畫出來時贏／輸／和局（對電腦看你贏沒有；兩人同機有人贏就是贏的那一句）
+  const endSound = game.winner === 'draw' ? 'draw' : vsAi && game.winner === 'white' ? 'lose' : 'win';
   useEffect(() => {
     if (!game.winner) return;
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const timers: number[] = [];
+    const settle = () => { setSettled(true); setResultOpen(true); playEnd(endSound); };
     if (blind) {
       const flipAt = reduce ? 0 : 400;
-      timers.push(window.setTimeout(() => setFlipped(true), flipAt));
-      timers.push(window.setTimeout(() => { setSettled(true); setResultOpen(true); }, flipAt + (reduce ? 0 : revealMs(game.moves.length)) + 450));
+      timers.push(window.setTimeout(() => { setFlipped(true); playReveal(); }, flipAt));
+      timers.push(window.setTimeout(settle, flipAt + (reduce ? 0 : revealMs(game.moves.length)) + 450));
     } else {
-      timers.push(window.setTimeout(() => { setSettled(true); setResultOpen(true); }, 800));
+      timers.push(window.setTimeout(settle, 800));
     }
     return () => timers.forEach((id) => window.clearTimeout(id));
-  }, [game.winner, game.moves.length, blind]);
+  }, [game.winner, game.moves.length, blind, endSound]);
+
+  // 落子的聲音：剛好多一手才響（悔棋、重來不響）。盲棋的音高只看顏色、兩方一樣，聽不出是誰的子
+  const heard = useRef(game.moves.length);
+  useEffect(() => {
+    const prev = heard.current;
+    heard.current = game.moves.length;
+    if (game.moves.length !== prev + 1) return;
+    const m = game.moves[game.moves.length - 1];
+    const stone = game.board[m.at];
+    if (stone) playStone(stringOf(stone, blind));
+  }, [game, blind]);
+
+  const pickColor = (c: StoneColor) => { setColor(c); playPick(colorString(c)); };
 
   const place = useCallback((p: Point) => {
     if (!canPlay || !isLegal(game, p)) return;
@@ -110,6 +138,8 @@ export default function GomokuPlay({ mode, onMenu }: { mode: GomokuMode; onMenu:
     ? `${blind ? t.blindAi : t.classicAi} · ${t.levels[level].name}`
     : `${t.local} · ${blind ? t.blind : t.classic}`;
   const ended = !!game.winner && settled && !resultOpen;
+  /** 標題大約幾個字寬（中日韓一個字 1、粗體的拉丁與泰文約 0.7），手機上方一排用它決定字級 */
+  const titleEm = Array.from(t.title).reduce((n, ch) => n + (ch.charCodeAt(0) >= 0x2e80 ? 1 : ch === ' ' ? 0.3 : 0.7), 0).toFixed(2);
 
   const describe = (p: Point) => {
     const s = game.board[p];
@@ -119,9 +149,33 @@ export default function GomokuPlay({ mode, onMenu }: { mode: GomokuMode; onMenu:
     return `${name} ${s.side === 'black' ? t.stoneBlack : t.stoneWhite}`;
   };
 
-  const band = game.winner === 'black' ? { className: 'bg-tile-ink', fg: 'text-tile-cream' }
-    : game.winner === 'white' ? { className: 'bg-white', fg: 'text-tile-ink' }
-    : GMK_BAND;
+  // 結算就是分享圖（shareCard.ts）：翻開的終局盤面、連成的五子、誰贏、第幾手
+  const card = {
+    board: game.board, line: game.line, winner: game.winner ?? 'draw', blind, lastColor: lastColor(game),
+    text: {
+      kicker: `${g.champion.matchOver} · ${modeLabel}`,
+      name: t.title,
+      sub: t.subtitle,
+      title: resultTitle,
+      body: resultBody,
+      brand: t.title,
+      from: fill(g.share.cardFrom, { show: t.showName }),
+      host: new URL(process.env.SITE_URL || 'https://quoridorgame.com').host,
+    },
+  } as const;
+  const font = typeof document === 'undefined' ? 'system-ui' : getComputedStyle(document.documentElement).getPropertyValue('--font-app').trim() || 'system-ui';
+  const share = useShareCard({
+    isOpen: resultOpen,
+    draw: drawGomokuCard({ ...card, font }),
+    contentKey: JSON.stringify({ ...card, board: game.moves.length }),
+    fileName: 'blind-gomoku',
+    homePath: localePath(locale, BLIND_GOMOKU),
+    campaign: 'blind-gomoku',
+    fonts: [
+      { font: `900 40px ${font}`, text: card.text.name + card.text.title + card.text.brand },
+      { font: `700 40px ${font}`, text: card.text.kicker + card.text.sub + card.text.body + card.text.from },
+    ],
+  });
 
   // 按鈕是一塊塊布（globals.css 的 .gmk-*）：角落的小鈕與次要動作是半透明的苧麻布，主要動作是拼起來的青綠布
   const round = 'gmk-patch is-ramie grid size-11 shrink-0 place-items-center text-xl text-ink-soft disabled:opacity-35';
@@ -143,7 +197,12 @@ export default function GomokuPlay({ mode, onMenu }: { mode: GomokuMode; onMenu:
   );
 
   const picker = blind && (
-    <ColorPicker value={color} onChange={setColor} disabled={!canPlay} label={t.pickColor} nameOf={(c) => colorName(t, c)} />
+    <ColorPicker value={color} onChange={pickColor} disabled={!canPlay} label={t.pickColor} nameOf={(c) => colorName(t, c)} />
+  );
+  const soundButton = (
+    <button type="button" onClick={() => setSoundPrefs({ sfx: !soundPrefs.sfx })} aria-pressed={soundPrefs.sfx} aria-label={g.sound.button} className={round}>
+      {soundPrefs.sfx ? <LuVolume2 aria-hidden="true" /> : <LuVolumeX aria-hidden="true" />}
+    </button>
   );
   const afterGame = (
     <div className="grid grid-cols-2 gap-2.5">
@@ -155,15 +214,19 @@ export default function GomokuPlay({ mode, onMenu }: { mode: GomokuMode; onMenu:
   return (
     <GomokuFrame className="items-center px-4 pb-5 pt-3 lg:flex-row lg:items-center lg:justify-center lg:gap-12 lg:py-8">
       {/* 手機的上方一排 */}
-      <div className="flex w-full max-w-[520px] items-center justify-between gap-2 lg:hidden">
-        <button type="button" onClick={onMenu} aria-label={t.menu} className={round}><LuHouse aria-hidden="true" /></button>
+      <div className="flex w-full max-w-[520px] items-center justify-between gap-1.5 lg:hidden">
+        {/* 左邊：換模式、聲音（跟 Wall Go 一樣聲音在左上）；右邊：說明、重來。兩邊一樣寬，標題才在正中間 */}
+        <div className="flex shrink-0 gap-1">
+          <button type="button" onClick={onMenu} aria-label={t.menu} className={round}><LuHouse aria-hidden="true" /></button>
+          {soundButton}
+        </div>
         <div className="min-w-0 text-center">
-          <h1 className="truncate text-lg font-black leading-tight">{t.title}</h1>
+          {/* 名字的長度差很多（盲五子棋、Blind Gomoku、ブラインド五目並べ）：字級照「兩組圓鈕中間剩多寬」縮，最大 18px */}
+          <h1 className="truncate font-black leading-tight" style={{ fontSize: `clamp(12px, calc((100vw - 268px) / ${titleEm}), 18px)` }}>{t.title}</h1>
           <p className="truncate text-[11px] font-bold text-ink-soft">{modeLabel}</p>
         </div>
-        <div className="flex gap-1.5">
+        <div className="flex shrink-0 gap-1">
           <button type="button" onClick={() => setHelpOpen(true)} aria-label={t.rules} className={round}><LuCircleHelp aria-hidden="true" /></button>
-          {!blind && <button type="button" onClick={doUndo} disabled={!canUndo} aria-label={t.undo} className={round}><LuUndo2 aria-hidden="true" /></button>}
           <button type="button" onClick={restart} aria-label={t.restart} className={round}><LuRotateCcw aria-hidden="true" /></button>
         </div>
       </div>
@@ -181,6 +244,7 @@ export default function GomokuPlay({ mode, onMenu }: { mode: GomokuMode; onMenu:
           glow={blind && !flipped}
           lastMark={!blind && !game.winner}
           line={settled ? game.line : null}
+          idle={!blind && !game.winner ? other(game.turn) : null}
           interactive={canPlay}
           label={t.board}
           describe={describe}
@@ -189,24 +253,35 @@ export default function GomokuPlay({ mode, onMenu }: { mode: GomokuMode; onMenu:
         />
       </div>
 
-      {/* 手機的下方：選色盤與「下子」；結束後換成換模式／再來一局 */}
+      {/* 手機的下方：選色盤、悔棋（一般模式）與「下子」；結束後換成換模式／再來一局 */}
       <div className="flex w-full max-w-[520px] flex-col gap-2.5 lg:hidden">
         {ended ? afterGame : (
           <>
             {picker}
-            <button type="button" onClick={() => aim !== null && place(aim)} disabled={!canPlay || aim === null || !!game.board[aim]}
-              className={`${ink} hidden coarse:flex`}>
-              {t.place}
-            </button>
+            {/* 盲棋沒有悔棋：滑鼠的畫面上這一排是空的，整排藏起來 */}
+            <div className={`gap-2.5 ${blind ? 'hidden coarse:flex' : 'flex'}`}>
+              {!blind && (
+                <button type="button" onClick={doUndo} disabled={!canUndo} className={`${wide} flex-1 coarse:flex-none coarse:px-5`}>
+                  <LuUndo2 aria-hidden="true" />{t.undo}
+                </button>
+              )}
+              <button type="button" onClick={() => aim !== null && place(aim)} disabled={!canPlay || aim === null || !!game.board[aim]}
+                className={`${ink} hidden flex-1 coarse:flex`}>
+                {t.place}
+              </button>
+            </div>
           </>
         )}
       </div>
 
       {/* 桌機的右邊一欄 */}
       <aside className="hidden w-[340px] shrink-0 flex-col gap-5 lg:flex">
-        <div>
-          <h1 className="text-4xl font-black leading-none">{t.title}</h1>
-          <p className="mt-1.5 text-sm font-bold text-ink-soft">{modeLabel}</p>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h1 className="text-4xl font-black leading-none">{t.title}</h1>
+            <p className="mt-1.5 text-sm font-bold text-ink-soft">{modeLabel}</p>
+          </div>
+          {soundButton}
         </div>
         {statusBlock}
         {ended ? afterGame : picker && (
@@ -228,19 +303,21 @@ export default function GomokuPlay({ mode, onMenu }: { mode: GomokuMode; onMenu:
         <HowToPlay t={t} prev={ui.prev} next={ui.next} done={ui.close} onDone={() => setHelpOpen(false)} />
       </Modal>
 
-      {/* 關掉結算還留在棋盤上，可以看翻開後的盤面；下面換成換模式／再來一局 */}
-      <Modal isOpen={resultOpen} onClose={() => setResultOpen(false)} title={resultTitle} kicker={t.title}
-        icon={game.winner === 'black' ? BlackStoneIcon : game.winner === 'white' ? WhiteStoneIcon : PairStonesIcon}
-        band={band} panelClassName={GMK_PANEL}
-        footer={
-          <>
-            <Button color="bg-tile-ink/[0.07] text-tile-ink" handleClickEvent={onMenu}>{t.menu}</Button>
-            <Button color="bg-tile-ink text-tile-cream" handleClickEvent={restart}>{t.again}</Button>
-          </>
-        }>
-        <p className="text-sm leading-relaxed">{resultBody}</p>
-        {blind && <p className="mt-2 text-sm leading-relaxed">{t.revealBody}</p>}
-      </Modal>
+      {/* 結算就是分享圖。關掉還留在棋盤上，可以看翻開後的盤面；下面換成換模式／再來一局。
+          暗遮罩上的按鈕也是這款的布：再來一局是拼起來的青綠布、分享是白絲布；比例切換是白絲的小布塊 */}
+      <ShareResultModal isOpen={resultOpen} onClose={() => setResultOpen(false)} title={resultTitle} card={share}
+        onRestart={restart} restartLabel={t.again}
+        srText={`${resultTitle} ${resultBody}${blind ? ` ${t.revealBody}` : ''}`}
+        frameClassName="rounded-[3px]"
+        classes={{
+          primary: 'gmk-patch is-pieced',
+          secondary: 'gmk-patch',
+          toggle: '!rounded-[3px] bg-[#f2e4c9]/15',
+          toggleOn: '!rounded-[2px] bg-[#f2e4c9] text-[#2a2525]',
+          toggleOff: '!rounded-[2px] text-[#f2e4c9]/75 hover:text-[#f2e4c9]',
+          button: 'font-black',
+          placeholder: 'bg-[#f2e4c9]/20',
+        }} />
     </GomokuFrame>
   );
 }

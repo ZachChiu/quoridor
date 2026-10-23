@@ -86,14 +86,17 @@ export function HowToPlay({ t, prev, next, done, onDone }: { t: BlindGomokuText;
     <div className="flex flex-col gap-4">
       <div className="flex min-h-[150px] items-center">{pictures[i]}</div>
       <p className="min-h-[5.5rem] text-sm font-bold leading-relaxed">{steps[i]}</p>
+      {/* 最後一步：出處，再一段名字的由來（glossary〈遊戲名〉：遊戲名照節目，在規則裡介紹） */}
       {last && <p className="text-xs font-bold leading-relaxed text-ink-soft">{t.showNote}</p>}
+      {last && <p className="text-xs font-bold leading-relaxed text-ink-soft">{t.nameNote}</p>}
       <div className="flex items-center justify-between gap-3">
         <span className="text-xs font-black tabular-nums text-ink-soft">{i + 1} / {steps.length}</span>
         <div className="flex gap-2">
           {i > 0 && (
-            <button type="button" onClick={() => setI(i - 1)} className="rounded-xl bg-tile-ink/[0.07] px-4 py-2.5 text-sm font-black text-tile-ink">{prev}</button>
+            <button type="button" onClick={() => setI(i - 1)} className="gmk-patch is-ramie px-4 py-2.5 text-sm font-black active:scale-[0.98]">{prev}</button>
           )}
-          <button type="button" onClick={() => (last ? onDone() : setI(i + 1))} className="rounded-xl bg-tile-ink px-4 py-2.5 text-sm font-black text-tile-cream">
+          {/* 按鈕是這款自己的布（globals.css 的 .gmk-*）：主要是拼起來的青綠布、次要是苧麻布 —— 原本是 Wall Go 的深墨＋淡灰 */}
+          <button type="button" onClick={() => (last ? onDone() : setI(i + 1))} className="gmk-patch is-pieced py-2.5 pl-7 pr-4 text-sm font-black ![--corner:14px] active:scale-[0.98]">
             {last ? done : next}
           </button>
         </div>
