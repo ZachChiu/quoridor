@@ -505,6 +505,10 @@ html:has(.bagh-root), body:has(.bagh-root) { background: #e3a43c; }
    圖塊的顏色用 Lab 空間的色彩轉移對齊到 board-art.webp 外圈的飾帶（原圖偏亮、偏檸檬黃，Zach 要跟那張一致），接近白色的地方保留色相。
    手機每塊 520px、桌機 720px；支援 image-set type() 的瀏覽器載 AVIF，其他退回 webp。底色是圖還沒載入時的番紅花。 */
 .bagh-bg { background: #e3a43c url('/games/bagh-chal/pattern.webp') 0 0 / 520px auto repeat; }
+/* 虎羊棋連線中／等對方：圓牌輪流輕輕浮起來 */
+@keyframes bagh-bob { 0%, 100% { translate: 0 0; } 50% { translate: 0 -10px; } }
+/* 虎羊棋：選了棋子，可以去的點開出米字小花 */
+@keyframes bagh-bloom { from { scale: 0.3; rotate: -90deg; opacity: 0; } to { scale: 1; rotate: 0deg; opacity: 1; } }
 @media (min-width: 1024px) { .bagh-bg { background-size: 720px auto; } }
 @supports (background-image: image-set(url('/x.avif') type('image/avif'))) {
   .bagh-bg { background-image: image-set(url('/games/bagh-chal/pattern.avif') type('image/avif'), url('/games/bagh-chal/pattern.webp') type('image/webp')); }

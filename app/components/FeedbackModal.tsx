@@ -95,14 +95,14 @@ const FeedbackModal: React.FC<Props> = ({ isOpen, onClose, onSubmit, variant = '
       band={{ className: bagh ? 'bg-[#4a2616]' : 'bg-tile-purple', fg: 'text-tile-cream' }}
       footer={
         state === 'sent' ? (
-          <Button color="bg-tile-ink text-tile-cream" handleClickEvent={onClose}>{closeLabel}</Button>
+          <Button color={bagh ? 'bg-[#5b6620] text-[#fbf4e1]' : 'bg-tile-ink text-tile-cream'} handleClickEvent={onClose}>{closeLabel}</Button>
         ) : (
           <>
             <Button color={bagh ? 'bg-[#f2e4c4] text-tile-ink hover:bg-[#ead8ad]' : 'text-ink-soft hover:bg-tile-ink/[0.06] bg-transparent'} handleClickEvent={onClose}>
               {g.feedback.later}
             </Button>
             <Button
-              color={canSend ? 'bg-tile-ink text-tile-cream' : 'bg-tile-ink/20 text-tile-ink/40'}
+              color={canSend ? (bagh ? 'bg-[#5b6620] text-[#fbf4e1]' : 'bg-tile-ink text-tile-cream') : 'bg-tile-ink/20 text-tile-ink/40'}
               handleClickEvent={submit}
             >
               {state === 'sending' ? g.feedback.sending : g.feedback.submit}
@@ -128,7 +128,7 @@ const FeedbackModal: React.FC<Props> = ({ isOpen, onClose, onSubmit, variant = '
                 // 聯絡我們的評分是選填：再點一次同一個可以取消
                 onClick={() => setRating(isContact && rating === f.value ? null : f.value)}
                 className={`flex flex-1 flex-col items-center gap-1 rounded-xl py-3 text-sm font-black transition ${
-                  rating === f.value ? 'bg-tile-ink text-tile-cream'
+                  rating === f.value ? (bagh ? 'bg-[#5b6620] text-[#fbf4e1]' : 'bg-tile-ink text-tile-cream')
                     : bagh ? 'bg-[#f2e4c4] text-tile-ink' : 'bg-tile-ink/[0.06] text-ink-soft'
                 }`}
               >

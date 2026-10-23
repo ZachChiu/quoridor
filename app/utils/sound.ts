@@ -10,7 +10,9 @@
  * - 分頁在背景時 AudioContext 照樣會響 —— 「輪到你了」的提示音就是為了這個。
  */
 
-export type Sfx = 'turn' | 'remind' | 'place' | 'wall' | 'nudge' | 'start' | 'win' | 'lose';
+export type Sfx = 'turn' | 'remind' | 'place' | 'wall' | 'nudge' | 'start' | 'win' | 'lose'
+  // 虎羊棋自己的一套（Zach 10/24：針對虎羊棋找不同的音效）：銅鈴、手鼓、頌缽
+  | 'baghPlace' | 'baghGoat' | 'baghTiger' | 'baghCapture' | 'baghWin' | 'baghLose' | 'baghTurn';
 export type SoundPrefs = { sfx: boolean };
 
 const KEY = 'wallgo:sound';
@@ -114,6 +116,52 @@ function knock(at: number, center: number, dur: number, vol: number) {
 
 const NOTE = (n: number) => 440 * 2 ** ((n - 69) / 12); // MIDI → Hz
 
+/** 金屬鈴：幾個不成整數倍的泛音、高的衰減得快（銅鈴、頌缽的聲音就是這樣來的） */
+const BELL: [number, number][] = [[1, 1], [2.76, 0.45], [5.4, 0.2], [8.93, 0.08]];
+function bell(at: number, freq: number, dur: number, vol: number) {
+  for (const [ratio, amp] of BELL) if (freq * ratio < 9000) tone(at, freq * ratio, dur / Math.sqrt(ratio), vol * amp, 'sine');
+}
+
+/** 手鼓（尼泊爾的 madal）：音高往下掉的低音，加一點手拍在皮上的雜音 */
+function drum(at: number, from: number, to: number, dur: number, vol: number) {
+  const c = ctx!;
+  const o = c.createOscillator();
+  const g = c.createGain();
+  o.type = 'sine';
+  o.frequency.setValueAtTime(from, at);
+  o.frequency.exponentialRampToValueAtTime(to, at + dur * 0.6);
+  g.gain.setValueAtTime(0, at);
+  g.gain.linearRampToValueAtTime(vol, at + 0.005);
+  g.gain.exponentialRampToValueAtTime(0.0001, at + dur);
+  o.connect(g).connect(master!);
+  o.start(at);
+  o.stop(at + dur + 0.05);
+  knock(at, 2200, 0.025, vol * 0.6);
+}
+
+/** 低吼：低通濾過的雜音，音量以約 28 Hz 抖動 —— 喉嚨裡的「呼嚕」 */
+function growl(at: number, dur: number, vol: number) {
+  const c = ctx!;
+  const rate = c.sampleRate;
+  const len = Math.ceil(rate * dur);
+  const buf = c.createBuffer(1, len, rate);
+  const ch = buf.getChannelData(0);
+  for (let i = 0; i < len; i++) {
+    const env = Math.min(1, i / (rate * 0.05)) * (1 - i / len) ** 1.5;
+    ch[i] = (Math.random() * 2 - 1) * env * (0.6 + 0.4 * Math.sin((2 * Math.PI * 28 * i) / rate));
+  }
+  const src = c.createBufferSource();
+  src.buffer = buf;
+  const lp = c.createBiquadFilter();
+  lp.type = 'lowpass';
+  lp.frequency.value = 420;
+  lp.Q.value = 3;
+  const g = c.createGain();
+  g.gain.value = vol;
+  src.connect(lp).connect(g).connect(master!);
+  src.start(at);
+}
+
 // ─── 音效 ─────────────────────────────────────────────────────────────────────
 
 export function playSfx(name: Sfx) {
@@ -140,6 +188,35 @@ export function playSfx(name: Sfx) {
       knock(t, 1500, 0.05, 0.7);
       knock(t + 0.012, 600, 0.09, 0.8);
       tone(t, 140, 0.16, 0.3, 'triangle');
+      break;
+    case 'baghPlace': // 羊放上盤：輕輕一聲落地，加頸上的小銅鈴響兩下
+      knock(t, 700, 0.05, 0.45);
+      bell(t, 1320, 0.55, 0.08);
+      bell(t + 0.08, 1480, 0.45, 0.055);
+      break;
+    case 'baghGoat': // 羊走一步：銅鈴一聲
+      knock(t, 900, 0.04, 0.3);
+      bell(t, 1400, 0.4, 0.06);
+      break;
+    case 'baghTiger': // 老虎走一步：手鼓低低一聲
+      drum(t, 150, 92, 0.34, 0.5);
+      break;
+    case 'baghCapture': // 老虎吃羊：重的鼓、撲地的悶響，再一聲低吼
+      knock(t, 500, 0.08, 0.9);
+      drum(t, 125, 58, 0.5, 0.8);
+      growl(t + 0.03, 0.5, 1.6);
+      break;
+    case 'baghTurn': // 換你了（連線）：小廟鐘兩聲
+      bell(t, NOTE(83), 1.0, 0.11);
+      bell(t + 0.16, NOTE(88), 1.1, 0.09);
+      break;
+    case 'baghWin': // 贏：頌缽，兩聲往上
+      bell(t, NOTE(67), 2.4, 0.14);
+      bell(t + 0.32, NOTE(72), 2.6, 0.12);
+      break;
+    case 'baghLose': // 輸：頌缽，兩聲往下、輕一點
+      bell(t, NOTE(62), 1.8, 0.1);
+      bell(t + 0.3, NOTE(57), 2.0, 0.09);
       break;
     case 'nudge': // 敲門兩下
       for (const dt of [0, 0.17]) {

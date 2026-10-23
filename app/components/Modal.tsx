@@ -114,7 +114,7 @@ const Modal: React.FC<Props> = ({
         } ${panelClassName}`}
       >
         {bagh && (
-          <div aria-hidden="true" className="h-7 shrink-0 border-b-[3px] border-[#5b6620] bg-[url('/games/bagh-chal/frieze.webp')] bg-[length:auto_100%] bg-center [background-repeat:round_no-repeat]" />
+          <div aria-hidden="true" className="h-11 shrink-0 border-b-[3px] border-[#5b6620] bg-[url('/games/bagh-chal/frieze.webp')] bg-[length:auto_100%] bg-center [background-repeat:round_no-repeat]" />
         )}
         {/* 色帶做成滿版（面板 overflow-hidden 負責切圓角），
             留白會讓它退化成一條「有底色的標題」，力道差很多。

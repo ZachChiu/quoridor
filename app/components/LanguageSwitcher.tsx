@@ -80,7 +80,7 @@ export default function LanguageSwitcher({ onDark = false, skin = 'default', but
                   hrefLang={it.locale}
                   aria-current={it.current ? 'true' : undefined}
                   onClick={it.onClick}
-                  className={`${row} ${it.current ? 'bg-tile-ink text-tile-cream' : bagh ? 'bg-[#f2e4c4] text-tile-ink hover:bg-[#ead8ad]' : 'bg-primary-50 text-tile-ink hover:brightness-95'}`}
+                  className={`${row} ${it.current ? (bagh ? 'bg-[#5b6620] text-[#fbf4e1]' : 'bg-tile-ink text-tile-cream') : bagh ? 'bg-[#f2e4c4] text-tile-ink hover:bg-[#ead8ad]' : 'bg-primary-50 text-tile-ink hover:brightness-95'}`}
                 >
                   {it.name}
                   {it.current && <LuCheck aria-hidden="true" />}

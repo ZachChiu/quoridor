@@ -1,9 +1,11 @@
 'use client';
-import { useEffect, useMemo, useState } from 'react';
-import { LuCircleHelp, LuHouse, LuRotateCcw, LuUndo2 } from 'react-icons/lu';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { LuCircleHelp, LuHouse, LuRotateCcw, LuUndo2, LuVolume2, LuVolumeX } from 'react-icons/lu';
 import Modal from '@/components/Modal';
 import { useRouter } from 'next/navigation';
-import { useMessages } from '@/i18n/LocaleProvider';
+import { useGameText, useMessages } from '@/i18n/LocaleProvider';
+import { useSound } from '@/hook/useSound';
+import { playSfx } from '@/utils/sound';
 import { localePath, type Locale } from '@/i18n/locales';
 import { BAGH_CHAL } from '@/i18n/routes';
 import { createGame, legalMoves, applyMove, undo, GOATS, type BaghState, type Point, type Side, type Move } from '@/games/bagh-chal/engine';
@@ -14,6 +16,7 @@ import { RulesStepsPaged } from './BaghRulesSteps';
 import BaghFrame from './BaghFrame';
 import { BAGH_PRIMARY, BAGH_ROUND, BAGH_SECONDARY } from './styles';
 import BaghWordmark from './BaghWordmark';
+import { labelled } from './BaghUi';
 
 export type BaghMode =
   | { kind: 'local' }
@@ -27,15 +30,18 @@ const fmt = (s: string, n: number) => s.replace('{n}', String(n));
  * Bagh Chal 的對局畫面（/bagh-chal/solo、/bagh-chal/local）。
  *
  * 跟 Wall Go 一樣分桌機與手機：
- * - 手機：上方一排小圓鈕（回遊戲首頁、標題、說明、悔棋、重來），下面狀態與棋盤。
+ * - 手機：上方只留回首頁、標題、音效、說明；下面兩張狀態卡＋一行提示、棋盤，悔棋與重來在棋盤下面。
+ *   原本上方一排五顆圓鈕再加兩行狀態，Zach 10/24：手機版上面偏亂。
  *   Bagh Chal 只要點棋盤就能玩，不需要 Wall Go 那種底部控制盤
  * - 桌機（lg）：棋盤在左，右邊一欄放狀態、提示與有字的按鈕
  * 說明是彈窗（一步一步附小棋盤），對局中不必離開頁面。平台 logo 不放（Zach：遊戲頁面內不要有）。
  */
 export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghMode }) {
   const t = useMessages();
+  const g = useGameText();
   const b = t.baghChal;
   const router = useRouter();
+  const { prefs: soundPrefs, setPrefs: setSoundPrefs } = useSound();
   const [localGame, setGame] = useState<BaghState>(createGame);
   const game = mode.kind === 'online' ? mode.game : localGame;
   const online = mode.kind === 'online';
@@ -63,7 +69,27 @@ export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghM
   const [endClosed, setEndClosed] = useState(false);
   const again = mode.kind === 'online' ? mode.newRoom : restart;
   const side = (s: Side) => (s === 'tiger' ? b.tiger : b.goat);
-  const whoAmI = mode.kind === 'local' ? '' : mode.kind === 'online' ? b.youAre.replace('{side}', side(mode.human)) : `${b.playAs}：${side(mode.human)}`;
+  const whoAmI = mode.kind === 'local' ? '' : mode.kind === 'online' ? b.youAre.replace('{side}', side(mode.human)) : labelled(locale, b.playAs, side(mode.human));
+  // 自己是哪一邊（本機對戰沒有「自己」）：那張狀態卡多一圈同色的框，中間留一道縫（跟 Wall Go 的比分一樣），手機上就不必再寫一行「你要當：老虎」
+  const mine: Side | null = mode.kind === 'local' ? null : mode.human;
+
+  // 音效（跟 Wall Go 共用開關）：剛好多一手才響 —— 悔棋、重整、連線一次補好幾手都不響
+  const heard = useRef(game.history.length);
+  useEffect(() => {
+    const prev = heard.current;
+    heard.current = game.history.length;
+    if (game.history.length !== prev + 1) return;
+    // 虎羊棋自己的一套（不是 Wall Go 的木頭聲，Zach 10/24）：羊是頸上的銅鈴、老虎是手鼓、吃羊加一聲低吼
+    const m = game.history[game.history.length - 1];
+    playSfx(m.kind === 'jump' ? 'baghCapture' : m.kind === 'place' ? 'baghPlace' : game.board[m.to] === 'T' ? 'baghTiger' : 'baghGoat');
+    if (game.winner) {
+      const won = mode.kind === 'local' || game.winner === mode.human;
+      window.setTimeout(() => playSfx(won ? 'baghWin' : 'baghLose'), 480);
+    } else if (mode.kind === 'online' && game.turn === mode.human) {
+      // 對方下完、換你：分頁在背景也聽得到
+      window.setTimeout(() => playSfx('baghTurn'), 360);
+    }
+  }, [game, mode]);
   // 虎羊棋裡面換頁不播轉場（木窗門只留在從平台卡片進來的那一下）
   const home = () => router.push(localePath(locale, BAGH_CHAL));
 
@@ -87,15 +113,12 @@ export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghM
     }
   };
 
+  // 只標選起來那顆可以去的點；放羊不標（每個空點都能放，Zach 10/24：一開始不要有符號）
   const targets = new Map<Point, Move>();
-  for (const m of legal) {
-    if (m.kind === 'place') { if (game.turn === 'goat') targets.set(m.to, m); }
-    else if (m.from === selected) targets.set(m.to, m);
-  }
+  for (const m of legal) if (m.kind !== 'place' && m.from === selected) targets.set(m.to, m);
   const movable = new Set(legal.flatMap((m) => (m.kind === 'place' ? [] : [m.from])));
-  // 吃子要一眼看得懂（Zach：不確定可不可以吃）：能吃的老虎閃、選了之後會被吃的羊加外框
-  const capturers = new Set(legal.flatMap((m) => (m.kind === 'jump' ? [m.from] : [])));
-  const victims = new Set(legal.flatMap((m) => (m.kind === 'jump' && m.from === selected ? [m.over] : [])));
+  // 老虎可以吃羊時不給任何提示（Zach 10/24）：不閃、不加框、不寫「可以吃羊」，吃子的落點跟一般落點一樣是那朵小花 ——
+  // 看不看得出來有羊可以吃是老虎那一方自己的功課。（先前做過老虎一直閃、會被吃的羊加紅框、提示字，都拿掉了）
   const last = game.history[game.history.length - 1];
   // 跟電腦下時退到「又輪到你」：電腦已經回了就退兩手。電腦先手（你當老虎）的第一手不能退
   const undoSteps = mode.kind === 'ai' ? (game.turn === mode.human ? 2 : 1) : 1;
@@ -105,9 +128,8 @@ export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghM
   const status = game.winner ? '' : aiTurn ? b.thinking : theirTurn ? b.opponentTurn
     : mode.kind === 'local' ? (game.turn === 'tiger' ? b.turnTiger : b.turnGoat) : b.yourTurn;
   // 第二行提示：新手最常卡住的兩件事 —— 羊不能吃、老虎要「跳過」才吃得到
-  const canCapture = game.turn === 'tiger' && capturers.size > 0 && selected === null;
   const hint = game.winner || locked ? ''
-    : game.turn === 'tiger' ? (canCapture ? b.hintCapture : b.hintTiger)
+    : game.turn === 'tiger' ? b.hintTiger
     : game.goatsInHand > 0 ? b.hintPlace : b.hintGoat;
   const result = game.winner === 'tiger' ? { title: b.winTiger, body: b.winTigerBody, band: 'bg-[#e3a43c]', fg: 'text-tile-ink' }
     : game.winner === 'goat' ? { title: b.winGoat, body: b.winGoatBody, band: 'bg-[#5b6620]', fg: 'text-tile-cream' }
@@ -120,11 +142,11 @@ export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghM
   // 兩行：上面圖示＋哪一方，下面數字。數字跟圖示擠同一行的話，「還有 14 隻羊要放」在手機上會斷成三行
   const statusCards = (
     <div className="grid w-full grid-cols-2 gap-3">
-      <div className={`flex flex-col gap-1 rounded-2xl p-3 ${game.turn === 'tiger' && !game.winner ? 'bg-[#e3a43c] text-tile-ink' : 'bg-[#4a2616]/[0.07] text-ink-soft'}`}>
+      <div className={`flex flex-col gap-1 rounded-2xl p-3 ${game.turn === 'tiger' && !game.winner ? 'bg-[#e3a43c] text-tile-ink' : 'bg-[#4a2616]/[0.07] text-ink-soft'} ${mine === 'tiger' ? 'ring ring-[#e3a43c] ring-offset-2 ring-offset-[#fbf4e1]' : ''}`}>
         <p className="flex items-center gap-2 text-sm font-bold"><TigerToken className="shrink-0 text-[28px]" />{b.tiger}</p>
         <p className="text-[15px] font-black leading-tight">{fmt(b.captured, game.captured)}</p>
       </div>
-      <div className={`flex flex-col gap-1 rounded-2xl p-3 ${game.turn === 'goat' && !game.winner ? 'bg-[#5b6620] text-tile-cream' : 'bg-[#4a2616]/[0.07] text-ink-soft'}`}>
+      <div className={`flex flex-col gap-1 rounded-2xl p-3 ${game.turn === 'goat' && !game.winner ? 'bg-[#5b6620] text-tile-cream' : 'bg-[#4a2616]/[0.07] text-ink-soft'} ${mine === 'goat' ? 'ring ring-[#5b6620] ring-offset-2 ring-offset-[#fbf4e1]' : ''}`}>
         <p className="flex items-center gap-2 text-sm font-bold"><GoatToken className="shrink-0 text-[28px]" />{b.goat}</p>
         <p className="text-[15px] font-black leading-tight">{game.goatsInHand > 0 ? fmt(b.goatsInHand, game.goatsInHand) : `${GOATS - game.captured} / ${GOATS}`}</p>
       </div>
@@ -134,42 +156,66 @@ export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghM
   const statusLine = (
     <div className="flex min-h-12 flex-col items-center text-center lg:items-start lg:text-left" aria-live="polite">
       <p className="text-sm font-black">{status}</p>
-      {/* 有得吃的時候用番紅花底襯深墨字，跟老虎那張狀態卡同色 */}
-      {hint && <p className={`mt-1 text-xs font-bold ${canCapture ? 'rounded-md bg-[#e3a43c] px-2 py-0.5 text-tile-ink' : 'text-ink-soft'}`}>{hint}</p>}
+      {hint && <p className="mt-1 text-xs font-bold text-ink-soft">{hint}</p>}
     </div>
+  );
+
+  // 手機只留一行：在等電腦／對方時寫在等誰，輪到人時寫怎麼下（輪到誰看亮起來的那張狀態卡就知道）
+  const mobileLine = (
+    <p className="min-h-6 py-1 text-center text-xs font-bold text-ink-soft" aria-live="polite">
+      {locked ? status : hint}
+    </p>
+  );
+
+  const soundButton = (
+    <button type="button" onClick={() => setSoundPrefs({ sfx: !soundPrefs.sfx })} aria-pressed={soundPrefs.sfx} aria-label={g.sound.button} className={round}>
+      {soundPrefs.sfx ? <LuVolume2 aria-hidden="true" /> : <LuVolumeX aria-hidden="true" />}
+    </button>
   );
 
   return (
     <BaghFrame variant="play">
     <div className="flex flex-1 flex-col items-center p-3 lg:flex-row lg:items-center lg:justify-center lg:gap-12 lg:py-8">
       {/* 手機的上方一排 */}
-      <div className="flex w-full max-w-[520px] items-center justify-between lg:hidden">
-        <button type="button" onClick={home} aria-label={b.menu} className={round}><LuHouse aria-hidden="true" /></button>
+      {/* 三欄：左右兩邊的圓鈕數量不同（1 顆對 2 顆），用 justify-between 標題會被擠歪（Zach 10/24），兩側各佔 1fr 標題才會在正中間 */}
+      <div className="grid w-full max-w-[520px] grid-cols-[1fr_auto_1fr] items-center lg:hidden">
+        <button type="button" onClick={home} aria-label={b.menu} className={`${round} justify-self-start`}><LuHouse aria-hidden="true" /></button>
         <h1 aria-label={`${b.title} ${b.subtitle}`}><BaghWordmark className="h-[22px] w-auto" /></h1>
-        <div className="flex gap-1.5">
+        <div className="flex gap-1.5 justify-self-end">
+          {soundButton}
           <button type="button" onClick={() => setHelpOpen(true)} aria-label={b.rulesHeading} className={round}><LuCircleHelp aria-hidden="true" /></button>
-          {!online && <>
-            <button type="button" onClick={doUndo} disabled={!canUndo} aria-label={b.undo} className={round}><LuUndo2 aria-hidden="true" /></button>
-            <button type="button" onClick={restart} aria-label={b.restart} className={round}><LuRotateCcw aria-hidden="true" /></button>
-          </>}
         </div>
       </div>
-      <div className="mt-4 flex w-full max-w-[520px] flex-col items-center gap-3 lg:hidden">
+      <div className="mt-4 flex w-full max-w-[520px] flex-col items-center gap-2 lg:hidden">
         {statusCards}
-        {statusLine}
+        {mobileLine}
       </div>
 
       {/* 手機：棋盤在剩下的高度裡置中，不貼在狀態列下面、底下空一大塊 */}
       <div className="flex w-full max-w-[520px] flex-1 items-center py-2 lg:max-w-[min(620px,calc(100dvh-5rem))] lg:flex-none lg:py-0">
-        <BaghBoard board={game.board} targets={targets} capturers={capturers} victims={victims} movable={movable}
-          selected={selected} last={last} labels={{ tiger: b.tiger, goat: b.goat }} onPick={pick} />
+        <BaghBoard board={game.board} targets={targets} movable={movable}
+          selected={selected} last={last} plies={game.history.length}
+          placing={!locked && !game.winner && game.turn === 'goat' && game.goatsInHand > 0}
+          idle={game.winner ? null : game.turn === 'tiger' ? 'goat' : 'tiger'}
+          labels={{ tiger: b.tiger, goat: b.goat }} onPick={pick} />
       </div>
+
+      {/* 手機：悔棋、重來放在棋盤下面（連線局沒有） */}
+      {!online && (
+        <div className="grid w-full max-w-[520px] grid-cols-2 gap-2.5 pt-1 lg:hidden">
+          <button type="button" onClick={doUndo} disabled={!canUndo} className={wide}><LuUndo2 aria-hidden="true" />{b.undo}</button>
+          <button type="button" onClick={restart} className={wide}><LuRotateCcw aria-hidden="true" />{b.restart}</button>
+        </div>
+      )}
 
       {/* 桌機的右邊一欄 */}
       <aside className="hidden w-[360px] shrink-0 flex-col gap-5 lg:flex">
-        <div>
-          <h1 aria-label={`${b.title} ${b.subtitle}`} className="flex items-end gap-3"><BaghWordmark className="h-11 w-auto" /><span className="pb-0.5 text-2xl font-black">{b.subtitle}</span></h1>
-          <p className="mt-1.5 text-sm font-bold text-ink-soft">{mode.kind === 'local' ? b.local : mode.kind === 'online' ? `${b.onlineTitle} · ${whoAmI}` : whoAmI}</p>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h1 aria-label={`${b.title} ${b.subtitle}`} className="flex items-end gap-3"><BaghWordmark className="h-11 w-auto" /><span className="pb-0.5 text-2xl font-black">{b.subtitle}</span></h1>
+            <p className="mt-1.5 text-sm font-bold text-ink-soft">{mode.kind === 'local' ? b.local : mode.kind === 'online' ? `${b.onlineTitle} · ${whoAmI}` : whoAmI}</p>
+          </div>
+          {soundButton}
         </div>
         {statusCards}
         {statusLine}
@@ -182,8 +228,6 @@ export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghM
           <button type="button" onClick={home} className={wide}><LuHouse aria-hidden="true" />{b.menu}</button>
         </div>
       </aside>
-
-      {whoAmI && <p className="mt-3 text-xs font-bold text-ink-soft lg:hidden">{whoAmI}</p>}
 
       <Modal skin="bagh" isOpen={helpOpen} onClose={() => setHelpOpen(false)} title={b.rulesHeading} kicker={b.title}
         icon={RulesToken} band={{ className: 'bg-[#5b6620]', fg: 'text-tile-cream' }}>
