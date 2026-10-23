@@ -244,8 +244,8 @@ export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghM
       <aside className="hidden w-[360px] shrink-0 flex-col gap-5 lg:flex">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h1 aria-label={`${b.title} ${b.subtitle}`} className="flex items-end gap-3"><BaghWordmark className="h-11 w-auto" /><span className="pb-0.5 text-2xl font-black">{b.subtitle}</span></h1>
-            <p className="mt-1.5 text-sm font-bold text-ink-soft">{mode.kind === 'local' ? b.local : mode.kind === 'online' ? `${b.onlineTitle} · ${whoAmI}` : whoAmI}</p>
+            <h1 aria-label={`${b.title} ${b.subtitle}`} className="flex flex-col items-start gap-1"><BaghWordmark className="h-11 w-auto" /><span className="text-xl font-black">{b.subtitle}</span></h1>
+            <p className="mt-1 text-sm font-bold text-ink-soft">{mode.kind === 'local' ? b.local : mode.kind === 'online' ? `${b.onlineTitle} · ${whoAmI}` : whoAmI}</p>
           </div>
           {soundButton}
         </div>
