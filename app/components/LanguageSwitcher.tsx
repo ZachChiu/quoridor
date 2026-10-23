@@ -3,6 +3,7 @@ import { LuGlobe, LuCheck } from 'react-icons/lu';
 import Modal from './Modal';
 import { useMessages } from '@/i18n/LocaleProvider';
 import { useLanguageSwitch } from '@/hook/useLanguageSwitch';
+import type { CornerTheme } from './cornerTheme';
 
 /**
  * 語言切換。
@@ -35,9 +36,11 @@ import { useLanguageSwitch } from '@/hook/useLanguageSwitch';
  * 一個只在正式站對、開發時看起來像壞掉的動畫不值得留著。換語言一次
  * 造訪頂多做一次，整頁重載本來就正常。
  */
-/** `buttonClassName`：只換圓鈕本身的配色（各遊戲自己的底色上），彈窗照 skin */
-export default function LanguageSwitcher({ onDark = false, skin = 'default', buttonClassName }: { onDark?: boolean; skin?: 'default' | 'bagh'; buttonClassName?: string } = {}) {
-  const bagh = skin === 'bagh';
+/**
+ * `theme`：那款遊戲的樣子（圓鈕＋彈窗，見 cornerTheme.ts）。沒給就是 Wall Go 的。
+ * `buttonClassName`：只換圓鈕（舊的寫法，各遊戲分支換成 theme 之前先留著）
+ */
+export default function LanguageSwitcher({ onDark = false, theme, buttonClassName }: { onDark?: boolean; theme?: CornerTheme; buttonClassName?: string } = {}) {
   const t = useMessages();
   // 停在同一頁換、bfcache 還原時關掉選單、已經是這個語言就只關掉：行為與平台共用（見 useLanguageSwitch）
   const { open, setOpen, items } = useLanguageSwitch();
@@ -50,11 +53,9 @@ export default function LanguageSwitcher({ onDark = false, skin = 'default', but
         aria-label={t.nav.language}
         aria-haspopup="dialog"
         className={`relative grid size-10 place-items-center rounded-full text-xl transition after:absolute after:-inset-0.5 after:content-[''] active:scale-95 ${
-          buttonClassName ? buttonClassName
-          : bagh ? 'bg-[#fbf4e1] text-tile-ink ring-2 ring-[#5b6620] hover:bg-[#f4e8cc]'
-          : onDark
+          theme?.button ?? buttonClassName ?? (onDark
             ? 'bg-tile-cream/[0.16] text-tile-cream hover:bg-tile-cream/[0.26]'
-            : 'bg-tile-ink/[0.06] text-ink-soft hover:bg-tile-ink/[0.12]'
+            : 'bg-tile-ink/[0.06] text-ink-soft hover:bg-tile-ink/[0.12]')
         }`}
       >
         <LuGlobe aria-hidden="true" />
@@ -65,8 +66,9 @@ export default function LanguageSwitcher({ onDark = false, skin = 'default', but
         onClose={() => setOpen(false)}
         title={t.nav.language}
         icon={LuGlobe}
-        band={bagh ? { className: 'bg-[#4a2616]', fg: 'text-tile-cream' } : { className: 'bg-tile-blue', fg: 'text-tile-cream' }}
-        skin={skin}
+        band={theme?.band ?? { className: 'bg-tile-blue', fg: 'text-tile-cream' }}
+        panelClassName={theme?.panelClassName}
+        skin={theme?.skin}
       >
         <ul className="flex flex-col gap-2">
           {items.map((it) => {
@@ -80,7 +82,7 @@ export default function LanguageSwitcher({ onDark = false, skin = 'default', but
                   hrefLang={it.locale}
                   aria-current={it.current ? 'true' : undefined}
                   onClick={it.onClick}
-                  className={`${row} ${it.current ? 'bg-tile-ink text-tile-cream' : bagh ? 'bg-[#f2e4c4] text-tile-ink hover:bg-[#ead8ad]' : 'bg-primary-50 text-tile-ink hover:brightness-95'}`}
+                  className={`${row} ${it.current ? (theme?.primary ?? 'bg-tile-ink text-tile-cream') : (theme?.secondary ?? 'bg-primary-50 text-tile-ink hover:brightness-95')}`}
                 >
                   {it.name}
                   {it.current && <LuCheck aria-hidden="true" />}

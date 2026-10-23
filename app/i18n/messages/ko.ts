@@ -70,10 +70,11 @@ const ko: Messages = {
     hintPlace: '빈 교차점을 눌러 염소를 놓으세요',
     hintGoat: '염소는 잡을 수 없어요. 호랑이를 모두 가두면 승리',
     hintTiger: '호랑이는 선을 따라 한 칸, 또는 염소를 뛰어넘어 잡기',
-    hintCapture: '염소를 잡을 수 있어요! 깜빡이는 호랑이를 누르세요',
     thinking: 'AI가 생각 중…',
     goatsInHand: '놓을 염소 {n}마리',
     captured: '잡은 염소 {n} / 5',
+    /** 結算分享圖上的手數 */
+    cardMoves: '{n}수',
     undo: '무르기',
     restart: '다시 하기',
     menu: '모드 변경',
@@ -98,6 +99,7 @@ const ko: Messages = {
     localSub: '한 기기로 번갈아 두기',
     inviteSub: '링크를 보내면 친구가 반대편',
     rulesLink: '규칙 보기',
+    rulesCta: '처음 화면에서 모드 고르기',
     onlineTitle: '온라인 대전',
     rulesMetaTitle: '바그찰 Bagh Chal 규칙과 하는 법',
     rulesMetaDescription: '바그찰(Bagh Chal) 전체 규칙을 그림으로: 5×5 판, 호랑이 4마리 대 염소 20마리, 염소 놓기, 호랑이의 뛰어넘어 잡기, 염소가 호랑이를 가두는 방법. 『데블스 플랜: 데스룸』 결승 게임.',
@@ -110,6 +112,7 @@ const ko: Messages = {
       '호랑이는 염소 5마리를 잡으면, 염소는 호랑이가 하나도 움직이지 못하게 하면 이깁니다.',
     ],
     showNote: '『데블스 플랜: 데스룸』 결승 두 번째 게임이 바그찰이었습니다. 결승 진출자 두 명이 두 판에서 동시에 두며 한쪽에서는 호랑이, 다른 쪽에서는 염소를 맡았습니다.',
+    nameNote: '이름: Bagh Chal(बाघचाल)은 네팔어로 ‘호랑이의 움직임’이라는 뜻입니다. 프로그램에서는 ‘바그찰’이라고 불렀습니다.',
   },
   rules: {
     kicker: '플레이 방법',

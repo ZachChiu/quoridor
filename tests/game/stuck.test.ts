@@ -57,9 +57,9 @@ describe('三人局有人動不了', () => {
     expect(legalTurns(after).length).toBeGreaterThan(0);
   });
 
-  it('兩家棋子被封在同一塊區域 → 那塊地永遠不歸任何人，算終局', () => {
-    // 這是關鍵：混合區域不是「還沒分出勝負」，是「確定不會歸任何人」。
-    // 少了這一條，遊戲會停在一個誰都拿不到的區域上等下去。
+  it('兩家棋子被封在同一塊區域、誰都動不了 → 那塊地已定局，算終局', () => {
+    // 這是關鍵：凍結的混合區域不是「還沒分出勝負」，是「確定不會再變」（計分是每顆棋子算自己那一格）。
+    // 少了這一條，遊戲會停在一個永遠不會變的區域上等下去。
     expect(computeTerritories(sealed(1)).settled).toBe(true);
     expect(isGameOver(sealed(1))).toBe(true);
   });

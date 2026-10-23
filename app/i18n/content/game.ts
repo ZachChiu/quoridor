@@ -42,7 +42,7 @@ export type GameText = {
   champion: {
     draw: string; win: string;
     matchOver: string; winner: string; feedback: string;
-    seeBoard: string; playAgain: string; squares: string; seeResult: string;
+    playAgain: string; squares: string; seeResult: string;
   };
   /** 首頁右上角的「聯絡我們」：同一個回饋視窗，但不綁某一局（沒有棋譜、評分選填）。 */
   contact: { button: string; heading: string; kicker: string; ratingLabel: string; placeholder: string; note: string; sentBody: string };
@@ -55,13 +55,22 @@ export type GameText = {
   share: {
     shareTitle: string; shareText: string; heading: string; kicker: string;
     copied: string; copyAria: string; copy: string; waiting: string; body: string; share: string;
+    /** 結算的分享圖：按鈕、視窗、圖上的字。cardFrom 不寫 Netflix —— 看起來像官方合作（大腦 10/23 建議） */
+    save: string; shareImage: string; holdToSave: string;
+    cardFrom: string; cardFormat: string;
   };
+  /** 喇叭鈕：音效、音樂各一個開關 */
+  sound: { button: string };
+  /** 連線時催輪到的人。received 是被催的那邊看到的 */
+  nudge: { button: string; sent: string; received: string };
+  /** 累計思考時間（不限時，只記錄）；total 是整局時長，寫在桌機比分底下（Zach 10/23 從四種寫法挑「對局時長」） */
+  clock: { label: string; total: string };
   waiting: { kicker: string; heading: string; invite: string };
   breakWall: { heading: string; kicker: string; cancel: string; confirm: string; body: string };
   surrender: { label: string; heading: string; kicker: string; cancel: string; confirm: string; body: string; bodyThree: string };
   leave: { heading: string; kicker: string; body: string; bodyOnline: string; cancel: string; confirm: string };
-  /** you：自己那塊比分給讀屏念的「你」（畫面上是一圈框，不寫字） */
-  status: { claimed: string; you: string };
+  /** you：自己那塊比分給讀屏念的「你」（畫面上是一圈框，不寫字）；away：對手那塊斷線時給讀屏念的（畫面上是一顆小記號） */
+  status: { claimed: string; you: string; away: string };
   play: {
     noRoom: string; roomFull: string; playerName: string; connectFail: string;
     noRoomBody: string; roomFullBody: string; connectFailBody: string; reload: string;
@@ -69,6 +78,10 @@ export type GameText = {
     badLink: string; badLinkBody: string; gameStart: string;
     /** 連線時「你是藍方」：開場那一下與等人的畫面 */
     youAre: string;
+    /** 連線時輪到的那一方斷線了（取代「等對手下」） */
+    away: string;
+    /** 自己斷線了。這時下的那一手會先存著，連回來才送出 */
+    reconnecting: string;
   };
 };
 
@@ -100,7 +113,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
     champion: {
       draw: '平局', win: '{names}勝利',
       matchOver: '對局結束', winner: '勝方', feedback: '給點意見',
-      seeBoard: '看看棋盤', playAgain: '再來一局', squares: '格', seeResult: '看結算',
+      playAgain: '再來一局', squares: '格', seeResult: '看結算',
     },
     contact: {
       button: '聯絡我們', heading: '聯絡我們', kicker: '給開發者的話',
@@ -124,7 +137,12 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       heading: '邀請朋友加入', kicker: '連線對戰', copied: '已複製', copyAria: '複製連結',
       copy: '複製', waiting: '等待中', body: '把連結傳給朋友，他們點開就會直接坐進這間房。',
       share: '分享連結',
+      save: '儲存圖片', shareImage: '分享圖片',
+      holdToSave: '也可以長按圖片儲存', cardFrom: '靈感來自《{show}》', cardFormat: '圖片比例',
     },
+    sound: { button: '聲音' },
+    nudge: { button: '催一下', sent: '催了！', received: '{who}在催你' },
+    clock: { label: '思考時間', total: '對局時長' },
     waiting: { kicker: '連線對戰', heading: '等朋友進來', invite: '邀請朋友加入' },
     breakWall: {
       heading: '要打破這面牆嗎', kicker: '每人只有一次', cancel: '取消', confirm: '破牆',
@@ -140,7 +158,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       body: '這一局到此結束，你判負。',
       bodyThree: '這一局到此結束，你判負。另外兩位照目前的地盤決定勝負。',
     },
-    status: { claimed: '已佔領', you: '你' },
+    status: { claimed: '已佔領', you: '你', away: '離線' },
     play: {
       noRoom: '不存在的對局', roomFull: '房間已滿，無法加入', playerName: '玩家 {id}',
       connectFail: '連不上房間',
@@ -150,6 +168,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       reload: '重新整理', home: '回首頁', howToPlay: '遊玩方式',
       unfinished: '未結束', connecting: '正在連線…', backHome: '返回首頁',
       badLink: '這個連結沒有指向任何對局', gameStart: '遊戲開始', youAre: '你是{side}',
+      away: '{who}暫時離線', reconnecting: '連線中斷，正在重新連線…',
       badLinkBody: '邀請連結可能被截斷了。跟對方要一次完整的連結，或回首頁開一間新的。',
     },
   },
@@ -177,7 +196,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
     champion: {
       draw: 'Draw', win: '{names} wins',
       matchOver: 'Match over', winner: 'Winner', feedback: 'Send feedback',
-      seeBoard: 'Look at the board', playAgain: 'Play again', squares: 'squares', seeResult: 'See the result',
+      playAgain: 'Play again', squares: 'squares', seeResult: 'See the result',
     },
     contact: {
       button: 'Contact', heading: 'Get in touch', kicker: 'A note to the developer',
@@ -201,7 +220,12 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       heading: 'Invite a friend', kicker: 'Online play', copied: 'Copied', copyAria: 'Copy link',
       copy: 'Copy', waiting: 'Waiting', body: 'Send the link to a friend and they will drop straight into this room.',
       share: 'Share link',
+      save: 'Save image', shareImage: 'Share image',
+      holdToSave: 'You can also press and hold the image to save it', cardFrom: 'Inspired by {show}', cardFormat: 'Image size',
     },
+    sound: { button: 'Sound' },
+    nudge: { button: 'Nudge', sent: 'Nudged!', received: '{who} is nudging you' },
+    clock: { label: 'Thinking time', total: 'Game time' },
     waiting: { kicker: 'Online play', heading: 'Waiting for a friend', invite: 'Invite a friend' },
     breakWall: {
       heading: 'Break this wall?', kicker: 'Once per game', cancel: 'Cancel', confirm: 'Break it',
@@ -217,7 +241,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       body: 'The game ends here and you lose.',
       bodyThree: 'The game ends here and you lose. The other two are ranked by the territory they hold right now.',
     },
-    status: { claimed: 'Territory', you: 'You' },
+    status: { claimed: 'Territory', you: 'You', away: 'Offline' },
     play: {
       noRoom: 'No such game', roomFull: 'This room is full', playerName: 'Player {id}',
       connectFail: 'Could not reach the room',
@@ -227,6 +251,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       reload: 'Reload', home: 'Home', howToPlay: 'How to play',
       unfinished: 'unfinished', connecting: 'Connecting…', backHome: 'Back to home',
       badLink: 'This link does not point to a game', gameStart: 'Game start', youAre: "You're {side}",
+      away: '{who} is offline', reconnecting: 'Connection lost — reconnecting…',
       badLinkBody: 'The invite link may have been cut short. Ask for the full link again, or go home and open a new room.',
     },
   },
@@ -254,7 +279,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
     champion: {
       draw: '引き分け', win: '{names}の勝ち',
       matchOver: '対局終了', winner: '勝者', feedback: '意見を送る',
-      seeBoard: '盤面を見る', playAgain: 'もう一局', squares: 'マス', seeResult: '結果を見る',
+      playAgain: 'もう一局', squares: 'マス', seeResult: '結果を見る',
     },
     contact: {
       button: 'お問い合わせ', heading: 'お問い合わせ', kicker: '開発者へのひとこと',
@@ -278,7 +303,12 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       heading: '友だちを招待', kicker: 'オンライン対戦', copied: 'コピーしました', copyAria: 'リンクをコピー',
       copy: 'コピー', waiting: '待機中', body: 'リンクを友だちに送ると、開いただけでこの部屋に入れます。',
       share: 'リンクを共有',
+      save: '画像を保存', shareImage: '画像をシェア',
+      holdToSave: '画像を長押ししても保存できます', cardFrom: '『{show}』から生まれたゲーム', cardFormat: '画像の比率',
     },
+    sound: { button: 'サウンド' },
+    nudge: { button: 'せかす', sent: 'せかしました', received: '{who}がせかしています' },
+    clock: { label: '考えた時間', total: '対局時間' },
     waiting: { kicker: 'オンライン対戦', heading: '友だちを待っています', invite: '友だちを招待' },
     breakWall: {
       heading: 'この壁を壊しますか？', kicker: '1ゲームに1回だけ', cancel: 'やめる', confirm: '壊す',
@@ -294,7 +324,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       body: 'この一局はここで終わり、あなたの負けになります。',
       bodyThree: 'この一局はここで終わり、あなたの負けになります。残りの2人は今の陣地で勝敗を決めます。',
     },
-    status: { claimed: '陣地', you: 'あなた' },
+    status: { claimed: '陣地', you: 'あなた', away: 'オフライン' },
     play: {
       noRoom: 'その対局は存在しません', roomFull: 'この部屋は満員です', playerName: 'プレイヤー {id}',
       connectFail: '部屋に接続できませんでした',
@@ -304,6 +334,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       reload: '再読み込み', home: 'ホーム', howToPlay: '遊び方',
       unfinished: '未完了', connecting: '接続中…', backHome: 'ホームに戻る',
       badLink: 'このリンクはどの対局も指していません', gameStart: 'ゲームスタート', youAre: 'あなたは{side}',
+      away: '{who}がオフラインです', reconnecting: '接続が切れました。再接続中…',
       badLinkBody: '招待リンクが途中で切れている可能性があります。完全なリンクをもう一度もらうか、ホームから新しい部屋を作ってください。',
     },
   },
@@ -331,7 +362,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
     champion: {
       draw: '무승부', win: '{names} 승리',
       matchOver: '대국 종료', winner: '승자', feedback: '의견 보내기',
-      seeBoard: '판 보기', playAgain: '다시 한 판', squares: '칸', seeResult: '결과 보기',
+      playAgain: '다시 한 판', squares: '칸', seeResult: '결과 보기',
     },
     contact: {
       button: '문의하기', heading: '문의하기', kicker: '개발자에게 한마디',
@@ -355,7 +386,12 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       heading: '친구 초대하기', kicker: '온라인 대전', copied: '복사됨', copyAria: '링크 복사',
       copy: '복사', waiting: '대기 중', body: '링크를 친구에게 보내면, 열자마자 이 방으로 들어옵니다.',
       share: '링크 공유',
+      save: '이미지 저장', shareImage: '이미지 공유',
+      holdToSave: '이미지를 길게 눌러도 저장할 수 있어요', cardFrom: '〈{show}〉에서 영감을 받은 게임', cardFormat: '이미지 비율',
     },
+    sound: { button: '소리' },
+    nudge: { button: '재촉하기', sent: '재촉했어요', received: '{who} 쪽이 재촉해요' },
+    clock: { label: '생각한 시간', total: '대국 시간' },
     waiting: { kicker: '온라인 대전', heading: '친구를 기다리는 중', invite: '친구 초대하기' },
     breakWall: {
       heading: '이 벽을 부술까요?', kicker: '한 게임에 한 번만', cancel: '취소', confirm: '부수기',
@@ -371,7 +407,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       body: '이번 판은 여기서 끝나고 패배로 처리됩니다.',
       bodyThree: '이번 판은 여기서 끝나고 패배로 처리됩니다. 나머지 두 사람은 현재 영역으로 승부를 가립니다.',
     },
-    status: { claimed: '영역', you: '나' },
+    status: { claimed: '영역', you: '나', away: '오프라인' },
     play: {
       noRoom: '존재하지 않는 대국입니다', roomFull: '방이 가득 찼습니다', playerName: '플레이어 {id}',
       connectFail: '방에 연결하지 못했습니다',
@@ -381,6 +417,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       reload: '새로고침', home: '홈', howToPlay: '플레이 방법',
       unfinished: '미완료', connecting: '연결 중…', backHome: '홈으로',
       badLink: '이 링크는 어떤 대국도 가리키지 않습니다', gameStart: '게임 시작', youAre: '내 색은 {side}',
+      away: '{who} 오프라인', reconnecting: '연결이 끊겼습니다. 다시 연결하는 중…',
       badLinkBody: '초대 링크가 중간에 잘렸을 수 있습니다. 전체 링크를 다시 받거나, 홈에서 새 방을 만들어 주세요.',
     },
   },
@@ -412,7 +449,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
     champion: {
       draw: '平局', win: '{names}获胜',
       matchOver: '对局结束', winner: '胜方', feedback: '提点意见',
-      seeBoard: '看看棋盘', playAgain: '再来一局', squares: '格', seeResult: '看结果',
+      playAgain: '再来一局', squares: '格', seeResult: '看结果',
     },
     contact: {
       button: '联系我们', heading: '联系我们', kicker: '给开发者的话',
@@ -436,7 +473,12 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       heading: '邀请朋友加入', kicker: '联机对战', copied: '已复制', copyAria: '复制链接',
       copy: '复制', waiting: '等待中', body: '把链接发给朋友，对方点开就会直接进入这个房间。',
       share: '分享链接',
+      save: '保存图片', shareImage: '分享图片',
+      holdToSave: '也可以长按图片保存', cardFrom: '灵感来自《{show}》', cardFormat: '图片比例',
     },
+    sound: { button: '声音' },
+    nudge: { button: '催一下', sent: '催了！', received: '{who}在催你' },
+    clock: { label: '思考时间', total: '对局时长' },
     waiting: { kicker: '联机对战', heading: '等朋友进来', invite: '邀请朋友加入' },
     breakWall: {
       heading: '要拆掉这道墙吗', kicker: '每人只有一次', cancel: '取消', confirm: '破墙',
@@ -452,7 +494,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       body: '这一局到此结束，判你输。',
       bodyThree: '这一局到此结束，判你输。另外两位按目前的地盘决定胜负。',
     },
-    status: { claimed: '已占领', you: '你' },
+    status: { claimed: '已占领', you: '你', away: '离线' },
     play: {
       noRoom: '对局不存在', roomFull: '房间已满，无法加入', playerName: '玩家 {id}',
       connectFail: '连不上房间',
@@ -462,6 +504,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       reload: '刷新', home: '返回首页', howToPlay: '玩法说明',
       unfinished: '未结束', connecting: '正在连接…', backHome: '返回首页',
       badLink: '这个链接没有指向任何对局', gameStart: '游戏开始', youAre: '你是{side}',
+      away: '{who}暂时离线', reconnecting: '连接中断，正在重新连接…',
       badLinkBody: '邀请链接可能被截断了。请对方再发一次完整的链接，或者回首页新开一个房间。',
     },
   },
@@ -494,7 +537,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
     champion: {
       draw: 'เสมอ', win: '{names}ชนะ',
       matchOver: 'จบเกม', winner: 'ผู้ชนะ', feedback: 'ส่งความเห็น',
-      seeBoard: 'ดูกระดาน', playAgain: 'เล่นอีกรอบ', squares: 'ช่อง', seeResult: 'ดูผล',
+      playAgain: 'เล่นอีกรอบ', squares: 'ช่อง', seeResult: 'ดูผล',
     },
     contact: {
       button: 'ติดต่อเรา', heading: 'ติดต่อเรา', kicker: 'ถึงผู้พัฒนา',
@@ -518,7 +561,12 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       heading: 'ชวนเพื่อนมาเล่น', kicker: 'เล่นออนไลน์', copied: 'คัดลอกแล้ว', copyAria: 'คัดลอกลิงก์',
       copy: 'คัดลอก', waiting: 'กำลังรอ', body: 'ส่งลิงก์ให้เพื่อน เพื่อนกดเปิดแล้วจะเข้าห้องนี้ได้ทันที',
       share: 'แชร์ลิงก์',
+      save: 'บันทึกรูป', shareImage: 'แชร์รูป',
+      holdToSave: 'กดค้างที่รูปเพื่อบันทึกก็ได้', cardFrom: 'ได้แรงบันดาลใจจาก {show}', cardFormat: 'ขนาดรูป',
     },
+    sound: { button: 'เสียง' },
+    nudge: { button: 'เร่งหน่อย', sent: 'เร่งแล้ว!', received: '{who}กำลังเร่งคุณ' },
+    clock: { label: 'เวลาคิด', total: 'เวลาทั้งเกม' },
     waiting: { kicker: 'เล่นออนไลน์', heading: 'รอเพื่อนเข้าห้อง', invite: 'ชวนเพื่อนมาเล่น' },
     breakWall: {
       heading: 'จะทำลายกำแพงนี้ไหม', kicker: 'ทำได้คนละครั้งเดียว', cancel: 'ยกเลิก', confirm: 'ทำลายกำแพง',
@@ -534,7 +582,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       body: 'เกมนี้จบลงที่นี่ และคุณเป็นฝ่ายแพ้',
       bodyThree: 'เกมนี้จบลงที่นี่ และคุณเป็นฝ่ายแพ้ ส่วนอีกสองคนจะตัดสินแพ้ชนะจากพื้นที่ที่มีอยู่ตอนนี้',
     },
-    status: { claimed: 'พื้นที่', you: 'คุณ' },
+    status: { claimed: 'พื้นที่', you: 'คุณ', away: 'ออฟไลน์' },
     play: {
       noRoom: 'ไม่พบเกมนี้', roomFull: 'ห้องเต็มแล้ว เข้าร่วมไม่ได้', playerName: 'ผู้เล่น {id}',
       connectFail: 'เชื่อมต่อห้องไม่ได้',
@@ -544,6 +592,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       reload: 'รีเฟรช', home: 'กลับหน้าแรก', howToPlay: 'วิธีเล่น',
       unfinished: 'ยังไม่จบ', connecting: 'กำลังเชื่อมต่อ…', backHome: 'กลับหน้าแรก',
       badLink: 'ลิงก์นี้ไม่ได้ชี้ไปยังเกมใด', gameStart: 'เริ่มเกม', youAre: 'คุณคือ{side}',
+      away: '{who}ออฟไลน์อยู่', reconnecting: 'การเชื่อมต่อหลุด กำลังเชื่อมต่อใหม่…',
       badLinkBody: 'ลิงก์เชิญอาจถูกตัด ขอลิงก์ฉบับเต็มจากอีกฝ่ายอีกครั้ง หรือกลับหน้าแรกเพื่อสร้างห้องใหม่',
     },
   },

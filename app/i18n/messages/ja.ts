@@ -67,10 +67,11 @@ const ja: Messages = {
     hintPlace: '空いている交点をタップしてヤギを置く',
     hintGoat: 'ヤギは捕まえられない。トラを全部動けなくすれば勝ち',
     hintTiger: 'トラは線に沿って1歩、またはヤギを飛び越えて捕まえる',
-    hintCapture: 'ヤギを捕まえられる！光っているトラをタップ',
     thinking: 'AIが考え中…',
     goatsInHand: '置くヤギはあと {n} 頭',
     captured: '捕獲 {n} / 5',
+    /** 結算分享圖上的手數 */
+    cardMoves: '{n} 手',
     undo: '待った',
     restart: 'やり直す',
     menu: 'モード変更',
@@ -95,6 +96,7 @@ const ja: Messages = {
     localSub: '1台を交代で使う',
     inviteSub: 'リンクを送って、相手は反対側',
     rulesLink: '遊び方を見る',
+    rulesCta: 'トップで遊び方を選ぶ',
     onlineTitle: 'オンライン対戦',
     rulesMetaTitle: 'バグチャル（Bagh Chal）のルールと遊び方',
     rulesMetaDescription: 'バグチャルの全ルールを図で解説：5×5の盤、トラ4頭とヤギ20頭、ヤギの配置、トラの飛び越し捕獲、ヤギがトラを動けなくする勝ち方。『悪魔の計略』シーズン2決勝のゲーム。',
@@ -107,6 +109,7 @@ const ja: Messages = {
       'トラはヤギを5頭捕まえれば勝ち、ヤギはトラが1頭も動けなくなれば勝ち。',
     ],
     showNote: '『悪魔の計略』シーズン2決勝の第2戦がバグチャルでした。決勝の2人は2つの盤で同時に指し、片方でトラ、もう片方でヤギを担当しました。',
+    nameNote: '名前：Bagh Chal（बाघचाल）はネパール語で「トラの動き」という意味です。「トラとヤギ」とも呼ばれます。',
   },
   rules: {
     kicker: '遊び方',
