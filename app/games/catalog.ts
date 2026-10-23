@@ -1,9 +1,10 @@
 /**
  * 《魔鬼的計謀》各季的遊戲清單，給平台首頁用。純資料，零 React。
  *
- * 遊戲名先用 Netflix 的英文官方名稱（來源：Wikipedia〈The Devil's Plan〉，2026-10-18 查）。
- * 各語系的譯名還沒查證，**不要自己翻**（韓文「벽바둑」那次的教訓）——
- * 查證後加進 app/i18n/glossary.md，再在這裡補 names。
+ * 遊戲名用 Netflix 的英文官方名稱（來源：Wikipedia〈The Devil's Plan〉，2026-10-18 查）。
+ * 繁中、簡中是節目播出時媒體一致的寫法（2026-10-23 查證，來源與可信度見 app/i18n/glossary.md 的〈遊戲名〉）；
+ * 其他語系還沒查證，**不要自己翻**（韓文「벽바둑」那次的教訓）—— 查證後先寫進 glossary，再在這裡補 names。
+ * 第 1 季的 Cooperative Puzzle 繁中說法分歧（拼圖遊戲／合作拼圖／七巧板拼圖），先留英文。
  *
  * playable：已經做成線上版的遊戲，值是站內路徑（常數在 i18n/routes.ts）；look 是它在平台上的卡片長相（各遊戲自己的識別）。
  * 第二批五款（時間拍賣、九子棋、盲眼五子棋、均衡曼卡拉、騎士巡邏）是 2026-10-20 的試做：
@@ -57,45 +58,45 @@ export const SEASONS: Season[] = [
     games: [
       { name: 'Wall Go', names: { 'zh-TW': '牆壁圍棋', 'zh-Hans': '墙壁围棋', ja: '壁囲碁', ko: '벽바둑' }, playable: routes.WALL_GO,
         look: { card: 'bg-tile-blue text-tile-cream', wipe: 'rgb(var(--tile-blue))', art: '/games/wall-go/key-art.svg' } },
-      // 中文「虎羊棋」是描述性副名、韓文「바그찰」是節目 RULE 卡上的寫法（見 glossary）
-      { name: 'Bagh Chal', names: { 'zh-TW': '虎羊棋', 'zh-Hans': '虎羊棋', ko: '바그찰' }, playable: routes.BAGH_CHAL,
+      // 中文用節目的「尼泊爾虎棋」（Zach 10/24：命名用 Netflix 版本）、韓文「바그찰」是節目 RULE 卡上的寫法（見 glossary）
+      { name: 'Bagh Chal', names: { 'zh-TW': '尼泊爾虎棋', 'zh-Hans': '尼泊尔虎棋', ko: '바그찰' }, playable: routes.BAGH_CHAL,
         look: { card: 'bg-[#e3a43c] text-tile-ink', wipe: '#f1e6cd', art: '/games/bagh-chal/key-art.webp', cover: true, doors: true } },
-      { name: 'Crooked Cops' },
-      { name: 'Remove One' },
-      { name: 'Unknown' },
-      { name: 'Time Auction', playable: routes.TIME_AUCTION,
-        look: { card: 'bg-[#92383a] text-[#ebe1b8]', wipe: '#ebe1b8', art: '/games/time-auction/auction.webp', cover: true, entrance: 'time-auction' } },
-      { name: 'Halloween Monster' },
-      { name: "Sniper Hold'em" },
-      { name: 'Treasure Island' },
-      { name: 'Triple Dice' },
-      { name: 'Balance Mancala' },
-      { name: 'Doubt and Bet' },
-      { name: 'Equation Pyramid' },
-      { name: 'Big Small' },
-      { name: 'Question and Truth' },
-      { name: "Knight's Tour" },
+      { name: 'Crooked Cops', names: { 'zh-TW': '腐敗警察', 'zh-Hans': '腐败警察' } },
+      { name: 'Remove One', names: { 'zh-TW': '移除一個', 'zh-Hans': '移除一个' } },
+      { name: 'Unknown', names: { 'zh-TW': '未知', 'zh-Hans': '未知' } },
+      { name: 'Time Auction', names: { 'zh-TW': '時間拍賣', 'zh-Hans': '时间拍卖' }, playable: routes.TIME_AUCTION,
+        look: { card: 'bg-[#92383a] text-[#ebe1b8]', wipe: '#ebe1b8', art: '/games/time-auction/auction.webp', cover: true, entrance: 'time-auction' } },,
+      { name: 'Halloween Monster', names: { 'zh-TW': '萬聖節怪物', 'zh-Hans': '万圣节怪物' } },
+      { name: "Sniper Hold'em", names: { 'zh-TW': '撲克精準玩家', 'zh-Hans': '扑克精准玩家' } },
+      { name: 'Treasure Island', names: { 'zh-TW': '寶藏島', 'zh-Hans': '宝藏岛' } },
+      { name: 'Triple Dice', names: { 'zh-TW': '三顆骰子相同點數', 'zh-Hans': '三骰子' } },
+      { name: 'Balance Mancala', names: { 'zh-TW': '平衡播棋', 'zh-Hans': '平衡播棋' } },
+      { name: 'Doubt and Bet', names: { 'zh-TW': '疑心下注', 'zh-Hans': '疑心下注' } },
+      { name: 'Equation Pyramid', names: { 'zh-TW': '方程式金字塔', 'zh-Hans': '方程式金字塔' } },
+      { name: 'Big Small', names: { 'zh-TW': '大或小', 'zh-Hans': '大或小' } },
+      { name: 'Question and Truth', names: { 'zh-TW': '提問與真相', 'zh-Hans': '提问与真相' } },
+      { name: "Knight's Tour", names: { 'zh-TW': '騎士巡遊', 'zh-Hans': '骑士巡游' } },
     ],
   },
   {
     id: 's1',
     games: [
-      { name: 'Virus Game' },
-      { name: 'Rules Race' },
-      { name: 'Secret Number' },
-      { name: 'Zoo' },
-      { name: 'Laying Grass' },
-      { name: 'Equation High-Low' },
+      { name: 'Virus Game', names: { 'zh-TW': '病毒遊戲', 'zh-Hans': '病毒游戏' } },
+      { name: 'Rules Race', names: { 'zh-TW': '規則競賽', 'zh-Hans': '规则竞赛' } },
+      { name: 'Secret Number', names: { 'zh-TW': '秘密數字', 'zh-Hans': '秘密数字' } },
+      { name: 'Zoo', names: { 'zh-TW': '動物園', 'zh-Hans': '动物园' } },
+      { name: 'Laying Grass', names: { 'zh-TW': '鋪草皮遊戲', 'zh-Hans': '铺草皮游戏' } },
+      { name: 'Equation High-Low', names: { 'zh-TW': '數學式比大小', 'zh-Hans': '数学式比大小' } },
       { name: 'Cooperative Puzzle' },
-      { name: 'Fragments of Memory' },
-      { name: 'Word Tower' },
-      { name: 'Scale Game' },
-      { name: 'Montage' },
-      { name: 'Four Player Three in a Row' },
-      { name: 'Blind Gomoku' },
+      { name: 'Fragments of Memory', names: { 'zh-TW': '記憶碎片', 'zh-Hans': '记忆碎片' } },
+      { name: 'Word Tower', names: { 'zh-TW': '單字塔', 'zh-Hans': '单字塔' } },
+      { name: 'Scale Game', names: { 'zh-TW': '托盤天平', 'zh-Hans': '托盘天平' } },
+      { name: 'Montage', names: { 'zh-TW': '蒙太奇', 'zh-Hans': '蒙太奇' } },
+      { name: 'Four Player Three in a Row', names: { 'zh-TW': '四人三子棋', 'zh-Hans': '四人三子棋' } },
+      { name: 'Blind Gomoku', names: { 'zh-TW': '盲五子棋', 'zh-Hans': '盲五子棋' } },
       // （盲眼五子棋與九子棋各自的分支會改上下這兩行，中間隔這一行，依序合併才不會衝突）
-      { name: "Nine Men's Morris" },
-      { name: 'Hexagon' },
+      { name: "Nine Men's Morris", names: { 'zh-TW': '九子棋', 'zh-Hans': '九子棋' } },
+      { name: 'Hexagon', names: { 'zh-TW': '六角數字盤', 'zh-Hans': '六角数字盘' } },
     ],
   },
 ];

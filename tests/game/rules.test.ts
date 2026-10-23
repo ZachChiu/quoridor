@@ -1,11 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import {
   applyTurn,
+  canSelectPiece,
   createGame,
   isGameOver,
   legalTurns,
   legalWalls,
   placeOpeningPiece,
+  replay,
+  selectablePieces,
   selectPiece,
   undoTurn,
 } from '@/game/engine';
@@ -95,7 +98,7 @@ describe('平手決勝：比最大單一領地', () => {
 });
 
 describe('凍結的爭奪區域', () => {
-  it('無人能動的爭奪區域視為已定局，且不計入任何人的分數', () => {
+  it('無人能動的爭奪區域視為已定局，每顆棋子算自己站的那一格', () => {
     // A 與 B 各一顆棋相鄰，四周封死 —— 兩顆都無路可走
     let s = createGame(2);
     s = {
@@ -126,12 +129,31 @@ describe('凍結的爭奪區域', () => {
     ]);
 
     const t = computeTerritories(s);
-    // 兩個區域都是爭奪中，但都凍結 → 已定局
-    expect(t.contested.length).toBe(4);
+    // 兩個區域都凍結 → 已定局；等於從中間切開，一人一格（2026-10-24 起，先前整塊不算分）
+    expect(t.contested).toEqual([]);
     expect(t.settled).toBe(true);
-    expect(t.owned.A).toEqual([]);
-    expect(t.owned.B).toEqual([]);
+    expect(t.owned.A.sort()).toEqual(['0,0', '6,6']);
+    expect(t.owned.B.sort()).toEqual(['0,1', '6,5']);
+    expect(t.ownerByCell['0,1']).toBe('B');
+    expect(t.frozen.sort()).toEqual(['0,0', '0,1', '6,5', '6,6']);
     expect(isGameOver(s)).toBe(true);
+  });
+
+  it('Zach 10/24 那一局：紅藍各一顆封在同一個兩格口袋 —— 一人一格，對局照常進行', () => {
+    const wgf = '2|A1:11,A2:55,B1:15,B2:51|A322,B344,B431,A424|A425,H15;B124,V24;A434,H24;B433,V33;A323,V23;B113,H13;A112,V12;B102,H02;A101,V01;B104,V03;A332,V32;B422,V22;A121,V21;B411,V11;AH11;B420,H10;A330,H20;B231,H21;A341,H31;B106,V05';
+    const s = replay(wgf);
+    expect(s.board[2][0]).toBe('B');
+    expect(s.board[2][1]).toBe('A');
+    const t = computeTerritories(s);
+    expect(t.ownerByCell['2,0']).toBe('B');
+    expect(t.ownerByCell['2,1']).toBe('A');
+    // 盤面其他地方還沒圍完：沒有結束，輪到的紅方還有別顆能走
+    expect(t.settled).toBe(false);
+    expect(isGameOver(s)).toBe(false);
+    expect(s.currentPlayer).toBe('A');
+    expect(selectablePieces(s).length).toBeGreaterThan(0);
+    // 被封住的那兩顆仍然不能選（走法規則沒變）
+    expect(canSelectPiece(s, 2, 1)).toBe(false);
   });
 });
 

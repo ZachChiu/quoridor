@@ -61,7 +61,7 @@ export default function HomeClient() {
     // 人數寫在路由裡 —— 不寫的話重整就掉回兩人，而且靜態 HTML 也會先
     // 畫一次兩人盤（見 (default)/local/[players]/page.tsx）
     navigate(localePath(locale, wallGo(playersNum === 3 ? '/local/3' : '/local')), { wipe: wipeFrom(origin) });
-    track('mode_select', { mode: 'local', players: playersNum === 3 ? 3 : 2, source: 'home' });
+    track('mode_select', { mode: 'local', players: playersNum === 3 ? 3 : 2, entry: 'home' });
   };
 
   const startSolo = (aiDifficulty: Difficulty, at: { x: number; y: number }) => {
@@ -71,7 +71,7 @@ export default function HomeClient() {
     // 難度選單的按鈕是奶油底上的淡灰卡片，擴散用奶油色才接得上 ——
     // 用陶橘會變成「按了白鈕卻噴出橘色」，對不上自己按的東西。
     navigate(localePath(locale, wallGo('/solo')) + gameHash({ aiDifficulty }), { wipe: { ...at, color: 'rgb(var(--tile-cream))' } });
-    track('mode_select', { mode: 'solo', players: 2, difficulty: aiDifficulty, source: 'home' });
+    track('mode_select', { mode: 'solo', players: 2, difficulty: aiDifficulty, entry: 'home' });
   };
 
   // 滑過或 focus 到連線磁磚就先把 Firebase 載起來並匿名登入。
@@ -87,7 +87,7 @@ export default function HomeClient() {
   */
   const startConnect = (playersNum: 2 | 3, origin: TileOrigin) => {
     navigate(localePath(locale, wallGo('/online')) + newRoomHash(playersNum), { wipe: wipeFrom(origin) });
-    track('mode_select', { mode: 'online', players: playersNum, source: 'home' });
+    track('mode_select', { mode: 'online', players: playersNum, entry: 'home' });
   };
 
   /*
