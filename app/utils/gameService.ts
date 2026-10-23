@@ -135,24 +135,10 @@ export async function updateGameState(
   */
   update(ref(db, `rooms/${roomId}`), {
     turnAt: serverTimestamp(),
-    draft: null,
+    draft: null, // 「看得到對手在想什麼」10/24 拔掉了，v26.10.7 的客戶端可能還會寫，回合結束一起清掉
     ...(clock ? { [`clock/${clock.seat}`]: Math.round(clock.ms) } : {}),
   }).catch(() => {});
   await update(ref(db, `rooms/${roomId}`), { wgf, currentPlayer });
-}
-
-/**
- * 對手看得到的「這一手正在想什麼」：選了哪顆棋、走到哪、手機上預覽中的牆。
- * 只有輪到的人能寫；回合結束時 updateGameState 會清掉。寫入失敗（規則還沒發布）就算了。
- *
- * piece 是那顆棋子在 pieceIndex 裡的序號 —— 對手那邊的盤面還停在這一手開始時，
- * 用序號找得到「原本在哪」，再把它畫到 at。
- */
-export type Draft = { by: 'A' | 'B' | 'C'; piece: number; at: string; wall?: string };
-
-export async function setDraft(roomId: string, draft: Draft | null): Promise<void> {
-  const { ref, set, db } = await rtdb();
-  await set(ref(db, `rooms/${roomId}/draft`), draft).catch(() => {});
 }
 
 /**

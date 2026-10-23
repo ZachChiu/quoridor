@@ -15,10 +15,10 @@ import { useRoomPresence } from "@/hook/useRoomPresence";
 import { useTitleAlert } from "@/hook/useTitleAlert";
 import { useSound } from "@/hook/useSound";
 import { buzz, playSfx } from "@/utils/sound";
+import { WALL_PRESS } from "./boardMotion";
 import SoundButton from "@/components/SoundButton";
 import { type ShareCardInput } from "@/components/ResultCard";
 import { type LiveClock } from "@/utils/clock";
-import type { GhostWall } from "@/components/Chessboard";
 import { playerKeys } from "@/game/territory";
 import { playerVar } from "@/config/players";
 import { shouldPushWgf } from "@/utils/wgfSync";
@@ -40,7 +40,7 @@ import type { Direction } from "@/types/chessboard";
 
 import {
   joinRoom, getRoom, subscribeRoom, updateGameState, setRoomWinner, sendFeedback, releaseConnection,
-  sendNudge, setDraft, serverNow, type Draft,
+  sendNudge, serverNow,
 } from '@/utils/gameService';
 import { atStep, describeOnlineError, reportOnlineError } from '@/utils/onlineError';
 import { useUser } from '@/contexts/UserContext';
@@ -475,10 +475,12 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
     const prev = soundSeen.current;
     soundSeen.current = now;
     if (!prev) return;
-    if (now.turns === prev.turns + 1) playSfx('wall');
+    // 牆聲在牆「壓進去」碰到的那一下響（見 boardMotion 的 WALL_PRESS；減少動態效果時沒有動畫、馬上響）
+    const press = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : WALL_PRESS.contact;
+    if (now.turns === prev.turns + 1) setTimeout(() => playSfx('wall'), press);
     else if (now.opening === prev.opening + 1) playSfx('place');
     // 對手的牆聲先響完，再提醒輪到你
-    if (isOnline && now.mine && !prev.mine && !now.lock) setTimeout(() => playSfx('turn'), 260);
+    if (isOnline && now.mine && !prev.mine && !now.lock) setTimeout(() => playSfx('turn'), press + 260);
     if (now.lock && !prev.lock) playSfx(!me || outcome.includes(me) ? 'win' : 'lose');
     // 只看這幾個值的轉變；outcome 與 me 是當下讀的
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -621,57 +623,7 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
   // 「已經動過」= 這一回合有動作、或步數被用掉、或選了棋子。三者任一成立，「重來」就該是可按的。
   const turnDirty = state.currentTurnActions.length > 0 || state.remainSteps < 2 || !!state.selected;
 
-  // ─── 對手正在想什麼（連線，Zach 10/23：「顯示對方的棋子正在推擠擠壓牆」）────────
-  /*
-    輪到的人每動一下（選了哪顆、走到哪、手機上預覽中的牆）就寫進 rooms/{id}/draft，
-    其他人的盤面上那顆棋子會移過去、在原地擠來擠去，預覽中的牆半透明地閃。
-    寫入節流 150ms；回合結束時 updateGameState 會一起清掉。
-  */
-  const pendingSlot = useMemo(() => {
-    const sel = state.selected;
-    if (!sel || !pendingWall) return undefined;
-    if (pendingWall === 'top') return `${sel.row - 1},${sel.col},H`;
-    if (pendingWall === 'bottom') return `${sel.row},${sel.col},H`;
-    if (pendingWall === 'left') return `${sel.row},${sel.col - 1},V`;
-    return `${sel.row},${sel.col},V`;
-  }, [state.selected, pendingWall]);
-  const myDraft = useMemo<Draft | null>(() => {
-    if (!isOnline || !isMyTurn || isPlacing || !myPlayerKey || !state.selected) return null;
-    const sel = state.selected;
-    const piece = state.pieceIndex[myPlayerKey]?.findIndex((q) => q.row === sel.row && q.col === sel.col) ?? -1;
-    if (piece < 0) return null;
-    return { by: myPlayerKey, piece, at: `${sel.row},${sel.col}`, ...(pendingSlot ? { wall: pendingSlot } : {}) };
-  }, [isOnline, isMyTurn, isPlacing, myPlayerKey, state.selected, state.pieceIndex, pendingSlot]);
-  const draftJson = myDraft ? JSON.stringify(myDraft) : '';
-  const sentDraft = useRef('');
-  useEffect(() => {
-    if (!roomId || !isMyTurn || draftJson === sentDraft.current) return;
-    const t = setTimeout(() => {
-      sentDraft.current = draftJson;
-      void setDraft(roomId, draftJson ? JSON.parse(draftJson) : null);
-    }, 150);
-    return () => clearTimeout(t);
-  }, [roomId, isMyTurn, draftJson]);
-  // 換人之後重新開始比對（下一手第一次選棋一定要送）
-  useEffect(() => { if (!isMyTurn) sentDraft.current = ''; }, [isMyTurn]);
-
-  const theirDraft = isOnline && !isMyTurn && !isLock && room?.draft && room.draft.by === state.currentPlayer ? room.draft : null;
-  const preview = useMemo(() => {
-    if (!theirDraft) return null;
-    const from = state.pieceIndex[theirDraft.by]?.[theirDraft.piece];
-    const [r, c] = theirDraft.at.split(',').map(Number);
-    if (!from || !Number.isInteger(r) || !Number.isInteger(c) || r < 0 || c < 0 || r >= BOARD_SIZE || c >= BOARD_SIZE) return null;
-    const moved = from.row !== r || from.col !== c;
-    if (moved && state.board[r][c]) return null; // 對不上（棋譜已經往前走了）就不畫
-    const board = !moved ? state.board : state.board.map((row, ri) => row.map((cell, ci) =>
-      ri === from.row && ci === from.col ? null : ri === r && ci === c ? theirDraft.by : cell));
-    let wall: GhostWall | null = null;
-    if (theirDraft.wall) {
-      const [wr, wc, wd] = theirDraft.wall.split(',');
-      if (wd === 'H' || wd === 'V') wall = { row: Number(wr), col: Number(wc), dir: wd, color: playerVar(theirDraft.by) };
-    }
-    return { board, pushing: { row: r, col: c }, wall };
-  }, [theirDraft, state.pieceIndex, state.board]);
+  // 「看得到對手正在選哪顆、走到哪、要蓋哪道牆」（rooms/{id}/draft）10/23 做、10/24 Zach 要拔掉 —— 對手在想什麼不該被看到。
 
   // ─── 數據分析 ───────────────────────────────────────────────────────────────
   /*
@@ -1304,12 +1256,10 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
               turnColor={turnColor}
               turnPulse={turnPulse}
               shake={shake}
-              pushing={preview?.pushing}
-              ghostWall={preview?.wall}
               onNudge={canNudge ? onNudge : undefined}
               nudged={nudged}
               size={BOARD_SIZE}
-              board={preview?.board ?? state.board}
+              board={state.board}
               verticalWalls={state.verticalWalls}
               horizontalWalls={state.horizontalWalls}
               currentPlayer={state.currentPlayer}
