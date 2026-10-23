@@ -20,22 +20,20 @@ interface ChampionModalProps {
   onFeedback?: () => void;
   /** 分享圖要畫的東西（見 ResultCard） */
   card: ShareCardInput;
-  /** 各方累計的思考時間，排好版的字（3:12）。圖上有，這裡給螢幕報讀用 */
-  times?: Partial<Record<PlayerKey, string>>;
 }
 
 /**
  * 結算。
  *
  * **結算畫面就是分享圖**（Zach 10/23：「是不是可以直接顯示這個分享畫面，結合成一個」）。
- * 先前是一排名次＋「分享戰績」再開一個視窗看圖 —— 圖上本來就有勝方、比分、盤面、思考時間，
+ * 先前是一排名次＋「分享戰績」再開一個視窗看圖 —— 圖上本來就有勝方、比分、盤面，
  * 等於同樣的東西看兩次；「看看棋盤」也拿掉了（圖上就是終局盤面，要看真的棋盤按右上角關掉）。
  *
  * 標題列照舊滿版染成勝方的顏色；並列冠軍或平局沒有單一勝方，色帶回到深墨。
  * 圖是 Canvas 畫的，名次另外放一份給螢幕報讀（sr-only）。
  */
 const ChampionModal: React.FC<ChampionModalProps> = ({
-  winners, isOpen, uniqTerritories, onClose, onRestart, onFeedback, card, times,
+  winners, isOpen, uniqTerritories, onClose, onRestart, onFeedback, card,
 }) => {
   const g = useGameText();
   const share = useResultCard(isOpen, card);
@@ -109,7 +107,6 @@ const ChampionModal: React.FC<ChampionModalProps> = ({
           <li key={player}>
             {!isDraw && winnerKeys.includes(player) && `${g.champion.winner} `}
             {g.players[player]} {count} {g.champion.squares}
-            {times?.[player] && `, ${g.clock.label} ${times[player]}`}
           </li>
         ))}
       </ol>

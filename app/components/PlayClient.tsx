@@ -561,12 +561,6 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
     return () => clearTimeout(id);
   }, [clockPlayer, started, isOnline, saveKey]);
   const clockMs = isOnline ? room?.clock : localClock.acc;
-  const times = useMemo(() => {
-    if (!clockMs) return undefined;
-    const out: Partial<Record<PlayerKey, string>> = {};
-    for (const p of playerKeys(playersNum)) if (clockMs[p]) out[p] = fmtClock(clockMs[p]!);
-    return Object.keys(out).length ? out : undefined;
-  }, [clockMs, playersNum]);
   // 整局時長＝各方加起來（輪到誰誰就在走秒，見 utils/clock.ts）
   const totalMs = clockMs ? Object.values(clockMs).reduce((a, b) => a + (b ?? 0), 0) : 0;
 
@@ -588,7 +582,6 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
     state,
     ownerByCell: territories.ownerByCell,
     neutral: territories.neutral,
-    times,
     winners: outcome as (PlayerKey | 'draw')[],
     owned: Object.fromEntries(playerKeys(playersNum).map((p) => [p, territories.owned[p]?.length ?? 0])),
     me,
@@ -596,7 +589,7 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
     modeLabel: isOnline ? t.online.metaTitle
       : aiDifficulty ? `${t.home.solo} · ${t.solo[aiDifficulty === 'easy' ? 'level1' : aiDifficulty === 'normal' ? 'level2' : 'level3']}`
       : t.local.metaTitle,
-  }), [state, territories, times, totalMs, outcome, playersNum, me, isOnline, aiDifficulty, t]);
+  }), [state, territories, totalMs, outcome, playersNum, me, isOnline, aiDifficulty, t]);
 
   // 「已經動過」= 這一回合有動作、或步數被用掉、或選了棋子。三者任一成立，「重來」就該是可按的。
   const turnDirty = state.currentTurnActions.length > 0 || state.remainSteps < 2 || !!state.selected;
@@ -1350,7 +1343,6 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
             onRestart={isOnline ? undefined : restartGame}
             onFeedback={() => { setChampionDismissed(true); setFeedbackOpen(true); }}
             card={shareInput}
-            times={times}
           />
 
           {/*

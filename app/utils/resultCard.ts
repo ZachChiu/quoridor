@@ -41,8 +41,6 @@ export type ResultCardData = {
   ownerByCell: Record<string, PlayerKey>;
   /** 中立區（被牆圍住、裡面沒有棋子）的格子，鋪頁面底色 */
   neutral?: string[];
-  /** 各方累計的思考時間，已經排好版的字（3:12）。沒有就不寫 */
-  times?: Partial<Record<PlayerKey, string>>;
   /** 勝方，平局是 ['draw'] */
   winners: (PlayerKey | 'draw')[];
   owned: Partial<Record<PlayerKey, number>>;
@@ -212,9 +210,8 @@ function scores(ctx: CanvasRenderingContext2D, d: ResultCardData, cx: number, y:
       ctx.globalAlpha = 1;
     }
     const pad = h * (won ? 0.3 : 0.56);
-    const time = d.times?.[player];
-    text(ctx, d.font, d.text.players[player], x + pad, y + h * (time ? 0.48 : 0.62), { size: Math.round(h * 0.3), color: fg, max: w * 0.5 });
-    if (time) text(ctx, d.font, time, x + pad, y + h * 0.8, { size: Math.round(h * 0.2), weight: 700, color: fg, alpha: 0.85 });
+    // 各自想了多久不寫在圖上（Zach 10/23：「結果畫面不用有個人花多久下棋」），只在上方小字寫整局多久
+    text(ctx, d.font, d.text.players[player], x + pad, y + h * 0.62, { size: Math.round(h * 0.3), color: fg, max: w * 0.5 });
     const sq = text(ctx, d.font, d.text.squares, x + w - h * 0.28, y + h * 0.66, { size: Math.round(h * 0.2), weight: 700, color: fg, align: 'right' });
     ctx.font = `700 ${sq}px ${d.font}`;
     const sqW = ctx.measureText(d.text.squares).width;

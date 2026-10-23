@@ -13,7 +13,7 @@ import { track } from '@/utils/analytics';
  * 原本是結算之後另開一個視窗；同一天 Zach 想「直接顯示這個分享畫面、結合成一個」，
  * 現在結算視窗本身就是這張圖（ChampionModal 用 useResultCard ＋ ResultCardPreview）。
  *
- * 圖在瀏覽器裡用 Canvas 畫（utils/resultCard.ts），不經過任何伺服器：盤面、比分、思考時間，
+ * 圖在瀏覽器裡用 Canvas 畫（utils/resultCard.ts），不經過任何伺服器：盤面、比分、整局多久，
  * 加上站名、網址、掃了就到首頁的 QR code。出處寫「靈感來自《節目名》」，**不寫 Netflix** ——
  * 圖上有我們的站名又有 Netflix，看起來像官方合作（大腦 10/23 建議）。
  *
