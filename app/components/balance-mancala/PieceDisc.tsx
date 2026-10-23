@@ -7,12 +7,14 @@ import { BRASS_DEEP, CLOTH_LIGHT, INK, letterOf, seatLook } from './palette';
  * `size` 是 CSS 長度（盤面上用 cqw，跟著盤面縮放；面板上用 px／rem）。
  * `count` > 1 時右上角標數字（同一格裡同一個人的子合成一顆顯示時用）。
  */
-export default function PieceDisc({ seat, size, count = 1, ring, className = '', style }: {
+export default function PieceDisc({ seat, size, count = 1, ring, onBoard = false, className = '', style }: {
   seat: Seat;
   size: string;
   count?: number;
   /** 額外的外框：incoming＝預覽中剛放進來的子、selected＝排序時選中、last＝最後一顆 */
   ring?: 'incoming' | 'selected' | 'last';
+  /** 盤面上的子：帶 data-seat，閒置動作（idleMotion.ts）靠它找子、分辨是誰的 */
+  onBoard?: boolean;
   className?: string;
   style?: CSSProperties;
 }) {
@@ -24,6 +26,7 @@ export default function PieceDisc({ seat, size, count = 1, ring, className = '',
   return (
     <span
       aria-hidden="true"
+      data-seat={onBoard ? seat : undefined}
       className={`relative grid shrink-0 place-items-center rounded-full font-black leading-none ${className}`}
       style={{
         width: size, height: size, background: look.bg, color: look.fg,

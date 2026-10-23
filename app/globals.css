@@ -580,3 +580,26 @@ html:has(.mcl-root) { --ink-soft: #5e4b3f; }
 .mcl-weight { display: inline-block; width: 10px; height: 13px; background: #856f4c;
   clip-path: polygon(2.5px 0, calc(100% - 2.5px) 0, 100% 2.5px, 100% calc(100% - 2.5px), calc(100% - 2.5px) 100%, 2.5px 100%, 0 calc(100% - 2.5px), 0 2.5px); }
 .mcl-link { font-weight: 900; text-decoration: underline double rgb(32 18 17 / 0.6); text-underline-offset: 5px; }
+/* 暗底上（結算分享圖的遮罩）的次要鈕：一條木頭（盤面的木色），同一組上下兩道梳線換成亮布色。
+   不用半透明：遮罩底下的盤面會從鈕裡透出來 */
+.mcl-wood {
+  --comb: rgb(254 242 236 / 0.5);
+  background:
+    linear-gradient(var(--comb) 0 0) left 0 top 3px / 100% 1px no-repeat,
+    linear-gradient(var(--comb) 0 0) left 0 top 6px / 100% 1px no-repeat,
+    linear-gradient(var(--comb) 0 0) left 0 bottom 3px / 100% 1px no-repeat,
+    linear-gradient(var(--comb) 0 0) left 0 bottom 6px / 100% 1px no-repeat,
+    #362522;
+  color: #fef2ec;
+}
+@media (pointer: fine) { .mcl-wood:hover:not(:disabled) { --comb: rgb(254 242 236 / 0.85); } }
+/* 播種：飛過去的那顆種子落地後，坑裡才出現真的那顆（mcl-land，延遲＝飛行時間，由元件給 --mcl-delay）；
+   坑裡已經有同一個人的子（合成一顆顯示）時只彈一下（mcl-receive）。分數變了的數字跳一下（mcl-pop）。
+   只動 scale／opacity 獨立屬性，不蓋掉元件本身的 transform。減少動態效果時全部關掉。 */
+@keyframes mcl-land { 0% { scale: 0.4; opacity: 0; } 60% { scale: 1.14; opacity: 1; } 100% { scale: 1; opacity: 1; } }
+@keyframes mcl-receive { 0%, 100% { scale: 1; } 45% { scale: 1.18; } }
+@keyframes mcl-pop { 0% { scale: 1; } 35% { scale: 1.35; } 100% { scale: 1; } }
+.mcl-land { animation: mcl-land 220ms var(--mo-snap) both; animation-delay: var(--mcl-delay, 0ms); }
+.mcl-receive { animation: mcl-receive 260ms ease-out both; animation-delay: var(--mcl-delay, 0ms); }
+.mcl-pop { display: inline-block; animation: mcl-pop 420ms var(--mo-snap); }
+@media (prefers-reduced-motion: reduce) { .mcl-land, .mcl-receive, .mcl-pop { animation: none !important; } }

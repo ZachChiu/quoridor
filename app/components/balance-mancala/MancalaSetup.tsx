@@ -14,6 +14,7 @@ import { localSeats, type MatchSetup } from './match';
 import MancalaFrame from './MancalaFrame';
 import MancalaRules from './MancalaRules';
 import { CLOTH, MCL_BAND, MCL_PANEL, WOOD } from './palette';
+import { MCL_CORNER } from './styles';
 
 const SEAT_CHOICES = Array.from({ length: MAX_SEATS - MIN_SEATS + 1 }, (_, i) => MIN_SEATS + i);
 const HUMAN_CHOICES = Array.from({ length: MAX_SEATS - 1 }, (_, i) => i + 2);
@@ -26,7 +27,8 @@ const KEY_ART = '/games/balance-mancala/weights.webp';
  * 開局設定（這一頁同時是遊戲首頁）。整頁是一塊 Adinkra 印花布（MancalaFrame）；上面是三件黃金砝碼與標題，
  * 下面選模式、席數、難度。有 AI 時按難度就開始；全部是真人時按「開始」。
  * 選項照全站：選中的是墨、其餘是布上一層淡墨，沒有框線；難度的點數用砝碼的黃銅（一個面板一個色相）。
- * 左上是平台 logo、右上是聯絡與語言（PlatformCorner，遊戲首頁才放），離邊多讓一個布邊的寬度。
+ * 左上是平台 logo、右上是聯絡與語言（PlatformCorner，遊戲首頁才放），離邊多讓一個布邊的寬度；
+ * 那兩顆鈕與打開的彈窗用這款自己的樣子（MCL_CORNER：切角淡布片、亮布面板、黃銅牌）。
  */
 export default function MancalaSetup({ locale, initial, onStart }: { locale: Locale; initial: MatchSetup; onStart: (m: MatchSetup) => void }) {
   const t = useTextTable(TEXT);
@@ -49,7 +51,7 @@ export default function MancalaSetup({ locale, initial, onStart }: { locale: Loc
 
   return (
     <MancalaFrame className="items-center">
-      <PlatformCorner locale={locale} offset="calc(var(--mcl-frame, 28px) + 6px)" />
+      <PlatformCorner locale={locale} theme={MCL_CORNER} offset="calc(var(--mcl-frame, 28px) + 6px)" />
       <div className="w-full max-w-[460px] px-5 pt-[60px]">
         <header className="flex flex-col items-center text-center">
           <figure className="flex w-full flex-col items-center gap-1">
