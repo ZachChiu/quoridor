@@ -13,22 +13,36 @@ const PLAYER_VAR: Record<string, string> = {
   B: 'var(--player-B)',
   C: 'var(--player-C)',
 };
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import SectionShadow from "./SectionShadow";
 import WallDirectionPad from "./WallDirectionPad";
 import { useCoarsePointer } from "@/hook/useCoarsePointer";
-import { boardSignature, diffBoard, territoryWave, newWall, pathBetween } from "./boardMotion";
+import { boardSignature, diffBoard, territoryWave, newWall, pathBetween, WALL_PRESS, wallPressFrames, wallBurstFrames, boardJoltFrames } from "./boardMotion";
 import { useGameText } from '@/i18n/LocaleProvider';
 import { fmt } from '@/i18n/content/game';
 import { isCursorKey, nearestEmpty, nextCursor, nextEmptyCell } from '@/components/boardCursor';
 import { NEUTRAL_FILL } from '@/components/neutralZone';
 import { playIdle, stopIdle, stopTrapped, syncTrapped, type IdleScene } from '@/components/idleMotion';
 
-/** 對手還沒蓋下去、正在考慮的那道牆（連線時即時看到）。dir：H＝那一格的下緣、V＝右緣 */
-export type GhostWall = { row: number; col: number; dir: 'H' | 'V'; color: string };
-
 const reducedMotion = () =>
   typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/**
+ * 新的牆壓進去、碰到時兩端各擴的那一圈（動畫在 Chessboard 的 layout effect 裡播）。
+ * 圈的中心是格線交叉點：牆的兩端各比格子多伸 3px，交叉點在格縫中間（多 1px），所以離牆端 2px。
+ */
+// 一般函式而不是元件：寫成元件（大寫開頭）時，React Compiler 的 lint 會在下面既有的遞迴 useCallback
+// （getAvailableMovesRecursive 自己呼叫自己）報錯，main 上不會。那段跟這裡無關，先不動。
+const wallBursts = (dir: 'h' | 'v') =>
+  (['2px', 'calc(100% - 2px)'] as const).map((pos) => (
+    <span
+      key={pos}
+      data-burst
+      aria-hidden="true"
+      className="pointer-events-none absolute size-[calc(var(--board-wall)*2)] -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-current opacity-0"
+      style={dir === 'h' ? { top: '50%', left: pos } : { left: '50%', top: pos }}
+    />
+  ));
 
 type Props = {
   size: number;
@@ -98,9 +112,6 @@ type Props = {
   turnPulse?: number;
   /** 每次被催就 +1：整塊棋盤抖一下 */
   shake?: number;
-  /** 對手正在動的那顆棋子（連線時即時看到）：擠來擠去像在推牆 */
-  pushing?: Move | null;
-  ghostWall?: GhostWall | null;
   /** 催一下，交給控制盤裡的 TurnGuide（橫式） */
   onNudge?: () => void;
   nudged?: boolean;
@@ -143,8 +154,6 @@ export default React.memo(function Chessboard({
   turnColor,
   turnPulse = 0,
   shake = 0,
-  pushing,
-  ghostWall,
   onNudge,
   nudged,
 }: Props) {
@@ -184,7 +193,7 @@ export default React.memo(function Chessboard({
     旁邊有牆的閒置棋子偶爾自己動一下（推牆、撞一下、敲敲…，見 idleMotion.ts）。每 2.5–5.5 秒挑一顆。
     盤面放在 ref 裡給計時器讀，計時器只在掛載時建立一次 —— 每走一步就重設的話，常下的人永遠看不到。
     **輪到的那一方的棋子不動**，只有等待的一方會（Zach 10/23：「我正在下時，我的棋子不要有撞牆那些效果，是對方的才能有」）：
-    正在下的人在想下一步，自己的棋子在晃會干擾；連線時對手的棋子「在擠」代表對手正在動那顆，其他顆也晃就分不出來。
+    正在下的人在想下一步，自己的棋子在晃會干擾。
     減少動態效果時整個關掉；分頁在背景時跳過。
   */
   const still = isLock ? null : currentPlayer;
@@ -193,12 +202,14 @@ export default React.memo(function Chessboard({
     idleScene.current = {
       board,
       walls: { h: horizontalWalls, v: verticalWalls },
-      skip: [selectedChess, pushing].filter((m) => !!m).map((m) => `${m!.row},${m!.col}`),
+      skip: selectedChess ? [`${selectedChess.row},${selectedChess.col}`] : [],
       still,
     };
   });
   // 換人的那一下，還在晃的停掉 —— 不然剛輪到的人，自己的棋子可能正在撞牆
   useEffect(() => { stopIdle(frameRef.current); }, [still]);
+  // 選了一顆棋子就停掉 —— 它可能正被對手打得往後縮（對打時被打的一定有反應），要走之前先站好
+  useEffect(() => { if (selectedChess) stopIdle(frameRef.current); }, [selectedChess]);
   // 四面都是牆的棋子一直想出去（不管輪到誰，見 idleMotion.ts 的 syncTrapped）
   useEffect(() => {
     if (reducedMotion()) return;
@@ -500,6 +511,18 @@ export default React.memo(function Chessboard({
   if (walls.sig.h !== wallSig.h || walls.sig.v !== wallSig.v) {
     setWalls((w) => ({ sig: wallSig, fresh: newWall(w.sig, wallSig) }));
   }
+  // 新的那道牆壓進去（見 boardMotion 的 WALL_PRESS）。layout effect：第一次畫出來之前就要在半空中，不然會先閃一下定位好的樣子
+  useLayoutEffect(() => {
+    if (!walls.fresh || reducedMotion()) return;
+    const [axis, at] = walls.fresh.split(':');
+    const i = Number(at);
+    const el = gridRef.current?.querySelector<HTMLElement>(`[data-wall="${axis}:${Math.floor(i / size)},${i % size}"]`);
+    if (!el) return;
+    const opts = { duration: WALL_PRESS.duration, easing: 'linear', fill: 'backwards' } as const;
+    el.animate(wallPressFrames, opts);
+    el.querySelectorAll('[data-burst]').forEach((b) => b.animate(wallBurstFrames, opts));
+    frameRef.current?.animate(boardJoltFrames, { duration: WALL_PRESS.duration });
+  }, [walls, size]);
 
   const [lastTerrSig, setLastTerrSig] = useState(terrSig);
   if (lastTerrSig !== terrSig) {
@@ -736,10 +759,7 @@ export default React.memo(function Chessboard({
                       >
                         <div
                           data-piece
-                          className={`size-3/5 rounded-full ${
-                            pushing?.row === rowIndex && pushing.col === colIndex ? 'animate-piece-push'
-                            : isPieceActive ? 'animate-pulse-shine' : ''
-                          }`}
+                          className={`size-3/5 rounded-full ${isPieceActive ? 'animate-pulse-shine' : ''}`}
                           style={{ backgroundColor: PLAYER_VAR[cellPlayer] }}
                         />
                       </div>
@@ -795,23 +815,6 @@ export default React.memo(function Chessboard({
                     />
                   )}
 
-                  {/* 對手正在考慮的牆：他的顏色、半透明、一明一暗 */}
-                  {ghostWall?.row === rowIndex && ghostWall.col === colIndex && (
-                    ghostWall.dir === 'H' ? (
-                      <div
-                        aria-hidden="true"
-                        className="pointer-events-none absolute inset-x-[-3px] bottom-[calc(var(--board-gap)*-0.5)] z-20 h-[var(--board-wall)] translate-y-1/2 animate-pulse rounded-full opacity-50"
-                        style={{ backgroundColor: ghostWall.color }}
-                      />
-                    ) : (
-                      <div
-                        aria-hidden="true"
-                        className="pointer-events-none absolute inset-y-[-3px] right-[calc(var(--board-gap)*-0.5)] z-20 w-[var(--board-wall)] translate-x-1/2 animate-pulse rounded-full opacity-50"
-                        style={{ backgroundColor: ghostWall.color }}
-                      />
-                    )
-                  )}
-
                   {/*
                     牆。
                     格縫當時是 4px 的深墨線（現在是 2px 淺灰，見 globals.css 的 --board-grid），牆原本也是 4px 且畫在同一個位置 ——
@@ -822,11 +825,10 @@ export default React.memo(function Chessboard({
                   {hasHorizontalWallPlayer && (
                     <div
                       data-wall={`h:${rowIndex},${colIndex}`}
-                      className={`absolute inset-x-[-3px] bottom-[calc(var(--board-gap)*-0.5)] z-20 h-[var(--board-wall)] translate-y-1/2 rounded-full ${
-                        walls.fresh === `h:${rowIndex * size + colIndex}` ? 'animate-wall-h' : ''
-                      }`}
-                      style={{ backgroundColor: PLAYER_VAR[hasHorizontalWallPlayer] }}
+                      className="absolute inset-x-[-3px] bottom-[calc(var(--board-gap)*-0.5)] z-20 h-[var(--board-wall)] translate-y-1/2 rounded-full"
+                      style={{ backgroundColor: PLAYER_VAR[hasHorizontalWallPlayer], color: PLAYER_VAR[hasHorizontalWallPlayer] }}
                     >
+                      {walls.fresh === `h:${rowIndex * size + colIndex}` && wallBursts('h')}
                       {isHorizontalWallBreakable && (
                         <button
                           type="button"
@@ -842,11 +844,10 @@ export default React.memo(function Chessboard({
                   {hasVerticalWall && (
                     <div
                       data-wall={`v:${rowIndex},${colIndex}`}
-                      className={`absolute inset-y-[-3px] right-[calc(var(--board-gap)*-0.5)] z-20 w-[var(--board-wall)] translate-x-1/2 rounded-full ${
-                        walls.fresh === `v:${rowIndex * size + colIndex}` ? 'animate-wall-v' : ''
-                      }`}
-                      style={{ backgroundColor: PLAYER_VAR[hasVerticalWall] }}
+                      className="absolute inset-y-[-3px] right-[calc(var(--board-gap)*-0.5)] z-20 w-[var(--board-wall)] translate-x-1/2 rounded-full"
+                      style={{ backgroundColor: PLAYER_VAR[hasVerticalWall], color: PLAYER_VAR[hasVerticalWall] }}
                     >
+                      {walls.fresh === `v:${rowIndex * size + colIndex}` && wallBursts('v')}
                       {isVerticalWallBreakable && (
                         <button
                           type="button"

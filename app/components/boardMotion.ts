@@ -135,6 +135,43 @@ export function newWall(
   return found;
 }
 
+/**
+ * 蓋牆的「壓進去」（Zach 10/24 要的放牆特效）：新的牆先浮在上面、稍大一點，按下去卡上；
+ * 碰到的那一下兩端各擴一圈、整個棋盤往下震一下，牆的音效也在那一下響（PlayClient 用 contact 對時）。
+ * 只動 translate／scale／opacity —— 合成執行緒跑得動，主執行緒忙的時候也不會卡（見 CLAUDE.md〈換頁轉場〉）。
+ * 單一屬性的 translate／scale 會疊在 Tailwind 的 transform（translate-y-1/2 定位）上面，不會蓋掉它。
+ */
+export const WALL_PRESS = { duration: 560, contact: 280 } as const;
+const hit = WALL_PRESS.contact / WALL_PRESS.duration;
+
+export const wallPressFrames: Keyframe[] = [
+  { opacity: 0, translate: '-2px -8px', scale: '1.25', offset: 0 },
+  { opacity: 1, translate: '-2px -8px', scale: '1.25', offset: 0.12, easing: 'cubic-bezier(0.55, 0, 0.9, 0.3)' },
+  { opacity: 1, translate: '0 0', scale: '0.94', offset: hit },
+  { scale: '1.04', offset: hit + 0.14 },
+  { opacity: 1, translate: '0 0', scale: '1' , offset: hit + 0.3 },
+  { opacity: 1, translate: '0 0', scale: '1' },
+];
+
+/** 碰到時牆的兩端各擴一圈 */
+export const wallBurstFrames: Keyframe[] = [
+  { opacity: 0, scale: '0.5', offset: 0 },
+  { opacity: 0, scale: '0.5', offset: hit },
+  { opacity: 0.9, scale: '0.8', offset: hit + 0.04 },
+  { opacity: 0, scale: '2.6', offset: hit + 0.4 },
+  { opacity: 0, scale: '2.6' },
+];
+
+/** 碰到時整個棋盤往下震一下（催一下的 shake 動的是 transform，這裡動 translate，兩個疊得起來） */
+export const boardJoltFrames: Keyframe[] = [
+  { translate: '0 0', offset: 0 },
+  { translate: '0 0', offset: hit },
+  { translate: '0 2px', offset: hit + 0.05 },
+  { translate: '0 -1px', offset: hit + 0.14 },
+  { translate: '0 0', offset: hit + 0.24 },
+  { translate: '0 0' },
+];
+
 export type Walls = { h: Player[][]; v: Player[][] };
 
 /** 從 `(r,c)` 往某方向走有沒有被牆擋住。與 Chessboard 的可走點判定同一套。 */

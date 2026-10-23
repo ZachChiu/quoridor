@@ -7,12 +7,16 @@ import type { Player } from '@/game/types';
  * 兩邊都是牆的還會「被夾扁」。牆也跟著被推出去一點再彈回來 —— 看起來是棋子在跟牆互動，不是自己在抖。
  *
  * 只用 `translate`／`scale` 這兩個獨立屬性，不碰 `transform`：
- * 牆本身用 transform 對齊格縫（translate-y-1/2）、棋子走路與「對手正在擠牆」也是 transform，
+ * 牆本身用 transform 對齊格縫（translate-y-1/2）、棋子走路也是 transform，
  * 獨立屬性會疊在那之上，不會把它們蓋掉。都交給 element.animate()（合成執行緒跑，見 CLAUDE.md〈換頁轉場〉）。
  *
  * 只算玩家蓋的牆，不算棋盤外圈：外圈那道深色框不會被推動，推它看起來像卡住。
  *
  * 只動等待那一方的棋子，輪到的人的棋子不動（`still`，Zach 10/23）。
+ *
+ * 不同顏色的兩顆棋子上下左右挨著、中間沒有牆時，會**對打**（Zach 10/24）：揮拳、衝撞、頂牛、挑釁、假動作。
+ * 動手的一樣是等待那一方；**被打的那顆一定有反應**，就算是輪到的人的棋子 —— 這是「輪到的人的棋子不動」的第二個例外
+ * （Zach 10/24 在「被打的不動」與「被打的有反應」兩支錄影之間選了後者：對打要有來有往）。見 FIGHTS。
  *
  * 例外：**四面都是牆、被關在一格裡的棋子一直在動**，想出去（Zach 10/23：「他可以隨時都在動嗎，想要出去的那種狀態」）——
  * 不管輪到誰都動（那顆本來就不能選、不能走，不會干擾正在下的人）。見 syncTrapped。
@@ -137,6 +141,155 @@ const MOVES: Record<string, Move> = {
   },
 };
 
+// ─── 對打 ─────────────────────────────────────────────────────────────────────
+
+/*
+  d 是「從動手的那顆往被打的那顆」的方向。位移一樣是棋子自己大小的百分比：
+  兩顆棋子中心相距約 170%，所以往前 66% 左右就碰到對方。
+  foe 是被打那顆的反應，正的位移＝往遠離動手那顆的方向（同一個 d）。
+*/
+type Dir = { dx: number; dy: number };
+type Fight = (d: Dir) => { piece: Keyframe[]; foe: Keyframe[]; duration: number };
+
+const fkit = ({ dx, dy }: Dir) => ({
+  /** 沿 d 走 a、往側邊走 p */
+  T: (a: number, p = 0) => `${dx * a - dy * p}% ${dy * a + dx * p}%`,
+  /** 沿 d 縮放 a、側向 b */
+  S: (a: number, b: number) => (dx ? `${a} ${b}` : `${b} ${a}`),
+});
+
+const FIGHTS: Record<string, Fight> = {
+  /** 連打：湊過去、三記短拳（拳打出去時身體拉長），對方每挨一下往後縮一點 */
+  jab: (d) => {
+    const { T, S } = fkit(d);
+    const hit = (o: number) => [
+      { translate: T(62), scale: S(1.2, 0.86), offset: o },
+      { translate: T(34), scale: S(1, 1), offset: o + 0.1 },
+    ];
+    const ouch = (o: number) => [
+      { translate: T(6), scale: S(0.88, 1.08), offset: o + 0.02 },
+      { translate: T(0), scale: S(1, 1), offset: o + 0.12 },
+    ];
+    return {
+      duration: 1300,
+      piece: [{ translate: T(0), scale: S(1, 1) }, { translate: T(34), scale: S(1, 1), offset: 0.2 }, ...hit(0.32), ...hit(0.5), ...hit(0.68), { translate: T(0), scale: S(1, 1) }],
+      foe: [{ translate: T(0), scale: S(1, 1) }, { translate: T(0), scale: S(1, 1), offset: 0.32 }, ...ouch(0.32), ...ouch(0.5), ...ouch(0.68), { translate: T(0), scale: S(1, 1) }],
+    };
+  },
+  /** 衝撞：往後蓄力、整顆撞過去壓扁，對方被撞得往後彈 */
+  charge: (d) => {
+    const { T, S } = fkit(d);
+    return {
+      duration: 1000,
+      piece: [
+        { translate: T(0), scale: S(1, 1) },
+        { translate: T(-14), scale: S(1.08, 0.94), offset: 0.32 },
+        { translate: T(64), scale: S(0.72, 1.22), offset: 0.5 },
+        { translate: T(40), scale: S(1.06, 0.95), offset: 0.64 },
+        { translate: T(0), scale: S(1, 1) },
+      ],
+      foe: [
+        { translate: T(0), scale: S(1, 1) },
+        { translate: T(0), scale: S(1, 1), offset: 0.49 },
+        { translate: T(20), scale: S(0.72, 1.2), offset: 0.56 },
+        { translate: T(-4), scale: S(1.06, 0.95), offset: 0.74 },
+        { translate: T(0), scale: S(1, 1) },
+      ],
+    };
+  },
+  /** 頂牛：貼上去一直頂，兩顆一起擠扁；對方被頂得慢慢後退 */
+  shove: (d) => {
+    const { T, S } = fkit(d);
+    return {
+      duration: 1700,
+      piece: [
+        { translate: T(0), scale: S(1, 1) },
+        { translate: T(64), scale: S(0.84, 1.1), offset: 0.22 },
+        { translate: T(68), scale: S(0.8, 1.13), offset: 0.38 },
+        { translate: T(64), scale: S(0.85, 1.09), offset: 0.5 },
+        { translate: T(72), scale: S(0.78, 1.15), offset: 0.64 },
+        { translate: T(-4), scale: S(1.05, 0.96), offset: 0.84 },
+        { translate: T(0), scale: S(1, 1) },
+      ],
+      foe: [
+        { translate: T(0), scale: S(1, 1) },
+        { translate: T(0), scale: S(1, 1), offset: 0.2 },
+        { translate: T(4), scale: S(0.86, 1.09), offset: 0.38 },
+        { translate: T(2), scale: S(0.88, 1.08), offset: 0.5 },
+        { translate: T(8), scale: S(0.82, 1.12), offset: 0.64 },
+        { translate: T(0), scale: S(1, 1), offset: 0.84 },
+        { translate: T(0), scale: S(1, 1) },
+      ],
+    };
+  },
+  /** 挑釁：原地跳兩下、湊過去左右晃（「來啊」），對方也挺起來 */
+  taunt: (d) => {
+    const { T, S } = fkit(d);
+    return {
+      duration: 1600,
+      piece: [
+        { translate: T(0), scale: '1 1' },
+        { translate: T(0), scale: '1.14 1.14', offset: 0.12 },
+        { translate: T(0), scale: '0.94 0.94', offset: 0.24 },
+        { translate: T(0), scale: '1.14 1.14', offset: 0.36 },
+        { translate: T(0), scale: '1 1', offset: 0.46 },
+        { translate: T(26, 7), scale: S(1.12, 0.92), offset: 0.58 },
+        { translate: T(28, -7), scale: S(1.12, 0.92), offset: 0.7 },
+        { translate: T(26, 7), scale: S(1.12, 0.92), offset: 0.8 },
+        { translate: T(0), scale: '1 1' },
+      ],
+      foe: [
+        { translate: T(0), scale: '1 1' },
+        { translate: T(0), scale: '1 1', offset: 0.56 },
+        { translate: T(-6), scale: '1.12 1.12', offset: 0.68 },
+        { translate: T(-6), scale: '1.1 1.1', offset: 0.8 },
+        { translate: T(0), scale: '1 1' },
+      ],
+    };
+  },
+  /** 假動作：往旁邊晃一下、再晃回來，趁對方往旁邊躲時一拳打過去 */
+  feint: (d) => {
+    const { T, S } = fkit(d);
+    return {
+      duration: 1400,
+      piece: [
+        { translate: T(0), scale: S(1, 1) },
+        { translate: T(18, -16), scale: S(1, 1), offset: 0.2 },
+        { translate: T(18, 16), scale: S(1, 1), offset: 0.4 },
+        { translate: T(8), scale: S(1.06, 0.95), offset: 0.52 },
+        { translate: T(64), scale: S(0.74, 1.2), offset: 0.64 },
+        { translate: T(0), scale: S(1, 1) },
+      ],
+      foe: [
+        { translate: T(0), scale: S(1, 1) },
+        { translate: T(0, 12), scale: S(1, 1), offset: 0.24 },
+        { translate: T(0, -12), scale: S(1, 1), offset: 0.44 },
+        { translate: T(0), scale: S(1, 1), offset: 0.62 },
+        { translate: T(16), scale: S(0.76, 1.18), offset: 0.7 },
+        { translate: T(0), scale: S(1, 1) },
+      ],
+    };
+  },
+};
+
+/** 上下左右挨著、中間沒有牆、不同顏色的對手。dx／dy 是從這顆往對手的方向 */
+function foes(board: Player[][], r: number, c: number, { h, v }: Walls) {
+  const me = board[r][c];
+  const n = board.length;
+  const out: { key: string; dx: number; dy: number }[] = [];
+  const near = [
+    { dx: 0, dy: -1, open: r > 0 && !h[r - 1]?.[c] },
+    { dx: 0, dy: 1, open: r < n - 1 && !h[r]?.[c] },
+    { dx: -1, dy: 0, open: c > 0 && !v[r]?.[c - 1] },
+    { dx: 1, dy: 0, open: c < n - 1 && !v[r]?.[c] },
+  ];
+  for (const { dx, dy, open } of near) {
+    const p = open ? board[r + dy][c + dx] : null;
+    if (p && p !== me) out.push({ key: `${r + dy},${c + dx}`, dx, dy });
+  }
+  return out;
+}
+
 /** 兩邊都是牆：被夾扁，兩道牆一起被撐開 */
 function squeeze(a: Side, b: Side) {
   const { S, W } = kit(a);
@@ -159,23 +312,36 @@ function squeeze(a: Side, b: Side) {
 
 const pick = <T,>(list: T[]) => list[Math.floor(Math.random() * list.length)];
 
-/** 挑一顆旁邊有牆的閒置棋子，隨機做一個動作。沒有符合的就什麼都不做 */
+/** 挑一顆旁邊有牆或有對手的閒置棋子，隨機做一個動作。沒有符合的就什麼都不做 */
 export function playIdle(root: HTMLElement | null, { board, walls, skip, still }: IdleScene) {
   if (!root) return;
-  const cand: { key: string; sides: Side[] }[] = [];
+  const cand: { key: string; sides: Side[]; foes: ReturnType<typeof foes> }[] = [];
   const caged = new Set(trappedCells(board, walls));
   board.forEach((row, r) => row.forEach((p, c) => {
     const key = `${r},${c}`;
     if (!p || p === still || skip.includes(key) || caged.has(key)) return;
     const s = sides(r, c, walls);
-    if (s.length) cand.push({ key, sides: s });
+    const f = foes(board, r, c, walls);
+    if (s.length || f.length) cand.push({ key, sides: s, foes: f });
   }));
   if (!cand.length) return;
-  const { key, sides: around } = pick(cand);
-  const piece = root.querySelector<HTMLElement>(`[data-cell="${key}"] [data-piece]`);
+  const { key, sides: around, foes: rivals } = pick(cand);
+  const el = (k: string) => root.querySelector<HTMLElement>(`[data-cell="${k}"] [data-piece]`);
+  const piece = el(key);
   if (!piece || piece.getAnimations().some((a) => a.id === 'idle')) return;
   const wallEl = (id: string) => root.querySelector<HTMLElement>(`[data-wall="${id}"]`);
   const opts = (duration: number): KeyframeAnimationOptions => ({ duration, easing: 'ease-in-out', id: 'idle' });
+
+  // 旁邊有對手的，多半先打架（比跟牆玩有趣）
+  if (rivals.length && (!around.length || Math.random() < 0.6)) {
+    const foe = pick(rivals);
+    const m = FIGHTS[pick(Object.keys(FIGHTS))](foe);
+    piece.animate(m.piece, opts(m.duration));
+    // 被打的那顆一定有反應（輪到的人的也是，見檔頭）；只有正在被操作、正在走的那顆不動
+    const target = skip.includes(foe.key) ? null : el(foe.key);
+    if (target && !target.getAnimations().some((a) => a.id === 'idle')) target.animate(m.foe, opts(m.duration));
+    return;
+  }
 
   const across = around.find((a) => around.some((b) => b.dx === -a.dx && b.dy === -a.dy && (a.dx || a.dy)));
   if (across && Math.random() < 0.4) {
@@ -302,3 +468,4 @@ export function syncTrapped(root: HTMLElement | null, board: Player[][], walls: 
 export function stopTrapped(root: HTMLElement | null) {
   root?.getAnimations({ subtree: true }).forEach((a) => { if (a.id.startsWith('cage:')) a.cancel(); });
 }
+
