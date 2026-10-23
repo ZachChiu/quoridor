@@ -6,6 +6,7 @@ import { InviteToken } from './bagh-chal/tokens';
 import Button from './Button';
 import { track } from '@/utils/analytics';
 import { useGameText, useMessages } from '@/i18n/LocaleProvider';
+import { DEFAULT_CORNER, type CornerTheme } from './cornerTheme';
 
 /**
  * 對局結束後的意見回饋。
@@ -25,8 +26,8 @@ type Props = {
   onClose: () => void;
   onSubmit: (rating: 1 | 2 | 3 | null, message: string, contact: string) => Promise<void>;
   variant?: 'game' | 'contact';
-  /** 外觀，傳給 Modal（虎羊棋頁用 bagh） */
-  skin?: 'default' | 'bagh';
+  /** 那款遊戲的樣子（見 cornerTheme.ts）。對局後的回饋是 Wall Go 的，不傳 */
+  theme?: CornerTheme;
 };
 
 /*
@@ -39,7 +40,7 @@ const FACES: { value: 1 | 2 | 3; emoji: string }[] = [
   { value: 3, emoji: '🤩' },
 ];
 
-const FeedbackModal: React.FC<Props> = ({ isOpen, onClose, onSubmit, variant = 'game', skin = 'default' }) => {
+const FeedbackModal: React.FC<Props> = ({ isOpen, onClose, onSubmit, variant = 'game', theme }) => {
   const g = useGameText();
   const t = useMessages();
   const closeLabel = t.ui.close;
@@ -57,11 +58,10 @@ const FeedbackModal: React.FC<Props> = ({ isOpen, onClose, onSubmit, variant = '
   }
 
   const isContact = variant === 'contact';
-  // 虎羊棋頁打開的是虎羊棋樣子：蠟封信圓牌、淡沙色的欄位與按鈕（不沿用 Wall Go 的元件）
-  const bagh = skin === 'bagh';
-  const field = bagh
-    ? 'bg-[#f2e4c4] outline-none ring-[#5b6620] focus:ring-2'
-    : 'bg-primary-50 outline-none ring-tile-ink/30 focus:ring-2';
+  // 各遊戲打開的是那款自己的樣子（Zach 10/24）；虎羊棋的圖示是蠟封信圓牌
+  const th = theme ?? DEFAULT_CORNER;
+  const bagh = th.skin === 'bagh';
+  const soft = th.soft ?? 'text-ink-soft';
   // 對局回饋要選評分；聯絡我們評分選填，但至少要寫點什麼
   const canSend = isContact ? message.trim().length > 0 : rating !== null;
   const copy = isContact
@@ -86,23 +86,24 @@ const FeedbackModal: React.FC<Props> = ({ isOpen, onClose, onSubmit, variant = '
 
   return (
     <Modal
-      skin={skin}
+      skin={th.skin}
+      panelClassName={th.panelClassName}
       isOpen={isOpen}
       onClose={onClose}
       title={state === 'sent' ? g.feedback.sent : copy.heading}
       kicker={copy.kicker}
       icon={bagh ? InviteToken : GiChatBubble}
-      band={{ className: bagh ? 'bg-[#4a2616]' : 'bg-tile-purple', fg: 'text-tile-cream' }}
+      band={th.band}
       footer={
         state === 'sent' ? (
-          <Button color="bg-tile-ink text-tile-cream" handleClickEvent={onClose}>{closeLabel}</Button>
+          <Button color={th.primary} handleClickEvent={onClose}>{closeLabel}</Button>
         ) : (
           <>
-            <Button color={bagh ? 'bg-[#f2e4c4] text-tile-ink hover:bg-[#ead8ad]' : 'text-ink-soft hover:bg-tile-ink/[0.06] bg-transparent'} handleClickEvent={onClose}>
+            <Button color={theme ? th.secondary : 'text-ink-soft hover:bg-tile-ink/[0.06] bg-transparent'} handleClickEvent={onClose}>
               {g.feedback.later}
             </Button>
             <Button
-              color={canSend ? 'bg-tile-ink text-tile-cream' : 'bg-tile-ink/20 text-tile-ink/40'}
+              color={canSend ? th.primary : theme ? `${th.secondary} opacity-50` : 'bg-tile-ink/20 text-tile-ink/40'}
               handleClickEvent={submit}
             >
               {state === 'sending' ? g.feedback.sending : g.feedback.submit}
@@ -117,7 +118,7 @@ const FeedbackModal: React.FC<Props> = ({ isOpen, onClose, onSubmit, variant = '
         </p>
       ) : (
         <>
-          {isContact && <p className="mb-2 text-sm font-bold text-ink-soft">{copy.ratingLabel}</p>}
+          {isContact && <p className={`mb-2 text-sm font-bold ${soft}`}>{copy.ratingLabel}</p>}
           <div className="flex gap-2" role="radiogroup" aria-label={copy.ratingLabel}>
             {FACES.map((f) => (
               <button
@@ -128,8 +129,7 @@ const FeedbackModal: React.FC<Props> = ({ isOpen, onClose, onSubmit, variant = '
                 // 聯絡我們的評分是選填：再點一次同一個可以取消
                 onClick={() => setRating(isContact && rating === f.value ? null : f.value)}
                 className={`flex flex-1 flex-col items-center gap-1 rounded-xl py-3 text-sm font-black transition ${
-                  rating === f.value ? 'bg-tile-ink text-tile-cream'
-                    : bagh ? 'bg-[#f2e4c4] text-tile-ink' : 'bg-tile-ink/[0.06] text-ink-soft'
+                  rating === f.value ? th.primary : th.secondary
                 }`}
               >
                 <span className="text-2xl leading-none" aria-hidden="true">{f.emoji}</span>
@@ -144,22 +144,22 @@ const FeedbackModal: React.FC<Props> = ({ isOpen, onClose, onSubmit, variant = '
               value={message}
               onChange={(e) => setMessage(e.target.value.slice(0, 800))}
               rows={3}
-              className={`mt-1.5 w-full resize-none rounded-xl p-3 text-sm ${field}`}
+              className={`mt-1.5 w-full resize-none rounded-xl p-3 text-sm ${th.field}`}
               placeholder={copy.placeholder}
             />
           </label>
 
           <label className="mt-3 block">
-            <span className="text-sm font-bold text-ink-soft">{g.feedback.contactLabel}</span>
+            <span className={`text-sm font-bold ${soft}`}>{g.feedback.contactLabel}</span>
             <input
               value={contact}
               onChange={(e) => setContact(e.target.value.slice(0, 120))}
-              className={`mt-1.5 w-full rounded-xl p-3 text-sm ${field}`}
+              className={`mt-1.5 w-full rounded-xl p-3 text-sm ${th.field}`}
               placeholder={g.feedback.contactPlaceholder}
             />
           </label>
 
-          <p className="mt-3 text-xs leading-relaxed text-ink-soft">
+          <p className={`mt-3 text-xs leading-relaxed ${soft}`}>
             {copy.note}
           </p>
 
