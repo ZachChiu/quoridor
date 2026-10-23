@@ -1,24 +1,25 @@
 'use client';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { GiScales } from 'react-icons/gi';
-import { LuArrowLeft, LuCircleHelp, LuHouse, LuRotateCcw, LuUndo2 } from 'react-icons/lu';
-import Modal from '@/components/Modal';
+import { LuArrowLeft, LuCircleHelp, LuHouse, LuRotateCcw, LuUndo2, LuVolume2, LuVolumeX } from 'react-icons/lu';
+import { ShareResultModal, useShareCard } from '@/components/ShareResultModal';
 import { useTransition } from '@/contexts/TransitionContext';
-import { useMessages } from '@/i18n/LocaleProvider';
+import { useSound } from '@/hook/useSound';
+import { useGameText, useMessages } from '@/i18n/LocaleProvider';
 import { fill, useTextTable } from '@/i18n/gameText';
 import { localePath, type Locale } from '@/i18n/locales';
-import { PLATFORM_HOME } from '@/i18n/routes';
+import { NINE_MENS_MORRIS, PLATFORM_HOME } from '@/i18n/routes';
 import {
-  allInMills, applyMove, cellOf, countOnBoard, createGame, decodeMoves, encodeMoves, lastMills, legalMoves, other, phaseOf,
-  removable, replay, undoPoint, undoTurn, type MorrisState, type Move, type Point, type Side,
+  NEIGHBORS, PIECES, allInMills, applyMove, cellOf, countOnBoard, createGame, decodeMoves, encodeMoves, lastMills, legalMoves, other, phaseOf,
+  removable, replay, sideOf, undoPoint, undoTurn, type MorrisState, type Move, type Point, type Side,
 } from '@/games/nine-mens-morris/engine';
 import { chooseTurn } from '@/games/nine-mens-morris/ai';
 import { TEXT } from '@/games/nine-mens-morris/text';
-import { BlackPieceIcon, MorrisBoard, PieceGlyph, WhitePieceIcon } from './MorrisBoard';
+import { MorrisBoard, PieceGlyph } from './MorrisBoard';
 import MorrisFrame from './MorrisFrame';
-import { MORRIS_BAND, MORRIS_PANEL } from './ui';
 import { MorrisRulesModal } from './MorrisRules';
 import { clearSession, saveSession, type Session } from './session';
+import { drawMorrisCard } from './shareCard';
+import { playMorris } from './sounds';
 
 const LEVELS = ['easy', 'normal', 'hard'] as const;
 
@@ -37,15 +38,17 @@ function restore(session: Session): MorrisState {
  * - 桌機（lg）：棋盤在左，右邊一欄放狀態與有字的按鈕
  *
  * 一個回合可能是兩段：放（走）一手成三之後，同一個人再點一顆對方的子拿掉。
- * 拿子是獨立的一步（engine 的 removing），狀態列的「拿子」亮成羊皮紙色、可以拿的子會發光並帶 ×，
- * 剛連成的那條線用羊皮紙色粗線標出來 —— 新手最容易卡在「成三之後要做什麼」。
+ * 拿子是獨立的一步（engine 的 removing），狀態列的「拿子」亮成朱紅、可以拿的子以腳底為軸搖晃（像快被推倒），
+ * 剛連成的那條線用粉筆畫出來 —— 新手最容易卡在「成三之後要做什麼」。被拿掉的子倒下、躺到棋盤下方。
  *
  * 整頁包在《遊戲之書》的畫框裡（MorrisFrame）：群青底上的字是羊皮紙色，按鈕與狀態卡是羊皮紙、沒有框線。
  */
 export default function MorrisPlay({ locale, session, onMenu }: { locale: Locale; session: Session; onMenu: () => void }) {
   const t = useTextTable(TEXT);
   const m = useMessages();
+  const g = useGameText();
   const { navigate } = useTransition();
+  const { prefs: soundPrefs, setPrefs: setSoundPrefs } = useSound();
   const { mode, showRules } = session;
   const [game, setGame] = useState<MorrisState>(() => restore(session));
   const [selected, setSelected] = useState<Point | null>(null);
@@ -82,6 +85,21 @@ export default function MorrisPlay({ locale, session, onMenu }: { locale: Locale
     return () => window.clearTimeout(id);
   }, [aiTurn, game, mode]);
 
+  // 音效（跟 Wall Go 共用開關）：剛好多一手才響 —— 悔棋、重來、重整接回都不響。九子棋自己的一套見 sounds.ts
+  const heard = useRef(game.history.length);
+  useEffect(() => {
+    const prev = heard.current;
+    heard.current = game.history.length;
+    if (game.history.length !== prev + 1) return;
+    const mv = game.history[game.history.length - 1];
+    playMorris(mv.kind === 'remove' ? 'remove' : mv.kind === 'place' ? 'place' : NEIGHBORS[mv.from].includes(mv.to) ? 'move' : 'fly');
+    if (mv.kind !== 'remove' && lastMills(game).length) window.setTimeout(() => playMorris('mill'), 200);
+    if (game.winner) {
+      const result = game.winner === 'draw' ? 'draw' : !human || game.winner === human ? 'win' : 'lose';
+      window.setTimeout(() => playMorris(result), 700);
+    }
+  }, [game, human]);
+
   const commit = (mv: Move) => { setGame(applyMove(game, mv)); setSelected(null); };
 
   const movable = new Set(legal.flatMap((x) => (x.kind === 'move' ? [x.from] : [])));
@@ -97,7 +115,12 @@ export default function MorrisPlay({ locale, session, onMenu }: { locale: Locale
       if (mv) commit(mv);
       return;
     }
-    if (game.board[p] === cellOf(game.turn)) { setSelected(selected === p || !movable.has(p) ? null : p); return; }
+    if (game.board[p] === cellOf(game.turn)) {
+      const next = selected === p || !movable.has(p) ? null : p;
+      if (next !== null) playMorris('select');
+      setSelected(next);
+      return;
+    }
     const mv = legal.find((x) => x.kind === 'move' && x.from === selected && x.to === p);
     if (mv) commit(mv);
     else setSelected(null);
@@ -116,7 +139,10 @@ export default function MorrisPlay({ locale, session, onMenu }: { locale: Locale
   const step = last?.kind === 'remove' ? prev : last;
   const lastTo = step && step.kind !== 'remove' ? step.to : undefined;
   const lastFrom = step?.kind === 'move' ? step.from : undefined;
-  const lastRemoved = last?.kind === 'remove' ? last.at : undefined;
+  // 被拿掉的是哪一方：拿子前那一手的子（成三的那一顆）還在盤上，它的對手就是被拿的
+  const removedSide = last?.kind === 'remove' && prev && prev.kind !== 'remove' && game.board[prev.to] ? other(sideOf(game.board[prev.to]!)) : undefined;
+  const removedCount = (s: Side) => PIECES - game.inHand[s] - countOnBoard(game.board, s);
+  const removed = { black: removedCount('black'), white: removedCount('white') };
   const mills = lastMills(game);
   // 成三了卻沒進入拿子（節目規則：對方的子全在線上）
   const millNoRemoval = !game.removing && last !== undefined && last.kind !== 'remove' && mills.length > 0;
@@ -158,8 +184,39 @@ export default function MorrisPlay({ locale, session, onMenu }: { locale: Locale
     : selected !== null ? t.hint.moveSelected
     : phase === 'fly' ? t.hint.fly : t.hint.move;
 
+  const endOpen = !!game.winner && closedFor !== game;
+  // 標題本來就是英文名（英文、泰文）就不重複寫兩次
+  const brand = /^[ -~’]+$/.test(t.title) ? t.title : `${t.title} ${t.subtitle}`;
+  const card = {
+    board: game.board, removed,
+    text: {
+      kicker: `${t.title} · ${summary}`,
+      title: resultTitle,
+      reason: resultBody,
+      moves: fill(t.cardMoves, { n: h.filter((x) => x.kind !== 'remove').length }),
+      brand,
+      from: fill(g.share.cardFrom, { show: t.show }),
+      host: new URL(process.env.SITE_URL || 'https://quoridorgame.com').host,
+    },
+  };
+  const font = typeof document === 'undefined' ? 'system-ui' : getComputedStyle(document.documentElement).getPropertyValue('--font-app').trim() || 'system-ui';
+  const share = useShareCard({
+    isOpen: endOpen,
+    draw: drawMorrisCard({ ...card, font }),
+    contentKey: JSON.stringify(card),
+    fileName: 'nine-mens-morris',
+    homePath: localePath(locale, NINE_MENS_MORRIS),
+    campaign: 'nine-mens-morris',
+    fonts: [{ font: `900 40px ${font}`, text: card.text.title + card.text.brand }, { font: `700 40px ${font}`, text: card.text.kicker + card.text.reason + card.text.from + card.text.moves }],
+  });
+
   // 群青底上的按鈕是拱頂的羊皮紙小拱（手抄本插圖框的形狀，globals.css 的 .nmm-arch）
   const round = 'nmm-arch is-small grid size-11 shrink-0 place-items-center pt-1 text-xl disabled:opacity-40';
+  const soundButton = (
+    <button type="button" onClick={() => setSoundPrefs({ sfx: !soundPrefs.sfx })} aria-pressed={soundPrefs.sfx} aria-label={g.sound.button} className={round}>
+      {soundPrefs.sfx ? <LuVolume2 aria-hidden="true" /> : <LuVolumeX aria-hidden="true" />}
+    </button>
+  );
   const wide = 'nmm-arch is-small flex h-12 items-center justify-center gap-2 px-2 pt-1 text-sm font-black disabled:opacity-40';
   const stacked = 'nmm-arch is-small flex h-14 flex-col items-center justify-center gap-0.5 px-1 pt-1.5 text-xs font-black disabled:opacity-40 [&_svg]:text-lg';
 
@@ -210,6 +267,7 @@ export default function MorrisPlay({ locale, session, onMenu }: { locale: Locale
           <h1 className="truncate text-lg font-black leading-tight">{t.title}</h1>
           <p className="text-xs font-bold leading-snug text-[#eee0c4]/80">{summary}</p>
         </div>
+        {soundButton}
         <button type="button" onClick={() => setHelpOpen(true)} aria-label={t.rulesHeading} className={round}><LuCircleHelp aria-hidden="true" /></button>
       </div>
       <div className="mt-3 flex w-full max-w-[520px] flex-col items-center gap-2 lg:hidden">
@@ -218,9 +276,11 @@ export default function MorrisPlay({ locale, session, onMenu }: { locale: Locale
       </div>
 
       {/* 棋盤在剩下的高度裡置中 */}
-      <div className="flex w-full max-w-[520px] flex-1 items-center py-2 lg:max-w-[min(620px,calc(100dvh-5rem))] lg:flex-none lg:py-0">
+      {/* 棋盤比寬多一段（下方放被拿掉的子，106:118），桌機照高度算寬 */}
+      <div className="flex w-full max-w-[500px] flex-1 items-center py-2 lg:max-w-[min(580px,calc((100dvh-5rem)*0.9))] lg:flex-none lg:py-0">
         <MorrisBoard board={game.board} targets={targets} movable={selected === null ? movable : new Set()} removable={removableNow}
-          selected={selected} lastTo={lastTo} lastFrom={lastFrom} lastRemoved={lastRemoved} mills={mills}
+          selected={selected} lastTo={lastTo} lastFrom={lastFrom} mills={mills} removed={removed} last={last} removedSide={removedSide}
+          plies={h.length} idle={game.winner ? null : other(game.turn)} ghost={phase === 'place' && !aiTurn ? game.turn : undefined}
           labels={{ black: t.black, white: t.white, empty: t.empty, remove: t.phase.remove }} onPick={pick} />
       </div>
 
@@ -235,10 +295,11 @@ export default function MorrisPlay({ locale, session, onMenu }: { locale: Locale
       <aside className="hidden w-[340px] shrink-0 flex-col gap-5 lg:flex">
         <div className="flex items-start gap-3">
           <button type="button" onClick={home} aria-label={t.home} className={round}><LuHouse aria-hidden="true" /></button>
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <h1 className="text-3xl font-black leading-none">{t.title}</h1>
             <p className="mt-1.5 text-sm font-bold text-[#eee0c4]/80">{summary}</p>
           </div>
+          {soundButton}
         </div>
         {statusCards}
         {statusLine}
@@ -252,17 +313,15 @@ export default function MorrisPlay({ locale, session, onMenu }: { locale: Locale
 
       <MorrisRulesModal t={t} open={helpOpen} onClose={() => setHelpOpen(false)} showRules={showRules} />
 
-      <Modal isOpen={!!game.winner && closedFor !== game} onClose={() => setClosedFor(game)} title={resultTitle} kicker={t.title}
-        icon={game.winner === 'draw' ? GiScales : game.winner === 'white' ? WhitePieceIcon : BlackPieceIcon}
-        band={MORRIS_BAND} panelClassName={MORRIS_PANEL}
-        footer={
-          <>
-            <button type="button" onClick={onMenu} className="nmm-arch is-small flex-1 pb-3 pt-4 font-black">{t.menu}</button>
-            <button type="button" onClick={restart} className="nmm-arch is-small is-red flex-1 pb-3 pt-4 font-black">{t.again}</button>
-          </>
-        }>
-        <p className="text-sm leading-relaxed text-[#1e120a]">{resultBody}</p>
-      </Modal>
+      {/* 結算就是分享圖（Zach 10/24：每款都要有結尾的可分享畫面），圖長得像這款自己的頁面（shareCard.ts）；
+          關掉就留在終局的盤面上看，換模式在頁面上 */}
+      <ShareResultModal isOpen={endOpen} onClose={() => setClosedFor(game)} title={resultTitle} card={share}
+        onRestart={restart} restartLabel={t.again} srText={`${resultBody} ${card.text.moves}`} frameClassName="rounded-[3px]"
+        classes={{
+          primary: 'nmm-arch is-small is-red', secondary: 'nmm-arch is-small',
+          toggle: 'bg-[#eee0c4]/15', toggleOn: 'bg-[#eee0c4] text-[#1e120a]', toggleOff: 'text-[#eee0c4]/75 hover:text-[#eee0c4]',
+          button: 'pb-3 pt-4 font-black', placeholder: 'bg-[#4b4577]/70',
+        }} />
     </MorrisFrame>
   );
 }

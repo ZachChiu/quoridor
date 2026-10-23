@@ -70,6 +70,12 @@ export type MorrisText = {
   showRulesDetail: string;
   /** 讀屏念的空點 */
   empty: string;
+  /** 規則最後一段：名字的由來（Zach 10/24：遊戲命名用 Netflix 版本，在規則裡介紹） */
+  nameNote: string;
+  /** 結算分享圖：這款出自第 1 季，「靈感來自《…》」寫第 1 季的節目名（共用的 showName 是第 2 季的） */
+  show: string;
+  /** 結算分享圖：走了幾手 */
+  cardMoves: string;
 };
 
 export const TEXT = {
@@ -105,7 +111,7 @@ export const TEXT = {
       move: '選一顆子，沿線走到相鄰的空點',
       moveSelected: '點標出來的點，把子走過去',
       fly: '只剩 3 顆：選一顆子，可以飛到任何空點',
-      remove: '連成一線！點一顆發光的對方棋子拿掉',
+      remove: '連成一線！點一顆搖搖晃晃的對方棋子拿掉',
       removeAny: '對方的子都在線上，這次可以拿線上的子',
       noRemoval: '連成一線，但對方的子都在線上，這次不能拿',
       aiRemoving: 'AI 連成一線，正在挑要拿哪一顆',
@@ -139,6 +145,9 @@ export const TEXT = {
     ],
     showRulesDetail: '節目規則：對方連成一線的子一律不能拿；有人剩 3 顆之後，雙方各走 10 手都沒有人被拿子，子少的一方輸（一樣多就和局）。',
     empty: '空點',
+    nameNote: '名字：節目裡的中文就叫「九子棋」（中文維基寫「直棋」）。英文 Nine Men\'s Morris 的 morris，一般認為是從拉丁文 merellus（棋子）訛變來的。首頁那幅插圖出自 1283 年西班牙阿方索十世的《遊戲之書》。',
+    show: '魔鬼的計謀',
+    cardMoves: '共 {n} 手',
   },
   en: {
     title: "Nine Men's Morris",
@@ -172,7 +181,7 @@ export const TEXT = {
       move: 'Pick a piece and slide it along a line to an empty neighbor',
       moveSelected: 'Tap a marked point to move there',
       fly: 'Down to 3 pieces: pick one and fly it to any empty point',
-      remove: 'Mill! Tap a glowing opponent piece to remove it',
+      remove: 'Mill! Tap a wobbling opponent piece to remove it',
       removeAny: 'All their pieces are in mills, so you may take one from a mill',
       noRemoval: 'A mill, but all their pieces are in mills, so nothing can be taken',
       aiRemoving: 'The AI made a mill and is choosing a piece to take',
@@ -206,6 +215,9 @@ export const TEXT = {
     ],
     showRulesDetail: 'Show rules: pieces in a mill can never be taken. Once someone is down to 3 pieces, if 10 rounds pass without a capture, the side with fewer pieces loses (equal pieces is a draw).',
     empty: 'empty point',
+    nameNote: 'The name: the Chinese subtitles call it 九子棋, “nine-piece chess”. The “morris” in Nine Men\'s Morris is usually traced to the Latin merellus, a gaming piece. The picture on the home page comes from Alfonso X\'s Book of Games (1283).',
+    show: 'The Devil\'s Plan',
+    cardMoves: '{n} moves',
   },
   ja: {
     title: 'ナイン・メンズ・モリス',
@@ -239,7 +251,7 @@ export const TEXT = {
       move: '駒を選んで、線に沿って隣の空いている点へ動かす',
       moveSelected: '印のついた点をタップして動かす',
       fly: '残り3個：駒を選んで、どの空いている点へも飛べる',
-      remove: '3つ並んだ！光っている相手の駒をタップして取る',
+      remove: '3つ並んだ！ぐらぐら揺れている相手の駒をタップして取る',
       removeAny: '相手の駒がすべて並んでいるので、並んでいる駒も取れる',
       noRemoval: '3つ並んだが、相手の駒がすべて並んでいるので取れない',
       aiRemoving: 'AIが3つ並べて、取る駒を選んでいます',
@@ -273,6 +285,9 @@ export const TEXT = {
     ],
     showRulesDetail: '番組ルール：並んでいる駒は決して取れません。誰かが残り3個になってから、10ラウンド（お互い10手）駒が取られなければ、駒の少ない方の負けです（同数なら引き分け）。',
     empty: '空き',
+    nameNote: '名前：英語名 Nine Men\'s Morris の「モリス」は、ラテン語の merellus（駒）がなまったものとされています。トップページの絵はアルフォンソ10世の『遊戯の書』（1283年）から。',
+    show: '悪魔の計略 ～デビルズ・プラン～',
+    cardMoves: '{n} 手',
   },
   ko: {
     title: '나인 멘스 모리스',
@@ -306,7 +321,7 @@ export const TEXT = {
       move: '말을 골라 선을 따라 옆의 빈 점으로 옮기세요',
       moveSelected: '표시된 점을 눌러 옮기세요',
       fly: '말이 3개 남았어요: 말을 골라 아무 빈 점으로나 날아갈 수 있어요',
-      remove: '한 줄 완성! 빛나는 상대 말을 눌러 가져오세요',
+      remove: '한 줄 완성! 흔들리는 상대 말을 눌러 가져오세요',
       removeAny: '상대 말이 모두 줄에 있어서 줄에 있는 말도 가져올 수 있어요',
       noRemoval: '한 줄을 만들었지만 상대 말이 모두 줄에 있어서 가져올 수 없어요',
       aiRemoving: 'AI가 한 줄을 만들어 가져올 말을 고르는 중이에요',
@@ -340,6 +355,9 @@ export const TEXT = {
     ],
     showRulesDetail: '방송 규칙: 한 줄로 이어진 말은 절대 가져올 수 없습니다. 누군가 3개가 된 뒤 양쪽이 10수씩 두는 동안 아무도 말을 잃지 않으면 말이 적은 쪽이 집니다(같으면 무승부).',
     empty: '빈 점',
+    nameNote: '이름: 영어 이름 Nine Men\'s Morris의 ‘모리스’는 라틴어 merellus(말)가 변한 것으로 알려져 있습니다. 첫 화면의 그림은 알폰소 10세의 『놀이의 책』(1283)에서 가져왔습니다.',
+    show: '데블스 플랜',
+    cardMoves: '{n}수',
   },
   'zh-Hans': {
     title: '九子棋',
@@ -373,7 +391,7 @@ export const TEXT = {
       move: '选一枚棋子，沿线走到相邻的空点',
       moveSelected: '点标出来的点，把棋子走过去',
       fly: '只剩 3 枚：选一枚棋子，可以飞到任何空点',
-      remove: '连成一线！点一枚发光的对方棋子拿掉',
+      remove: '连成一线！点一枚摇摇晃晃的对方棋子拿掉',
       removeAny: '对方的棋子都在线上，这次可以拿线上的棋子',
       noRemoval: '连成一线，但对方的棋子都在线上，这次不能拿',
       aiRemoving: 'AI 连成一线，正在挑要拿哪一枚',
@@ -407,6 +425,9 @@ export const TEXT = {
     ],
     showRulesDetail: '节目规则：对方连成一线的棋子一律不能拿；有人剩 3 枚之后，双方各走 10 步都没有人被拿子，棋子少的一方输（一样多就和局）。',
     empty: '空点',
+    nameNote: '名字：节目里的中文就叫“九子棋”（中文维基写“直棋”）。英文 Nine Men\'s Morris 的 morris，一般认为是从拉丁文 merellus（棋子）讹变来的。首页那幅插图出自 1283 年西班牙阿方索十世的《游戏之书》。',
+    show: '魔鬼的计谋',
+    cardMoves: '共 {n} 步',
   },
   th: {
     title: "Nine Men's Morris",
@@ -440,7 +461,7 @@ export const TEXT = {
       move: 'เลือกหมาก แล้วเดินตามเส้นไปยังจุดว่างที่อยู่ติดกัน',
       moveSelected: 'แตะจุดที่มีเครื่องหมายเพื่อเดินไปที่นั่น',
       fly: 'เหลือ 3 ตัว: เลือกหมากแล้วบินไปจุดว่างไหนก็ได้',
-      remove: 'เรียงครบ 3 ตัวแล้ว! แตะหมากของอีกฝ่ายที่เรืองแสงเพื่อหยิบออก',
+      remove: 'เรียงครบ 3 ตัวแล้ว! แตะหมากของอีกฝ่ายที่กำลังโยกเยกเพื่อหยิบออก',
       removeAny: 'หมากของอีกฝ่ายเรียงอยู่ทุกตัว ครั้งนี้หยิบตัวที่เรียงอยู่ได้',
       noRemoval: 'เรียงครบ 3 ตัว แต่หมากของอีกฝ่ายเรียงอยู่ทุกตัว จึงหยิบไม่ได้',
       aiRemoving: 'AI เรียงครบ 3 ตัว กำลังเลือกหมากที่จะหยิบ',
@@ -474,5 +495,8 @@ export const TEXT = {
     ],
     showRulesDetail: 'กติกาในรายการ: หมากที่เรียงครบ 3 ตัวหยิบไม่ได้เลย เมื่อมีฝ่ายใดเหลือ 3 ตัว ถ้าทั้งสองฝ่ายเดินคนละ 10 ตาโดยไม่มีใครเสียหมาก ฝ่ายที่มีหมากน้อยกว่าจะแพ้ (ถ้าเท่ากันถือว่าเสมอ)',
     empty: 'จุดว่าง',
+    nameNote: 'ชื่อ: คำว่า morris ใน Nine Men\'s Morris เชื่อกันว่าเพี้ยนมาจากคำละติน merellus (ตัวหมาก) ภาพที่หน้าแรกมาจาก “หนังสือแห่งเกม” ของพระเจ้าอัลฟองโซที่ 10 (ค.ศ. 1283)',
+    show: 'The Devil\'s Plan',
+    cardMoves: '{n} ตา',
   },
 } satisfies TextTable<MorrisText>;

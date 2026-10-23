@@ -198,6 +198,7 @@ nudge { by, at }          最近一次「催一下」
   各分支改的是自己那一段，依序合併才不會衝突（globals.css 底部的五個標記、catalog.ts 的寫法也是同一個道理）。
 
   - 九子棋（`feat/game-nine-mens-morris`）：原件是《遊戲之書》（1283）的插圖；最外緣朱紅框、四角小方塊裡一朵四瓣小花（`.nmm-frame`；原本畫叉，右上角像關閉鈕，換掉了），群青底撒白點（`.nmm-field`）；主視覺是插圖 `libro.webp`、Grenze Gotisch 字標。
+    10/24 棋盤照插圖做（Zach：「棋盤可以跟視覺圖一樣」）：木頭上的深淺斑（feTurbulence）、線是嵌進去的淺金色木條、下方多一段木頭放被拿掉的子；棋子是插圖裡側面看的鐘形小人（形狀在 `art.ts`，分享圖共用）。拿子不畫紅色 ×，改成可以拿的子以腳底為軸搖晃（`.nmm-teeter`）。音效是骨棋子碰木頭＋撥弦琴（`sounds.ts`），等的那一方會鞠躬、用肩膀頂人（`idleMotion.ts`），結算是分享圖（`shareCard.ts`），右上角彈窗用 `MORRIS_CORNER`。
 
   - 盲眼五子棋：試做中，視覺在 `feat/game-blind-gomoku`。
 
