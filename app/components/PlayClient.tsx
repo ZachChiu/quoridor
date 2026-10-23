@@ -17,7 +17,7 @@ import { useSound } from "@/hook/useSound";
 import { buzz, playSfx } from "@/utils/sound";
 import SoundButton from "@/components/SoundButton";
 import { type ShareCardInput } from "@/components/ResultCard";
-import { fmtClock, type LiveClock } from "@/utils/clock";
+import { type LiveClock } from "@/utils/clock";
 import type { GhostWall } from "@/components/Chessboard";
 import { playerKeys } from "@/game/territory";
 import { playerVar } from "@/config/players";
@@ -560,9 +560,6 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
     }), 0);
     return () => clearTimeout(id);
   }, [clockPlayer, started, isOnline, saveKey]);
-  const clockMs = isOnline ? room?.clock : localClock.acc;
-  // 整局時長＝各方加起來（輪到誰誰就在走秒，見 utils/clock.ts）
-  const totalMs = clockMs ? Object.values(clockMs).reduce((a, b) => a + (b ?? 0), 0) : 0;
 
   // 對局中走秒的時鐘，交給比分那塊自己每秒更新（不讓整個 PlayClient 每秒重畫）
   const roomTurnAt = room?.turnAt;
@@ -585,11 +582,10 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
     winners: outcome as (PlayerKey | 'draw')[],
     owned: Object.fromEntries(playerKeys(playersNum).map((p) => [p, territories.owned[p]?.length ?? 0])),
     me,
-    total: totalMs ? fmtClock(totalMs) : undefined,
     modeLabel: isOnline ? t.online.metaTitle
       : aiDifficulty ? `${t.home.solo} · ${t.solo[aiDifficulty === 'easy' ? 'level1' : aiDifficulty === 'normal' ? 'level2' : 'level3']}`
       : t.local.metaTitle,
-  }), [state, territories, totalMs, outcome, playersNum, me, isOnline, aiDifficulty, t]);
+  }), [state, territories, outcome, playersNum, me, isOnline, aiDifficulty, t]);
 
   // 「已經動過」= 這一回合有動作、或步數被用掉、或選了棋子。三者任一成立，「重來」就該是可按的。
   const turnDirty = state.currentTurnActions.length > 0 || state.remainSteps < 2 || !!state.selected;

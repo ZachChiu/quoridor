@@ -63,7 +63,7 @@ export type GameText = {
   sound: { button: string; sfx: string; music: string };
   /** 連線時催輪到的人。received 是被催的那邊看到的 */
   nudge: { button: string; sent: string; received: string };
-  /** 累計思考時間（不限時，只記錄）；total 是整局時長，寫在桌機比分底下與分享圖上方那行 */
+  /** 累計思考時間（不限時，只記錄）；total 是整局時長，寫在桌機比分底下（Zach 10/23 從四種寫法挑「對局時長」） */
   clock: { label: string; total: string };
   waiting: { kicker: string; heading: string; invite: string };
   breakWall: { heading: string; kicker: string; cancel: string; confirm: string; body: string };
@@ -142,7 +142,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
     },
     sound: { button: '聲音', sfx: '音效', music: '音樂' },
     nudge: { button: '催一下', sent: '催了！', received: '{who}在催你' },
-    clock: { label: '思考時間', total: '整局' },
+    clock: { label: '思考時間', total: '對局時長' },
     waiting: { kicker: '連線對戰', heading: '等朋友進來', invite: '邀請朋友加入' },
     breakWall: {
       heading: '要打破這面牆嗎', kicker: '每人只有一次', cancel: '取消', confirm: '破牆',
@@ -225,7 +225,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
     },
     sound: { button: 'Sound', sfx: 'Sound effects', music: 'Music' },
     nudge: { button: 'Nudge', sent: 'Nudged!', received: '{who} is nudging you' },
-    clock: { label: 'Thinking time', total: 'Total' },
+    clock: { label: 'Thinking time', total: 'Game time' },
     waiting: { kicker: 'Online play', heading: 'Waiting for a friend', invite: 'Invite a friend' },
     breakWall: {
       heading: 'Break this wall?', kicker: 'Once per game', cancel: 'Cancel', confirm: 'Break it',
@@ -308,7 +308,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
     },
     sound: { button: 'サウンド', sfx: '効果音', music: '音楽' },
     nudge: { button: 'せかす', sent: 'せかしました', received: '{who}がせかしています' },
-    clock: { label: '考えた時間', total: '合計' },
+    clock: { label: '考えた時間', total: '対局時間' },
     waiting: { kicker: 'オンライン対戦', heading: '友だちを待っています', invite: '友だちを招待' },
     breakWall: {
       heading: 'この壁を壊しますか？', kicker: '1ゲームに1回だけ', cancel: 'やめる', confirm: '壊す',
@@ -391,7 +391,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
     },
     sound: { button: '소리', sfx: '효과음', music: '음악' },
     nudge: { button: '재촉하기', sent: '재촉했어요', received: '{who} 쪽이 재촉해요' },
-    clock: { label: '생각한 시간', total: '총' },
+    clock: { label: '생각한 시간', total: '대국 시간' },
     waiting: { kicker: '온라인 대전', heading: '친구를 기다리는 중', invite: '친구 초대하기' },
     breakWall: {
       heading: '이 벽을 부술까요?', kicker: '한 게임에 한 번만', cancel: '취소', confirm: '부수기',
@@ -478,7 +478,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
     },
     sound: { button: '声音', sfx: '音效', music: '音乐' },
     nudge: { button: '催一下', sent: '催了！', received: '{who}在催你' },
-    clock: { label: '思考时间', total: '整局' },
+    clock: { label: '思考时间', total: '对局时长' },
     waiting: { kicker: '联机对战', heading: '等朋友进来', invite: '邀请朋友加入' },
     breakWall: {
       heading: '要拆掉这道墙吗', kicker: '每人只有一次', cancel: '取消', confirm: '破墙',
@@ -566,7 +566,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
     },
     sound: { button: 'เสียง', sfx: 'เสียงเอฟเฟกต์', music: 'เพลง' },
     nudge: { button: 'เร่งหน่อย', sent: 'เร่งแล้ว!', received: '{who}กำลังเร่งคุณ' },
-    clock: { label: 'เวลาคิด', total: 'รวม' },
+    clock: { label: 'เวลาคิด', total: 'เวลาทั้งเกม' },
     waiting: { kicker: 'เล่นออนไลน์', heading: 'รอเพื่อนเข้าห้อง', invite: 'ชวนเพื่อนมาเล่น' },
     breakWall: {
       heading: 'จะทำลายกำแพงนี้ไหม', kicker: 'ทำได้คนละครั้งเดียว', cancel: 'ยกเลิก', confirm: 'ทำลายกำแพง',

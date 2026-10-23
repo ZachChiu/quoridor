@@ -22,7 +22,7 @@ import { useGameText } from '@/i18n/LocaleProvider';
 import { fmt } from '@/i18n/content/game';
 import { isCursorKey, nearestEmpty, nextCursor, nextEmptyCell } from '@/components/boardCursor';
 import { NEUTRAL_FILL } from '@/components/neutralZone';
-import { playIdle, stopIdle, type IdleScene } from '@/components/idleMotion';
+import { playIdle, stopIdle, stopTrapped, syncTrapped, type IdleScene } from '@/components/idleMotion';
 
 /** 對手還沒蓋下去、正在考慮的那道牆（連線時即時看到）。dir：H＝那一格的下緣、V＝右緣 */
 export type GhostWall = { row: number; col: number; dir: 'H' | 'V'; color: string };
@@ -199,6 +199,15 @@ export default React.memo(function Chessboard({
   });
   // 換人的那一下，還在晃的停掉 —— 不然剛輪到的人，自己的棋子可能正在撞牆
   useEffect(() => { stopIdle(frameRef.current); }, [still]);
+  // 四面都是牆的棋子一直想出去（不管輪到誰，見 idleMotion.ts 的 syncTrapped）
+  useEffect(() => {
+    if (reducedMotion()) return;
+    syncTrapped(frameRef.current, board, { h: horizontalWalls, v: verticalWalls });
+  }, [board, horizontalWalls, verticalWalls]);
+  useEffect(() => {
+    const root = frameRef.current;
+    return () => stopTrapped(root);
+  }, []);
   useEffect(() => {
     if (reducedMotion()) return;
     let timer = 0;

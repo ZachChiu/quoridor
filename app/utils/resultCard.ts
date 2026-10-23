@@ -210,7 +210,7 @@ function scores(ctx: CanvasRenderingContext2D, d: ResultCardData, cx: number, y:
       ctx.globalAlpha = 1;
     }
     const pad = h * (won ? 0.3 : 0.56);
-    // 各自想了多久不寫在圖上（Zach 10/23：「結果畫面不用有個人花多久下棋」），只在上方小字寫整局多久
+    // 時間（各自想了多久、整局多久）都不寫在圖上（Zach 10/23：「結果畫面不用有個人花多久下棋」「對局時間都不用到結尾」）
     text(ctx, d.font, d.text.players[player], x + pad, y + h * 0.62, { size: Math.round(h * 0.3), color: fg, max: w * 0.5 });
     const sq = text(ctx, d.font, d.text.squares, x + w - h * 0.28, y + h * 0.66, { size: Math.round(h * 0.2), weight: 700, color: fg, align: 'right' });
     ctx.font = `700 ${sq}px ${d.font}`;

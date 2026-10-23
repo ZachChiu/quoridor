@@ -13,6 +13,9 @@ import type { Player } from '@/game/types';
  * 只算玩家蓋的牆，不算棋盤外圈：外圈那道深色框不會被推動，推它看起來像卡住。
  *
  * 只動等待那一方的棋子，輪到的人的棋子不動（`still`，Zach 10/23）。
+ *
+ * 例外：**四面都是牆、被關在一格裡的棋子一直在動**，想出去（Zach 10/23：「他可以隨時都在動嗎，想要出去的那種狀態」）——
+ * 不管輪到誰都動（那顆本來就不能選、不能走，不會干擾正在下的人）。見 syncTrapped。
  */
 
 type Side = { dx: number; dy: number; wall: string };
@@ -160,9 +163,10 @@ const pick = <T,>(list: T[]) => list[Math.floor(Math.random() * list.length)];
 export function playIdle(root: HTMLElement | null, { board, walls, skip, still }: IdleScene) {
   if (!root) return;
   const cand: { key: string; sides: Side[] }[] = [];
+  const caged = new Set(trappedCells(board, walls));
   board.forEach((row, r) => row.forEach((p, c) => {
     const key = `${r},${c}`;
-    if (!p || p === still || skip.includes(key)) return;
+    if (!p || p === still || skip.includes(key) || caged.has(key)) return;
     const s = sides(r, c, walls);
     if (s.length) cand.push({ key, sides: s });
   }));
@@ -190,4 +194,111 @@ export function playIdle(root: HTMLElement | null, { board, walls, skip, still }
 /** 把盤面上還在播的閒置動作全部停掉（棋子與牆回到原位） */
 export function stopIdle(root: HTMLElement | null) {
   root?.getAnimations({ subtree: true }).forEach((a) => { if (a.id === 'idle') a.cancel(); });
+}
+
+// ─── 被關在一格裡的棋子：一直想出去 ───────────────────────────────────────────
+
+/** 四面都是牆的格子（棋盤外緣本身就算一道牆）。只回傳上面有棋子的 */
+export function trappedCells(board: Player[][], { h, v }: Walls): string[] {
+  const n = board.length;
+  const out: string[] = [];
+  board.forEach((row, r) => row.forEach((p, c) => {
+    if (!p) return;
+    const up = r === 0 || !!h[r - 1]?.[c];
+    const down = r === n - 1 || !!h[r]?.[c];
+    const left = c === 0 || !!v[r]?.[c - 1];
+    const right = c === n - 1 || !!v[r]?.[c];
+    if (up && down && left && right) out.push(`${r},${c}`);
+  }));
+  return out;
+}
+
+const DIRS = [{ dx: 0, dy: -1 }, { dx: 1, dy: 0 }, { dx: 0, dy: 1 }, { dx: -1, dy: 0 }];
+
+/**
+ * 一圈「想出去」的動作：四個方向各撞一次（順序每顆隨機），其中一邊連撞兩下、一邊伸長探一下，中間喘口氣。
+ * 撞到的如果是玩家蓋的牆，那道牆跟著被撞出去一點；外框推不動，只有棋子扁掉。
+ * 棋子與牆的動畫同一個長度、同時開始、無限循環，所以一直對得上。
+ */
+function cageLoop(r: number, c: number, walls: Walls) {
+  const order = [...DIRS].sort(() => Math.random() - 0.5);
+  const piece: Keyframe[] = [{ translate: '0% 0%', scale: '1 1', offset: 0 }];
+  const wallKf = new Map<string, Keyframe[]>();
+  const wallAt = ({ dx, dy }: { dx: number; dy: number }) =>
+    dy === -1 ? (r > 0 && walls.h[r - 1]?.[c] ? `h:${r - 1},${c}` : null)
+      : dy === 1 ? (walls.h[r]?.[c] ? `h:${r},${c}` : null)
+        : dx === -1 ? (c > 0 && walls.v[r]?.[c - 1] ? `v:${r},${c - 1}` : null)
+          : (walls.v[r]?.[c] ? `v:${r},${c}` : null);
+  const jolt = (id: string | null, at: number, px: number, d: { dx: number; dy: number }) => {
+    if (!id) return;
+    const list = wallKf.get(id) ?? [{ translate: '0px 0px', offset: 0 }];
+    const W = (k: number) => `${d.dx * k}px ${d.dy * k}px`;
+    list.push({ translate: W(0), offset: at - 0.005 }, { translate: W(px), offset: at + 0.01 }, { translate: W(-1), offset: at + 0.025 }, { translate: W(0), offset: at + 0.04 });
+    wallKf.set(id, list);
+  };
+  // 每一段佔整圈的 0.25：前面是動作、後面停一下
+  order.forEach((d, i) => {
+    const { T, S } = kit({ ...d, wall: '' });
+    const o = i * 0.25;
+    if (i === 1) {
+      // 連撞兩下
+      piece.push(
+        { translate: T(-6), scale: S(1.05, 0.96), offset: o + 0.04 },
+        { translate: T(30), scale: S(0.74, 1.18), offset: o + 0.07 },
+        { translate: T(8), scale: S(1, 1), offset: o + 0.1 },
+        { translate: T(31), scale: S(0.72, 1.2), offset: o + 0.13 },
+        { translate: T(-4), scale: S(1.06, 0.95), offset: o + 0.17 },
+        { translate: '0% 0%', scale: '1 1', offset: o + 0.21 },
+      );
+      jolt(wallAt(d), o + 0.07, 3, d);
+      jolt(wallAt(d), o + 0.13, 4, d);
+    } else if (i === 2) {
+      // 伸長探一下，看看有沒有縫
+      piece.push(
+        { translate: T(18), scale: S(1.2, 0.86), offset: o + 0.07 },
+        { translate: T(22), scale: S(1.24, 0.84), offset: o + 0.14 },
+        { translate: '0% 0%', scale: '1 1', offset: o + 0.21 },
+      );
+    } else {
+      // 蓄力、衝過去撞扁、彈回來
+      piece.push(
+        { translate: T(-10), scale: S(1.06, 0.95), offset: o + 0.05 },
+        { translate: T(31), scale: S(0.7, 1.2), offset: o + 0.09 },
+        { translate: T(-5), scale: S(1.07, 0.95), offset: o + 0.14 },
+        { translate: '0% 0%', scale: '1 1', offset: o + 0.19 },
+      );
+      jolt(wallAt(d), o + 0.09, 5, d);
+    }
+  });
+  piece.push({ translate: '0% 0%', scale: '1 1', offset: 1 });
+  for (const list of wallKf.values()) list.push({ translate: '0px 0px', offset: 1 });
+  return { piece, walls: wallKf, duration: 5200 + Math.round(Math.random() * 1200) };
+}
+
+/**
+ * 讓被關住的棋子一直動、不再被關住的停下來。盤面每變一次就呼叫一次（已經在動的不重來）。
+ * 動畫的 id 是 `cage:r,c`，閒置動作（id 'idle'）與 stopIdle 都不會碰到它。
+ */
+export function syncTrapped(root: HTMLElement | null, board: Player[][], walls: Walls) {
+  if (!root) return;
+  const want = new Set(trappedCells(board, walls));
+  // 先停掉不該動的（牆被破掉、換了一局）
+  for (const a of root.getAnimations({ subtree: true })) {
+    const key = a.id.startsWith('cage:') ? a.id.slice(5) : null;
+    if (key && !want.has(key)) a.cancel();
+  }
+  for (const key of want) {
+    const piece = root.querySelector<HTMLElement>(`[data-cell="${key}"] [data-piece]`);
+    if (!piece || piece.getAnimations().some((a) => a.id === `cage:${key}`)) continue;
+    const [r, c] = key.split(',').map(Number);
+    const m = cageLoop(r, c, walls);
+    const opts = { duration: m.duration, iterations: Infinity, easing: 'ease-in-out', id: `cage:${key}` };
+    piece.animate(m.piece, opts);
+    for (const [id, kf] of m.walls) root.querySelector<HTMLElement>(`[data-wall="${id}"]`)?.animate(kf, opts);
+  }
+}
+
+/** 全部停掉（離開頁面、減少動態效果） */
+export function stopTrapped(root: HTMLElement | null) {
+  root?.getAnimations({ subtree: true }).forEach((a) => { if (a.id.startsWith('cage:')) a.cancel(); });
 }
