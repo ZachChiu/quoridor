@@ -75,6 +75,7 @@ zh-TW 不加前綴（`app/(default)/`），en / ja / ko / zh-Hans / th 加前綴
 重點：
 - 7×7 棋盤（`Player[][]`），`horizontalWalls[][]` 與 `verticalWalls[][]` 分開存
 - `computeTerritories()` 對整盤做**單次**連通區塊掃描（非逐棋子 BFS），同時算出中立區
+- **凍結區域**（不同人的棋子關在一起、誰都動不了，也不能原地蓋牆切開）：每顆棋子算自己站的那一格（`TerritoryResult.frozen`，2026-10-24 Zach 遇到紅藍各一顆封在同一個兩格口袋，選了「只改計分」而不是「允許原地蓋牆」）。走法、跳過、終局判定都沒變 —— `shouldSkipTurn` 刻意仍把那一格當成不是自己的地，改了會讓舊棋譜重播出來的輪次跟舊版客戶端對不上（改版時用 1500 局隨機對局比對過新舊引擎的輪次、跳過、終局、合法手完全一致）
 - `skipUnplayable()` 自動跳過已無法影響結果的玩家。跳過不寫入棋譜，完全由盤面推導，故各客戶端結果一致；`replay()` 結尾也必須套用它
 - `replay(wgf, upToTurn?)` 從空棋盤重建，`upToTurn` 供悔棋與逐步回放使用
 - 三人模式破牆機制：`breakWallCount`，每位玩家最多 1 次；確認 UI 使用 `app/hook/useConfirm.tsx`
