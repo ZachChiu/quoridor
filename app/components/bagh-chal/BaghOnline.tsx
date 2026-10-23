@@ -142,17 +142,7 @@ function Session({ locale, hash }: { locale: Locale; hash: string }) {
       </BaghFrame>
     );
   }
-  if (!roomId || !me || !room) {
-    // 不用共用的 Connecting：那是 Wall Go 的紙色面板加紅藍兩顆棋子（v26.10.5），放在虎羊棋裡顏色不對。這裡維持一顆小轉圈加一行字
-    return (
-      <BaghFrame variant="play" className="items-center justify-center">
-        <div className="flex items-center gap-3 text-lg" role="status">
-          <div className="size-4 animate-spin rounded-full border-2 border-tile-ink border-t-transparent" aria-hidden="true" />
-          {g.play.connecting}
-        </div>
-      </BaghFrame>
-    );
-  }
+  if (!roomId || !me || !room) return <Connecting />;
 
   if (!room.players?.[other(me)]) {
     return <Waiting me={me} url={`${location.origin}${location.pathname}#roomId=${roomId}`} home={home} />;
@@ -160,16 +150,42 @@ function Session({ locale, hash }: { locale: Locale; hash: string }) {
   return <BaghPlay locale={locale} mode={{ kind: 'online', human: me, game, onMove, newRoom }} />;
 }
 
-/** 等對方加入：連結、複製、分享。整頁都是這一件事，所以不是彈窗 */
+/**
+ * 連線中：一隻老虎、一隻羊面對面輪流浮起來。不用共用的 Connecting（那是 Wall Go 的紙色面板加紅藍兩顆棋子），
+ * 原本這裡是一顆小轉圈加一行字，Zach 10/24：一開始連線中希望可以改好看一點。
+ */
+function Connecting() {
+  const b = useMessages().baghChal;
+  const g = useGameText();
+  return (
+    <BaghFrame variant="play" className="items-center justify-center">
+      <div className="flex flex-col items-center gap-5" role="status">
+        <div className="flex items-center gap-4" aria-hidden="true">
+          <TigerToken className="text-[clamp(72px,20vw,96px)] motion-safe:animate-[bagh-bob_1.6s_ease-in-out_infinite]" />
+          <span className="text-base font-black text-ink-soft">{b.versus}</span>
+          <GoatToken className="text-[clamp(72px,20vw,96px)] motion-safe:animate-[bagh-bob_1.6s_ease-in-out_-0.8s_infinite]" />
+        </div>
+        <p className="text-base font-black">{g.play.connecting}</p>
+      </div>
+    </BaghFrame>
+  );
+}
+
+/**
+ * 等對方加入：整頁都是這一件事，所以不是彈窗。
+ * 上面是自己（多一圈自己顏色的框，中間留一道縫，跟對局的狀態卡一樣）對上還沒來的對方（淡淡的、輕輕浮著），
+ * 下面是標題、連結與分享。原本是一排小字靠左擠在大面板中間，Zach 10/24：偏醜、沒有整體風格。
+ */
 function Waiting({ me, url, home }: { me: Side; url: string; home: string }) {
   const b = useMessages().baghChal;
   const g = useGameText();
   const canShare = useWebShare();
   const [copied, setCopied] = useState(false);
   const name = (s: Side) => (s === 'tiger' ? b.tiger : b.goat);
-  const Icon = me === 'tiger' ? TigerToken : GoatToken;
-  // 等的是對方那一邊：用對方的圓牌輕輕閃，不用 Wall Go 等候室的虛線轉圈
+  const Me = me === 'tiger' ? TigerToken : GoatToken;
   const Them = other(me) === 'tiger' ? TigerToken : GoatToken;
+  const ring = me === 'tiger' ? 'ring-[#e3a43c]' : 'ring-[#5b6620]';
+  const token = 'text-[clamp(84px,24vw,112px)]';
 
   const copy = async () => {
     try { await navigator.clipboard.writeText(url); } catch { return; }
@@ -180,35 +196,43 @@ function Waiting({ me, url, home }: { me: Side; url: string; home: string }) {
   return (
     <BaghFrame variant="play">
     <div className="flex flex-1 items-center justify-center px-5 py-8">
-      <div className="flex w-full max-w-[420px] flex-col gap-5">
-        <div className="flex items-center gap-3">
-          <Icon className="shrink-0 text-[56px]" />
-          <div>
-            <p className="text-sm font-bold text-ink-soft">{b.title} · {b.onlineTitle}</p>
-            <h1 className="text-2xl font-black leading-tight">{b.inviteHeading}</h1>
+      <div className="flex w-full max-w-[440px] flex-col items-center gap-7 text-center">
+        <div className="flex items-start gap-[clamp(14px,5vw,32px)]">
+          <div className="flex flex-col items-center gap-2.5">
+            <span className={`rounded-full ring ring-offset-4 ring-offset-[#fbf4e1] ${ring}`}><Me className={`block ${token}`} /></span>
+            <span className="text-sm font-black">{name(me)}</span>
+          </div>
+          <span className="mt-[clamp(32px,10vw,46px)] text-lg font-black text-ink-soft">{b.versus}</span>
+          <div className="flex flex-col items-center gap-2.5" aria-live="polite">
+            <span className="rounded-full ring ring-transparent ring-offset-4 ring-offset-[#fbf4e1]">
+              <Them className={`block opacity-45 motion-safe:animate-[bagh-bob_1.8s_ease-in-out_infinite] ${token}`} />
+            </span>
+            <span className="text-sm font-bold text-ink-soft">{b.waitingOpponent}</span>
           </div>
         </div>
-        <p className="text-sm leading-relaxed">{b.inviteBody.replace('{me}', name(me)).replace('{them}', name(other(me)))}</p>
 
-        <div className="flex items-center gap-2 rounded-xl bg-[#f2e4c4] p-2 pl-4">
-          <span className="flex-1 select-all truncate font-mono text-sm">{url}</span>
-          <button type="button" onClick={copy} aria-label={copied ? g.share.copied : g.share.copyAria}
-            className={`${BAGH_PRIMARY} shrink-0 gap-1.5 px-3 py-2 text-sm`}>
-            {copied ? <LuCheck /> : <LuCopy />}{copied ? g.share.copied : g.share.copy}
-          </button>
+        <div>
+          <p className="text-sm font-bold text-ink-soft">{b.title} · {b.onlineTitle}</p>
+          <h1 className="mt-1 text-[clamp(1.6rem,6.5vw,2.1rem)] font-black leading-tight">{b.inviteHeading}</h1>
+          <p className="mt-2 text-sm leading-relaxed">{b.inviteBody.replace('{me}', name(me)).replace('{them}', name(other(me)))}</p>
         </div>
-        {canShare && (
-          <button type="button" onClick={() => share({ title: b.title, text: b.shareText, url })}
-            className={`${BAGH_PRIMARY} w-full px-4 py-3 text-base`}>
-            <LuShare2 className="text-lg" aria-hidden="true" />{g.share.share}
-          </button>
-        )}
 
-        <div className="flex items-center gap-2.5 text-sm font-bold text-ink-soft" aria-live="polite">
-          <Them className="shrink-0 animate-pulse text-[22px]" />
-          {b.waitingOpponent}
+        <div className="flex w-full flex-col gap-2.5">
+          <div className="bagh-line flex items-center gap-2 bg-[#f2e4c4] p-1.5 pl-3 text-left">
+            <span className="flex-1 select-all truncate font-mono text-sm">{url}</span>
+            <button type="button" onClick={copy} aria-label={copied ? g.share.copied : g.share.copyAria}
+              className={`${BAGH_PRIMARY} shrink-0 gap-1.5 px-3 py-2 text-sm`}>
+              {copied ? <LuCheck /> : <LuCopy />}{copied ? g.share.copied : g.share.copy}
+            </button>
+          </div>
+          {canShare && (
+            <button type="button" onClick={() => share({ title: b.title, text: b.shareText, url })}
+              className={`${BAGH_PRIMARY} h-12 w-full px-4 text-base`}>
+              <LuShare2 className="text-lg" aria-hidden="true" />{g.share.share}
+            </button>
+          )}
         </div>
-        <Link href={home} className="self-start text-sm font-bold text-ink-soft underline underline-offset-4">{g.play.backHome}</Link>
+        <Link href={home} className="text-sm font-bold text-ink-soft underline underline-offset-4">{g.play.backHome}</Link>
       </div>
     </div>
     </BaghFrame>

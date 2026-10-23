@@ -1,6 +1,6 @@
 {
   "name": "quoridor",
-  "version": "26.10.5",
+  "version": "26.10.9",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -28,7 +28,8 @@
     "next-sitemap": "^4.2.3",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
-    "react-icons": "^5.5.0"
+    "react-icons": "^5.5.0",
+    "uqr": "0.1.3"
   },
   "devDependencies": {
     "@types/node": "^22.20.4",

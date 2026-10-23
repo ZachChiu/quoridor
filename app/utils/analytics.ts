@@ -16,13 +16,14 @@ import type { OnlineFailReason, OnlineStep } from '@/types/online';
  *
  * ── 在 GA 後台要做的事 ────────────────────────────────────────────
  * 參數要在「管理 → 自訂定義」註冊成自訂維度（或指標）才能在報表裡篩選。
- * 清單見 CLAUDE.md〈數據分析〉。
+ * 清單見 CLAUDE.md〈數據分析〉。參數名稱不能用 GA 保留給流量來源的 source／medium／campaign／term／content：
+ * GA4 會拿它們蓋掉這個工作階段的來源（mode_select 帶過 source=home，Google 搜尋進來的被記成「home」）。
  */
 export type GameModeParam = 'local' | 'solo' | 'online';
 
 type Events = {
   /** 首頁（或 /solo 頁）選了一個模式。是「想玩」，不是「開始玩」 */
-  mode_select: { mode: GameModeParam; players: 2 | 3; difficulty?: Difficulty; source: 'home' | 'solo_page' };
+  mode_select: { mode: GameModeParam; players: 2 | 3; difficulty?: Difficulty; entry: 'home' | 'solo_page' };
   /** 連線房開好了（還沒有人加入） */
   room_created: { players: 2 | 3 };
   /**
@@ -53,14 +54,21 @@ type Events = {
   online_error: { reason: 'noRoom' | 'roomFull' | OnlineFailReason; fail_step?: OnlineStep };
   /** 分享房間連結 */
   share_room_link: { method: 'native' | 'copy' };
+  /**
+   * 結算的分享圖。用 GA4 建議的 share 事件（大腦 10/23 建議）：
+   * method＝叫出系統分享（native）或存成檔案（download）；item_id＝哪一種比例。
+   */
+  share: { method: 'native' | 'download'; content_type: 'result_card'; item_id: 'poster' | 'square' | 'story' };
+  /** 連線時催輪到的人 */
+  nudge_send: { players: 2 | 3 };
   /** 關掉遊玩方式。step 從 1 起算；finished＝有沒有看到最後一步 */
   tutorial_close: { step: number; steps: number; finished: boolean };
   /** 切換語系 */
   locale_switch: { from: string; to: string };
   /** 打開首頁的「聯絡我們」 */
   contact_open: Record<string, never>;
-  /** 送出回饋。source：對局後的回饋（game）、Wall Go 首頁的聯絡我們（contact）、平台頁尾的聯絡我們（platform） */
-  feedback_send: { source: 'game' | 'contact' | 'platform'; rating?: number };
+  /** 送出回饋。entry：對局後的回饋（game）、Wall Go 首頁的聯絡我們（contact）、平台頁尾的聯絡我們（platform） */
+  feedback_send: { entry: 'game' | 'contact' | 'platform'; rating?: number };
 };
 
 export type AnalyticsEvent = keyof Events;

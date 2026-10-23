@@ -23,6 +23,14 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
+/**
+ * 本機測試用：`NEXT_PUBLIC_FIREBASE_EMULATOR=1 npm run dev` 時改連 Firebase 模擬器
+ * （`npx firebase-tools emulators:start --only auth,database`，要裝 Java）。
+ * 在線狀態、斷線、規則這些事只能開兩個瀏覽器真的連一次才驗得到，又不該拿正式資料庫試。
+ * 建置時沒設這個變數，判斷式會被編成 false、整段被剝掉（next.config.ts 給了空字串的預設值才會這樣）。
+ */
+const useEmulator = process.env.NEXT_PUBLIC_FIREBASE_EMULATOR === '1';
+
 let appPromise: Promise<FirebaseApp> | null = null;
 let authPromise: Promise<Auth> | null = null;
 let dbPromise: Promise<Database> | null = null;
@@ -40,8 +48,10 @@ function getApp(): Promise<FirebaseApp> {
 /** 取得 Firebase Authentication 實例。 */
 export function getFirebaseAuth(): Promise<Auth> {
   authPromise ??= (async () => {
-    const [{ getAuth }, app] = await Promise.all([import('firebase/auth'), getApp()]);
-    return getAuth(app);
+    const [{ getAuth, connectAuthEmulator }, app] = await Promise.all([import('firebase/auth'), getApp()]);
+    const auth = getAuth(app);
+    if (useEmulator) connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
+    return auth;
   })();
   return authPromise;
 }
@@ -49,11 +59,13 @@ export function getFirebaseAuth(): Promise<Auth> {
 /** 取得 Firebase Realtime Database 實例。 */
 export function getFirebaseDb(): Promise<Database> {
   dbPromise ??= (async () => {
-    const [{ getDatabase }, app] = await Promise.all([
+    const [{ getDatabase, connectDatabaseEmulator }, app] = await Promise.all([
       import('firebase/database'),
       getApp(),
     ]);
-    return getDatabase(app);
+    const db = getDatabase(app);
+    if (useEmulator) connectDatabaseEmulator(db, '127.0.0.1', 9000);
+    return db;
   })();
   return dbPromise;
 }

@@ -81,6 +81,11 @@ type Props = {
   canSwitch: boolean;
   /** 換到下一顆能選的棋子。沒選的時候就是選第一顆 */
   onSwitchPiece: () => void;
+  /** 連線狀況的提示，交給橫式那顆 TurnGuide（見 TurnGuide 的 notice） */
+  notice?: string | null;
+  /** 催一下，交給橫式那顆 TurnGuide */
+  onNudge?: () => void;
+  nudged?: boolean;
 };
 
 const ARROW: Record<Direction, string> = {
@@ -126,7 +131,7 @@ const DIRS: Direction[] = ['top', 'bottom', 'left', 'right'];
 export default function WallDirectionPad({
   placing, placeMovable, onPlaceMove, onPlace, pieceColor, selected, movable, buildable, breakable, breaksLeft,
   pending, onPick, onMove, onBreak, onConfirm, onRedo, onSurrender, dirty, color, myTurn, remainSteps,
-  breakMode, onToggleBreak, onWallStep, canSwitch, onSwitchPiece,
+  breakMode, onToggleBreak, onWallStep, canSwitch, onSwitchPiece, notice, onNudge, nudged,
 }: Props) {
   const g = useGameText();
 
@@ -184,6 +189,9 @@ export default function WallDirectionPad({
         breakMode={breakMode}
         remainSteps={remainSteps}
         color={color}
+        notice={notice}
+          onNudge={onNudge}
+          nudged={nudged}
       />
 
       <div className="flex items-center justify-center gap-3 px-4 landscape:flex-col landscape:gap-2 landscape:px-2">

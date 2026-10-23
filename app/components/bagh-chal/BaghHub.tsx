@@ -9,7 +9,7 @@ import type { Side } from '@/games/bagh-chal/engine';
 import type { Difficulty } from '@/games/bagh-chal/ai';
 import { soloHash } from './soloHash';
 import { GOAT_SRC, GoatToken, INVITE_SRC, InviteToken, LOCAL_SRC, TIGER_SRC, TigerToken } from './tokens';
-import { BaghDifficulty } from './BaghUi';
+import { BaghDifficulty, labelled } from './BaghUi';
 
 /** 一般點擊交給呼叫端（走轉場）；修飾鍵與中鍵放行給瀏覽器，「在新分頁開啟」才不會壞 */
 const intercept = (fn: () => void) => (e: React.MouseEvent<HTMLAnchorElement>) => {
@@ -20,10 +20,12 @@ const intercept = (fn: () => void) => (e: React.MouseEvent<HTMLAnchorElement>) =
 
 /**
  * 四個按鈕之一：淡沙色卡片（沒有外框線），中間一枚 AI 畫的圓牌，下面兩行字。
- * 有靜態目標的給 href（爬蟲走得進去、cmd 點可以開新分頁），連線要先選邊所以沒有。
+ * 本機對戰給 href（cmd 點可以開新分頁）。老虎、羊是按下去問難度的按鈕，不給 href：
+ * 原本連到 /bagh-chal/solo，頁面還沒載好（換語言是整頁重載）就點下去會照連結跳到下一頁、不跳難度
+ * —— Zach 10/24 在英文、日文頁遇到。/solo 本來就 noindex，不給連結也不損失什麼。連線要先選邊所以也沒有。
  */
 function Choice({ src, label, sub, href, onClick }: { src: string; label: string; sub: string; href?: string; onClick: () => void }) {
-  const cls = 'group flex flex-col items-center justify-center gap-1 rounded-2xl bg-[#f2e4c4] px-2 py-[max(0.75rem,2dvh)] text-center transition fine:hover:bg-[#ead8ad] active:scale-[0.97]';
+  const cls = 'bagh-totem group flex flex-col items-center justify-center gap-1 bg-[#f2e4c4] px-2 py-[max(0.75rem,2dvh)] text-center transition fine:hover:bg-[#ead8ad] active:scale-[0.97]';
   const inner = (
     <>
       {/* 背景圖、影子用 box-shadow（不用 <img>＋filter，iPhone 的 WebKit 會漏畫，見 BaghBoard） */}
@@ -61,8 +63,8 @@ export default function BaghHub() {
   return (
     <div className="relative z-20 flex w-full flex-col items-center gap-[max(0.75rem,2dvh)]">
       <div className="grid w-full grid-cols-2 gap-2.5">
-        <Choice src={TIGER_SRC} label={b.tiger} sub={b.vsAi} href={localePath(locale, baghChal('/solo'))} onClick={() => setSide('tiger')} />
-        <Choice src={GOAT_SRC} label={b.goat} sub={b.vsAi} href={localePath(locale, baghChal('/solo'))} onClick={() => setSide('goat')} />
+        <Choice src={TIGER_SRC} label={b.tiger} sub={b.vsAi} onClick={() => setSide('tiger')} />
+        <Choice src={GOAT_SRC} label={b.goat} sub={b.vsAi} onClick={() => setSide('goat')} />
         <Choice src={LOCAL_SRC} label={b.local} sub={b.localSub} href={localePath(locale, baghChal('/local'))} onClick={() => go(baghChal('/local'))} />
         <Choice src={INVITE_SRC} label={b.onlineTitle} sub={b.inviteSub} onClick={() => setInviteOpen(true)} />
       </div>
@@ -73,10 +75,10 @@ export default function BaghHub() {
       </a>
 
       <Modal skin="bagh" isOpen={!!side} onClose={() => setSide(null)} title={t.ui.pickLevel}
-        kicker={`${b.playAs}：${side === 'goat' ? b.goat : b.tiger}`}
+        kicker={labelled(locale, b.playAs, side === 'goat' ? b.goat : b.tiger)}
         icon={side === 'goat' ? GoatToken : TigerToken}
         band={side === 'goat' ? { className: 'bg-[#5b6620]', fg: 'text-tile-cream' } : { className: 'bg-[#e3a43c]', fg: 'text-tile-ink' }}>
-        <BaghDifficulty onPick={startSolo} />
+        <BaghDifficulty side={side ?? 'tiger'} onPick={startSolo} />
       </Modal>
 
       <Modal skin="bagh" isOpen={inviteOpen} onClose={() => setInviteOpen(false)} title={b.pickSide} kicker={b.onlineTitle}
@@ -87,7 +89,7 @@ export default function BaghHub() {
             return (
               <button key={s} type="button"
                 onClick={() => { setInviteOpen(false); router.push(localePath(locale, baghChal('/online')) + `#new=${s}`); }}
-                className="flex flex-col items-center gap-2 rounded-2xl bg-[#f2e4c4] py-5 text-xl font-black text-tile-ink transition hover:bg-[#ead8ad] active:scale-[0.97]">
+                className="bagh-totem flex flex-col items-center gap-2 bg-[#f2e4c4] py-5 text-xl font-black text-tile-ink transition hover:bg-[#ead8ad] active:scale-[0.97]">
                 <Icon className="text-6xl" />{s === 'tiger' ? b.tiger : b.goat}
               </button>
             );

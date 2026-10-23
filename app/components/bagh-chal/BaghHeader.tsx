@@ -4,6 +4,7 @@ import ContactButton from '@/components/ContactButton';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { BRAND } from '@/brand';
 import { localePath, type Locale } from '@/i18n/locales';
+import { BAGH_CORNER } from './styles';
 
 /**
  * 虎羊棋首頁面板最上面那一列：左邊平台 logo（回平台首頁）、右邊聯絡我們與語言。
@@ -19,8 +20,8 @@ export default function BaghHeader({ locale }: { locale: Locale }) {
         <PlatformMark />
       </Link>
       <div className="flex gap-2">
-        <ContactButton skin="bagh" />
-        <LanguageSwitcher skin="bagh" />
+        <ContactButton theme={BAGH_CORNER} />
+        <LanguageSwitcher theme={BAGH_CORNER} />
       </div>
     </div>
   );

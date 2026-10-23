@@ -45,6 +45,9 @@ const nextConfig: NextConfig = {
     // 規則頁底下顯示給人看的版號，跟 git tag 同一個寫法。
     // 不直接吃 Sentry 那顆：那個帶專案名，而且哪天拿掉 Sentry，版號不該跟著消失。
     NEXT_PUBLIC_APP_VERSION: `v${pkg.version}`,
+    // 本機測連線用的模擬器開關（見 utils/firebase.ts）。沒設時一定要給空字串而不是 undefined：
+    // 沒定義的 NEXT_PUBLIC_ 變數不會被編進去，判斷式會留到執行時才算，連模擬器的那段程式也跟著上線。
+    NEXT_PUBLIC_FIREBASE_EMULATOR: process.env.NEXT_PUBLIC_FIREBASE_EMULATOR ?? '',
   },
 };
 
