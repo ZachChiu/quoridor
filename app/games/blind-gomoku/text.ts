@@ -3,10 +3,11 @@ import type { Level } from './ai';
 import type { Shape, StoneColor } from './engine';
 
 /**
- * 盲眼五子棋的文案（六個語系）。寫法照 i18n/gameText.ts 的規定：
+ * 盲五子棋的文案（六個語系）。寫法照 i18n/gameText.ts 的規定：
  * 語系的 key 在兩格縮排、依 'zh-TW' → en → ja → ko → 'zh-Hans' → th 排，字型子集靠這個切字。
  *
- * 遊戲名：盲眼五子棋／Blind Gomoku／ブラインド五目並べ／블라인드 오목／盲眼五子棋／โกโมกุปิดตา。
+ * 遊戲名：盲五子棋／Blind Gomoku／ブラインド五目並べ／블라인드 오목／盲五子棋／โกโมกุปิดตา。
+ * 繁簡原本是自己取的「盲眼五子棋」，10/24 照節目改成「盲五子棋」（Zach：命名用 Netflix 版本，見 glossary〈遊戲名〉）。
  * 節目出處是第一季（《魔鬼的計謀》），不是第二季的「死亡密室」。
  */
 export type BlindGomokuText = {
@@ -70,9 +71,9 @@ export type BlindGomokuText = {
 
 export const TEXT: TextTable<BlindGomokuText> = {
   'zh-TW': {
-    metaTitle: '盲眼五子棋：只看得到顏色的五子棋',
-    metaDescription: '《魔鬼的計謀》第一季監獄密室的隱藏關「盲眼五子棋」線上版：每顆子只看得到顏色，看不出黑白，AI 用你上一手的顏色回應。也能下一般五子棋、兩人同機對戰。免費、免下載。',
-    title: '盲眼五子棋',
+    metaTitle: '盲五子棋：只看得到顏色的五子棋',
+    metaDescription: '《魔鬼的計謀》第一季監獄密室的隱藏關「盲五子棋」線上版：每顆子只看得到顏色，看不出黑白，AI 用你上一手的顏色回應。也能下一般五子棋、兩人同機對戰。免費、免下載。',
+    title: '盲五子棋',
     subtitle: 'Blind Gomoku',
     tagline: '黑白藏在底面，你只看得到顏色',
     tags: '第 1 季 · 1–2 人 · 約 5 分鐘',
@@ -338,9 +339,9 @@ export const TEXT: TextTable<BlindGomokuText> = {
     showNote: '「데블스 플랜」 시즌 1 감옥 방의 히든 게임으로, NPC와 단 한 판을 둬요. 방송에서는 한 칸 띄워 대각선으로 둔 도전자가 19수 만에 이겼어요.',
   },
   'zh-Hans': {
-    metaTitle: '盲眼五子棋：只看得到颜色的五子棋',
-    metaDescription: '《魔鬼的计谋》第一季监狱密室的隐藏关“盲眼五子棋”在线版：每颗棋子只看得到颜色，看不出黑白，AI 用你上一手的颜色回应。也能下普通五子棋、两人同机对战。免费、免下载。',
-    title: '盲眼五子棋',
+    metaTitle: '盲五子棋：只看得到颜色的五子棋',
+    metaDescription: '《魔鬼的计谋》第一季监狱密室的隐藏关“盲五子棋”在线版：每颗棋子只看得到颜色，看不出黑白，AI 用你上一手的颜色回应。也能下普通五子棋、两人同机对战。免费、免下载。',
+    title: '盲五子棋',
     subtitle: 'Blind Gomoku',
     tagline: '黑白藏在底面，你只看得到颜色',
     tags: '第 1 季 · 1–2 人 · 约 5 分钟',
