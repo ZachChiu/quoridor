@@ -73,7 +73,7 @@ const FeedbackModal: React.FC<Props> = ({ isOpen, onClose, onSubmit, variant = '
   const submit = async () => {
     if (!canSend || state === 'sending') return;
     setState('sending');
-    track('feedback_send', { source: isContact ? 'contact' : 'game', rating: rating ?? undefined });
+    track('feedback_send', { entry: isContact ? 'contact' : 'game', rating: rating ?? undefined });
     try {
       await onSubmit(rating, message.trim(), contact.trim());
       setState('sent');

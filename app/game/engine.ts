@@ -539,10 +539,14 @@ export function shouldSkipTurn(state: GameState): boolean {
   const pieces = state.pieceIndex[state.currentPlayer];
   if (!pieces || pieces.length === 0) return false;
 
-  const { ownerByCell } = computeTerritories(state);
-  return pieces.every(
-    ({ row, col }) => ownerByCell[cellKey(row, col)] === state.currentPlayer
-  );
+  // 凍結區域裡的那一格雖然算分（見 territory），這裡仍當成「不是自己的地」：
+  // 跳過的結果決定輪到誰，改了它，舊棋譜重播出來的輪次就會跟改版前的客戶端對不上
+  // （連線對局進行到一半時兩邊版本不同就會各認各的）。
+  const { ownerByCell, frozen } = computeTerritories(state);
+  return pieces.every(({ row, col }) => {
+    const cell = cellKey(row, col);
+    return ownerByCell[cell] === state.currentPlayer && !frozen.includes(cell);
+  });
 }
 
 /** 推進到下一位玩家。 */

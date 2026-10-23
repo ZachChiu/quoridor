@@ -40,10 +40,18 @@ interface Props {
    * 標題列上方一條老虎追羊的飾帶（虎羊棋整套視覺不沿用 Wall Go，見 CLAUDE.md 路由表）。
    */
   skin?: 'default' | 'bagh';
+  /**
+   * 不要面板的外觀（色帶、紙色底、內距、底部按鈕列）：內容自己就是整個對話框。
+   * 結算用 —— 分享圖本身就是對話框（Zach 10/23）。title 仍然當作對話框的名稱給螢幕報讀。
+   */
+  bare?: boolean;
+  /** 遮罩的顏色，預設 50% 黑 */
+  backdropClassName?: string;
 }
 
 const Modal: React.FC<Props> = ({
   isOpen, onClose, title, icon: Icon, kicker, band, children, footer, onKeyDown, panelClassName = '', bodyClassName = '', skin = 'default',
+  bare = false, backdropClassName = 'bg-black/50',
 }) => {
   const bagh = skin === 'bagh';
   // 捲動鎖、Esc、焦點鎖、portal 時機：跟平台的 PlatformDialog 共用（見 useDialog）
@@ -90,8 +98,13 @@ const Modal: React.FC<Props> = ({
         （Zach 回報「Safari 上下變灰色」，模擬器上量到）。開著的時候變暗是對的，
         跟整個畫面一起被遮住。
       */}
-      <div className={`cover-viewport bg-black/50 ${isOpen ? '' : 'hidden'}`} onClick={onClose}></div>
+      <div className={`cover-viewport ${backdropClassName} ${isOpen ? '' : 'hidden'}`} onClick={onClose}></div>
 
+      {bare ? (
+        <div ref={panelRef} tabIndex={-1} className={`relative flex max-h-full flex-col font-[family-name:var(--font-app)] outline-none ${panelClassName}`}>
+          {children}
+        </div>
+      ) : (
       <div
         ref={panelRef}
         tabIndex={-1}
@@ -153,6 +166,7 @@ const Modal: React.FC<Props> = ({
           </div>
         )}
       </div>
+      )}
     </div>
   );
 
