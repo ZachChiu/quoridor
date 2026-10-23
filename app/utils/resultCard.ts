@@ -1,5 +1,5 @@
 import type { GameState, PlayerKey } from '@/game/types';
-// 中立區跟棋盤上同一個灰
+// 中立區跟棋盤上同一個顏色（頁面底色）
 import { NEUTRAL_FILL } from '@/components/neutralZone';
 
 /**
@@ -39,7 +39,7 @@ export const CARD_SIZE: Record<CardLayout, { w: number; h: number }> = {
 export type ResultCardData = {
   state: GameState;
   ownerByCell: Record<string, PlayerKey>;
-  /** 中立區（被牆圍住、裡面沒有棋子）的格子，反灰 */
+  /** 中立區（被牆圍住、裡面沒有棋子）的格子，鋪頁面底色 */
   neutral?: string[];
   /** 各方累計的思考時間，已經排好版的字（3:12）。沒有就不寫 */
   times?: Partial<Record<PlayerKey, string>>;

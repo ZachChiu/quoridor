@@ -357,14 +357,13 @@ body {
 }
 .animate-dot-pop { animation: dot-pop 170ms var(--mo-snap) both; }
 
-/* 輪到誰：棋盤外圈一圈那一方顏色的光（Zach 10/23 的提議）。
-   顏色由 --turn-color 給，換人時用 transition 換色；輪到自己的那一下另外脹一次 ——
+/* 輪到誰：棋盤外圈一層那一方顏色的淡陰影（Zach 10/23 的提議）。
+   先前多一圈 5px 的實色框，Zach 說只要淡淡的陰影就好 —— 框等於又多一塊色，畫面會亂。
+   顏色由 --turn-color 給，換人時用 transition 換色；輪到自己的那一下陰影稍微濃一下再退回來 ——
    由 Chessboard 用 element.animate() 播（每次都要能重播，切 class 做不到）。
    全站其他地方沒有陰影，這是唯一的例外：它不是在模擬光源，是「現在是誰」的訊號。 */
 .board-turn {
-  box-shadow:
-    0 0 0 5px color-mix(in srgb, var(--turn-color) 32%, transparent),
-    0 0 40px 8px color-mix(in srgb, var(--turn-color) 42%, transparent);
+  box-shadow: 0 0 32px 2px color-mix(in srgb, var(--turn-color) 26%, transparent);
   transition: box-shadow 320ms var(--mo-out);
 }
 

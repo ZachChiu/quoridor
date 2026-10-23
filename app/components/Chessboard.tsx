@@ -89,7 +89,7 @@ type Props = {
   me?: Player;
   /** 連線狀況的提示（自己斷線、輪到的對手斷線），交給控制盤上的 TurnGuide */
   notice?: string | null;
-  /** 中立區（`row,col`）：被牆圍住、裡面沒有棋子的格子，反灰 */
+  /** 中立區（`row,col`）：被牆圍住、裡面沒有棋子的格子，鋪頁面底色 */
   neutral?: Set<string>;
   /** 輪到的那一方的顏色。有給就在棋盤外圈打一圈那個顏色的光 */
   turnColor?: string | null;
@@ -524,7 +524,7 @@ export default React.memo(function Chessboard({
             <div aria-hidden="true" className="board-turn pointer-events-none absolute inset-0 rounded-[inherit]"
               style={{ '--turn-color': turnColor } as React.CSSProperties} />
             <div ref={pulseRef} aria-hidden="true" className="pointer-events-none absolute inset-0 rounded-[inherit] opacity-0"
-              style={{ boxShadow: `0 0 0 12px color-mix(in srgb, ${turnColor} 50%, transparent), 0 0 80px 24px color-mix(in srgb, ${turnColor} 55%, transparent)` }} />
+              style={{ boxShadow: `0 0 48px 8px color-mix(in srgb, ${turnColor} 34%, transparent)` }} />
           </>
         )}
         {/* 欄數走 inline style 而不是 `grid-cols-${size}`：
@@ -745,7 +745,7 @@ export default React.memo(function Chessboard({
                     <div className="absolute z-10 size-1/4 rounded-full bg-tile-ink/20 transition-opacity fine:group-hover:opacity-0" />
                   )}
 
-                  {/* 中立區反灰（見 neutralZone.ts）。跟地盤同一個長出來的動畫，離左上角越遠越晚 */}
+                  {/* 中立區鋪頁面底色（見 neutralZone.ts）。跟地盤同一個長出來的動畫，離左上角越遠越晚 */}
                   {!isPlacingChess && neutral?.has(`${rowIndex},${colIndex}`) && (
                     <div
                       aria-hidden="true"
