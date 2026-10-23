@@ -603,7 +603,10 @@ html:has(.tau-root), body:has(.tau-root) { background: #ebe1b8; }
 @keyframes tau-stamp { from { transform: rotate(-7deg) scale(1.7); opacity: 0; } to { transform: rotate(-7deg) scale(1); opacity: 1; } }
 /* 一排實心圓點（1877 拍賣海報標題底下那條） */
 .tau-dots { height: 6px; background: radial-gradient(circle, rgb(53 51 28 / 0.7) 2px, transparent 2.5px) 0 50% / 10px 6px repeat-x; }
-@media (prefers-reduced-motion: reduce) { .tau-stamp { animation: none; } .tau-press { transition: none; } }
+/* 倒數的數字：每一秒換一個數字時從稍大落下、壓到原大（數字重掛就重播一次）。只動 transform／opacity */
+.tau-count { display: inline-block; animation: tau-count 0.28s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
+@keyframes tau-count { from { transform: translateY(-0.12em) scale(1.25); opacity: 0.35; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .tau-stamp, .tau-count { animation: none; } .tau-press { transition: none; } }
 
 /* 均衡曼卡拉（MancalaFrame）：一塊阿坎（今迦納）的 Adinkra 印花布。.mcl-frame 是蓋了印的布邊 —— 兩側各兩道梳子畫的細線
    （nwomu），中間一排印章：上下寶螺殼（Nsirewa）、左右曲折（Nkyimkyim）、四角連在一起的心（Akoma ntoaso）。

@@ -1,15 +1,21 @@
 'use client';
 import { useState } from 'react';
+import Link from 'next/link';
 import { GiRuleBook } from 'react-icons/gi';
-import { LuCircleHelp, LuHouse } from 'react-icons/lu';
+import { LuCircleHelp } from 'react-icons/lu';
 import Modal from '@/components/Modal';
+import PlatformMark from '@/components/PlatformMark';
+import ContactButton from '@/components/ContactButton';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
+import { BRAND } from '@/brand';
 import { useMessages } from '@/i18n/LocaleProvider';
 import { fill, useTextTable } from '@/i18n/gameText';
+import { localePath, type Locale } from '@/i18n/locales';
 import type { Mode } from '@/games/time-auction/engine';
 import type { Difficulty } from '@/games/time-auction/ai';
 import { TEXT } from '@/games/time-auction/text';
 import AuctionRules from './AuctionRules';
-import { KEY_ART, TAU_BAND, TAU_PANEL } from './theme';
+import { KEY_ART, TAU_BAND, TAU_CORNER, TAU_PANEL } from './theme';
 import TauFrame from './TauFrame';
 import TauWordmark from './TauWordmark';
 
@@ -30,13 +36,17 @@ export const roundBtn = 'grid size-11 shrink-0 place-items-center rounded-[2px] 
  * 介面照拍賣傳單與拍品票的印刷方式（globals.css 的 .tau-*，Zach 10/22：每款的按鈕要有自己的樣子，不要最後都是黑白按鈕）：
  * 區段標題左右夾細線、選項是方角雙線的票（選中＝紅色版塊）、對手人數是打孔的拍品票、難度用羅馬數字、
  * 開拍是紅色鉛字版塊、怎麼玩是一隻指示手 ☞。桌機（lg）改成左右兩欄。
+ *
+ * 最上面一列跟其他遊戲首頁一樣：左邊平台 logo（回平台首頁）、右邊說明、聯絡我們與語言。
+ * 不用 PlatformCorner 釘在畫面角落 —— 那樣會疊在紅色牛津角框上（虎羊棋的教訓），所以放在框裡、跟內容走同一個流。
+ * 聯絡與語言的圓鈕和彈窗換成這款的拍賣目錄（TAU_CORNER），不是 Wall Go 的奶油底黑鈕（Zach 10/24）。
  */
-export default function AuctionSetup({ value, onChange, onStart, onHome }: {
+export default function AuctionSetup({ locale, value, onChange, onStart }: {
+  locale: Locale;
   value: Setup;
   /** 只傳改了哪一項；由上層用 updater 合併，連點兩個選項也不會用到舊值 */
   onChange: (patch: Partial<Setup>) => void;
   onStart: () => void;
-  onHome: () => void;
 }) {
   const t = useTextTable(TEXT);
   const m = useMessages();
@@ -51,8 +61,14 @@ export default function AuctionSetup({ value, onChange, onStart, onHome }: {
   return (
     <TauFrame className="items-center px-4 pb-6 pt-3 lg:px-8">
       <div className="flex w-full max-w-[460px] items-center justify-between lg:max-w-[960px]">
-        <button type="button" onClick={onHome} aria-label={t.home} className={roundBtn}><LuHouse aria-hidden="true" /></button>
-        <button type="button" onClick={() => setHelpOpen(true)} aria-label={t.howTo} className={roundBtn}><LuCircleHelp aria-hidden="true" /></button>
+        <Link href={localePath(locale, '/')} aria-label={BRAND} title={BRAND} className="transition hover:brightness-110 active:scale-95">
+          <PlatformMark className="!size-11" />
+        </Link>
+        <div className="flex gap-1.5">
+          <button type="button" onClick={() => setHelpOpen(true)} aria-label={t.howTo} className={roundBtn}><LuCircleHelp aria-hidden="true" /></button>
+          <ContactButton theme={TAU_CORNER} />
+          <LanguageSwitcher theme={TAU_CORNER} />
+        </div>
       </div>
 
       <main className="mt-3 flex w-full max-w-[460px] flex-col gap-4 lg:my-auto lg:max-w-[960px] lg:flex-row lg:items-center lg:gap-10">

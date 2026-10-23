@@ -1,10 +1,14 @@
 'use client';
 import { useEffect, useEffectEvent, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
-import { GiExitDoor, GiPodium, GiRuleBook, GiTrophyCup } from 'react-icons/gi';
-import { LuCircleHelp, LuHouse, LuSettings2 } from 'react-icons/lu';
+import { GiExitDoor, GiRuleBook } from 'react-icons/gi';
+import { LuCircleHelp, LuHouse, LuSettings2, LuVolume2, LuVolumeX } from 'react-icons/lu';
 import Modal from '@/components/Modal';
-import { useMessages } from '@/i18n/LocaleProvider';
+import { ShareResultModal, useShareCard } from '@/components/ShareResultModal';
+import { useSound } from '@/hook/useSound';
+import { useGameText, useMessages } from '@/i18n/LocaleProvider';
 import { fill, useTextTable } from '@/i18n/gameText';
+import { localePath, type Locale } from '@/i18n/locales';
+import { TIME_AUCTION } from '@/i18n/routes';
 import {
   MODES, TENTH_MS, bidFromHold, createAuction, formatTenths, isOver, maxRemaining, playRound, publicHistory,
   remaining, standings, viewFor, type Mode,
@@ -15,6 +19,9 @@ import AuctionRules from './AuctionRules';
 import { roundBtn } from './AuctionSetup';
 import { KEY_BG, TAU_BAND, TAU_PANEL } from './theme';
 import TauFrame from './TauFrame';
+import { playTau } from './sounds';
+import { buzzShake, flyCoin, idleBidders, pop, reducedMotion, shake, springUp, thud } from './motion';
+import { DIDONE, TAU_CARD_IMAGES, drawTauCard, type TauCardData } from './shareCard';
 
 /**
  * ready：等你按下去開始這一回合（第一回合）
@@ -52,8 +59,15 @@ function BigTime({ text, dim = false }: { text: string; dim?: boolean }) {
  * 計時一律用 performance.now 的絕對時間，畫面每一格只是把經過的時間畫出來：
  * 分頁切到背景時 requestAnimationFrame 會停，回來時直接跳到正確的位置。
  * 按住中切到背景（visibilitychange）、視窗失焦、pointercancel 都當作放手。
+ *
+ * 聲音（sounds.ts）、動作（motion.ts）、結算分享圖（shareCard.ts）都是這款自己的（Zach 10/24：學 Wall Go，但各自設計）：
+ * - 倒數每秒懷錶一聲、開始計時叫人鈴一聲、跑秒時座鐘滴答；放手喀一聲、時間用完悶咚一聲加按鈕震動
+ * - 成交：木槌落下（大螢幕一沉）→ 金幣從大螢幕拋到得標者名片 → 落下時數字加一、成交章蓋下去；流標大螢幕搖一下
+ * - 你放手之後在等別人時，電腦的名片偶爾互相瞄一眼（亂數，跟誰還按著無關）；你按著、還沒開始時畫面不亂動
+ * - 聲音只在事件處理的當下響一次（一回合結算一次），重掛元件、再來一局不會補響
  */
-export default function AuctionPlay({ mode, opponents, difficulty, seed, onHome, onSettings, onAgain }: {
+export default function AuctionPlay({ locale, mode, opponents, difficulty, seed, onHome, onSettings, onAgain }: {
+  locale: Locale;
   mode: Mode;
   opponents: number;
   difficulty: Difficulty;
@@ -64,6 +78,8 @@ export default function AuctionPlay({ mode, opponents, difficulty, seed, onHome,
 }) {
   const t = useTextTable(TEXT);
   const m = useMessages();
+  const g = useGameText();
+  const { prefs: soundPrefs, setPrefs: setSoundPrefs } = useSound();
   const cfg = MODES[mode];
   const personas = useMemo(() => assignPersonas(opponents, seed), [opponents, seed]);
   const [game, setGame] = useState(() => createAuction(mode, opponents + 1));
@@ -84,6 +100,12 @@ export default function AuctionPlay({ mode, opponents, difficulty, seed, onHome,
   /** 事件處理器用：還按著沒（擋重複放手）、按著的是哪一根手指。不參與畫面 */
   const holding = useRef(false);
   const pointer = useRef<number | null>(null);
+  /** 動作用的 DOM：大螢幕、名片那一排、大按鈕 */
+  const clockRef = useRef<HTMLDivElement>(null);
+  const seatsRef = useRef<HTMLUListElement>(null);
+  const pressRef = useRef<HTMLButtonElement>(null);
+  /** 金幣還在飛向哪一席：那張名片的數字先不加、成交章先不蓋，落下才出現 */
+  const [flying, setFlying] = useState<number | null>(null);
 
   const over = isOver(game);
   const myLeft = remaining(game, 0);
@@ -101,6 +123,7 @@ export default function AuctionPlay({ mode, opponents, difficulty, seed, onHome,
   const begin = (pass: boolean): boolean => {
     if (!canBegin || modalOpen) return false;
     const aiBids = personas.map((p, i) => decideBid(viewFor(game, i + 1), p, difficulty, seed));
+    if (pass) playTau('pass');
     holding.current = !pass;
     setLive({ start: performance.now(), aiBids });
     setMyBid(pass ? 0 : null);
@@ -116,16 +139,34 @@ export default function AuctionPlay({ mode, opponents, difficulty, seed, onHome,
     if (!holding.current || !live) return;
     holding.current = false;
     pointer.current = null;
-    setMyBid(bidFromHold(performance.now() - live.start, cfg.countdownMs, myLeft));
+    const bid = bidFromHold(performance.now() - live.start, cfg.countdownMs, myLeft);
+    playTau(bid === 0 ? 'pass' : 'release');
+    if (pressRef.current && !reducedMotion()) springUp(pressRef.current);
+    setMyBid(bid);
   };
 
   const finish = (bid: number, l: Live) => {
     const next = playRound(game, [bid, ...l.aiBids]);
+    const r = next.history[next.history.length - 1];
     setGame(next);
-    setClock(next.history[next.history.length - 1].top);
+    setClock(r.top);
     setCount(0);
     setLive(null);
     setPhase('result');
+    // 一回合只結算一次，所以聲音與動作在這裡做（不放 effect：重掛、再來一局都不會補響）
+    playTau(r.winner === null ? 'noSale' : r.winner === 0 ? 'soldYou' : 'sold');
+    const clockEl = clockRef.current;
+    if (!clockEl || reducedMotion()) return;
+    if (r.winner === null) { shake(clockEl); return; }
+    thud(clockEl);
+    const target = seatsRef.current?.querySelector<HTMLElement>(`[data-seat="${r.winner}"] [data-tokens]`);
+    if (!target) return;
+    const seat = r.winner;
+    setFlying(seat);
+    flyCoin(clockEl, target, () => {
+      setFlying((f) => (f === seat ? null : f));
+      pop(target);
+    });
   };
 
   // 每一格：畫倒數或跑秒；時間用完就彈起；你放手後跑到最後一個人放手就結算
@@ -146,6 +187,8 @@ export default function AuctionPlay({ mode, opponents, difficulty, seed, onHome,
         setMyBid(myLeft);
         setPopped(true);
         setClock(myLeft);
+        playTau('popped');
+        if (pressRef.current && !reducedMotion()) buzzShake(pressRef.current);
         if (typeof navigator.vibrate === 'function') navigator.vibrate(200);
       } else {
         setClock(elapsed);
@@ -212,12 +255,48 @@ export default function AuctionPlay({ mode, opponents, difficulty, seed, onHome,
     };
   }, []);
 
-  // 最後一回合的結果先看一眼，再跳出排名
+  // 最後一回合的結果先看一眼，再跳出排名（分享圖），同時拍賣官搖鈴（第一名）或低低敲兩下
+  const onEnd = useEffectEvent(() => {
+    setEndShown(true);
+    playTau(standings(game).find((r) => r.seat === 0)?.rank === 1 ? 'win' : 'lose');
+  });
   useEffect(() => {
     if (!over) return;
-    const id = window.setTimeout(() => setEndShown(true), 900);
+    const id = window.setTimeout(() => onEnd(), 900);
     return () => window.clearTimeout(id);
   }, [over]);
+
+  // 倒數每一秒懷錶一聲；倒數到 0、開始計時叫人鈴一聲
+  const lastCount = useRef(0);
+  useEffect(() => {
+    const prev = lastCount.current;
+    lastCount.current = count;
+    if (phase !== 'live') return;
+    if (count > 0 && count !== prev) playTau('tick');
+    else if (count === 0 && prev > 0) playTau('go');
+  }, [phase, count]);
+
+  // 跑秒中每一整秒座鐘滴答一聲（滴、答輪流）；你已經放手、只是在等別人時小聲一半
+  const second = phase === 'live' && count === 0 ? Math.floor(clock / 10) : 0;
+  useEffect(() => {
+    if (second > 0) playTau('second', { soft: !holding.current, odd: second % 2 === 1 });
+  }, [second]);
+
+  // 你已經放手（或這回合不參加）、在等最後一個人：電腦的名片偶爾動一下（motion.ts）。你還按著或還沒開始時一律不動
+  const waiting = phase === 'live' && myBid !== null;
+  useEffect(() => {
+    const root = seatsRef.current;
+    if (!waiting || !root || reducedMotion()) return;
+    const cards = [...root.querySelectorAll<HTMLElement>('[data-seat]')].filter((el) => el.dataset.seat !== '0');
+    let id = 0;
+    const tick = () => { id = window.setTimeout(() => { idleBidders(cards); tick(); }, 1400 + Math.random() * 1800); };
+    tick();
+    return () => {
+      window.clearTimeout(id);
+      // 結果一出來就站好，名片不要還歪著
+      cards.forEach((el) => el.getAnimations().forEach((a) => a.cancel()));
+    };
+  }, [waiting]);
 
   const onDown = (e: ReactPointerEvent<HTMLButtonElement>) => {
     if (e.pointerType === 'mouse' && e.button !== 0) return;
@@ -269,24 +348,67 @@ export default function AuctionPlay({ mode, opponents, difficulty, seed, onHome,
   const firstCount = table.filter((r) => r.rank === 1).length;
   const endTitle = me?.rank === 1 ? (firstCount > 1 ? t.endTieFirst : t.endWin) : fill(t.endRank, { n: me?.rank ?? 0 });
 
+  // ── 結算分享圖（shareCard.ts）：一頁拍賣目錄的成交紀錄。結算就是這張圖，關掉就停在終局的畫面上 ──
+  const latinTitle = t.nameEn === t.title;
+  const modeName = mode === 'quick' ? t.modeQuick : t.modeShow;
+  const card: Omit<TauCardData, 'font'> = {
+    rows: table.map((r) => ({
+      rank: r.rank, no: r.seat + 1, name: name(r.seat), persona: r.seat > 0 ? t.personas[personas[r.seat - 1]].name : null,
+      tokens: r.tokens, left: fmt(r.remaining), me: r.seat === 0,
+    })),
+    lots: game.history.map((h) => h.winner),
+    won: me?.rank === 1,
+    text: {
+      kicker: `${t.standingsTitle} · ${modeName} · ${levelName}`,
+      title: endTitle,
+      name: latinTitle ? null : t.title,
+      you: `${fill(t.tokensAria, { name: t.you, n: me?.tokens ?? 0 })} · ${fill(t.left, { t: fmt(me?.remaining ?? 0) })}`,
+      tokensCol: t.tokensCol,
+      leftCol: t.leftCol,
+      lotsLabel: t.historyTitle,
+      stamp: t.stampWon,
+      brand: latinTitle ? t.title : `${t.title} ${t.nameEn}`,
+      from: fill(g.share.cardFrom, { show: m.meta.showName }),
+      host: new URL(process.env.SITE_URL || 'https://quoridorgame.com').host,
+    },
+  };
+  const font = typeof document === 'undefined' ? 'system-ui' : getComputedStyle(document.documentElement).getPropertyValue('--font-app').trim() || 'system-ui';
+  const share = useShareCard({
+    isOpen: endOpen,
+    draw: drawTauCard({ ...card, font }),
+    contentKey: JSON.stringify(card),
+    fileName: 'time-auction',
+    homePath: localePath(locale, TIME_AUCTION),
+    campaign: 'time-auction',
+    fonts: [
+      { font: `900 40px ${font}`, text: card.text.title + (card.text.name ?? '') + card.text.lotsLabel + card.text.brand + card.rows.map((r) => r.name).join('') },
+      { font: `700 40px ${font}`, text: card.text.kicker + card.text.you + card.text.from + card.text.tokensCol + card.text.leftCol + card.rows.map((r) => r.persona ?? '').join('') },
+      { font: `italic 700 40px ${DIDONE}`, text: '0123456789:.–No' },
+    ],
+    images: TAU_CARD_IMAGES,
+  });
+  const srResult = `${t.endBody} ${table.map((r) => `${r.rank}. ${name(r.seat)} ${r.tokens} · ${fmt(r.remaining)}`).join(' / ')}`;
+
   // ── 版面零件 ─────────────────────────────────────────────────────────
   const seatsGrid = (
-    <ul className={`grid shrink-0 gap-2 ${game.seats === 4 ? 'grid-cols-2' : 'grid-cols-3'}`}>
+    <ul ref={seatsRef} className={`grid shrink-0 gap-2 ${game.seats === 4 ? 'grid-cols-2' : 'grid-cols-3'}`}>
       {game.tokens.map((n, seat) => {
-        const won = phase === 'result' && last?.winner === seat;
+        // 金幣還在飛過來：數字先不加、章先不蓋（落下那一刻才出現）
+        const incoming = flying === seat;
+        const won = phase === 'result' && last?.winner === seat && !incoming;
         const note = seat === 0
           ? (cfg.showRemaining ? fill(t.left, { t: fmt(myLiveLeft) }) : t.leftHidden)
           : (cfg.showRemaining ? fill(t.maxLeft, { t: fmt(maxRemaining(game.budget, pub, seat)) }) : '');
         // 競買人名片：方角細框、No. 編號；自己那張紅框。這回合得標的人身上蓋一個紅色成交章
         return (
-          <li key={seat} aria-label={fill(t.tokensAria, { name: name(seat), n })}
+          <li key={seat} data-seat={seat} aria-label={fill(t.tokensAria, { name: name(seat), n })}
             className={`tau-bidder px-3 py-2 text-[#35331c] ${seat === 0 ? 'is-me' : ''}`}>
             <div className="flex items-baseline justify-between gap-2">
               <span className="flex min-w-0 items-baseline gap-1.5">
                 <span aria-hidden="true" className="tau-display shrink-0 text-[11px] italic text-ink-soft">No.{seat + 1}</span>
                 <span className="truncate text-xs font-black">{name(seat)}</span>
               </span>
-              <span className="text-2xl font-black leading-none">{n}</span>
+              <span data-tokens className="text-2xl font-black leading-none">{incoming ? n - 1 : n}</span>
             </div>
             {note && <p className="mt-0.5 truncate text-[11px] font-bold text-ink-soft">{note}</p>}
             {won && <span aria-hidden="true" className="tau-stamp absolute -bottom-2.5 -right-1 z-10 text-xs">{t.stampWon}</span>}
@@ -326,17 +448,23 @@ export default function AuctionPlay({ mode, opponents, difficulty, seed, onHome,
   return (
     <TauFrame rootClassName="h-dvh overflow-hidden short:h-auto short:min-h-dvh short:overflow-visible"
       className="px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 lg:px-8 lg:pb-8">
-      <header className="flex shrink-0 items-center justify-between gap-2 lg:mx-auto lg:w-full lg:max-w-[1040px]">
-        <button type="button" onClick={() => askLeave('home')} aria-label={t.home} className={roundBtn}><LuHouse aria-hidden="true" /></button>
+      {/* 左右各兩顆（回首頁、聲音｜說明、換設定），標題才會在正中間。手機上四顆圓鈕擠掉標題的寬度，間距與副標縮一點 */}
+      <header className="flex shrink-0 items-center justify-between gap-1.5 sm:gap-2 lg:mx-auto lg:w-full lg:max-w-[1040px]">
+        <div className="flex gap-1 sm:gap-1.5">
+          <button type="button" onClick={() => askLeave('home')} aria-label={t.home} className={roundBtn}><LuHouse aria-hidden="true" /></button>
+          <button type="button" onClick={() => setSoundPrefs({ sfx: !soundPrefs.sfx })} aria-pressed={soundPrefs.sfx} aria-label={g.sound.button} className={roundBtn}>
+            {soundPrefs.sfx ? <LuVolume2 aria-hidden="true" /> : <LuVolumeX aria-hidden="true" />}
+          </button>
+        </div>
         <div className="min-w-0 text-center">
           <h1 className="truncate text-lg font-black leading-tight">{t.title}</h1>
-          <p className="truncate text-xs font-bold text-ink-soft">
+          <p className="truncate text-[11px] font-bold text-ink-soft sm:text-xs">
             {fill(t.roundOf, { n: Math.max(1, roundNo), total: game.rounds })} · {mode === 'quick' ? t.modeQuick : t.modeShow}
             {/* 窄手機上放不下第三段（日文會被截掉），難度在對局中也不是必要資訊 */}
             <span className="hidden sm:inline"> · {levelName}</span>
           </p>
         </div>
-        <div className="flex gap-1.5">
+        <div className="flex gap-1 sm:gap-1.5">
           <button type="button" onClick={() => setHelpOpen(true)} aria-label={t.howTo} className={roundBtn}><LuCircleHelp aria-hidden="true" /></button>
           <button type="button" onClick={() => askLeave('settings')} aria-label={t.settings} className={roundBtn}><LuSettings2 aria-hidden="true" /></button>
         </div>
@@ -350,7 +478,7 @@ export default function AuctionPlay({ mode, opponents, difficulty, seed, onHome,
         </div>
 
         <section className="flex shrink-0 flex-col items-center lg:flex-1 lg:justify-center">
-          <div className="relative flex h-[clamp(4rem,11dvh,6.5rem)] items-center text-[clamp(3.25rem,9.5dvh,5.5rem)] lg:h-36 lg:text-[clamp(5rem,13vh,8rem)]">
+          <div ref={clockRef} className="relative flex h-[clamp(4rem,11dvh,6.5rem)] items-center text-[clamp(3.25rem,9.5dvh,5.5rem)] lg:h-36 lg:text-[clamp(5rem,13vh,8rem)]">
             {/* 沒有人得標（同秒流標、全員放棄）：大螢幕右上蓋一個墨色的章；有人得標的章蓋在那個人的名片上 */}
             {phase === 'result' && last && last.winner === null && (
               <span aria-hidden="true" className="tau-stamp absolute -right-2 -top-1 z-10 text-sm !text-[#35331c]">
@@ -358,7 +486,8 @@ export default function AuctionPlay({ mode, opponents, difficulty, seed, onHome,
               </span>
             )}
             {phase === 'live' && count > 0
-              ? <span aria-hidden="true" className="tau-display font-bold leading-none">{count}</span>
+              // key：每換一個數字就重掛，倒數的數字「落下」一次（.tau-count）
+              ? <span key={count} aria-hidden="true" className="tau-display tau-count font-bold leading-none">{count}</span>
               : <BigTime text={fmt(clock)} dim={phase === 'ready'} />}
           </div>
           <div className="flex min-h-11 flex-col items-center justify-center text-center" aria-live="polite">
@@ -378,6 +507,7 @@ export default function AuctionPlay({ mode, opponents, difficulty, seed, onHome,
           ) : (
             <>
               <button
+                ref={pressRef}
                 type="button"
                 onPointerDown={onDown}
                 onPointerUp={onUp}
@@ -425,38 +555,19 @@ export default function AuctionPlay({ mode, opponents, difficulty, seed, onHome,
         <p className="text-sm font-bold leading-relaxed">{t.leaveBody}</p>
       </Modal>
 
-      {/* 結算：勝方（第一名）排最上面、滿色放大；其他人淡灰（CLAUDE.md〈視覺〉）。電腦的個性在這時才揭曉 */}
-      <Modal isOpen={endOpen} onClose={() => setEndClosed(true)} title={endTitle} kicker={t.standingsTitle}
-        icon={me?.rank === 1 ? GiTrophyCup : GiPodium}
-        band={TAU_BAND} panelClassName={TAU_PANEL}
-        footer={
-          <>
-            <button type="button" className="tau-lot flex-1 font-black" onClick={onSettings}>{t.settings}</button>
-            <button type="button" className="tau-press flex-1 font-black" onClick={onAgain}>{t.again}</button>
-          </>
-        }>
-        <p className="text-xs font-bold leading-relaxed text-ink-soft">{t.endBody}</p>
-        <p className="mt-3 text-right text-[11px] font-bold text-ink-soft">{t.tokensCol} · {t.leftCol}</p>
-        <ol className="mt-1 flex flex-col gap-1.5">
-          {table.map((r) => {
-            const first = r.rank === 1;
-            const persona = r.seat > 0 ? t.personas[personas[r.seat - 1]] : null;
-            return (
-              <li key={r.seat} className={`flex items-center gap-3 px-3 ${first ? `tau-press py-3 tracking-normal` : 'border-b-2 border-dotted border-[#35331c]/25 py-2 text-ink-soft'}`}>
-                <span className="tau-display w-6 shrink-0 text-center text-base font-bold italic">{r.rank}</span>
-                <span className="min-w-0 flex-1">
-                  <span className={`block truncate font-black ${first ? 'text-lg' : 'text-sm'} ${r.seat === 0 && !first ? 'text-[#35331c]' : ''}`}>{name(r.seat)}</span>
-                  {persona && <span className="block truncate text-[11px] font-bold opacity-80">{persona.name} · {persona.hint}</span>}
-                </span>
-                <span className="shrink-0 text-right">
-                  <span className={`block font-black leading-tight ${first ? 'text-xl' : 'text-base'}`}>{r.tokens}</span>
-                  <span className="block text-[11px] font-bold opacity-80">{fmt(r.remaining)}</span>
-                </span>
-              </li>
-            );
-          })}
-        </ol>
-      </Modal>
+      {/* 結算就是分享圖（shareCard.ts）。關掉就停在終局的畫面上看，「最終排名」再打開；再來一局是主要鈕 */}
+      <ShareResultModal isOpen={endOpen} onClose={() => setEndClosed(true)} title={endTitle} card={share}
+        onRestart={onAgain} restartLabel={t.again} srText={srResult}
+        frameClassName="rounded-[3px]"
+        classes={{
+          primary: 'tau-press',
+          secondary: 'tau-lot',
+          toggle: '!rounded-[2px] bg-[#ebe1b8]/15',
+          toggleOn: '!rounded-[2px] bg-[#ebe1b8] text-[#35331c]',
+          toggleOff: '!rounded-[2px] text-[#ebe1b8]/75 hover:text-[#ebe1b8]',
+          button: 'font-black',
+          placeholder: 'bg-[#ebe1b8]/20',
+        }} />
     </TauFrame>
   );
 }

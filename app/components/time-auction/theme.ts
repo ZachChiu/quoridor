@@ -1,3 +1,5 @@
+import type { CornerTheme } from '@/components/cornerTheme';
+
 /**
  * 時間拍賣的配色：維多利亞時代的拍賣行版畫（設計總表第 9 節的 A 方向）。2026-10-21 從原件取樣，不自己調：
  * - 紙、墨：《Puck》1888〈Grand Presidential Auction Sale〉彩色石版畫（芝加哥藝術博物館 129246，公有領域）
@@ -22,3 +24,25 @@ export const KEY_ART = '/games/time-auction/auction.webp';
  */
 export const TAU_PANEL = '!rounded-[3px] !bg-[#ebe1b8] shadow-[inset_0_0_0_1.5px_#35331c]';
 export const TAU_BAND = { className: 'mx-6 !px-0 border-b-[4px] border-double border-[#35331c]/70 bg-transparent', fg: 'text-[#35331c]' };
+
+/** 紅（Cruikshank 的紅色顏料）：分享圖等用 canvas 畫的地方要色值，不是 class */
+export const RED = '#92383a';
+
+/**
+ * 首頁右上角的「聯絡我們」與「語言」（見 components/cornerTheme.ts）：跟對局裡的彈窗同一張拍賣目錄的紙 ——
+ * 方角紙色面板、標題下雙線（TAU_PANEL／TAU_BAND）。圓鈕是傳單角落那種方角墨線小框（同 AuctionSetup 的 roundBtn）。
+ * 主要鈕（送出、目前的語言、選中的評分）是紅色鉛字版塊 .tau-press，次要鈕是墨色雙線的票 .tau-lot，欄位是名片那種細框、
+ * 對焦時換成紅框（自己那張名片的紅框）。
+ *
+ * 這個檔案刻意沒有 'use client'：伺服器元件匯入 client 模組的常數會變成 client reference（原因見 bagh-chal/styles.ts）。
+ * 共用元件寫死的 size-10、rounded-full／rounded-xl 要用 ! 蓋掉（.tau-* 本身在 globals.css 已經壓得過圓角 utility）。
+ */
+export const TAU_CORNER: CornerTheme = {
+  button: '!size-11 !rounded-[2px] text-[#35331c] shadow-[inset_0_0_0_1.5px_#35331c] fine:hover:bg-[#35331c]/[0.07]',
+  band: TAU_BAND,
+  panelClassName: TAU_PANEL,
+  primary: 'tau-press tracking-normal',
+  secondary: 'tau-lot',
+  field: '!rounded-[2px] bg-[#35331c]/[0.05] shadow-[inset_0_0_0_1px_rgb(53_51_28/0.5)] outline-none focus:shadow-[inset_0_0_0_2px_#92383a]',
+  soft: 'text-ink-soft',
+};

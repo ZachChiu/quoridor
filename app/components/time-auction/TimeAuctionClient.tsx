@@ -27,11 +27,12 @@ export default function TimeAuctionClient({ locale }: { locale: Locale }) {
   const home = () => navigate(localePath(locale, PLATFORM_HOME));
 
   if (!game) {
-    return <AuctionSetup value={setup} onChange={(patch) => setSetup((s) => ({ ...s, ...patch }))} onStart={() => start(setup)} onHome={home} />;
+    return <AuctionSetup locale={locale} value={setup} onChange={(patch) => setSetup((s) => ({ ...s, ...patch }))} onStart={() => start(setup)} />;
   }
   return (
     <AuctionPlay
       key={game.seed}
+      locale={locale}
       mode={game.setup.mode}
       opponents={game.setup.opponents}
       difficulty={game.setup.difficulty}

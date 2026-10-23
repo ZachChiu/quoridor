@@ -82,6 +82,8 @@ type Text = {
   rulesQuick: string;
   rulesShow: string;
   controls: string;
+  /** 說明最上面的名字由來：節目第 2 季的遊戲、名字指的是什麼（Zach 10/24：名字照 Netflix 版，在規則裡介紹） */
+  nameNote: string;
 };
 
 export const TEXT: TextTable<Text> = {
@@ -165,6 +167,7 @@ export const TEXT: TextTable<Text> = {
     rulesQuick: '快速局會顯示你自己還剩多少時間。',
     rulesShow: '節目局跟節目一樣，連自己剩多少都不顯示，要自己記。',
     controls: '手機按住大按鈕；電腦可以按住空白鍵。',
+    nameNote: '名字：時間拍賣是第 2 季《魔鬼的計謀：死亡密室》裡的遊戲。拍賣出價用的不是錢，是自己的時間 —— 按住多久，就付多久。',
   },
   en: {
     title: 'Time Auction',
@@ -246,6 +249,7 @@ export const TEXT: TextTable<Text> = {
     rulesQuick: 'Quick mode shows how much time you have left.',
     rulesShow: 'Show rules hide even your own time, just like on the show — you have to remember it.',
     controls: 'On a phone, hold the big button. On a computer, you can hold the space bar.',
+    nameNote: "The name: Time Auction is a game from season 2, The Devil's Plan: Death Room. You bid with time instead of money — however long you hold, that's what you pay.",
   },
   ja: {
     title: 'タイムオークション',
@@ -327,6 +331,7 @@ export const TEXT: TextTable<Text> = {
     rulesQuick: 'クイックでは自分の残り時間が表示されます。',
     rulesShow: '番組ルールでは番組と同じく、自分の残り時間も表示されません。自分で覚えておきましょう。',
     controls: 'スマホは大きなボタンを長押し。パソコンはスペースキーの長押しでも遊べます。',
+    nameNote: '名前：タイムオークションは『悪魔の計略 ～デビルズ・プラン～』シーズン2のゲームです。お金ではなく自分の持ち時間で入札し、押していた時間をそのまま支払います。',
   },
   ko: {
     title: '시간 경매',
@@ -408,6 +413,7 @@ export const TEXT: TextTable<Text> = {
     rulesQuick: '빠른 게임에서는 내 남은 시간이 표시됩니다.',
     rulesShow: '방송 룰에서는 방송처럼 내 남은 시간도 보이지 않습니다. 직접 기억해야 합니다.',
     controls: '휴대폰에서는 큰 버튼을 길게 누르고, 컴퓨터에서는 스페이스바를 눌러도 됩니다.',
+    nameNote: '이름: 시간 경매는 『데블스 플랜: 데스룸』(시즌 2)에 나온 게임입니다. 돈이 아니라 자기 시간으로 입찰하고, 누르고 있던 만큼 그대로 냅니다.',
   },
   'zh-Hans': {
     title: '时间拍卖',
@@ -489,6 +495,7 @@ export const TEXT: TextTable<Text> = {
     rulesQuick: '快速局会显示你自己还剩多少时间。',
     rulesShow: '节目局和节目一样，连自己剩多少都不显示，要自己记。',
     controls: '手机按住大按钮；电脑可以按住空格键。',
+    nameNote: '名字：时间拍卖是第 2 季《魔鬼的计谋：死亡密室》里的游戏。拍卖出价用的不是钱，是自己的时间 —— 按住多久，就付多久。',
   },
   th: {
     title: 'ประมูลเวลา',
@@ -570,5 +577,6 @@ export const TEXT: TextTable<Text> = {
     rulesQuick: 'เกมเร็วจะแสดงเวลาที่คุณเหลืออยู่',
     rulesShow: 'กติกาแบบในรายการจะไม่แสดงแม้แต่เวลาของคุณเอง เหมือนในรายการ ต้องจำเอาเอง',
     controls: 'บนมือถือให้กดปุ่มใหญ่ค้างไว้ บนคอมพิวเตอร์กดแป้นเว้นวรรคค้างไว้ก็ได้',
+    nameNote: "ชื่อ: ประมูลเวลาเป็นเกมจาก The Devil's Plan ซีซัน 2 (Death Room) ประมูลด้วยเวลาของตัวเองแทนเงิน กดค้างไว้นานเท่าไรก็จ่ายเท่านั้น",
   },
 };
