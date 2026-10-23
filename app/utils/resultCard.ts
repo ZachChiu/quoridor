@@ -61,6 +61,8 @@ export type ResultCardData = {
   };
   /** QR code 的格子（uqr 的 encode().data）。沒有就不畫 */
   qr?: boolean[][];
+  /** 站的圖示（public/icon-192.png，跟分頁上的 favicon 同一個），放在站名前面。沒載到就只寫站名 */
+  icon?: CanvasImageSource;
   /** CSS 的 font-family，跟頁面同一套（--font-app） */
   font: string;
 };
@@ -224,6 +226,20 @@ function scores(ctx: CanvasRenderingContext2D, d: ResultCardData, cx: number, y:
 
 // ─── 品牌與 QR ─────────────────────────────────────────────────────────────
 
+/**
+ * 站名，前面放站的圖示（Zach 10/23：「分享圖可以補上 favicon 嗎」）—— 跟瀏覽器分頁上看到的是同一個，
+ * 看到圖的人點進來會認得。圖示對齊字的視覺中線（中文字身約在基線上 0.38 個字級的位置）。
+ */
+function brand(ctx: CanvasRenderingContext2D, d: ResultCardData, x: number, y: number, size: number, max: number) {
+  let tx = x;
+  if (d.icon) {
+    const side = Math.round(size * 1.25);
+    ctx.drawImage(d.icon, x, Math.round(y - size * 0.38 - side / 2), side, side);
+    tx = x + side + Math.round(size * 0.3);
+  }
+  text(ctx, d.font, d.text.brand, tx, y, { size, color: C.ink, max: max - (tx - x) });
+}
+
 function qr(ctx: CanvasRenderingContext2D, d: ResultCardData, x: number, y: number, size: number) {
   if (!d.qr) return;
   const pad = size * 0.08;
@@ -256,7 +272,7 @@ function poster(ctx: CanvasRenderingContext2D, d: ResultCardData) {
   board(ctx, d, 200, 320, 680);
   scores(ctx, d, w / 2, 1040, 104, 920);
   // 左邊三行：站名、出處、網址；右邊 QR，旁邊一句邀請
-  text(ctx, d.font, d.text.brand, 80, 1226, { size: 52, color: C.ink, max: 520 });
+  brand(ctx, d, 80, 1226, 52, 520);
   text(ctx, d.font, d.text.from, 80, 1268, { size: 24, weight: 700, color: C.inkSoft, max: 520 });
   text(ctx, d.font, d.text.host, 80, 1306, { size: 24, weight: 700, color: C.inkSoft, max: 520 });
   if (d.qr) {
@@ -283,7 +299,7 @@ function square(ctx: CanvasRenderingContext2D, d: ResultCardData) {
     scores(ctx, one, colX + colW / 2, y, r.won ? 110 : 80, colW);
     y += (r.won ? 110 : 80) + 26;
   }
-  text(ctx, d.font, d.text.brand, 72, 930, { size: 48, color: C.ink, max: 600 });
+  brand(ctx, d, 72, 930, 48, 600);
   text(ctx, d.font, d.text.from, 72, 976, { size: 24, weight: 700, color: C.inkSoft, max: 600 });
   text(ctx, d.font, d.text.host, 72, 1022, { size: 26, color: C.inkSoft });
   if (d.qr) {
@@ -302,7 +318,7 @@ function story(ctx: CanvasRenderingContext2D, d: ResultCardData) {
   // 底部一塊紙色：邀請＋QR＋品牌
   fill(ctx, C.cream, 60, 1600, w - 120, 260, 36);
   text(ctx, d.font, d.text.cta, 110, 1700, { size: 50, color: C.ink, max: 620 });
-  text(ctx, d.font, d.text.brand, 110, 1770, { size: 34, color: C.ink, max: 620 });
+  brand(ctx, d, 110, 1770, 34, 620);
   text(ctx, d.font, d.text.host, 110, 1818, { size: 26, weight: 700, color: C.inkSoft, max: 620 });
   if (d.qr) qr(ctx, d, w - 110 - 200, 1630, 200);
 }
@@ -310,12 +326,18 @@ function story(ctx: CanvasRenderingContext2D, d: ResultCardData) {
 const DRAW: Record<CardLayout, (ctx: CanvasRenderingContext2D, d: ResultCardData) => void> = { poster, square, story };
 
 /** 畫到一張新的 canvas 上。 */
-export function drawResultCard(d: ResultCardData, layout: CardLayout): HTMLCanvasElement {
+/**
+ * 畫到一張新的 canvas 上。scale < 1 給畫面上的預覽用：照顯示的大小重新畫一次，
+ * 不要拿 1080 寬的大圖讓瀏覽器縮 —— 縮太多倍時細的格線會一條有一條沒有（Zach 10/23：「在更小的地方渲染會怪怪」）。
+ * 版面座標一律是 1080 寬，縮放交給 ctx.scale。
+ */
+export function drawResultCard(d: ResultCardData, layout: CardLayout, scale = 1): HTMLCanvasElement {
   const { w, h } = CARD_SIZE[layout];
   const canvas = document.createElement('canvas');
-  canvas.width = w;
-  canvas.height = h;
+  canvas.width = Math.round(w * scale);
+  canvas.height = Math.round(h * scale);
   const ctx = canvas.getContext('2d')!;
+  ctx.scale(scale, scale);
   DRAW[layout](ctx, d);
   return canvas;
 }

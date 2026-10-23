@@ -221,7 +221,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       copy: 'Copy', waiting: 'Waiting', body: 'Send the link to a friend and they will drop straight into this room.',
       share: 'Share link',
       card: 'Share result', cardKicker: 'Save it or send it to a friend', save: 'Save image', shareImage: 'Share image',
-      holdToSave: 'You can also press and hold the image to save it', cardCta: 'Scan to play me', cardFrom: 'Inspired by {show}', cardFormat: 'Image size',
+      holdToSave: 'You can also press and hold the image to save it', cardCta: 'Scan to challenge me', cardFrom: 'Inspired by {show}', cardFormat: 'Image size',
     },
     sound: { button: 'Sound', sfx: 'Sound effects', music: 'Music' },
     nudge: { button: 'Nudge', sent: 'Nudged!', received: '{who} is nudging you' },
