@@ -4,50 +4,48 @@ import { GiLaurelCrown, GiScales } from "react-icons/gi";
 import Modal from './Modal';
 import Button from './Button';
 import { PLAYER_ON, playerVar, type PlayerKey } from '@/config/players';
+import { ResultCardPreview, useResultCard, type ShareCardInput } from './ResultCard';
 
 import { Player } from '@/types/chessboard';
 import { useGameText } from '@/i18n/LocaleProvider';
-import { fmt } from '@/i18n/content/game';
-
 
 interface ChampionModalProps {
   winners: (Player | 'draw')[];
   isOpen: boolean;
   uniqTerritories: { A: string[]; B: string[]; C?: string[] };
   onClose: () => void;
-  /** 省略時不顯示「{g.champion.playAgain}」。連線模式沒有本地重開 —— 重開要雙方同意。 */
+  /** 省略時不顯示「再來一局」。連線模式沒有本地重開 —— 重開要雙方同意。 */
   onRestart?: () => void;
   /** 打開回饋表單。剛玩完是唯一還記得剛剛發生什麼的時刻。 */
   onFeedback?: () => void;
-  /** 打開分享圖（見 ShareCardModal） */
-  onShare?: () => void;
-  /** 各方累計的思考時間，排好版的字（3:12） */
+  /** 分享圖要畫的東西（見 ResultCard） */
+  card: ShareCardInput;
+  /** 各方累計的思考時間，排好版的字（3:12）。圖上有，這裡給螢幕報讀用 */
   times?: Partial<Record<PlayerKey, string>>;
 }
 
 /**
  * 結算。
  *
- * 這是整局的回報畫面，所以做成全站最重的一塊：標題列滿版染成勝方的顏色。
- * 內容則是把最終比分排成名次 —— 沿用遊戲中比分條的樣子，色彩即資訊，
- * 不必再用文字解釋誰是誰。並列冠軍或平局沒有單一勝方，色帶回到深墨。
+ * **結算畫面就是分享圖**（Zach 10/23：「是不是可以直接顯示這個分享畫面，結合成一個」）。
+ * 先前是一排名次＋「分享戰績」再開一個視窗看圖 —— 圖上本來就有勝方、比分、盤面、思考時間，
+ * 等於同樣的東西看兩次；「看看棋盤」也拿掉了（圖上就是終局盤面，要看真的棋盤按右上角關掉）。
+ *
+ * 標題列照舊滿版染成勝方的顏色；並列冠軍或平局沒有單一勝方，色帶回到深墨。
+ * 圖是 Canvas 畫的，名次另外放一份給螢幕報讀（sr-only）。
  */
 const ChampionModal: React.FC<ChampionModalProps> = ({
-  winners, isOpen, uniqTerritories, onClose, onRestart, onFeedback, onShare, times,
+  winners, isOpen, uniqTerritories, onClose, onRestart, onFeedback, card, times,
 }) => {
   const g = useGameText();
+  const share = useResultCard(isOpen, card);
   const isDraw = !winners?.length || winners[0] === 'draw';
   const winnerKeys = useMemo(
     () => (isDraw ? [] : (winners as PlayerKey[])),
     [isDraw, winners]
   );
 
-  /*
-    勝方一律排最上面，其次才看地盤大小。
-
-    只照格數排的話，投降那一局會是「輸家在上、贏家在下」——
-    投降的人地可能比較多，但他輸了。這張表回答的是誰贏，不是誰的地大。
-  */
+  // 勝方一律排最上面，其次才看地盤大小（投降的人地可能比較多，但他輸了）
   const ranking = useMemo(() => {
     const keys = (['A', 'B', 'C'] as PlayerKey[])
       .filter((p) => uniqTerritories[p] !== undefined);
@@ -57,112 +55,64 @@ const ChampionModal: React.FC<ChampionModalProps> = ({
       .sort((a, b) => won(b.player) - won(a.player) || b.count - a.count);
   }, [uniqTerritories, winnerKeys]);
 
-  const title = isDraw
-    ? g.champion.draw
-    : fmt(g.champion.win, { names: winnerKeys.map((w) => g.players[w]).join(g.players.and) });
-
   // 單一勝方才用他的顏色；並列或平局沒有代表色，回到深墨。
   const solo = !isDraw && winnerKeys.length === 1 ? winnerKeys[0] : null;
+
+  const shareLabel = share.canShareFile ? g.share.shareImage : g.share.save;
+  const onShare = share.canShareFile ? share.shareFile : share.save;
 
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={title}
+      title={share.title}
       icon={isDraw ? GiScales : GiLaurelCrown}
-      kicker={g.champion.matchOver}
+      kicker={`${g.champion.matchOver} · ${card.modeLabel}`}
       band={solo
         ? { style: { backgroundColor: playerVar(solo) }, fg: PLAYER_ON[solo] }
         : { className: 'bg-tile-ink', fg: 'text-tile-cream' }}
       /*
-        兩排：次要的兩顆左右並排，主要動作自己一整條在下面。
-
-        三顆擠一排的時候每顆只剩約 95px，中文四個字剛好塞不下；而且
-        「再來一局」和另外兩顆一樣寬，看不出誰才是主要動作。
-        分兩排之後寬度就是層級 —— 不必再靠顏色去喊。
+        兩排：次要的左右並排，主要動作自己一整條在下面 —— 寬度就是層級，不必再靠顏色去喊。
+        本機／單人：主要是「再來一局」，分享退一階成次要灰；連線沒有再來一局，分享就是主要動作。
+        深墨不屬於任何玩家，放在勝方色帶旁邊永遠不會撞色。
       */
       footer={
         <div className="flex w-full flex-col gap-3">
           <div className="flex gap-3">
-            {/* 回饋放在最左邊、樣式最輕 —— 它不該和「再來一局」搶主要動作，
-                但也不能藏到別的頁面去：離開這個畫面就沒人會回頭找它了。 */}
+            {/* 回饋放在最左邊、樣式最輕 —— 它不該和主要動作搶，但也不能藏到別的頁面去 */}
             {onFeedback && (
               <Button color="text-ink-soft hover:bg-tile-ink/[0.06] bg-transparent" handleClickEvent={onFeedback}>
                 {g.champion.feedback}
               </Button>
             )}
-            <Button color="text-ink-soft hover:bg-tile-ink/[0.06] bg-transparent" handleClickEvent={onClose}>
-              {g.champion.seeBoard}
-            </Button>
+            {onRestart && (
+              <Button color="bg-tile-ink/[0.07] text-tile-ink" handleClickEvent={onShare} disabled={!share.ready}>{shareLabel}</Button>
+            )}
           </div>
-          {/*
-            深墨：不屬於任何玩家，放在勝方色帶與比分條旁邊永遠不會撞色。
-            分享戰績：本機／單人跟「再來一局」並排、退一階成次要灰；連線沒有再來一局，它就是主要動作。
-          */}
-          {(onRestart || onShare) && (
-            <div className="flex gap-3">
-              {onShare && (
-                <Button color={onRestart ? 'bg-tile-ink/[0.07] text-tile-ink' : 'bg-tile-ink text-tile-cream'} handleClickEvent={onShare}>
-                  {g.share.card}
-                </Button>
-              )}
-              {onRestart && (
-                <Button color="bg-tile-ink text-tile-cream" handleClickEvent={onRestart}>{g.champion.playAgain}</Button>
-              )}
-            </div>
-          )}
+          {onRestart
+            ? <Button handleClickEvent={onRestart}>{g.champion.playAgain}</Button>
+            : <Button handleClickEvent={onShare} disabled={!share.ready}>{shareLabel}</Button>}
         </div>
       }
     >
-      <div className="flex flex-col gap-2">
-        {ranking.map(({ player, count }) => {
-          // 平局時沒有輸家，一律不調暗；否則整面都是灰的，看起來像大家都輸了
-          const won = isDraw || winnerKeys.includes(player);
-          /*
-            勝方滿色、而且明顯比較大；輸家退到背景：淡灰底、淡灰字、色點也淡掉，
-            只留下認得出是誰的程度。
-
-            先前全部滿色、只靠高度分名次 —— 三條都是飽和的紅藍黃，
-            視線沒有落點，看不出誰贏。輸家的字刻意壓到約 3.6:1（ink 45%）：
-            這一行是次要資訊，要讀得到但不該搶眼；再淡就讀不清楚了。
-          */
-          if (!won) {
-            return (
-              <div
-                key={player}
-                className="flex items-center gap-3 rounded-xl bg-tile-ink/[0.04] px-4 py-2 text-sm font-bold tabular-nums text-tile-ink/45"
-              >
-                <span className="size-2.5 shrink-0 rounded-full opacity-40" style={{ backgroundColor: playerVar(player) }} aria-hidden="true" />
-                <span className="flex-1">
-                  {g.players[player]}
-                  {times?.[player] && <span className="ml-2 text-xs">{g.clock.label} {times[player]}</span>}
-                </span>
-                <span className="text-lg leading-none">{count}</span>
-                <span className="text-xs font-bold">{g.champion.squares}</span>
-              </div>
-            );
-          }
-          return (
-            <div
-              key={player}
-              className={`flex items-center gap-3 rounded-xl px-5 font-black tabular-nums ${PLAYER_ON[player]} ${
-                isDraw ? 'py-4 text-base' : 'py-6 text-xl'
-              }`}
-              style={{ backgroundColor: playerVar(player) }}
-            >
-              {/* 標題色帶已經有桂冠，這裡不再放同一個圖示；「勝方」留給螢幕報讀 */}
-              {!isDraw && <span className="sr-only">{g.champion.winner}</span>}
-              <span className="flex flex-1 flex-col">
-                {g.players[player]}
-                {/* 累計思考時間（不限時，只記錄 —— Zach 10/23） */}
-                {times?.[player] && <span className="text-xs font-bold opacity-80">{g.clock.label} {times[player]}</span>}
-              </span>
-              <span className={`leading-none ${isDraw ? 'text-2xl' : 'text-5xl'}`}>{count}</span>
-              <span className="text-xs font-bold opacity-80">{g.champion.squares}</span>
-            </div>
-          );
-        })}
-      </div>
+      <ResultCardPreview
+        card={share}
+        // 比分享圖自己那組再矮一點：底下多一排按鈕。iPhone SE（667 高）上整個要放得下、不用捲
+        boxH={{
+          story: 'h-[min(58dvh,calc(100dvh_-_25.5rem),600px)]',
+          poster: 'h-[min(46dvh,calc(100dvh_-_25.5rem),480px)]',
+          square: 'h-[min(46dvh,calc(100dvh_-_25.5rem),480px)]',
+        }}
+      />
+      <ol className="sr-only">
+        {ranking.map(({ player, count }) => (
+          <li key={player}>
+            {!isDraw && winnerKeys.includes(player) && `${g.champion.winner} `}
+            {g.players[player]} {count} {g.champion.squares}
+            {times?.[player] && `, ${g.clock.label} ${times[player]}`}
+          </li>
+        ))}
+      </ol>
     </Modal>
   );
 };

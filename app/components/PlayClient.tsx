@@ -16,7 +16,8 @@ import { useTitleAlert } from "@/hook/useTitleAlert";
 import { useSound } from "@/hook/useSound";
 import { buzz, playSfx } from "@/utils/sound";
 import SoundButton from "@/components/SoundButton";
-import ShareCardModal, { type ShareCardInput } from "@/components/ShareCardModal";
+import { type ShareCardInput } from "@/components/ResultCard";
+import { fmtClock, type LiveClock } from "@/utils/clock";
 import type { GhostWall } from "@/components/Chessboard";
 import { playerKeys } from "@/game/territory";
 import { playerVar } from "@/config/players";
@@ -93,15 +94,6 @@ interface PlayClientProps {
    * 殘留的難度會把 B（三人局連 C）交給 AI，本機對戰就變成了單人。
    */
   aiDifficulty?: Difficulty | null;
-}
-
-/** 累計思考時間的寫法：3:07、1:02:45 */
-function fmtClock(ms: number): string {
-  const sec = Math.round(ms / 1000);
-  const h = Math.floor(sec / 3600);
-  const m = Math.floor((sec % 3600) / 60);
-  const ss = String(sec % 60).padStart(2, '0');
-  return h ? `${h}:${String(m).padStart(2, '0')}:${ss}` : `${m}:${ss}`;
 }
 
 /** 本機／單人的累計時間存在這個分頁裡（跟棋譜一樣，重整接得回來） */
@@ -219,7 +211,6 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
   // 冠軍 Modal 的開啟與否完全由「是否已分出勝負」推導，只額外記錄使用者
   // 是否手動關閉過，避免用 effect 去同步一個本來就能算出來的狀態。
   const [championDismissed, setChampionDismissed] = useState(false);
-  const [shareCardOpen, setShareCardOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   // 控制盤的破牆模式。指引在畫面上方、開關在下方的控制盤裡，
   // 所以狀態放在共同的父層。
@@ -576,8 +567,23 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
     for (const p of playerKeys(playersNum)) if (clockMs[p]) out[p] = fmtClock(clockMs[p]!);
     return Object.keys(out).length ? out : undefined;
   }, [clockMs, playersNum]);
+  // 整局時長＝各方加起來（輪到誰誰就在走秒，見 utils/clock.ts）
+  const totalMs = clockMs ? Object.values(clockMs).reduce((a, b) => a + (b ?? 0), 0) : 0;
 
-  // 分享圖要的東西（見 ShareCardModal）。只在結束後才用得到
+  // 對局中走秒的時鐘，交給比分那塊自己每秒更新（不讓整個 PlayClient 每秒重畫）
+  const roomTurnAt = room?.turnAt;
+  const roomClock = room?.clock;
+  const roomMover = room?.currentPlayer as PlayerKey | undefined;
+  const liveClock = useMemo<LiveClock | undefined>(() => {
+    if (isOnline) {
+      if (!roomTurnAt) return undefined;
+      return { acc: roomClock ?? {}, running: isLock ? null : roomMover ?? null, since: roomTurnAt, now: serverNow };
+    }
+    if (!started || !localClock.at) return undefined;
+    return { acc: localClock.acc, running: localClock.p, since: localClock.at, now: Date.now };
+  }, [isOnline, roomTurnAt, roomClock, roomMover, isLock, started, localClock]);
+
+  // 分享圖要的東西（見 ResultCard）。只在結束後才用得到
   const shareInput = useMemo<ShareCardInput>(() => ({
     state,
     ownerByCell: territories.ownerByCell,
@@ -586,10 +592,11 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
     winners: outcome as (PlayerKey | 'draw')[],
     owned: Object.fromEntries(playerKeys(playersNum).map((p) => [p, territories.owned[p]?.length ?? 0])),
     me,
+    total: totalMs ? fmtClock(totalMs) : undefined,
     modeLabel: isOnline ? t.online.metaTitle
       : aiDifficulty ? `${t.home.solo} · ${t.solo[aiDifficulty === 'easy' ? 'level1' : aiDifficulty === 'normal' ? 'level2' : 'level3']}`
       : t.local.metaTitle,
-  }), [state, territories, times, outcome, playersNum, me, isOnline, aiDifficulty, t]);
+  }), [state, territories, times, totalMs, outcome, playersNum, me, isOnline, aiDifficulty, t]);
 
   // 「已經動過」= 這一回合有動作、或步數被用掉、或選了棋子。三者任一成立，「重來」就該是可按的。
   const turnDirty = state.currentTurnActions.length > 0 || state.remainSteps < 2 || !!state.selected;
@@ -1204,6 +1211,7 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
             uniqTerritories={territories.owned}
             playersNum={playersNum}
             away={away}
+            clock={liveClock}
           />
 
           {/*
@@ -1337,22 +1345,13 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
           <ChampionModal
             winners={outcome}
             uniqTerritories={territories.owned}
-            isOpen={isLock && !championDismissed && !shareCardOpen}
+            isOpen={isLock && !championDismissed}
             onClose={() => setChampionDismissed(true)}
             onRestart={isOnline ? undefined : restartGame}
             onFeedback={() => { setChampionDismissed(true); setFeedbackOpen(true); }}
-            onShare={() => setShareCardOpen(true)}
+            card={shareInput}
             times={times}
           />
-
-          {/* 分享圖：關掉回到結算 */}
-          {isLock && (
-            <ShareCardModal
-              isOpen={shareCardOpen}
-              onClose={() => setShareCardOpen(false)}
-              input={shareInput}
-            />
-          )}
 
           {/*
             回饋自帶這一局的完整棋譜。

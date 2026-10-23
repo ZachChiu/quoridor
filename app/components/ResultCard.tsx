@@ -1,10 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { LuShare2 } from 'react-icons/lu';
-import Modal from './Modal';
-import Button from './Button';
-import { PLAYER_ON, playerVar, type PlayerKey } from '@/config/players';
+import { type PlayerKey } from '@/config/players';
 import { useGameText, useLocale, useMessages } from '@/i18n/LocaleProvider';
 import { fmt } from '@/i18n/content/game';
 import { localePath } from '@/i18n/locales';
@@ -12,7 +9,9 @@ import { CARD_SIZE, drawResultCard, type CardLayout, type ResultCardData } from 
 import { track } from '@/utils/analytics';
 
 /**
- * 結算之後的分享圖（Zach 10/23：「結束後易於分享的圖片…當然要帶有廣告效果」）。
+ * 結算的分享圖（Zach 10/23：「結束後易於分享的圖片…當然要帶有廣告效果」）。
+ * 原本是結算之後另開一個視窗；同一天 Zach 想「直接顯示這個分享畫面、結合成一個」，
+ * 現在結算視窗本身就是這張圖（ChampionModal 用 useResultCard ＋ ResultCardPreview）。
  *
  * 圖在瀏覽器裡用 Canvas 畫（utils/resultCard.ts），不經過任何伺服器：盤面、比分、思考時間，
  * 加上站名、網址、掃了就到首頁的 QR code。出處寫「靈感來自《節目名》」，**不寫 Netflix** ——
@@ -26,9 +25,11 @@ import { track } from '@/utils/analytics';
  *
  * navigator.share 要在點擊的當下呼叫（使用者手勢），所以圖先畫好放著，按下去不再等。
  */
-export type ShareCardInput = Omit<ResultCardData, 'qr' | 'font' | 'text'> & {
+export type ShareCardInput = Omit<ResultCardData, 'qr' | 'font' | 'text' | 'icon'> & {
   /** 「連線對戰」「單人對戰 · 二級」 */
   modeLabel: string;
+  /** 整局花了多久，已經排好版的字（12:34）。寫在圖上方那行小字的最後 */
+  total?: string;
 };
 
 const LAYOUTS: { id: CardLayout; label: string }[] = [
@@ -39,11 +40,7 @@ const LAYOUTS: { id: CardLayout; label: string }[] = [
 
 const SITE = process.env.SITE_URL || 'https://quoridorgame.com';
 
-export default function ShareCardModal({ isOpen, onClose, input }: {
-  isOpen: boolean;
-  onClose: () => void;
-  input: ShareCardInput;
-}) {
+export function useResultCard(isOpen: boolean, input: ShareCardInput) {
   const g = useGameText();
   const t = useMessages();
   const locale = useLocale();
@@ -58,19 +55,17 @@ export default function ShareCardModal({ isOpen, onClose, input }: {
   const title = isDraw
     ? g.champion.draw
     : fmt(g.champion.win, { names: winnerKeys.map((w) => g.players[w]).join(g.players.and) });
-  const solo = !isDraw && winnerKeys.length === 1 ? winnerKeys[0] : null;
 
   // 這張圖要畫什麼。字串化當作 key：同樣的內容不重畫
   const card = useMemo(() => ({
     ...input,
     text: {
-      kicker: `${g.champion.matchOver} · ${input.modeLabel}`,
+      kicker: [g.champion.matchOver, input.modeLabel, input.total && `${g.clock.total} ${input.total}`].filter(Boolean).join(' · '),
       title,
       players: g.players,
       squares: g.champion.squares,
       brand: g.share.shareTitle,
       from: fmt(g.share.cardFrom, { show: t.meta.showName }),
-      cta: g.share.cardCta,
       host: new URL(SITE).host,
     },
   }), [input, g, t, title]);
@@ -91,7 +86,7 @@ export default function ShareCardModal({ isOpen, onClose, input }: {
       const font = getComputedStyle(document.documentElement).getPropertyValue('--font-app').trim() || 'system-ui';
       await Promise.all([
         document.fonts.load(`900 40px ${font}`, card.text.title + card.text.brand),
-        document.fonts.load(`700 40px ${font}`, card.text.from + card.text.cta),
+        document.fonts.load(`700 40px ${font}`, card.text.from + card.text.kicker),
       ]).catch(() => {});
       const data = { ...card, qr, font, icon: icon.naturalWidth ? icon : undefined };
       const full = drawResultCard(data, layout);
@@ -144,64 +139,57 @@ export default function ShareCardModal({ isOpen, onClose, input }: {
     }
   };
 
+  return { layout, setLayout, box, ready, title, canShareFile, save, shareFile };
+}
+
+export type ResultCardState = ReturnType<typeof useResultCard>;
+
+/** 比例切換＋預覽圖＋「也可以長按圖片儲存」 */
+export function ResultCardPreview({ card, boxH }: {
+  card: ResultCardState;
+  /** 預覽框的高度（Tailwind class），依版型給。省略時用分享圖自己那一組 */
+  boxH?: Partial<Record<CardLayout, string>>;
+}) {
+  const g = useGameText();
+  const { layout, setLayout, box, ready, title } = card;
   const ratio = layout === 'story' ? 'aspect-[9/16]' : layout === 'square' ? 'aspect-square' : 'aspect-[4/5]';
   /*
     預覽框的高度。9:16 最窄，同樣的高度下棋盤只剩一點點，給它高一點；
     但不能超過「畫面高度扣掉標題、比例切換、按鈕」—— iPhone SE（667 高）上要整個放得下、不用捲。
   */
-  const boxH = layout === 'story' ? 'h-[min(60dvh,calc(100dvh_-_22rem),620px)]' : 'h-[min(46dvh,calc(100dvh_-_22rem),480px)]';
+  const h = boxH?.[layout] ?? (layout === 'story'
+    ? 'h-[min(60dvh,calc(100dvh_-_22rem),620px)]'
+    : 'h-[min(46dvh,calc(100dvh_-_22rem),480px)]');
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title={g.share.card}
-      icon={LuShare2}
-      kicker={g.share.cardKicker}
-      // 跟結算同一個色帶：這是結算的延伸
-      band={solo
-        ? { style: { backgroundColor: playerVar(solo) }, fg: PLAYER_ON[solo] }
-        : { className: 'bg-tile-ink', fg: 'text-tile-cream' }}
-      footer={
-        <div className="flex w-full gap-3">
-          {canShareFile && (
-            <Button color="bg-tile-ink/[0.07] text-tile-ink" handleClickEvent={save} disabled={!ready}>{g.share.save}</Button>
-          )}
-          <Button handleClickEvent={canShareFile ? shareFile : save} disabled={!ready}>
-            {canShareFile ? g.share.shareImage : g.share.save}
-          </Button>
-        </div>
-      }
-    >
-      <div className="flex flex-col items-center gap-3">
-        {/* 比例：一組並列的選項不各帶色相（全站規則），選中的是深墨 */}
-        <div role="radiogroup" aria-label={g.share.cardFormat} className="flex gap-1 rounded-full bg-tile-ink/[0.07] p-1">
-          {LAYOUTS.map(({ id, label }) => (
-            <button
-              key={id}
-              type="button"
-              role="radio"
-              aria-checked={layout === id}
-              onClick={() => setLayout(id)}
-              className={`rounded-full px-4 py-1.5 text-sm font-black tabular-nums transition ${
-                layout === id ? 'bg-tile-ink text-tile-cream' : 'text-ink-soft hover:text-tile-ink'
-              }`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-        {/* 預覽就是那張圖本身 —— 長按可以直接存（App 內建瀏覽器的退路） */}
-        <div ref={box} className={`relative max-w-full overflow-hidden rounded-xl bg-tile-ink/[0.05] ${ratio} ${boxH}`}>
-          {ready ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={ready.url} alt={title} className="size-full object-contain" />
-          ) : (
-            <div className="size-full animate-pulse" />
-          )}
-        </div>
-        <p className="text-xs font-bold text-ink-soft">{g.share.holdToSave}</p>
+    <div className="flex flex-col items-center gap-3">
+      {/* 比例：一組並列的選項不各帶色相（全站規則），選中的是深墨 */}
+      <div role="radiogroup" aria-label={g.share.cardFormat} className="flex gap-1 rounded-full bg-tile-ink/[0.07] p-1">
+        {LAYOUTS.map(({ id, label }) => (
+          <button
+            key={id}
+            type="button"
+            role="radio"
+            aria-checked={layout === id}
+            onClick={() => setLayout(id)}
+            className={`rounded-full px-4 py-1.5 text-sm font-black tabular-nums transition ${
+              layout === id ? 'bg-tile-ink text-tile-cream' : 'text-ink-soft hover:text-tile-ink'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
       </div>
-    </Modal>
+      {/* 預覽就是那張圖本身 —— 長按可以直接存（App 內建瀏覽器的退路） */}
+      <div ref={box} className={`relative max-w-full overflow-hidden rounded-xl bg-tile-ink/[0.05] ${ratio} ${h}`}>
+        {ready ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={ready.url} alt={title} className="size-full object-contain" />
+        ) : (
+          <div className="size-full animate-pulse" />
+        )}
+      </div>
+      <p className="text-xs font-bold text-ink-soft">{g.share.holdToSave}</p>
+    </div>
   );
 }

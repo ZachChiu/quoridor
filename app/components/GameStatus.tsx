@@ -1,8 +1,9 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { PLAYER_ON, playerVar, type PlayerKey } from "@/config/players";
 import type { Player } from "@/types/chessboard";
 import { useGameText } from '@/i18n/LocaleProvider';
 import { GiUnplugged } from 'react-icons/gi';
+import { clockOf, fmtClock, type LiveClock } from '@/utils/clock';
 
 interface Props {
   /** 這台裝置上的人坐哪一方（連線、跟 AI 下）。本機對戰沒有 */
@@ -13,6 +14,8 @@ interface Props {
   playersNum: number;
   /** 連線時斷線的對手（已經等過幾秒、確定不是重新整理） */
   away?: PlayerKey[];
+  /** 各方累計的思考時間，輪到的人在走秒。還沒開始（沒擺下第一顆）時沒有 */
+  clock?: LiveClock;
 }
 
 /**
@@ -52,10 +55,27 @@ interface Props {
  * ── 斷線的對手掛一顆拔掉插頭的小圓 ────────────────────────────────
  * 釘在那塊的右上角，深墨底、外面一圈頁面底色把它跟磚分開。不淡化整塊（理由見上）、
  * 也不在磚上寫字 —— 手機上那塊只放得下一個數字。輪到他的時候，提示句另外會寫「藍方暫時離線」。
+ *
+ * ── 思考時間（Zach 10/23：「桌機版沒看到下棋時間的計時」）──────────────
+ * 不限時，只記錄。桌機寫在「已佔領」底下，整局時長（各方加起來）在整排的最下面；
+ * 手機直式一小行掛在每塊下方，橫式掛在右邊；手機不寫整局（沒地方，結算的圖上有）。
+ * 只有這一塊每秒重畫，PlayClient 與棋盤不跟著動。
  */
-export default React.memo(function GameStatus({ me, isLock, currentPlayer, uniqTerritories, playersNum, away }: Props) {
+export default React.memo(function GameStatus({ me, isLock, currentPlayer, uniqTerritories, playersNum, away, clock }: Props) {
   const g = useGameText();
   const players: PlayerKey[] = playersNum === 3 ? ['A', 'B', 'C'] : ['A', 'B'];
+
+  // 現在幾點，每秒更新一次；沒有人在走秒時停掉
+  const [now, setNow] = useState(0);
+  useEffect(() => {
+    if (!clock) return;
+    const tick = () => setNow(clock.now());
+    const first = setTimeout(tick, 0);
+    const id = clock.running ? setInterval(tick, 1000) : undefined;
+    return () => { clearTimeout(first); clearInterval(id); };
+  }, [clock]);
+  const ms = (p: PlayerKey) => (clock ? clockOf(clock, p, now) : 0);
+  const total = clock ? players.reduce((a, p) => a + ms(p), 0) : 0;
 
   return (
     <div
@@ -81,7 +101,19 @@ export default React.memo(function GameStatus({ me, isLock, currentPlayer, uniqT
               ...(p === me ? { outline: `3px solid ${playerVar(p)}`, outlineOffset: '3px' } : null),
             }}
           >
-            <span className="coarse:hidden">{g.status.claimed}</span>
+            <span className="flex flex-col coarse:hidden">
+              {g.status.claimed}
+              {clock && <span className="text-xs font-bold opacity-80" aria-label={`${g.clock.label} ${fmtClock(ms(p))}`}>{fmtClock(ms(p))}</span>}
+            </span>
+            {/* 手機：一小行掛在磚外面（直式在下方、橫式在右邊） */}
+            {clock && (
+              <span aria-hidden="true"
+                className="pointer-events-none absolute hidden whitespace-nowrap text-[11px] font-bold text-ink-soft coarse:left-1/2
+                           coarse:top-full coarse:mt-1 coarse:block coarse:-translate-x-1/2
+                           coarse-land:left-full coarse-land:top-1/2 coarse-land:ml-2 coarse-land:mt-0 coarse-land:-translate-y-1/2 coarse-land:translate-x-0">
+                {fmtClock(ms(p))}
+              </span>
+            )}
             {p === me && <span className="sr-only">{g.status.you}</span>}
             {away?.includes(p) && (
               <span className="absolute -right-2 -top-2 grid size-6 place-items-center rounded-full bg-tile-ink text-[13px] text-tile-cream ring ring-primary-50">
@@ -96,6 +128,11 @@ export default React.memo(function GameStatus({ me, isLock, currentPlayer, uniqT
           </div>
         );
       })}
+      {clock && (
+        <p className="pr-1 text-xs font-black tabular-nums text-ink-soft coarse:hidden">
+          {g.clock.total} {fmtClock(total)}
+        </p>
+      )}
     </div>
   )
 })

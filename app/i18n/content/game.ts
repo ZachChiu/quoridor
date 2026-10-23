@@ -42,7 +42,7 @@ export type GameText = {
   champion: {
     draw: string; win: string;
     matchOver: string; winner: string; feedback: string;
-    seeBoard: string; playAgain: string; squares: string; seeResult: string;
+    playAgain: string; squares: string; seeResult: string;
   };
   /** 首頁右上角的「聯絡我們」：同一個回饋視窗，但不綁某一局（沒有棋譜、評分選填）。 */
   contact: { button: string; heading: string; kicker: string; ratingLabel: string; placeholder: string; note: string; sentBody: string };
@@ -56,15 +56,15 @@ export type GameText = {
     shareTitle: string; shareText: string; heading: string; kicker: string;
     copied: string; copyAria: string; copy: string; waiting: string; body: string; share: string;
     /** 結算的分享圖：按鈕、視窗、圖上的字。cardFrom 不寫 Netflix —— 看起來像官方合作（大腦 10/23 建議） */
-    card: string; cardKicker: string; save: string; shareImage: string; holdToSave: string;
-    cardCta: string; cardFrom: string; cardFormat: string;
+    save: string; shareImage: string; holdToSave: string;
+    cardFrom: string; cardFormat: string;
   };
   /** 喇叭鈕：音效、音樂各一個開關 */
   sound: { button: string; sfx: string; music: string };
   /** 連線時催輪到的人。received 是被催的那邊看到的 */
   nudge: { button: string; sent: string; received: string };
-  /** 累計思考時間（不限時，只記錄） */
-  clock: { label: string };
+  /** 累計思考時間（不限時，只記錄）；total 是整局時長，寫在桌機比分底下與分享圖上方那行 */
+  clock: { label: string; total: string };
   waiting: { kicker: string; heading: string; invite: string };
   breakWall: { heading: string; kicker: string; cancel: string; confirm: string; body: string };
   surrender: { label: string; heading: string; kicker: string; cancel: string; confirm: string; body: string; bodyThree: string };
@@ -113,7 +113,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
     champion: {
       draw: '平局', win: '{names}勝利',
       matchOver: '對局結束', winner: '勝方', feedback: '給點意見',
-      seeBoard: '看看棋盤', playAgain: '再來一局', squares: '格', seeResult: '看結算',
+      playAgain: '再來一局', squares: '格', seeResult: '看結算',
     },
     contact: {
       button: '聯絡我們', heading: '聯絡我們', kicker: '給開發者的話',
@@ -137,12 +137,12 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       heading: '邀請朋友加入', kicker: '連線對戰', copied: '已複製', copyAria: '複製連結',
       copy: '複製', waiting: '等待中', body: '把連結傳給朋友，他們點開就會直接坐進這間房。',
       share: '分享連結',
-      card: '分享戰績', cardKicker: '存下來或傳給朋友', save: '儲存圖片', shareImage: '分享圖片',
-      holdToSave: '也可以長按圖片儲存', cardCta: '掃碼來跟我下一局', cardFrom: '靈感來自《{show}》', cardFormat: '圖片比例',
+      save: '儲存圖片', shareImage: '分享圖片',
+      holdToSave: '也可以長按圖片儲存', cardFrom: '靈感來自《{show}》', cardFormat: '圖片比例',
     },
     sound: { button: '聲音', sfx: '音效', music: '音樂' },
     nudge: { button: '催一下', sent: '催了！', received: '{who}在催你' },
-    clock: { label: '思考時間' },
+    clock: { label: '思考時間', total: '整局' },
     waiting: { kicker: '連線對戰', heading: '等朋友進來', invite: '邀請朋友加入' },
     breakWall: {
       heading: '要打破這面牆嗎', kicker: '每人只有一次', cancel: '取消', confirm: '破牆',
@@ -196,7 +196,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
     champion: {
       draw: 'Draw', win: '{names} wins',
       matchOver: 'Match over', winner: 'Winner', feedback: 'Send feedback',
-      seeBoard: 'Look at the board', playAgain: 'Play again', squares: 'squares', seeResult: 'See the result',
+      playAgain: 'Play again', squares: 'squares', seeResult: 'See the result',
     },
     contact: {
       button: 'Contact', heading: 'Get in touch', kicker: 'A note to the developer',
@@ -220,12 +220,12 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       heading: 'Invite a friend', kicker: 'Online play', copied: 'Copied', copyAria: 'Copy link',
       copy: 'Copy', waiting: 'Waiting', body: 'Send the link to a friend and they will drop straight into this room.',
       share: 'Share link',
-      card: 'Share result', cardKicker: 'Save it or send it to a friend', save: 'Save image', shareImage: 'Share image',
-      holdToSave: 'You can also press and hold the image to save it', cardCta: 'Scan to challenge me', cardFrom: 'Inspired by {show}', cardFormat: 'Image size',
+      save: 'Save image', shareImage: 'Share image',
+      holdToSave: 'You can also press and hold the image to save it', cardFrom: 'Inspired by {show}', cardFormat: 'Image size',
     },
     sound: { button: 'Sound', sfx: 'Sound effects', music: 'Music' },
     nudge: { button: 'Nudge', sent: 'Nudged!', received: '{who} is nudging you' },
-    clock: { label: 'Thinking time' },
+    clock: { label: 'Thinking time', total: 'Total' },
     waiting: { kicker: 'Online play', heading: 'Waiting for a friend', invite: 'Invite a friend' },
     breakWall: {
       heading: 'Break this wall?', kicker: 'Once per game', cancel: 'Cancel', confirm: 'Break it',
@@ -279,7 +279,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
     champion: {
       draw: '引き分け', win: '{names}の勝ち',
       matchOver: '対局終了', winner: '勝者', feedback: '意見を送る',
-      seeBoard: '盤面を見る', playAgain: 'もう一局', squares: 'マス', seeResult: '結果を見る',
+      playAgain: 'もう一局', squares: 'マス', seeResult: '結果を見る',
     },
     contact: {
       button: 'お問い合わせ', heading: 'お問い合わせ', kicker: '開発者へのひとこと',
@@ -303,12 +303,12 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       heading: '友だちを招待', kicker: 'オンライン対戦', copied: 'コピーしました', copyAria: 'リンクをコピー',
       copy: 'コピー', waiting: '待機中', body: 'リンクを友だちに送ると、開いただけでこの部屋に入れます。',
       share: 'リンクを共有',
-      card: '結果をシェア', cardKicker: '保存して友だちに送ろう', save: '画像を保存', shareImage: '画像をシェア',
-      holdToSave: '画像を長押ししても保存できます', cardCta: 'スキャンして対戦しよう', cardFrom: '『{show}』から生まれたゲーム', cardFormat: '画像の比率',
+      save: '画像を保存', shareImage: '画像をシェア',
+      holdToSave: '画像を長押ししても保存できます', cardFrom: '『{show}』から生まれたゲーム', cardFormat: '画像の比率',
     },
     sound: { button: 'サウンド', sfx: '効果音', music: '音楽' },
     nudge: { button: 'せかす', sent: 'せかしました', received: '{who}がせかしています' },
-    clock: { label: '考えた時間' },
+    clock: { label: '考えた時間', total: '合計' },
     waiting: { kicker: 'オンライン対戦', heading: '友だちを待っています', invite: '友だちを招待' },
     breakWall: {
       heading: 'この壁を壊しますか？', kicker: '1ゲームに1回だけ', cancel: 'やめる', confirm: '壊す',
@@ -362,7 +362,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
     champion: {
       draw: '무승부', win: '{names} 승리',
       matchOver: '대국 종료', winner: '승자', feedback: '의견 보내기',
-      seeBoard: '판 보기', playAgain: '다시 한 판', squares: '칸', seeResult: '결과 보기',
+      playAgain: '다시 한 판', squares: '칸', seeResult: '결과 보기',
     },
     contact: {
       button: '문의하기', heading: '문의하기', kicker: '개발자에게 한마디',
@@ -386,12 +386,12 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       heading: '친구 초대하기', kicker: '온라인 대전', copied: '복사됨', copyAria: '링크 복사',
       copy: '복사', waiting: '대기 중', body: '링크를 친구에게 보내면, 열자마자 이 방으로 들어옵니다.',
       share: '링크 공유',
-      card: '결과 공유', cardKicker: '저장하거나 친구에게 보내세요', save: '이미지 저장', shareImage: '이미지 공유',
-      holdToSave: '이미지를 길게 눌러도 저장할 수 있어요', cardCta: '스캔하고 한 판 붙자', cardFrom: '〈{show}〉에서 영감을 받은 게임', cardFormat: '이미지 비율',
+      save: '이미지 저장', shareImage: '이미지 공유',
+      holdToSave: '이미지를 길게 눌러도 저장할 수 있어요', cardFrom: '〈{show}〉에서 영감을 받은 게임', cardFormat: '이미지 비율',
     },
     sound: { button: '소리', sfx: '효과음', music: '음악' },
     nudge: { button: '재촉하기', sent: '재촉했어요', received: '{who} 쪽이 재촉해요' },
-    clock: { label: '생각한 시간' },
+    clock: { label: '생각한 시간', total: '총' },
     waiting: { kicker: '온라인 대전', heading: '친구를 기다리는 중', invite: '친구 초대하기' },
     breakWall: {
       heading: '이 벽을 부술까요?', kicker: '한 게임에 한 번만', cancel: '취소', confirm: '부수기',
@@ -449,7 +449,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
     champion: {
       draw: '平局', win: '{names}获胜',
       matchOver: '对局结束', winner: '胜方', feedback: '提点意见',
-      seeBoard: '看看棋盘', playAgain: '再来一局', squares: '格', seeResult: '看结果',
+      playAgain: '再来一局', squares: '格', seeResult: '看结果',
     },
     contact: {
       button: '联系我们', heading: '联系我们', kicker: '给开发者的话',
@@ -473,12 +473,12 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       heading: '邀请朋友加入', kicker: '联机对战', copied: '已复制', copyAria: '复制链接',
       copy: '复制', waiting: '等待中', body: '把链接发给朋友，对方点开就会直接进入这个房间。',
       share: '分享链接',
-      card: '分享战绩', cardKicker: '保存下来或发给朋友', save: '保存图片', shareImage: '分享图片',
-      holdToSave: '也可以长按图片保存', cardCta: '扫码来跟我下一局', cardFrom: '灵感来自《{show}》', cardFormat: '图片比例',
+      save: '保存图片', shareImage: '分享图片',
+      holdToSave: '也可以长按图片保存', cardFrom: '灵感来自《{show}》', cardFormat: '图片比例',
     },
     sound: { button: '声音', sfx: '音效', music: '音乐' },
     nudge: { button: '催一下', sent: '催了！', received: '{who}在催你' },
-    clock: { label: '思考时间' },
+    clock: { label: '思考时间', total: '整局' },
     waiting: { kicker: '联机对战', heading: '等朋友进来', invite: '邀请朋友加入' },
     breakWall: {
       heading: '要拆掉这道墙吗', kicker: '每人只有一次', cancel: '取消', confirm: '破墙',
@@ -537,7 +537,7 @@ export const GAME_TEXT: Record<Locale, GameText> = {
     champion: {
       draw: 'เสมอ', win: '{names}ชนะ',
       matchOver: 'จบเกม', winner: 'ผู้ชนะ', feedback: 'ส่งความเห็น',
-      seeBoard: 'ดูกระดาน', playAgain: 'เล่นอีกรอบ', squares: 'ช่อง', seeResult: 'ดูผล',
+      playAgain: 'เล่นอีกรอบ', squares: 'ช่อง', seeResult: 'ดูผล',
     },
     contact: {
       button: 'ติดต่อเรา', heading: 'ติดต่อเรา', kicker: 'ถึงผู้พัฒนา',
@@ -561,12 +561,12 @@ export const GAME_TEXT: Record<Locale, GameText> = {
       heading: 'ชวนเพื่อนมาเล่น', kicker: 'เล่นออนไลน์', copied: 'คัดลอกแล้ว', copyAria: 'คัดลอกลิงก์',
       copy: 'คัดลอก', waiting: 'กำลังรอ', body: 'ส่งลิงก์ให้เพื่อน เพื่อนกดเปิดแล้วจะเข้าห้องนี้ได้ทันที',
       share: 'แชร์ลิงก์',
-      card: 'แชร์ผลการแข่ง', cardKicker: 'บันทึกไว้หรือส่งให้เพื่อน', save: 'บันทึกรูป', shareImage: 'แชร์รูป',
-      holdToSave: 'กดค้างที่รูปเพื่อบันทึกก็ได้', cardCta: 'สแกนแล้วมาเล่นกัน', cardFrom: 'ได้แรงบันดาลใจจาก {show}', cardFormat: 'ขนาดรูป',
+      save: 'บันทึกรูป', shareImage: 'แชร์รูป',
+      holdToSave: 'กดค้างที่รูปเพื่อบันทึกก็ได้', cardFrom: 'ได้แรงบันดาลใจจาก {show}', cardFormat: 'ขนาดรูป',
     },
     sound: { button: 'เสียง', sfx: 'เสียงเอฟเฟกต์', music: 'เพลง' },
     nudge: { button: 'เร่งหน่อย', sent: 'เร่งแล้ว!', received: '{who}กำลังเร่งคุณ' },
-    clock: { label: 'เวลาคิด' },
+    clock: { label: 'เวลาคิด', total: 'รวม' },
     waiting: { kicker: 'เล่นออนไลน์', heading: 'รอเพื่อนเข้าห้อง', invite: 'ชวนเพื่อนมาเล่น' },
     breakWall: {
       heading: 'จะทำลายกำแพงนี้ไหม', kicker: 'ทำได้คนละครั้งเดียว', cancel: 'ยกเลิก', confirm: 'ทำลายกำแพง',

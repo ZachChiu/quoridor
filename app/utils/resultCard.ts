@@ -56,7 +56,6 @@ export type ResultCardData = {
     squares: string;
     brand: string;
     from: string;
-    cta: string;
     host: string;
   };
   /** QR code 的格子（uqr 的 encode().data）。沒有就不畫 */
@@ -262,6 +261,10 @@ function bandColor(d: ResultCardData) {
 
 // ─── 三種版型 ──────────────────────────────────────────────────────────────
 
+/*
+  三種版型都不寫「掃碼來跟我下一局」這類邀請句（Zach 10/23 拿掉的）：QR 與網址留著，讓看到的人自己掃。
+*/
+
 /** 4:5 直式。上面勝方色帶寫結果，盤面壓在色帶下緣，底下比分、最下面品牌＋QR。 */
 function poster(ctx: CanvasRenderingContext2D, d: ResultCardData) {
   const { w, h } = CARD_SIZE.poster;
@@ -271,24 +274,24 @@ function poster(ctx: CanvasRenderingContext2D, d: ResultCardData) {
   text(ctx, d.font, d.text.title, w / 2, 250, { size: 128, color: C.cream, align: 'center', max: 940 });
   board(ctx, d, 200, 320, 680);
   scores(ctx, d, w / 2, 1040, 104, 920);
-  // 左邊三行：站名、出處、網址；右邊 QR，旁邊一句邀請
-  brand(ctx, d, 80, 1226, 52, 520);
-  text(ctx, d.font, d.text.from, 80, 1268, { size: 24, weight: 700, color: C.inkSoft, max: 520 });
-  text(ctx, d.font, d.text.host, 80, 1306, { size: 24, weight: 700, color: C.inkSoft, max: 520 });
-  if (d.qr) {
-    qr(ctx, d, w - 80 - 150, 1170, 150);
-    text(ctx, d.font, d.text.cta, w - 80 - 150 - 24, 1256, { size: 26, weight: 700, color: C.ink, align: 'right', max: 260 });
-  }
+  // 左邊三行：站名、出處、網址；右邊 QR
+  brand(ctx, d, 80, 1226, 52, 720);
+  text(ctx, d.font, d.text.from, 80, 1268, { size: 24, weight: 700, color: C.inkSoft, max: 720 });
+  text(ctx, d.font, d.text.host, 80, 1306, { size: 24, weight: 700, color: C.inkSoft, max: 720 });
+  if (d.qr) qr(ctx, d, w - 80 - 150, 1170, 150);
 }
 
-/** 1:1。左邊大盤面、右邊一欄結果＋比分直排，最下面品牌。 */
+/**
+ * 1:1。左邊大盤面、右邊一欄結果＋比分直排，最下面品牌。
+ * 標題與盤面之間要留空：先前標題字的下緣直接壓到盤面的外框（Zach 10/23：「1:1 的有點卡到文字」）。
+ */
 function square(ctx: CanvasRenderingContext2D, d: ResultCardData) {
   const { w, h } = CARD_SIZE.square;
   fill(ctx, C.ground, 0, 0, w, h);
-  fill(ctx, bandColor(d), 0, 0, w, 250);
-  text(ctx, d.font, d.text.kicker, 72, 96, { size: 32, color: C.cream, alpha: 0.75, max: 936 });
-  text(ctx, d.font, d.text.title, 72, 200, { size: 96, color: C.cream, max: 936 });
-  board(ctx, d, 72, 210, 600);
+  fill(ctx, bandColor(d), 0, 0, w, 270);
+  text(ctx, d.font, d.text.kicker, 72, 82, { size: 30, color: C.cream, alpha: 0.75, max: 936 });
+  text(ctx, d.font, d.text.title, 72, 180, { size: 86, color: C.cream, max: 936 });
+  board(ctx, d, 72, 232, 578);
   // 右欄：比分直排
   const list = ranking(d);
   const colX = 720, colW = 288;
@@ -307,7 +310,7 @@ function square(ctx: CanvasRenderingContext2D, d: ResultCardData) {
   }
 }
 
-/** 9:16 限時動態。滿版勝方色、超大結果，盤面在中間，最下面一句邀請＋大 QR。 */
+/** 9:16 限時動態。滿版勝方色、超大結果，盤面在中間，最下面一塊紙色放品牌＋大 QR。 */
 function story(ctx: CanvasRenderingContext2D, d: ResultCardData) {
   const { w, h } = CARD_SIZE.story;
   fill(ctx, bandColor(d), 0, 0, w, h);
@@ -315,11 +318,11 @@ function story(ctx: CanvasRenderingContext2D, d: ResultCardData) {
   text(ctx, d.font, d.text.title, w / 2, 420, { size: 150, color: C.cream, align: 'center', max: 960 });
   scores(ctx, d, w / 2, 500, 110, 960, true);
   board(ctx, d, 110, 680, 860);
-  // 底部一塊紙色：邀請＋QR＋品牌
+  // 底部一塊紙色：品牌、出處、網址＋QR
   fill(ctx, C.cream, 60, 1600, w - 120, 260, 36);
-  text(ctx, d.font, d.text.cta, 110, 1700, { size: 50, color: C.ink, max: 620 });
-  brand(ctx, d, 110, 1770, 34, 620);
-  text(ctx, d.font, d.text.host, 110, 1818, { size: 26, weight: 700, color: C.inkSoft, max: 620 });
+  brand(ctx, d, 110, 1706, 50, 620);
+  text(ctx, d.font, d.text.from, 110, 1762, { size: 28, weight: 700, color: C.inkSoft, max: 620 });
+  text(ctx, d.font, d.text.host, 110, 1808, { size: 28, weight: 700, color: C.inkSoft, max: 620 });
   if (d.qr) qr(ctx, d, w - 110 - 200, 1630, 200);
 }
 
