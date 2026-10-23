@@ -11,9 +11,9 @@ import { track } from '@/utils/analytics';
 /**
  * 結算的分享圖（Zach 10/23：「結束後易於分享的圖片…當然要帶有廣告效果」）。
  * 原本是結算之後另開一個視窗；同一天 Zach 想「直接顯示這個分享畫面、結合成一個」，
- * 現在結算視窗本身就是這張圖（ChampionModal 用 useResultCard ＋ ResultCardPreview）。
+ * 現在結算視窗本身就是這張圖（ChampionModal 用 useResultCard ＋ RatioToggle ＋ CardImage 拼起來）。
  *
- * 圖在瀏覽器裡用 Canvas 畫（utils/resultCard.ts），不經過任何伺服器：盤面、比分、整局多久，
+ * 圖在瀏覽器裡用 Canvas 畫（utils/resultCard.ts），不經過任何伺服器：盤面、比分，
  * 加上站名、網址、掃了就到首頁的 QR code。出處寫「靈感來自《節目名》」，**不寫 Netflix** ——
  * 圖上有我們的站名又有 Netflix，看起來像官方合作（大腦 10/23 建議）。
  *
@@ -28,8 +28,6 @@ import { track } from '@/utils/analytics';
 export type ShareCardInput = Omit<ResultCardData, 'qr' | 'font' | 'text' | 'icon'> & {
   /** 「連線對戰」「單人對戰 · 二級」 */
   modeLabel: string;
-  /** 整局花了多久，已經排好版的字（12:34）。寫在圖上方那行小字的最後 */
-  total?: string;
 };
 
 const LAYOUTS: { id: CardLayout; label: string }[] = [
@@ -60,7 +58,7 @@ export function useResultCard(isOpen: boolean, input: ShareCardInput) {
   const card = useMemo(() => ({
     ...input,
     text: {
-      kicker: [g.champion.matchOver, input.modeLabel, input.total && `${g.clock.total} ${input.total}`].filter(Boolean).join(' · '),
+      kicker: `${g.champion.matchOver} · ${input.modeLabel}`,
       title,
       players: g.players,
       squares: g.champion.squares,
@@ -144,52 +142,53 @@ export function useResultCard(isOpen: boolean, input: ShareCardInput) {
 
 export type ResultCardState = ReturnType<typeof useResultCard>;
 
-/** 比例切換＋預覽圖＋「也可以長按圖片儲存」 */
-export function ResultCardPreview({ card, boxH }: {
-  card: ResultCardState;
-  /** 預覽框的高度（Tailwind class），依版型給。省略時用分享圖自己那一組 */
-  boxH?: Partial<Record<CardLayout, string>>;
-}) {
+/** 比例切換。一組並列的選項不各帶色相（全站規則），選中的是深墨；放在暗的遮罩上時反過來用米白 */
+export function RatioToggle({ card, onDark = false }: { card: ResultCardState; onDark?: boolean }) {
   const g = useGameText();
-  const { layout, setLayout, box, ready, title } = card;
-  const ratio = layout === 'story' ? 'aspect-[9/16]' : layout === 'square' ? 'aspect-square' : 'aspect-[4/5]';
-  /*
-    預覽框的高度。9:16 最窄，同樣的高度下棋盤只剩一點點，給它高一點；
-    但不能超過「畫面高度扣掉標題、比例切換、按鈕」—— iPhone SE（667 高）上要整個放得下、不用捲。
-  */
-  const h = boxH?.[layout] ?? (layout === 'story'
-    ? 'h-[min(60dvh,calc(100dvh_-_22rem),620px)]'
-    : 'h-[min(46dvh,calc(100dvh_-_22rem),480px)]');
-
+  const { layout, setLayout } = card;
   return (
-    <div className="flex flex-col items-center gap-3">
-      {/* 比例：一組並列的選項不各帶色相（全站規則），選中的是深墨 */}
-      <div role="radiogroup" aria-label={g.share.cardFormat} className="flex gap-1 rounded-full bg-tile-ink/[0.07] p-1">
-        {LAYOUTS.map(({ id, label }) => (
-          <button
-            key={id}
-            type="button"
-            role="radio"
-            aria-checked={layout === id}
-            onClick={() => setLayout(id)}
-            className={`rounded-full px-4 py-1.5 text-sm font-black tabular-nums transition ${
-              layout === id ? 'bg-tile-ink text-tile-cream' : 'text-ink-soft hover:text-tile-ink'
-            }`}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-      {/* 預覽就是那張圖本身 —— 長按可以直接存（App 內建瀏覽器的退路） */}
-      <div ref={box} className={`relative max-w-full overflow-hidden rounded-xl bg-tile-ink/[0.05] ${ratio} ${h}`}>
-        {ready ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={ready.url} alt={title} className="size-full object-contain" />
-        ) : (
-          <div className="size-full animate-pulse" />
-        )}
-      </div>
-      <p className="text-xs font-bold text-ink-soft">{g.share.holdToSave}</p>
+    <div role="radiogroup" aria-label={g.share.cardFormat}
+      className={`flex gap-1 rounded-full p-1 ${onDark ? 'bg-white/15' : 'bg-tile-ink/[0.07]'}`}>
+      {LAYOUTS.map(({ id, label }) => (
+        <button
+          key={id}
+          type="button"
+          role="radio"
+          aria-checked={layout === id}
+          onClick={() => setLayout(id)}
+          className={`rounded-full px-4 py-1.5 text-sm font-black tabular-nums transition ${
+            layout === id
+              ? onDark ? 'bg-tile-cream text-tile-ink' : 'bg-tile-ink text-tile-cream'
+              : onDark ? 'text-tile-cream/75 hover:text-tile-cream' : 'text-ink-soft hover:text-tile-ink'
+          }`}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/**
+ * 圖本身。預覽就是那張圖 —— 長按可以直接存（App 內建瀏覽器的退路）。
+ * size 是每種比例的高度（Tailwind class，要是寫死的完整字串，JIT 才掃得到）：
+ * 高度同時受「畫面高度扣掉按鈕」與「畫面寬度 × 比例」限制，寬高比才不會被擠歪、不用留黑邊。
+ */
+export function CardImage({ card, size, className = '' }: {
+  card: ResultCardState;
+  size: Record<CardLayout, string>;
+  className?: string;
+}) {
+  const { layout, box, ready, title } = card;
+  const ratio = layout === 'story' ? 'aspect-[9/16]' : layout === 'square' ? 'aspect-square' : 'aspect-[4/5]';
+  return (
+    <div ref={box} className={`relative shrink-0 overflow-hidden ${ratio} ${size[layout]} ${className}`}>
+      {ready ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={ready.url} alt={title} className="size-full object-cover" />
+      ) : (
+        <div className="size-full animate-pulse bg-tile-ink/10" />
+      )}
     </div>
   );
 }
