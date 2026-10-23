@@ -1,21 +1,24 @@
 'use client';
-import { useEffect, useMemo, useState } from 'react';
-import { GiChessKnight } from 'react-icons/gi';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { LuCheck, LuCircleHelp, LuGrid3X3, LuLightbulb, LuRotateCcw, LuTimer, LuUndo2, LuX } from 'react-icons/lu';
-import Modal from '@/components/Modal';
+import { ShareResultModal } from '@/components/ShareResultModal';
 import { fill, useTextTable } from '@/i18n/gameText';
 import {
   canStartFrom, createTour, hint as findHint, isComplete, isStuck, legalMoves, move, tapKind, truncate, undo, verdict,
   type Hint, type Square, type Tour,
 } from '@/games/knights-tour/engine';
 import { TEXT, type KnightsText } from '@/games/knights-tour/text';
-import GameFrame, { BTN, BTN_PRIMARY, type Place } from './GameFrame';
+import GameFrame, { type Place } from './GameFrame';
 import HowToPlay from './HowToPlay';
 import SizePicker from './SizePicker';
 import TourBoard from './TourBoard';
+import { finaleMs } from './motion';
 import { practiceKey, saveBest, useBestTimes } from './records';
+import { isClosed } from './shareCard';
+import { playJump, playKt } from './sounds';
 import { formatTime, shake, sizeLabel, squareName } from './ui';
-import { BAND_CHALK, MODAL_PANEL } from './GameFrame';
+import { BTN, BTN_PRIMARY, KT_SHARE } from './styles';
+import { useKtShare } from './useKtShare';
 
 type Note = 'notKnight' | 'badStart' | 'revisited' | null;
 
@@ -23,6 +26,10 @@ type Note = 'notKnight' | 'badStart' | 'revisited' | null;
  * 練習模式：5×5–10×10 自選，可以悔棋、看提示，每走一步就判定「從這裡還走不走得完」
  * （engine 的解題器，有節點上限，算不完就顯示「算不出來」，不會卡住畫面）。
  * 用過提示的那一局不列入最佳紀錄；悔棋與判定可以用 —— 它們本來就是練習的一部分。
+ *
+ * 聲音在點擊當下放（sounds.ts）：只有真的走了、悔了、點錯了才響，重新整理、換大小不會響。
+ * 走完時先讓騎士在棋盤上收尾（motion.ts 的 finale），再跳出結算 —— 結算就是分享圖（shareCard.ts），
+ * 關掉就停在走完的棋盤上。
  */
 export default function PracticeGame({ n, onMenu, onSize }: { n: number; onMenu: () => void; onSize: (n: number) => void }) {
   const t = useTextTable<KnightsText>(TEXT);
@@ -39,6 +46,9 @@ export default function PracticeGame({ n, onMenu, onSize }: { n: number; onMenu:
   const [helpOpen, setHelpOpen] = useState(false);
   const [sizeOpen, setSizeOpen] = useState(false);
   const [result, setResult] = useState<{ ms: number; isNew: boolean; open: boolean } | null>(null);
+  /** 走完到跳出結算之間的那段收尾 */
+  const finaleTimer = useRef(0);
+  useEffect(() => () => window.clearTimeout(finaleTimer.current), []);
 
   const running = startedAt !== null && endedAt === null;
   useEffect(() => {
@@ -65,22 +75,36 @@ export default function PracticeGame({ n, onMenu, onSize }: { n: number; onMenu:
   const tap = (sq: Square, el: HTMLElement) => {
     const kind = tapKind(tour, sq);
     if (kind === 'current' || kind === 'over') return;
-    if (kind === 'notKnight' || kind === 'revisit') { setNote(kind === 'revisit' ? 'revisited' : 'notKnight'); shake(el); return; }
-    if (kind === 'start' && !canStartFrom(n, sq) && armed !== sq) { setArmed(sq); setNote('badStart'); shake(el); return; }
+    if (kind === 'notKnight' || kind === 'revisit') { setNote(kind === 'revisit' ? 'revisited' : 'notKnight'); shake(el); playKt('wrong'); return; }
+    if (kind === 'start' && !canStartFrom(n, sq) && armed !== sq) { setArmed(sq); setNote('badStart'); shake(el); playKt('wrong'); return; }
     const at = Date.now();
     const next = move(tour, sq);
     commit(next);
     setNow(at);
+    playJump(n, sq, kind === 'start');
     const start = startedAt ?? at;
     if (startedAt === null) setStartedAt(at);
     if (isComplete(next)) {
       setEndedAt(at);
       const ms = at - start;
-      setResult({ ms, isNew: assisted ? false : saveBest(practiceKey(n), ms).isNew, open: true });
+      const closed = isClosed(next);
+      playKt('complete', 0.3);
+      if (closed) playKt('closed', 0.95);
+      setResult({ ms, isNew: assisted ? false : saveBest(practiceKey(n), ms).isNew, open: false });
+      finaleTimer.current = window.setTimeout(() => setResult((r) => (r ? { ...r, open: true } : r)), finaleMs(n * n) + (closed ? 500 : 0));
+    } else if (isStuck(next)) {
+      playKt('stuck', 0.3);
     }
   };
 
+  const back = (next: Tour) => {
+    commit(next);
+    playKt('undo');
+  };
+
   const restart = () => {
+    window.clearTimeout(finaleTimer.current);
+    if (tour.path.length) playKt('clear');
     commit(createTour(n));
     setStartedAt(null);
     setEndedAt(null);
@@ -143,7 +167,7 @@ export default function PracticeGame({ n, onMenu, onSize }: { n: number; onMenu:
       <div className={`flex min-h-10 flex-col justify-center gap-1.5 ${place === 'bar' ? 'items-center text-center' : 'items-start'}`} aria-live="polite">
         <p className={`text-sm font-bold leading-snug ${note || hint ? 'text-[#322e2a]' : 'text-ink-soft'}`}>{message}</p>
         {hint?.kind === 'undo' && (
-          <button type="button" onClick={() => commit(truncate(tour, hint.keep))}
+          <button type="button" onClick={() => back(truncate(tour, hint.keep))}
             className="kt-chalk px-3 py-1.5 text-xs font-black active:scale-[0.97]">
             {hint.keep ? fill(t.undoTo, { k: hint.keep }) : t.reselectStart}
           </button>
@@ -158,7 +182,7 @@ export default function PracticeGame({ n, onMenu, onSize }: { n: number; onMenu:
     const cls = bar ? `${BTN} flex-col gap-0.5 px-1 text-xs` : BTN;
     return (
       <div className={`grid gap-2 ${bar ? 'grid-cols-4' : 'grid-cols-2'}`}>
-        <button type="button" onClick={() => commit(undo(tour))} disabled={!tour.path.length || done} className={cls}>
+        <button type="button" onClick={() => back(undo(tour))} disabled={!tour.path.length || done} className={cls}>
           <LuUndo2 aria-hidden="true" className="shrink-0 text-lg" />{t.undo}
         </button>
         <button type="button" onClick={askHint} disabled={done} className={cls}>
@@ -175,6 +199,14 @@ export default function PracticeGame({ n, onMenu, onSize }: { n: number; onMenu:
   };
 
   const bestHere = best[practiceKey(n)];
+  const share = useKtShare({
+    isOpen: !!result?.open,
+    plates: [{ n, path: tour.path }],
+    time: formatTime(result?.ms ?? 0),
+    isNew: !!result?.isNew,
+    kicker: `${t.practiceMode} · ${size}`,
+    title: t.doneTitle,
+  });
 
   return (
     <>
@@ -183,30 +215,23 @@ export default function PracticeGame({ n, onMenu, onSize }: { n: number; onMenu:
         status={status} controls={controls}
         board={<TourBoard n={n} path={tour.path} targets={targets} dead={dead}
           hinted={hint?.kind === 'move' ? hint.square : null} failed={stuck ? tour.path[tour.path.length - 1] : null}
+          idle={tour.path.length > 0 && !done && !stuck && !hint}
           label={label} boardLabel={`${t.board} ${size}`} onTap={tap} />} />
 
       <HowToPlay open={helpOpen} onClose={() => setHelpOpen(false)} />
       <SizePicker open={sizeOpen} current={n} onClose={() => setSizeOpen(false)}
         onPick={(next) => { setSizeOpen(false); if (next === n) restart(); else onSize(next); }} />
 
-      <Modal isOpen={!!result?.open} onClose={() => setResult((r) => (r ? { ...r, open: false } : r))}
-        title={t.doneTitle} kicker={`${t.practiceMode} · ${size}`} icon={GiChessKnight}
-        band={BAND_CHALK} panelClassName={MODAL_PANEL}
-        footer={<>
-          <button type="button" className="kt-plate flex-1 py-3.5 font-black" onClick={() => { setResult((r) => (r ? { ...r, open: false } : r)); setSizeOpen(true); }}>{t.changeSize}</button>
-          <button type="button" className="kt-chalk flex-1 py-3.5 font-black" onClick={restart}>{t.again}</button>
-        </>}>
-        <div className="flex flex-col gap-3">
-          <div className="flex items-end justify-between gap-3">
-            <p className="text-5xl font-black tabular-nums leading-none">{formatTime(result?.ms ?? 0)}</p>
-            {result?.isNew
-              ? <p className="kt-chalk px-2.5 py-1 text-sm font-black">{t.newBest}</p>
-              : bestHere !== undefined && <p className="text-sm font-bold text-ink-soft">{fill(t.bestWas, { time: formatTime(bestHere) })}</p>}
-          </div>
-          <p className="text-sm font-bold leading-relaxed">{fill(t.doneBody, { size, time: formatTime(result?.ms ?? 0) })}</p>
-          {assisted && <p className="text-xs font-bold text-ink-soft">{t.assisted}</p>}
-        </div>
-      </Modal>
+      {/* 結算就是分享圖：一張銅版圖版（shareCard.ts）。關掉就停在走完的棋盤上，換大小在棋盤下面 */}
+      <ShareResultModal isOpen={!!result?.open} onClose={() => setResult((r) => (r ? { ...r, open: false } : r))}
+        title={t.doneTitle} card={share} onRestart={restart} restartLabel={t.again}
+        classes={KT_SHARE} frameClassName="rounded-[2px]"
+        srText={[
+          fill(t.doneBody, { size, time: formatTime(result?.ms ?? 0) }),
+          result?.isNew ? t.newBest : bestHere !== undefined ? fill(t.bestWas, { time: formatTime(bestHere) }) : '',
+          done && isClosed(tour) ? t.closedTour : '',
+          assisted ? t.assisted : '',
+        ].filter(Boolean).join(' ')} />
     </>
   );
 }

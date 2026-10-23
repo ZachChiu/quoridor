@@ -14,10 +14,11 @@ import KtFrame from './KtFrame';
 import SizePicker from './SizePicker';
 import TourBoard from './TourBoard';
 import { practiceKey, useBestTimes, type RecordKey } from './records';
+import { KT_CORNER } from './styles';
 import { formatTime, sizeLabel } from './ui';
 
 /**
- * 騎士巡邏的首頁（選模式）。整頁是一張印了銅版插圖的紙（KtFrame：紙邊、雙線框、右下角 Tab. I.），
+ * 騎士巡遊的首頁（選模式）。整頁是一張印了銅版插圖的紙（KtFrame：紙邊、雙線框、右下角 Tab. I.），
  * 主視覺是「Fig. 1」：歐拉 1759 年論文裡那條 8×8 走法，用對局同一個棋盤畫（深格斜線、舊式數字、紅粉筆路徑）——
  * 不用另外畫插圖，也跟點進去的棋盤是同一套東西。
  *
@@ -39,7 +40,8 @@ export default function KnightsTourMenu({ locale, onShow, onPractice }: {
 
   return (
     <KtFrame className="items-center justify-center px-5 py-[max(1rem,3dvh)]">
-      <PlatformCorner locale={locale} offset="calc(clamp(6px, 1.6vw, 14px) + var(--kt-frame, 8px) + 6px)" />
+      {/* 右上角的聯絡、語言：圓鈕與打開的彈窗都是這款的圖版（KT_CORNER），不是 Wall Go 的奶油底 */}
+      <PlatformCorner locale={locale} theme={KT_CORNER} offset="calc(clamp(6px, 1.6vw, 14px) + var(--kt-frame, 8px) + 6px)" />
       <main className="flex w-full max-w-[420px] flex-col items-center pt-10 lg:max-w-[900px] lg:flex-row lg:items-center lg:gap-14 lg:pt-0">
         <header className="flex w-full flex-col items-center text-center lg:flex-1">
           <h1 className="flex flex-col items-center">

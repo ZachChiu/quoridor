@@ -6,7 +6,7 @@ import { useTextTable } from '@/i18n/gameText';
 import { knightMoves } from '@/games/knights-tour/engine';
 import { TEXT, type KnightsText } from '@/games/knights-tour/text';
 import TourBoard from './TourBoard';
-import { BAND_CHALK, MODAL_PANEL } from './GameFrame';
+import { BAND_CHALK, MODAL_PANEL } from './styles';
 
 /** 示意圖：5×5 正中央的騎士與它跳得到的八格 */
 const DEMO_PATH = [12];
@@ -28,6 +28,7 @@ export default function HowToPlay({ open, onClose }: { open: boolean; onClose: (
           ))}
         </ol>
         <p className="text-xs font-bold leading-relaxed text-ink-soft">{t.source}</p>
+        <p className="-mt-2 text-xs font-bold leading-relaxed text-ink-soft">{t.nameNote}</p>
         <p className="text-[11px] leading-relaxed text-ink-soft">
           {m.credits.prefix}{' '}
           <a className="underline" href="https://game-icons.net" target="_blank" rel="noopener noreferrer">game-icons.net</a>

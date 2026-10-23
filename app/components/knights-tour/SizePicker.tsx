@@ -6,7 +6,7 @@ import { SIZES } from '@/games/knights-tour/engine';
 import { TEXT, type KnightsText } from '@/games/knights-tour/text';
 import { practiceKey, useBestTimes } from './records';
 import { formatTime, sizeLabel } from './ui';
-import { BAND_CHALK, MODAL_PANEL } from './GameFrame';
+import { BAND_CHALK, MODAL_PANEL } from './styles';
 
 /**
  * 練習模式選棋盤大小（選單與對局中共用）。六個大小同一種中性卡片 ——
