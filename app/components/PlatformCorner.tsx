@@ -4,6 +4,7 @@ import ContactButton from './ContactButton';
 import PlatformMark from './PlatformMark';
 import { BRAND } from '@/brand';
 import { localePath, type Locale } from '@/i18n/locales';
+import type { CornerTheme } from './cornerTheme';
 
 /**
  * 遊戲首頁的兩個角落：左上是平台 logo（回平台首頁），右上是聯絡我們＋語言。
@@ -18,10 +19,11 @@ import { localePath, type Locale } from '@/i18n/locales';
  * 只放在遊戲首頁。對局畫面、規則頁這些「遊戲裡面」的頁面不放（Zach 指定）。
  */
 /**
- * `buttonClassName`：右上兩顆圓鈕的配色，給底色不是奶油色的遊戲（九子棋的群青底）用。
+ * `theme`：那款遊戲的樣子 —— 右上兩顆圓鈕，加上打開的聯絡、語言彈窗（見 cornerTheme.ts）。
+ * `buttonClassName`：只換圓鈕（舊的寫法，各遊戲分支換成 theme 之前先留著）。
  * `offset`：離邊距離（CSS 長度），整頁有外框的遊戲用來避開外框，例如 `calc(var(--gmk-frame) + 6px)`。
  */
-export default function PlatformCorner({ locale, buttonClassName, offset }: { locale: Locale; buttonClassName?: string; offset?: string }) {
+export default function PlatformCorner({ locale, theme, buttonClassName, offset }: { locale: Locale; theme?: CornerTheme; buttonClassName?: string; offset?: string }) {
   return (
     <>
       <Link
@@ -34,8 +36,8 @@ export default function PlatformCorner({ locale, buttonClassName, offset }: { lo
         <PlatformMark />
       </Link>
       <div className="fixed right-2.5 top-2.5 z-40 flex gap-1" style={offset ? { right: offset, top: offset } : undefined}>
-        <ContactButton buttonClassName={buttonClassName} />
-        <LanguageSwitcher buttonClassName={buttonClassName} />
+        <ContactButton theme={theme} buttonClassName={buttonClassName} />
+        <LanguageSwitcher theme={theme} buttonClassName={buttonClassName} />
       </div>
     </>
   );
