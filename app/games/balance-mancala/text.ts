@@ -5,7 +5,7 @@ import type { TextTable } from '@/i18n/gameText';
  * 語系 key 在兩格縮排、依 'zh-TW' → en → ja → ko → 'zh-Hans' → th 排，字型子集靠這個切字。
  *
  * 用詞照 glossary.md：棋子／piece／駒／말／棋子／หมาก，本機對戰、單人對戰的各語說法。
- * 遊戲名：繁簡「均衡曼卡拉」、英文 Balance Mancala、日文「バランス・マンカラ」、
+ * 遊戲名：繁簡「平衡播棋」（節目的中文名；原本自己取的「均衡曼卡拉」10/24 照 Netflix 版本改掉，見 glossary〈遊戲名〉）、英文 Balance Mancala、日文「バランス・マンカラ」、
  * 韓文「균형의 만칼라」（節目 RULE 卡的名字）、泰文「แมนคาลาสมดุล」。
  * {seat} 是座位字母、{cell} 是格子名（「藍 05」「惡魔」）、{colour} 是顏色名。
  */
@@ -89,12 +89,12 @@ export type BalanceMancalaText = {
 
 export const TEXT: TextTable<BalanceMancalaText> = {
   'zh-TW': {
-    title: '均衡曼卡拉',
+    title: '平衡播棋',
     altName: 'Balance Mancala',
     showRef: '魔鬼的計謀：死亡密室 · 第 5 天主賽',
     tagline: '最後一顆子讓誰得分，由你決定。三色要平均。',
-    metaTitle: '均衡曼卡拉 Balance Mancala 線上免費玩',
-    metaDescription: 'Netflix《魔鬼的計謀：死亡密室》第 5 天主賽的均衡曼卡拉（Balance Mancala）。14 格繞成一圈，拿起一格的子順時針播下，由你決定最後一顆給誰得分；紅藍綠三色要平均，最終分數＝2×最低−最高。可以跟電腦玩或多人同一台，免下載、免註冊。',
+    metaTitle: '平衡播棋 Balance Mancala 線上免費玩',
+    metaDescription: 'Netflix《魔鬼的計謀：死亡密室》第 5 天主賽的平衡播棋（Balance Mancala）。14 格繞成一圈，拿起一格的子順時針播下，由你決定最後一顆給誰得分；紅藍綠三色要平均，最終分數＝2×最低−最高。可以跟電腦玩或多人同一台，免下載、免註冊。',
     modeSolo: '跟電腦玩',
     modeLocal: '多人同一台',
     seats: '座位',
@@ -413,12 +413,12 @@ export const TEXT: TextTable<BalanceMancalaText> = {
     credit: '아이콘: game-icons.net (CC BY 3.0)',
   },
   'zh-Hans': {
-    title: '均衡曼卡拉',
+    title: '平衡播棋',
     altName: 'Balance Mancala',
     showRef: '魔鬼的计谋：死亡密室 · 第 5 天主赛',
     tagline: '最后一颗子让谁得分，由你决定。三种颜色要平均。',
-    metaTitle: '均衡曼卡拉 Balance Mancala 在线免费玩',
-    metaDescription: 'Netflix《魔鬼的计谋：死亡密室》第 5 天主赛的均衡曼卡拉（Balance Mancala）。14 格围成一圈，拿起一格的棋子顺时针播下，由你决定最后一颗给谁得分；红蓝绿三色要平均，最终分数＝2×最低−最高。可以人机对战，也可以多人同一台设备玩，免下载、免注册。',
+    metaTitle: '平衡播棋 Balance Mancala 在线免费玩',
+    metaDescription: 'Netflix《魔鬼的计谋：死亡密室》第 5 天主赛的平衡播棋（Balance Mancala）。14 格围成一圈，拿起一格的棋子顺时针播下，由你决定最后一颗给谁得分；红蓝绿三色要平均，最终分数＝2×最低−最高。可以人机对战，也可以多人同一台设备玩，免下载、免注册。',
     modeSolo: '人机对战',
     modeLocal: '本地对战',
     seats: '座位',
