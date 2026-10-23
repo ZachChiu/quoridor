@@ -11,11 +11,14 @@ import type { Player } from '@/game/types';
  * 獨立屬性會疊在那之上，不會把它們蓋掉。都交給 element.animate()（合成執行緒跑，見 CLAUDE.md〈換頁轉場〉）。
  *
  * 只算玩家蓋的牆，不算棋盤外圈：外圈那道深色框不會被推動，推它看起來像卡住。
+ *
+ * 只動等待那一方的棋子，輪到的人的棋子不動（`still`，Zach 10/23）。
  */
 
 type Side = { dx: number; dy: number; wall: string };
 type Walls = { h: Player[][]; v: Player[][] };
-export type IdleScene = { board: Player[][]; walls: Walls; skip: string[] };
+/** still：輪到的那一方，他的棋子不動。分出勝負後是 null（大家都可以動） */
+export type IdleScene = { board: Player[][]; walls: Walls; skip: string[]; still: Player };
 
 /** 這一格四周有哪些牆。wall 是那道牆在 DOM 上的 data-wall（牆畫在左上那格裡） */
 function sides(r: number, c: number, { h, v }: Walls): Side[] {
@@ -154,12 +157,12 @@ function squeeze(a: Side, b: Side) {
 const pick = <T,>(list: T[]) => list[Math.floor(Math.random() * list.length)];
 
 /** 挑一顆旁邊有牆的閒置棋子，隨機做一個動作。沒有符合的就什麼都不做 */
-export function playIdle(root: HTMLElement | null, { board, walls, skip }: IdleScene) {
+export function playIdle(root: HTMLElement | null, { board, walls, skip, still }: IdleScene) {
   if (!root) return;
   const cand: { key: string; sides: Side[] }[] = [];
   board.forEach((row, r) => row.forEach((p, c) => {
     const key = `${r},${c}`;
-    if (!p || skip.includes(key)) return;
+    if (!p || p === still || skip.includes(key)) return;
     const s = sides(r, c, walls);
     if (s.length) cand.push({ key, sides: s });
   }));
@@ -182,4 +185,9 @@ export function playIdle(root: HTMLElement | null, { board, walls, skip }: IdleS
   const m = MOVES[pick(Object.keys(MOVES))](side);
   piece.animate(m.piece, opts(m.duration));
   if (m.wall) wallEl(side.wall)?.animate(m.wall, opts(m.duration));
+}
+
+/** 把盤面上還在播的閒置動作全部停掉（棋子與牆回到原位） */
+export function stopIdle(root: HTMLElement | null) {
+  root?.getAnimations({ subtree: true }).forEach((a) => { if (a.id === 'idle') a.cancel(); });
 }

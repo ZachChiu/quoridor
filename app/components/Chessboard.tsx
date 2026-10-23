@@ -22,7 +22,7 @@ import { useGameText } from '@/i18n/LocaleProvider';
 import { fmt } from '@/i18n/content/game';
 import { isCursorKey, nearestEmpty, nextCursor, nextEmptyCell } from '@/components/boardCursor';
 import { NEUTRAL_FILL } from '@/components/neutralZone';
-import { playIdle, type IdleScene } from '@/components/idleMotion';
+import { playIdle, stopIdle, type IdleScene } from '@/components/idleMotion';
 
 /** 對手還沒蓋下去、正在考慮的那道牆（連線時即時看到）。dir：H＝那一格的下緣、V＝右緣 */
 export type GhostWall = { row: number; col: number; dir: 'H' | 'V'; color: string };
@@ -183,16 +183,22 @@ export default React.memo(function Chessboard({
   /*
     旁邊有牆的閒置棋子偶爾自己動一下（推牆、撞一下、敲敲…，見 idleMotion.ts）。每 2.5–5.5 秒挑一顆。
     盤面放在 ref 裡給計時器讀，計時器只在掛載時建立一次 —— 每走一步就重設的話，常下的人永遠看不到。
-    選中的那顆、對手正在動的那顆不動；減少動態效果時整個關掉；分頁在背景時跳過。
+    **輪到的那一方的棋子不動**，只有等待的一方會（Zach 10/23：「我正在下時，我的棋子不要有撞牆那些效果，是對方的才能有」）：
+    正在下的人在想下一步，自己的棋子在晃會干擾；連線時對手的棋子「在擠」代表對手正在動那顆，其他顆也晃就分不出來。
+    減少動態效果時整個關掉；分頁在背景時跳過。
   */
-  const idleScene = useRef<IdleScene>({ board, walls: { h: horizontalWalls, v: verticalWalls }, skip: [] });
+  const still = isLock ? null : currentPlayer;
+  const idleScene = useRef<IdleScene>({ board, walls: { h: horizontalWalls, v: verticalWalls }, skip: [], still });
   useEffect(() => {
     idleScene.current = {
       board,
       walls: { h: horizontalWalls, v: verticalWalls },
       skip: [selectedChess, pushing].filter((m) => !!m).map((m) => `${m!.row},${m!.col}`),
+      still,
     };
   });
+  // 換人的那一下，還在晃的停掉 —— 不然剛輪到的人，自己的棋子可能正在撞牆
+  useEffect(() => { stopIdle(frameRef.current); }, [still]);
   useEffect(() => {
     if (reducedMotion()) return;
     let timer = 0;
