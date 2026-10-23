@@ -28,21 +28,11 @@ const reducedMotion = () =>
   typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /**
- * 新的牆壓進去、碰到時兩端各擴的那一圈（動畫在 Chessboard 的 layout effect 裡播）。
- * 圈的中心是格線交叉點：牆的兩端各比格子多伸 3px，交叉點在格縫中間（多 1px），所以離牆端 2px。
+ * 新的牆壓進去、碰到時沿著整道牆擴出去的那一圈（動畫在 Chessboard 的 layout effect 裡播）。
+ * 先前是牆的兩端各一圈，端點沒接到別的牆時圈懸在空格上，Zach 覺得位置怪；
+ * 10/24 從五種（兩端、只在接到牆的那端、整道牆一圈、兩側噴短線、只震）裡選了整道牆一圈。
  */
-// 一般函式而不是元件：寫成元件（大寫開頭）時，React Compiler 的 lint 會在下面既有的遞迴 useCallback
-// （getAvailableMovesRecursive 自己呼叫自己）報錯，main 上不會。那段跟這裡無關，先不動。
-const wallBursts = (dir: 'h' | 'v') =>
-  (['2px', 'calc(100% - 2px)'] as const).map((pos) => (
-    <span
-      key={pos}
-      data-burst
-      aria-hidden="true"
-      className="pointer-events-none absolute size-[calc(var(--board-wall)*2)] -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-current opacity-0"
-      style={dir === 'h' ? { top: '50%', left: pos } : { left: '50%', top: pos }}
-    />
-  ));
+const wallBurst = <span data-burst aria-hidden="true" className="pointer-events-none absolute inset-[-2px] rounded-full border-2 border-current opacity-0" />;
 
 type Props = {
   size: number;
@@ -520,7 +510,7 @@ export default React.memo(function Chessboard({
     if (!el) return;
     const opts = { duration: WALL_PRESS.duration, easing: 'linear', fill: 'backwards' } as const;
     el.animate(wallPressFrames, opts);
-    el.querySelectorAll('[data-burst]').forEach((b) => b.animate(wallBurstFrames, opts));
+    el.querySelector('[data-burst]')?.animate(wallBurstFrames(axis === 'h' ? 'h' : 'v'), opts);
     frameRef.current?.animate(boardJoltFrames, { duration: WALL_PRESS.duration });
   }, [walls, size]);
 
@@ -828,7 +818,7 @@ export default React.memo(function Chessboard({
                       className="absolute inset-x-[-3px] bottom-[calc(var(--board-gap)*-0.5)] z-20 h-[var(--board-wall)] translate-y-1/2 rounded-full"
                       style={{ backgroundColor: PLAYER_VAR[hasHorizontalWallPlayer], color: PLAYER_VAR[hasHorizontalWallPlayer] }}
                     >
-                      {walls.fresh === `h:${rowIndex * size + colIndex}` && wallBursts('h')}
+                      {walls.fresh === `h:${rowIndex * size + colIndex}` && wallBurst}
                       {isHorizontalWallBreakable && (
                         <button
                           type="button"
@@ -847,7 +837,7 @@ export default React.memo(function Chessboard({
                       className="absolute inset-y-[-3px] right-[calc(var(--board-gap)*-0.5)] z-20 w-[var(--board-wall)] translate-x-1/2 rounded-full"
                       style={{ backgroundColor: PLAYER_VAR[hasVerticalWall], color: PLAYER_VAR[hasVerticalWall] }}
                     >
-                      {walls.fresh === `v:${rowIndex * size + colIndex}` && wallBursts('v')}
+                      {walls.fresh === `v:${rowIndex * size + colIndex}` && wallBurst}
                       {isVerticalWallBreakable && (
                         <button
                           type="button"
