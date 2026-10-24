@@ -11,6 +11,15 @@ on:
 env:
   BETA_S3_BUCKET: quoridorgame-beta
   BETA_CLOUDFRONT_DISTRIBUTION_ID: E3QE1R78LMII02
+  # beta 連自己的 Firebase 專案 quoridor-beta（Spark 免費方案，匿名登入＋新加坡的 RTDB），房間與回饋都不進正式資料庫。
+  # 這些值本來就會出現在網頁裡，不是機密；只有 API key 放 GitHub secret（BETA_FIREBASE_API_KEY），
+  # 免得 GitHub 的秘密掃描把它當成外洩的 Google API key。
+  BETA_FIREBASE_AUTH_DOMAIN: quoridor-beta.firebaseapp.com
+  BETA_FIREBASE_DATABASE_URL: https://quoridor-beta-default-rtdb.asia-southeast1.firebasedatabase.app
+  BETA_FIREBASE_PROJECT_ID: quoridor-beta
+  BETA_FIREBASE_STORAGE_BUCKET: quoridor-beta.firebasestorage.app
+  BETA_FIREBASE_MESSAGING_SENDER_ID: "952360268072"
+  BETA_FIREBASE_APP_ID: "1:952360268072:web:c1ce0b44c69198a968601d"
 
 jobs:
   # 構建和部署工作
@@ -56,6 +65,14 @@ jobs:
       - name: 測試
         run: npm test
 
+      # beta 的 Firebase API key 還沒設的話先停下來：不然會建出一個連線全部失敗的 beta
+      - name: 檢查 beta 的 Firebase 設定
+        if: github.ref == 'refs/heads/beta'
+        env:
+          KEY: ${{ secrets.BETA_FIREBASE_API_KEY }}
+        run: |
+          if [ -z "$KEY" ]; then echo "::error::GitHub secret BETA_FIREBASE_API_KEY 還沒設（Firebase Console → quoridor-beta → 專案設定 → 網頁應用程式 beta.quoridorgame.com 的 apiKey）"; exit 1; fi
+
       - name: 構建專案
         run: npm run build
         env:
@@ -64,9 +81,9 @@ jobs:
           NEXT_PUBLIC_APP_ENV: ${{ github.ref == 'refs/heads/main' && 'production' || 'beta' }}
           NEXT_PUBLIC_ENV: ${{ github.ref == 'refs/heads/main' && 'production' || 'development' }}
           SITE_URL: ${{ github.ref == 'refs/heads/main' && secrets.SITE_URL || 'https://beta.quoridorgame.com' }}
-          NEXT_PUBLIC_FIREBASE_API_KEY: ${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }}
-          NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ${{ secrets.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN }}
-          NEXT_PUBLIC_FIREBASE_DATABASE_URL: ${{ secrets.NEXT_PUBLIC_FIREBASE_DATABASE_URL }}
+          NEXT_PUBLIC_FIREBASE_API_KEY: ${{ github.ref == 'refs/heads/main' && secrets.NEXT_PUBLIC_FIREBASE_API_KEY || secrets.BETA_FIREBASE_API_KEY }}
+          NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ${{ github.ref == 'refs/heads/main' && secrets.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || env.BETA_FIREBASE_AUTH_DOMAIN }}
+          NEXT_PUBLIC_FIREBASE_DATABASE_URL: ${{ github.ref == 'refs/heads/main' && secrets.NEXT_PUBLIC_FIREBASE_DATABASE_URL || env.BETA_FIREBASE_DATABASE_URL }}
 
           # Sentry —— 執行時。DSN 已寫死在 instrumentation-client.ts。
           NEXT_PUBLIC_SENTRY_ENVIRONMENT: ${{ github.ref == 'refs/heads/main' && 'production' || 'development' }}
@@ -77,10 +94,10 @@ jobs:
           # Sentry —— 建置時（source map 上傳，不進 client bundle）。
           # org 與 project 已寫死在 next.config.ts，這裡只剩 token。
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-          NEXT_PUBLIC_FIREBASE_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_PROJECT_ID }}
-          NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: ${{ secrets.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET }}
-          NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID }}
-          NEXT_PUBLIC_FIREBASE_APP_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_APP_ID }}
+          NEXT_PUBLIC_FIREBASE_PROJECT_ID: ${{ github.ref == 'refs/heads/main' && secrets.NEXT_PUBLIC_FIREBASE_PROJECT_ID || env.BETA_FIREBASE_PROJECT_ID }}
+          NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: ${{ github.ref == 'refs/heads/main' && secrets.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || env.BETA_FIREBASE_STORAGE_BUCKET }}
+          NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: ${{ github.ref == 'refs/heads/main' && secrets.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || env.BETA_FIREBASE_MESSAGING_SENDER_ID }}
+          NEXT_PUBLIC_FIREBASE_APP_ID: ${{ github.ref == 'refs/heads/main' && secrets.NEXT_PUBLIC_FIREBASE_APP_ID || env.BETA_FIREBASE_APP_ID }}
 
       # 驗建置產物（out/）：路由、sitemap、hreflang、分享圖、source map 沒外洩。
       # 上面那道 npm test 跑在 build 之前，那時 out/ 還不存在，這個檔案整組

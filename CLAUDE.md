@@ -398,7 +398,7 @@ GitHub Actions（`.github/workflows/`）負責建置並將 `/out` 同步至 AWS 
 
 **beta 站**（2026-10-24）：`beta` 分支推上去就部署到 https://beta.quoridorgame.com —— S3 `quoridorgame-beta`（跟正式站一樣是靜態網站代管）＋CloudFront `E3QE1R78LMII02`（照正式站的設定複製，只差網域、來源 bucket、憑證，外加回應標頭政策 `beta-noindex`：`X-Robots-Tag: noindex, nofollow`）。DNS 在 Route 53。
 - 不載 GA（`NEXT_PUBLIC_APP_ENV=beta`），Sentry 環境是 `development`、release 用 commit SHA，`SITE_URL` 是 beta 的網址
-- **連的是正式的 Firebase**（同一組 secrets）：在 beta 開的房間會寫進正式資料庫
+- **連自己的 Firebase 專案 `quoridor-beta`**（Spark 免費方案；匿名登入、RTDB 在新加坡 `quoridor-beta-default-rtdb`）：beta 開的房間、送的回饋都不進正式資料庫，要測連線就拿 beta 測。設定值寫在 `deploy.yml` 的 `BETA_FIREBASE_*`，只有 API key 放 GitHub secret `BETA_FIREBASE_API_KEY`（沒設的話 beta 的部署會在建置前停下來）。規則跟 repo 的 `database.rules.json` 同一份，**改規則時 beta 專案也要貼一次**（Console → quoridor-beta → Realtime Database → 規則）；beta 先發布、測過再發布正式的
 - `beta` 分支＝平台＋各款自己的分支合在一起（一款一款上線前先在這裡一起測）；各分支有更新就再合進 `beta` 推上去。**不要從 `beta` 打版**，打版照舊從平台或各款的分支
 - 轉址 function `wallgo-redirects` 正式站與 beta 共用，所以只有 main 的部署會更新它
 
