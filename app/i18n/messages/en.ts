@@ -54,6 +54,7 @@ const en: Messages = {
     ogDescription: "Four tigers against twenty goats — the Nepali classic from The Devil's Plan season 2 final. Free, no download.",
     title: 'Bagh Chal',
     subtitle: 'Tigers and Goats',
+    name: 'Bagh Chal',
     tagline: '4 tigers against 20 goats',
     local: 'Local play',
     vsAi: 'Play the AI',
@@ -100,6 +101,7 @@ const en: Messages = {
     rulesCta: 'Choose how to play',
     onlineTitle: 'Online',
     rulesMetaTitle: 'Bagh Chal Rules: How to Play Tigers and Goats',
+    rulesTitle: 'Bagh Chal Rules',
     rulesMetaDescription: "Full Bagh Chal rules with pictures: the 5×5 board, four tigers against twenty goats, placing goats, tigers jumping to capture, and goats trapping the tigers. The game from The Devil's Plan season 2 final.",
     rulesHeading: 'How to play',
     rules: [

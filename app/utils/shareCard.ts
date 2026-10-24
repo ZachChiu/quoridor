@@ -14,7 +14,7 @@ export { CARD_SIZE, type CardLayout };
 export type ShareAssets = {
   /** QR code 的格子（uqr 的 encode().data），掃了到那款遊戲的首頁 */
   qr: boolean[][];
-  /** 站的圖示（public/icon-192.png）。沒載到就是 undefined */
+  /** 那款遊戲的 favicon（useShareCard 的 icon，預設 public/icon-192.png）。沒載到就是 undefined */
   icon?: HTMLImageElement;
   /** 那款遊戲要的其他圖（棋子圖、主視覺），照 useShareCard 的 images 順序，載不到的是 undefined */
   images: (HTMLImageElement | undefined)[];
