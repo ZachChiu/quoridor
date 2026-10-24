@@ -17,18 +17,18 @@ export default function BaghChalView({ locale }: { locale: Locale }) {
   return (
     <BaghFrame variant="hub">
       <BaghHeader locale={locale} />
-      <div className="flex flex-1 justify-center gap-[clamp(2rem,5vw,4.5rem)] px-4 pb-[max(1rem,3dvh)] pt-1">
+      <div className="flex flex-1 justify-center gap-[clamp(2rem,5vw,4.5rem)] px-4 pb-[max(1rem,3svh)] pt-1">
         {/* eslint-disable-next-line @next/next/no-img-element -- 靜態匯出，已是 webp */}
         <img src="/games/bagh-chal/board-art.webp" alt="" width={760} height={760}
-          className="my-auto hidden aspect-square w-[min(500px,64dvh,40vw)] rounded-[24px] lg:block" />
+          className="my-auto hidden aspect-square w-[min(500px,64svh,40vw)] rounded-[24px] lg:block" />
         <main className="my-auto flex w-full max-w-[400px] flex-col items-center">
           <h1 className="flex flex-col items-center text-center">
             <span className="sr-only">{b.title}</span>
-            <BaghWordmark className="h-auto w-[min(80%,300px,36dvh)]" />
-            <span className="mt-[max(0.25rem,1dvh)] text-[clamp(1.4rem,4dvh,2rem)] font-black tracking-[0.12em]">{b.subtitle}</span>
+            <BaghWordmark className="h-auto w-[min(80%,300px,36svh)]" />
+            <span className="mt-[max(0.25rem,1svh)] text-[clamp(1.4rem,4svh,2rem)] font-black tracking-[0.12em]">{b.subtitle}</span>
           </h1>
           <p className="mt-1 text-sm font-bold text-ink-soft">{b.tagline}</p>
-          <div className="mt-[max(1rem,2.6dvh)] w-full">
+          <div className="mt-[max(1rem,2.6svh)] w-full">
             <BaghHub />
           </div>
         </main>

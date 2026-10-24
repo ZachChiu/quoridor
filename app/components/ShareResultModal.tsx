@@ -124,11 +124,14 @@ export function useShareCard({ isOpen, draw, contentKey, fileName, homePath, cam
 /*
   圖的高度：受「畫面高度扣掉上下的切換與按鈕」與「畫面寬度 × 比例」兩邊限制，再加一個上限（跟 ChampionModal 一樣）。
   手機橫放（short）：圖在左、右邊一欄 13rem 放切換與按鈕。
+  **寬度也要明寫**（高度 × 比例），不能只靠 aspect-ratio：WebKit 算這一欄有多寬時會拿裡面那張圖的原始寬度（1080px）去算，
+  欄被撐到整個畫面寬、圖靠左、關閉鈕飄在圖外面（10/24 Zach 在 iPhone 上看到九子棋的結算歪掉）。
+  高度用 svh（工具列展開時的畫面高）而不是 dvh：工具列收起、展開時圖不跟著縮放，也不會有一邊算新、一邊算舊的寬度。
 */
 const SIZE: Record<CardLayout, string> = {
-  story: 'h-[min(calc(100dvh_-_11.5rem),calc((100vw_-_2rem)*16/9),720px)] short:h-[calc(100dvh_-_2rem)]',
-  poster: 'h-[min(calc(100dvh_-_11.5rem),calc((100vw_-_2rem)*5/4),640px)] short:h-[min(calc(100dvh_-_2rem),calc((100vw_-_16.25rem)*5/4))]',
-  square: 'h-[min(calc(100dvh_-_11.5rem),calc(100vw_-_2rem),560px)] short:h-[min(calc(100dvh_-_2rem),calc(100vw_-_16.25rem))]',
+  story: '[--card-h:min(calc(100svh_-_11.5rem),calc((100vw_-_2rem)*16/9),720px)] short:[--card-h:calc(100svh_-_2rem)] w-[calc(var(--card-h)*9/16)]',
+  poster: '[--card-h:min(calc(100svh_-_11.5rem),calc((100vw_-_2rem)*5/4),640px)] short:[--card-h:min(calc(100svh_-_2rem),calc((100vw_-_16.25rem)*5/4))] w-[calc(var(--card-h)*4/5)]',
+  square: '[--card-h:min(calc(100svh_-_11.5rem),calc(100vw_-_2rem),560px)] short:[--card-h:min(calc(100svh_-_2rem),calc(100vw_-_16.25rem))] w-[var(--card-h)]',
 };
 
 /** 暗遮罩上的按鈕與切換的顏色，各遊戲自己給（預設是 Wall Go 那套：主要米白、次要半透明白） */
@@ -195,7 +198,7 @@ export function ShareResultModal({
           ))}
         </div>}
         <div className="relative short:col-start-1 short:row-span-5 short:row-start-1">
-          <div ref={box} className={`relative shrink-0 overflow-hidden ${ratio} ${SIZE[layout]} ${frameClassName}`}>
+          <div ref={box} className={`relative h-[var(--card-h)] shrink-0 overflow-hidden ${ratio} ${SIZE[layout]} ${frameClassName}`}>
             {ready
               // eslint-disable-next-line @next/next/no-img-element
               ? <img src={ready.url} alt={title} className="size-full object-cover" />

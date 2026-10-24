@@ -234,7 +234,7 @@ export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghM
       </div>
 
       {/* 手機：棋盤在剩下的高度裡置中，不貼在狀態列下面、底下空一大塊 */}
-      <div className="flex w-full max-w-[520px] flex-1 items-center py-2 lg:max-w-[min(620px,calc(100dvh-5rem))] lg:flex-none lg:py-0">
+      <div className="flex w-full max-w-[520px] flex-1 items-center py-2 lg:max-w-[min(620px,calc(100svh-5rem))] lg:flex-none lg:py-0">
         <BaghBoard board={game.board} targets={targets} movable={movable}
           selected={selected} last={last} plies={game.history.length}
           placing={!locked && !game.winner && game.turn === 'goat' && game.goatsInHand > 0}

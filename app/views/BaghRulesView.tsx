@@ -31,7 +31,7 @@ export default function BaghRulesView({ locale }: { locale: Locale }) {
         </div>
       </header>
 
-      <div className="mx-auto max-w-[46rem] px-5 pb-[max(3rem,6dvh)] pt-8">
+      <div className="mx-auto max-w-[46rem] px-5 pb-[max(3rem,6svh)] pt-8">
         <h1 className="text-balance text-center text-[clamp(1.75rem,7vw,3rem)] font-black leading-[1.15] tracking-tight">{b.rulesTitle}</h1>
         <p className="mt-2 text-center text-sm font-bold text-ink-soft">{b.tagline}</p>
         <div className="mt-6"><RulesStepsList rules={b.rules} /></div>
