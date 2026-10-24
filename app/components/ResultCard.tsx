@@ -78,7 +78,7 @@ export function useResultCard(isOpen: boolean, input: ShareCardInput) {
       const url = `${SITE}${localePath(locale, wallGo())}?utm_source=result_card&utm_medium=share`;
       // 站的圖示：載不到（離線、被擋）就不畫，不讓整張圖卡住
       const icon = new Image();
-      icon.src = '/icon-192.png';
+      icon.src = '/icons/wall-go-192.png';
       const [{ encode }] = await Promise.all([import('uqr'), icon.decode().catch(() => {})]);
       const qr = encode(url, { ecc: 'M', border: 0 }).data;
       // 字型跟頁面同一套。canvas 不會自己等字型下載完，先要求載入粗、中兩種字重

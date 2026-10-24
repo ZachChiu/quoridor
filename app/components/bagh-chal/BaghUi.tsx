@@ -20,7 +20,7 @@ export function BaghDifficulty({ side, onPick }: { side: Side; onPick: (difficul
     <div className="grid w-full grid-cols-3 gap-2.5">
       {LEVELS.map((key, i) => (
         <button key={key} type="button" onClick={() => onPick(key)}
-          className="bagh-totem flex flex-col items-center gap-2.5 bg-[#f2e4c4] py-4 text-xl font-black text-tile-ink transition hover:bg-[#ead8ad] active:scale-[0.97]">
+          className="bagh-line flex flex-col items-center gap-2.5 bg-[#f2e4c4] py-4 text-xl font-black text-tile-ink transition hover:bg-[#ead8ad] active:scale-[0.97]">
           <span className="flex h-9 items-center -space-x-2.5" aria-hidden="true">
             {LEVELS.slice(0, i + 1).map((_, n) => (
               // 背景圖、不用 <img>（見 BaghBoard 的 iPhone 漏畫）；紙色外圈把疊在一起的頭分開

@@ -16,7 +16,7 @@ import { BaghBoard } from './BaghBoard';
 import { GoatToken, RulesToken, TigerToken } from './tokens';
 import { RulesStepsPaged } from './BaghRulesSteps';
 import BaghFrame from './BaghFrame';
-import { BAGH_ROUND, BAGH_SECONDARY } from './styles';
+import { BAGH_PRIMARY, BAGH_ROUND, BAGH_SECONDARY } from './styles';
 import BaghWordmark from './BaghWordmark';
 import { labelled } from './BaghUi';
 import { BAGH_CARD_IMAGES, drawBaghCard } from './shareCard';
@@ -147,10 +147,10 @@ export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghM
     text: {
       kicker: `${g.champion.matchOver} · ${modeLabel}`,
       title: result.title,
-      name: `${b.title} ${b.subtitle}`,
+      name: b.name,
       capturedLabel: `${b.tiger} ${fmt(b.captured, game.captured)}`,
       moves: fmt(b.cardMoves, game.history.length),
-      brand: `${b.title} ${b.subtitle}`,
+      brand: b.name,
       from: fill(g.share.cardFrom, { show: t.meta.showName }),
       host: new URL(process.env.SITE_URL || 'https://quoridorgame.com').host,
     },
@@ -165,6 +165,8 @@ export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghM
     campaign: 'bagh-chal',
     fonts: [{ font: `900 40px ${font}`, text: card.text.title + card.text.name }, { font: `700 40px ${font}`, text: card.text.kicker + card.text.from }],
     images: BAGH_CARD_IMAGES,
+    layouts: ['story'],
+    icon: '/icons/bagh-chal-192.png',
   });
 
   // 虎羊棋自己的按鈕（BaghUi）：紙色底、橄欖綠外圈的圓鈕，深墨框的寬鈕 —— 不沿用 Wall Go 的灰色無框鈕
@@ -199,6 +201,14 @@ export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghM
     </p>
   );
 
+  // 結算關掉之後留在終局的盤面上看，狀態那一行換成叫回結算的鈕（Zach 10/24：「結尾 Modal 點掉以後沒有地方可以點回來」）
+  const reopen = !!game.winner && !endOpen && (
+    <button type="button" onClick={() => setClosedFor(null)} className={`${BAGH_PRIMARY} h-12 w-full px-4 text-sm`}>
+      {game.winner === 'tiger' ? <TigerToken className="shrink-0 text-[26px]" /> : game.winner === 'goat' ? <GoatToken className="shrink-0 text-[26px]" /> : null}
+      {result.title} · {g.champion.seeResult}
+    </button>
+  );
+
   const soundButton = (
     <button type="button" onClick={() => setSoundPrefs({ sfx: !soundPrefs.sfx })} aria-pressed={soundPrefs.sfx} aria-label={g.sound.button} className={round}>
       {soundPrefs.sfx ? <LuVolume2 aria-hidden="true" /> : <LuVolumeX aria-hidden="true" />}
@@ -220,11 +230,11 @@ export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghM
       </div>
       <div className="mt-4 flex w-full max-w-[520px] flex-col items-center gap-2 lg:hidden">
         {statusCards}
-        {mobileLine}
+        {reopen || mobileLine}
       </div>
 
       {/* 手機：棋盤在剩下的高度裡置中，不貼在狀態列下面、底下空一大塊 */}
-      <div className="flex w-full max-w-[520px] flex-1 items-center py-2 lg:max-w-[min(620px,calc(100dvh-5rem))] lg:flex-none lg:py-0">
+      <div className="flex w-full max-w-[520px] flex-1 items-center py-2 lg:max-w-[min(620px,calc(100svh-5rem))] lg:flex-none lg:py-0">
         <BaghBoard board={game.board} targets={targets} movable={movable}
           selected={selected} last={last} plies={game.history.length}
           placing={!locked && !game.winner && game.turn === 'goat' && game.goatsInHand > 0}
@@ -244,13 +254,13 @@ export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghM
       <aside className="hidden w-[360px] shrink-0 flex-col gap-5 lg:flex">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h1 aria-label={`${b.title} ${b.subtitle}`} className="flex items-end gap-3"><BaghWordmark className="h-11 w-auto" /><span className="pb-0.5 text-2xl font-black">{b.subtitle}</span></h1>
-            <p className="mt-1.5 text-sm font-bold text-ink-soft">{mode.kind === 'local' ? b.local : mode.kind === 'online' ? `${b.onlineTitle} · ${whoAmI}` : whoAmI}</p>
+            <h1 aria-label={`${b.title} ${b.subtitle}`} className="flex flex-col items-start gap-1"><BaghWordmark className="h-11 w-auto" /><span className="text-xl font-black">{b.subtitle}</span></h1>
+            <p className="mt-1 text-sm font-bold text-ink-soft">{mode.kind === 'local' ? b.local : mode.kind === 'online' ? `${b.onlineTitle} · ${whoAmI}` : whoAmI}</p>
           </div>
           {soundButton}
         </div>
         {statusCards}
-        {statusLine}
+        {reopen || statusLine}
         <div className="grid grid-cols-2 gap-2.5">
           {!online && <>
             <button type="button" onClick={doUndo} disabled={!canUndo} className={wide}><LuUndo2 aria-hidden="true" />{b.undo}</button>
@@ -261,7 +271,7 @@ export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghM
         </div>
       </aside>
 
-      <Modal skin="bagh" isOpen={helpOpen} onClose={() => setHelpOpen(false)} title={b.rulesHeading} kicker={b.title}
+      <Modal skin="bagh" isOpen={helpOpen} onClose={() => setHelpOpen(false)} title={b.rulesHeading} kicker={b.name}
         icon={RulesToken} band={{ className: 'bg-[#5b6620]', fg: 'text-tile-cream' }}>
         <RulesStepsPaged rules={b.rules} prev={t.ui.prev} next={t.ui.next} done={t.ui.close} onDone={() => setHelpOpen(false)} />
       </Modal>
@@ -271,9 +281,8 @@ export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghM
         onRestart={again} restartLabel={b.again} srText={`${result.title} ${result.body} ${card.text.capturedLabel} · ${card.text.moves}`}
         frameClassName=""
         classes={{
-          primary: 'bagh-totem-on bg-[#5b6620] text-[#fbf4e1] hover:bg-[#4d5719]',
+          primary: 'bagh-line-on bg-[#5b6620] text-[#fbf4e1] hover:bg-[#4d5719]',
           secondary: 'bagh-line bg-[#f2e4c4] text-tile-ink hover:bg-[#ead8ad]',
-          toggle: 'bg-[#fbf4e1]/15', toggleOn: 'bg-[#e3a43c] text-tile-ink', toggleOff: 'text-[#fbf4e1]/75 hover:text-[#fbf4e1]',
           button: 'font-black', placeholder: 'bg-[#e3a43c]/30',
         }} />
     </div>
