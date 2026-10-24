@@ -1,0 +1,50 @@
+{
+  "zh-TW": {
+    "kicker": "骰子惡魔",
+    "title": [
+      "盲五子棋",
+      "Blind Gomoku"
+    ],
+    "titleSize": 71
+  },
+  "en": {
+    "kicker": "Dice Devil",
+    "title": [
+      "Blind Gomoku",
+      "Five in a row, blindfolded"
+    ],
+    "titleSize": 56
+  },
+  "ja": {
+    "kicker": "Dice Devil",
+    "title": [
+      "ブラインド五目並べ",
+      "Blind Gomoku"
+    ],
+    "titleSize": 56
+  },
+  "ko": {
+    "kicker": "Dice Devil",
+    "title": [
+      "블라인드 오목",
+      "Blind Gomoku"
+    ],
+    "titleSize": 71
+  },
+  "zh-Hans": {
+    "kicker": "骰子恶魔",
+    "title": [
+      "盲五子棋",
+      "Blind Gomoku"
+    ],
+    "titleSize": 71
+  },
+  "th": {
+    "kicker": "Dice Devil",
+    "title": [
+      "โกโมกุปิดตา",
+      "Blind Gomoku"
+    ],
+    "titleSize": 71
+  }
+}

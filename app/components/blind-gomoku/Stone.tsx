@@ -1,4 +1,5 @@
 import { SHAPE_OF, type Shape, type Side, type StoneColor } from '@/games/blind-gomoku/engine';
+import type { BlindGomokuText } from '@/games/blind-gomoku/text';
 
 /**
  * 棋子的畫法：盲棋的「彩色面」（顏色＋形狀）與底面的「黑白面」。
@@ -89,4 +90,9 @@ export function SideFace({ side, className = 'size-full' }: { side: Side; classN
         : <circle cx="50" cy="50" r="46" fill={WHITE_FACE} stroke={EDGE} strokeWidth="8" />}
     </svg>
   );
+}
+
+/** 讀屏與 title 用的顏色名：「紅 圓形」 */
+export function colorName(t: BlindGomokuText, c: StoneColor): string {
+  return `${t.colors[c]} ${t.shapes[SHAPE_OF[c]]}`;
 }

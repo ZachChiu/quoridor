@@ -108,7 +108,7 @@ export const SEASONS: Season[] = [
       { name: 'Montage', names: { 'zh-TW': '蒙太奇', 'zh-Hans': '蒙太奇' } },
       { name: 'Four Player Three in a Row', names: { 'zh-TW': '四人三子棋', 'zh-Hans': '四人三子棋' } },
       { name: 'Blind Gomoku', names: { 'zh-TW': '盲五子棋', 'zh-Hans': '盲五子棋' }, playable: routes.BLIND_GOMOKU,
-        look: { card: 'bg-[#046161] text-[#f2e4c9]', wipe: '#046161', art: '/games/blind-gomoku/pojagi.webp', cover: true, entrance: 'blind-gomoku' } },
+        look: { card: 'bg-[#046161] text-[#f2e4c9]', wipe: '#046161', art: '/games/blind-gomoku/pojagi.webp', cover: true, entrance: 'blind-gomoku', rules: routes.trialRules(routes.BLIND_GOMOKU) } },
       // （盲眼五子棋與九子棋各自的分支會改上下這兩行，中間隔這一行，依序合併才不會衝突）
       { name: "Nine Men's Morris", names: { 'zh-TW': '九子棋', 'zh-Hans': '九子棋' } },
       { name: 'Hexagon', names: { 'zh-TW': '六角數字盤', 'zh-Hans': '六角数字盘' } },

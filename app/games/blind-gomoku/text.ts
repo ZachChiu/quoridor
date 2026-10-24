@@ -82,12 +82,25 @@ export type BlindGomokuText = {
   board: string;
   colors: Record<StoneColor, string>;
   shapes: Record<Shape, string>;
-  steps: string[];
+  /**
+   * 規則的步驟：規則頁（一步一張圖、全部攤開）與對局中的說明彈窗（一次一步、可以左右滑）共用同一份。
+   * 每一步的圖在 components/blind-gomoku/RulesSteps.tsx 的 PICTURES，順序要對得上。
+   * 不寫「你／對方」：講到兩方用黑方／白方。
+   */
+  steps: { title: string; body: string }[];
   showNote: string;
   /** 名字的由來（規則最後一段，glossary〈遊戲名〉：每款的規則最後寫節目裡叫什麼、原文是什麼） */
   nameNote: string;
   /** 分享圖「靈感來自《…》」的節目名：這款出自第 1 季，不能用 messages 的 showName（那是第 2 季的「死亡密室」） */
   showName: string;
+  /** 規則頁（/blind-gomoku/rules）：metadata、大標、開頭一句、回這款首頁選玩法的按鈕 */
+  rulesMetaTitle: string;
+  rulesMetaDescription: string;
+  rulesTitle: string;
+  rulesIntro: string;
+  rulesCta: string;
+  /** 規則頁最下面的署名：主視覺與七個棋子顏色的出處（選單畫面上不寫，Zach 10/24：插圖不要說明） */
+  artCredit: string;
 };
 
 export const TEXT: TextTable<BlindGomokuText> = {
@@ -163,15 +176,21 @@ export const TEXT: TextTable<BlindGomokuText> = {
     colors: { red: '紅', orange: '橙', yellow: '黃', green: '綠', blue: '藍', purple: '紫', pink: '粉紅' },
     shapes: { circle: '圓形', triangle: '三角形', square: '方形', diamond: '菱形', star: '星形', heart: '心形', cross: '十字' },
     steps: [
-      '在 15×15 的棋盤上輪流下子，橫、直、斜任一方向先連成五顆的一方獲勝。六顆以上也算，沒有禁手。',
-      '盲棋裡，每顆子只看得到顏色與形狀，看不出是黑是白 —— 黑白只印在底面。',
-      '每一手先選顏色再下。AI 會用你剛才那一手的顏色回應，所以顏色不會透露是誰的子。',
-      '每個顏色都有自己的形狀，分不清顏色也認得出來。',
-      '不能悔棋，也不能偷看。有人連成五子時，所有棋子一起翻開，揭曉黑白。',
+      { title: '連成五子', body: '在 15×15 的棋盤上輪流下子，橫、直、斜任一方向先連成五顆的一方獲勝。六顆以上也算，沒有禁手；棋盤下滿還沒有人連成五子就是和局。' },
+      { title: '只看得到顏色', body: '盲棋裡，每顆子只看得到顏色與形狀，看不出是黑是白 —— 黑白只印在底面。哪些子是自己的，只能靠記憶。' },
+      { title: '每一手先選顏色', body: '每一手先從七個顏色裡選一個，再下到盤上。每個顏色都有自己的形狀，分不清顏色也認得出來。' },
+      { title: 'AI 跟著同色', body: '跟 AI 下時，AI 執白，一律用黑方上一手的顏色回應，跟節目裡一樣 —— 每個顏色都是黑白各半，看顏色分不出是誰的子。兩人對下時各自選色。' },
+      { title: '一起翻開', body: '不能悔棋，也不能偷看。有人連成五子的那一刻（自己沒發現也算），所有棋子一起翻開，揭曉黑白。' },
     ],
     showNote: '出自《魔鬼的計謀》第一季：監獄密室裡的隱藏關，挑戰者跟 NPC 只下一局。節目裡有人斜著隔一格下，19 手就贏了。',
     nameNote: '名字：節目裡的中文是「盲五子棋」，英文是 Blind Gomoku。Gomoku 就是五子棋，名字來自日文的「五目並べ」。',
     showName: '魔鬼的計謀',
+    rulesMetaTitle: '盲五子棋規則：只看得到顏色的五子棋',
+    rulesMetaDescription: '盲五子棋的規則，一步一張圖：15×15 棋盤先連成五子獲勝；盲棋只看得到顏色，黑白印在底面，AI 用黑方上一手的顏色回應，連成五子才一起翻開。出自《魔鬼的計謀》第一季。',
+    rulesTitle: '盲五子棋怎麼玩',
+    rulesIntro: '就是五子棋，只多一件事：黑白印在棋子底面，盤上只看得到顏色，連成五子才一起翻開。',
+    rulesCta: '回首頁選玩法',
+    artCredit: '主視覺與棋子的七個顏色：19 世紀朝鮮的拼布包袱巾，芝加哥藝術博物館館藏，公有領域。',
   },
   en: {
     metaTitle: 'Blind Gomoku: Five in a Row in Colour Only',
@@ -245,15 +264,21 @@ export const TEXT: TextTable<BlindGomokuText> = {
     colors: { red: 'red', orange: 'orange', yellow: 'yellow', green: 'green', blue: 'blue', purple: 'purple', pink: 'pink' },
     shapes: { circle: 'circle', triangle: 'triangle', square: 'square', diamond: 'diamond', star: 'star', heart: 'heart', cross: 'cross' },
     steps: [
-      'Take turns placing stones on the 15×15 board. The first to get five in a row — across, down or diagonally — wins. Six or more counts too; there are no forbidden moves.',
-      'In blind mode every stone shows only a colour and a shape. You cannot tell black from white — that is printed on the bottom.',
-      'Pick a colour before each move. The AI answers in the colour you just used, so colours never give away whose stone it is.',
-      'Each colour has its own shape, so you can tell them apart even without colour.',
-      'No undo, no peeking. When someone makes five in a row, every stone flips over to reveal black and white.',
+      { title: 'Five in a row', body: 'Take turns placing stones on the 15×15 board. The first to get five in a row — across, down or diagonally — wins. Six or more counts too; there are no forbidden moves. If the board fills up with no five in a row, it is a draw.' },
+      { title: 'Colours only', body: 'In blind mode every stone shows only a colour and a shape — black and white are printed on the bottom, out of sight. Each player has to remember which stones are theirs.' },
+      { title: 'Pick a colour, then play', body: 'Before each move, pick one of seven colours, then place the stone. Each colour has its own shape, so the stones can be told apart even without seeing colour.' },
+      { title: 'The AI copies the colour', body: 'Against the AI, the AI plays white and always answers in the colour Black just used, as on the show. Every colour ends up half black and half white, so colours never give away whose stone it is. In two-player games, each side picks freely.' },
+      { title: 'Everything flips', body: 'No undo, no peeking. The moment someone makes five in a row — even without noticing — every stone flips over to reveal black and white.' },
     ],
     showNote: "From season 1 of The Devil's Plan: a hidden game in the prison room, one game against an NPC. On the show, one player won in 19 moves by playing diagonally with a gap.",
     nameNote: 'The name: in Chinese the show calls it Mang Wuziqi, “blind five-in-a-row”. Gomoku (wuziqi in Chinese) comes from the Japanese gomokunarabe, “lining up five”.',
     showName: "The Devil's Plan",
+    rulesMetaTitle: 'Blind Gomoku Rules: Five in a Row in Colour Only',
+    rulesMetaDescription: "The rules of Blind Gomoku, one picture per step: first to five in a row on a 15×15 board wins. In blind mode only colours show — black and white are printed underneath, the AI answers in Black's last colour, and every stone flips when someone makes five. From season 1 of The Devil's Plan.",
+    rulesTitle: 'How to play Blind Gomoku',
+    rulesIntro: "It's gomoku with one twist: black and white are printed underneath, so the board shows only colours until someone makes five in a row.",
+    rulesCta: 'Choose how to play',
+    artCredit: 'Key art and the seven stone colours: a 19th-century Korean patchwork wrapping cloth (jogakbo), Art Institute of Chicago, public domain.',
   },
   ja: {
     metaTitle: 'ブラインド五目並べ：色しか見えない五目並べ',
@@ -327,15 +352,21 @@ export const TEXT: TextTable<BlindGomokuText> = {
     colors: { red: '赤', orange: 'オレンジ', yellow: '黄', green: '緑', blue: '青', purple: '紫', pink: 'ピンク' },
     shapes: { circle: '丸', triangle: '三角', square: '四角', diamond: 'ひし形', star: '星', heart: 'ハート', cross: '十字' },
     steps: [
-      '15×15の盤に交互に石を打ち、縦・横・斜めのどれかで先に五つ並べたほうが勝ち。六つ以上でも勝ちで、禁じ手はありません。',
-      'ブラインドでは、石は色と形しか見えず、黒か白かはわかりません。黒白は石の底にだけ印されています。',
-      '毎手、色を選んでから打ちます。AIはあなたが今使った色で打ち返すので、色から誰の石かはわかりません。',
-      '色ごとに形が決まっているので、色が見分けにくくても区別できます。',
-      '待ったなし、のぞき見なし。誰かが五つ並べたら、すべての石がめくれて黒白が明かされます。',
+      { title: '五つ並べる', body: '15×15の盤に交互に石を打ち、縦・横・斜めのどれかで先に五つ並べたほうが勝ち。六つ以上でも勝ちで、禁じ手はありません。盤が埋まっても誰も五つ並ばなければ引き分けです。' },
+      { title: '見えるのは色だけ', body: 'ブラインドでは、石は色と形しか見えず、黒か白かはわかりません。黒白は石の底にだけ印されています。どれが自分の石かは、覚えておくしかありません。' },
+      { title: '色を選んでから打つ', body: '毎手、7色から1色を選んでから盤に打ちます。色ごとに形が決まっているので、色が見分けにくくても区別できます。' },
+      { title: 'AIは同じ色で返す', body: 'AIと対戦するとき、AIは白を持ち、黒が直前に使った色で必ず打ち返します（番組と同じ）。どの色も黒白が半分ずつになるので、色から誰の石かはわかりません。2人で対戦するときは、それぞれ自由に色を選びます。' },
+      { title: 'いっせいにめくる', body: '待ったなし、のぞき見なし。誰かが五つ並べた瞬間（本人が気づいていなくても）、すべての石がめくれて黒白が明かされます。' },
     ],
     showNote: '『悪魔の計略 ～デビルズ・プラン～』シーズン1、監獄の部屋の隠しゲーム。NPCと一局だけ打ちます。番組では、一つ空けて斜めに打った挑戦者が19手で勝ちました。',
     nameNote: '名前：番組の中国語版では「盲五子棋」。五目並べは中国語で「五子棋」、英語では日本語から来た Gomoku と呼ばれます。',
     showName: '悪魔の計略 ～デビルズ・プラン～',
+    rulesMetaTitle: 'ブラインド五目並べのルール：色しか見えない五目並べ',
+    rulesMetaDescription: 'ブラインド五目並べのルールを1ステップずつ図で解説。15×15の盤で先に五つ並べたら勝ち。ブラインドでは色しか見えず、黒白は石の底に。AIは黒の直前の色で打ち返し、五つ並んだらすべての石をめくります。『悪魔の計略 ～デビルズ・プラン～』シーズン1より。',
+    rulesTitle: 'ブラインド五目並べの遊び方',
+    rulesIntro: 'ルールは五目並べそのまま。違うのは一つだけ：黒白は石の底にあり、盤上で見えるのは色だけ。五つ並んだときに初めてめくれます。',
+    rulesCta: 'トップで遊び方を選ぶ',
+    artCredit: 'メインビジュアルと石の7色：19世紀朝鮮のパッチワークの風呂敷（チョガッポ）、シカゴ美術館所蔵、パブリックドメイン。',
   },
   ko: {
     metaTitle: '블라인드 오목: 색깔만 보이는 오목',
@@ -409,15 +440,21 @@ export const TEXT: TextTable<BlindGomokuText> = {
     colors: { red: '빨강', orange: '주황', yellow: '노랑', green: '초록', blue: '파랑', purple: '보라', pink: '분홍' },
     shapes: { circle: '원', triangle: '삼각형', square: '사각형', diamond: '마름모', star: '별', heart: '하트', cross: '십자' },
     steps: [
-      '15×15 판에 번갈아 돌을 두어, 가로·세로·대각선 중 먼저 다섯 개를 이으면 승리. 여섯 개 이상도 인정되고 금수는 없어요.',
-      '블라인드에서는 돌의 색깔과 모양만 보이고 흑백은 알 수 없어요. 흑백은 돌 밑면에만 표시되어 있어요.',
-      '매 수마다 색깔을 고르고 둬요. AI는 당신이 방금 쓴 색으로 응수하니, 색깔로는 누구 돌인지 알 수 없어요.',
-      '색깔마다 모양이 정해져 있어서 색을 구별하기 어려워도 알아볼 수 있어요.',
-      '무르기도, 엿보기도 없어요. 누군가 오목을 완성하면 모든 돌이 뒤집혀 흑백이 드러나요.',
+      { title: '다섯 개 잇기', body: '15×15 판에 번갈아 돌을 두어, 가로·세로·대각선 중 먼저 다섯 개를 이으면 승리. 여섯 개 이상도 인정되고 금수는 없어요. 판이 다 찰 때까지 아무도 다섯 개를 잇지 못하면 무승부예요.' },
+      { title: '색깔만 보여요', body: '블라인드에서는 돌의 색깔과 모양만 보이고 흑백은 알 수 없어요. 흑백은 돌 밑면에만 표시되어 있어요. 어느 돌이 자기 돌인지는 기억에 맡길 수밖에 없어요.' },
+      { title: '색을 고르고 두기', body: '매 수마다 일곱 가지 색 중 하나를 고른 뒤 판에 둬요. 색깔마다 모양이 정해져 있어서 색을 구별하기 어려워도 알아볼 수 있어요.' },
+      { title: 'AI는 같은 색으로 응수', body: 'AI와 둘 때 AI는 백을 잡고, 흑이 방금 쓴 색으로 항상 응수해요(방송과 같아요). 어떤 색이든 흑백이 반반이라 색깔로는 누구 돌인지 알 수 없어요. 둘이서 둘 때는 각자 자유롭게 색을 골라요.' },
+      { title: '한꺼번에 뒤집기', body: '무르기도, 엿보기도 없어요. 누군가 오목을 완성하는 순간(본인이 몰라도), 모든 돌이 뒤집혀 흑백이 드러나요.' },
     ],
     showNote: '「데블스 플랜」 시즌 1 감옥 방의 히든 게임으로, NPC와 단 한 판을 둬요. 방송에서는 한 칸 띄워 대각선으로 둔 도전자가 19수 만에 이겼어요.',
     nameNote: '이름: 중국어판 방송에서는 ‘盲五子棋’라고 불러요. 오목(五目)은 중국어로 ‘五子棋’, 일본어로 ‘고모쿠나라베(五目並べ)’이고, 영어 이름 Gomoku도 일본어에서 왔어요.',
     showName: '데블스 플랜',
+    rulesMetaTitle: '블라인드 오목 규칙: 색깔만 보이는 오목',
+    rulesMetaDescription: '블라인드 오목 규칙을 단계별 그림으로 설명해요. 15×15 판에서 먼저 다섯 개를 이으면 승리. 블라인드에서는 색깔만 보이고 흑백은 돌 밑면에 있어요. AI는 흑의 직전 색으로 응수하고, 오목이 완성되면 모든 돌이 뒤집혀요. 넷플릭스 「데블스 플랜」 시즌 1의 게임.',
+    rulesTitle: '블라인드 오목 게임 방법',
+    rulesIntro: '규칙은 오목 그대로, 다른 점은 하나뿐이에요. 흑백이 돌 밑면에 있어서 판 위에는 색깔만 보이고, 오목이 완성되어야 한꺼번에 뒤집혀요.',
+    rulesCta: '처음 화면에서 모드 고르기',
+    artCredit: '메인 이미지와 돌의 일곱 색: 19세기 조선 조각보, 시카고 미술관 소장, 퍼블릭 도메인.',
   },
   'zh-Hans': {
     metaTitle: '盲五子棋：只看得到颜色的五子棋',
@@ -491,15 +528,21 @@ export const TEXT: TextTable<BlindGomokuText> = {
     colors: { red: '红', orange: '橙', yellow: '黄', green: '绿', blue: '蓝', purple: '紫', pink: '粉红' },
     shapes: { circle: '圆形', triangle: '三角形', square: '方形', diamond: '菱形', star: '星形', heart: '心形', cross: '十字' },
     steps: [
-      '在 15×15 的棋盘上轮流落子，横、竖、斜任一方向先连成五颗的一方获胜。六颗以上也算，没有禁手。',
-      '盲棋里，每颗棋子只看得到颜色和形状，看不出是黑是白——黑白只印在底面。',
-      '每一手先选颜色再下。AI 会用你刚才那一手的颜色回应，所以颜色不会透露是谁的棋子。',
-      '每种颜色都有自己的形状，分不清颜色也认得出来。',
-      '不能悔棋，也不能偷看。有人连成五子时，所有棋子一起翻开，揭晓黑白。',
+      { title: '连成五子', body: '在 15×15 的棋盘上轮流落子，横、竖、斜任一方向先连成五颗的一方获胜。六颗以上也算，没有禁手；棋盘下满还没有人连成五子就是和棋。' },
+      { title: '只看得到颜色', body: '盲棋里，每颗棋子只看得到颜色和形状，看不出是黑是白——黑白只印在底面。哪些棋子是自己的，只能靠记忆。' },
+      { title: '每一手先选颜色', body: '每一手先从七种颜色里选一种，再落到棋盘上。每种颜色都有自己的形状，分不清颜色也认得出来。' },
+      { title: 'AI 跟着同色', body: '跟 AI 下时，AI 执白，一律用黑方上一手的颜色回应，和节目里一样——每种颜色都是黑白各半，看颜色分不出是谁的棋子。两人对下时各自选色。' },
+      { title: '一起翻开', body: '不能悔棋，也不能偷看。有人连成五子的那一刻（自己没发现也算），所有棋子一起翻开，揭晓黑白。' },
     ],
     showNote: '出自《魔鬼的计谋》第一季：监狱密室里的隐藏关，挑战者和 NPC 只下一局。节目里有人斜着隔一格下，19 手就赢了。',
     nameNote: '名字：节目里的中文是“盲五子棋”，英文是 Blind Gomoku。Gomoku 就是五子棋，名字来自日文的“五目並べ”。',
     showName: '魔鬼的计谋',
+    rulesMetaTitle: '盲五子棋规则：只看得到颜色的五子棋',
+    rulesMetaDescription: '盲五子棋的规则，一步一张图：15×15 棋盘先连成五子获胜；盲棋只看得到颜色，黑白印在底面，AI 用黑方上一手的颜色回应，连成五子才一起翻开。出自《魔鬼的计谋》第一季。',
+    rulesTitle: '盲五子棋怎么玩',
+    rulesIntro: '就是五子棋，只多一件事：黑白印在棋子底面，盘上只看得到颜色，连成五子才一起翻开。',
+    rulesCta: '回首页选玩法',
+    artCredit: '主视觉与棋子的七种颜色：19 世纪朝鲜的拼布包袱巾，芝加哥艺术博物馆馆藏，公有领域。',
   },
   th: {
     metaTitle: 'โกโมกุปิดตา: โกโมกุที่เห็นแค่สี',
@@ -573,14 +616,20 @@ export const TEXT: TextTable<BlindGomokuText> = {
     colors: { red: 'แดง', orange: 'ส้ม', yellow: 'เหลือง', green: 'เขียว', blue: 'น้ำเงิน', purple: 'ม่วง', pink: 'ชมพู' },
     shapes: { circle: 'วงกลม', triangle: 'สามเหลี่ยม', square: 'สี่เหลี่ยม', diamond: 'ข้าวหลามตัด', star: 'ดาว', heart: 'หัวใจ', cross: 'กากบาท' },
     steps: [
-      'ผลัดกันวางหมากบนกระดาน 15×15 ใครเรียงครบห้าก่อนในแนวนอน แนวตั้ง หรือแนวทแยงเป็นฝ่ายชนะ หกตัวขึ้นไปก็นับ ไม่มีตาห้ามเดิน',
-      'ในโหมดปิดตา หมากทุกตัวเห็นแค่สีและรูปทรง ไม่รู้ว่าดำหรือขาว ดำขาวพิมพ์ไว้ที่ใต้หมากเท่านั้น',
-      'ก่อนวางแต่ละตาให้เลือกสี AI จะตอบด้วยสีที่คุณเพิ่งใช้ สีจึงไม่บอกว่าหมากเป็นของใคร',
-      'แต่ละสีมีรูปทรงของตัวเอง แม้แยกสีไม่ออกก็ยังจำได้',
-      'ย้อนไม่ได้ แอบดูไม่ได้ เมื่อมีคนเรียงครบห้า หมากทุกตัวจะพลิกเผยดำขาว',
+      { title: 'เรียงให้ครบห้า', body: 'ผลัดกันวางหมากบนกระดาน 15×15 ใครเรียงครบห้าก่อนในแนวนอน แนวตั้ง หรือแนวทแยงเป็นฝ่ายชนะ หกตัวขึ้นไปก็นับ ไม่มีตาห้ามเดิน ถ้ากระดานเต็มแล้วยังไม่มีใครเรียงครบห้า ถือว่าเสมอ' },
+      { title: 'เห็นแค่สี', body: 'ในโหมดปิดตา หมากทุกตัวเห็นแค่สีและรูปทรง ไม่รู้ว่าดำหรือขาว ดำขาวพิมพ์ไว้ที่ใต้หมากเท่านั้น หมากตัวไหนเป็นของตัวเอง ต้องจำเอาเอง' },
+      { title: 'เลือกสีก่อนวาง', body: 'ก่อนวางแต่ละตา ให้เลือกหนึ่งในเจ็ดสีแล้วจึงวางลงกระดาน แต่ละสีมีรูปทรงของตัวเอง แม้แยกสีไม่ออกก็ยังจำได้' },
+      { title: 'AI ใช้สีเดียวกัน', body: 'เมื่อเล่นกับ AI ฝ่าย AI จะเป็นฝ่ายขาว และตอบด้วยสีเดียวกับที่ฝ่ายดำเพิ่งใช้เสมอ เหมือนในรายการ ทุกสีจึงเป็นดำครึ่งขาวครึ่ง ดูจากสีไม่ออกว่าหมากเป็นของใคร ถ้าเล่นสองคน แต่ละฝ่ายเลือกสีเองได้' },
+      { title: 'พลิกพร้อมกัน', body: 'ย้อนไม่ได้ แอบดูไม่ได้ ทันทีที่มีคนเรียงครบห้า (แม้ตัวเองจะไม่ทันสังเกต) หมากทุกตัวจะพลิกเผยดำขาว' },
     ],
     showNote: "มาจาก The Devil's Plan ซีซั่น 1: ด่านลับในห้องขัง เล่นกับ NPC แค่เกมเดียว ในรายการมีผู้เล่นชนะใน 19 ตาด้วยการวางทแยงเว้นช่อง",
     nameNote: 'ชื่อ: ในภาษาจีน รายการเรียกเกมนี้ว่า Mang Wuziqi (โกโมกุปิดตา) ส่วนคำว่าโกโมกุ (Gomoku) มาจากภาษาญี่ปุ่น gomokunarabe แปลว่า “เรียงห้า”',
     showName: "The Devil's Plan",
+    rulesMetaTitle: 'กติกาโกโมกุปิดตา: โกโมกุที่เห็นแค่สี',
+    rulesMetaDescription: "กติกาโกโมกุปิดตา (Blind Gomoku) ทีละขั้นพร้อมภาพ: ใครเรียงครบห้าก่อนบนกระดาน 15×15 ชนะ ในโหมดปิดตาเห็นแค่สี ดำขาวอยู่ใต้หมาก AI ตอบด้วยสีล่าสุดของฝ่ายดำ และหมากทุกตัวจะพลิกเมื่อมีคนเรียงครบห้า จาก The Devil's Plan ซีซั่น 1",
+    rulesTitle: 'วิธีเล่นโกโมกุปิดตา',
+    rulesIntro: 'กติกาเหมือนโกโมกุทุกอย่าง ต่างกันแค่อย่างเดียว: ดำขาวซ่อนอยู่ใต้หมาก บนกระดานจึงเห็นแค่สี จนกว่าจะมีคนเรียงครบห้า หมากถึงจะพลิก',
+    rulesCta: 'กลับไปเลือกวิธีเล่น',
+    artCredit: 'ภาพหลักและเจ็ดสีของหมาก: ผ้าห่อของแบบเย็บปะติดของเกาหลี ศตวรรษที่ 19 (โชกักโพ) จากสถาบันศิลปะชิคาโก เป็นสาธารณสมบัติ',
   },
 };

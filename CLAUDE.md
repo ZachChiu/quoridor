@@ -207,6 +207,7 @@ nudge { by, at }          最近一次「催一下」
     聲音（`sounds.ts`）：子落在布上悶的一聲＋每個顏色一根伽倻琴的弦（AI 跟色就彈你那一根，音高只看顏色、聽不出黑白），翻開時刮過整排弦。結算就是分享圖（`shareCard.ts`：同一圈布條外框、翻開的終局盤面、連成的五子一道青綠線）。
     動作（`idleMotion.ts`）：落子壓一下布、旁邊的子跟著滑；閒置動作只在一般模式、只動等待那一方 —— **盲棋沒有閒置動作**（只動一方就等於告訴你哪些是對方的子）。
     邀請朋友（10/24）：共用的 `turnRooms`，`s0` 黑、`s1` 白，setup 是 `blind`／`classic`，moves 是 engine 的 `encodeMoves`（`games/blind-gomoku/online.ts`）；首頁的彈窗選玩法與自己執黑或執白 → `/blind-gomoku/online#new=blind-black`。對局沿用 `GomokuPlay`（只有輪到自己能下、沒有悔棋與重來、再來一局＝開新房）；盲棋兩邊都只畫顏色、各自選色（沒有 AI 的跟色）；畫面上寫黑方／白方、不寫「你」「對方」，自己那方是狀態底下實線縫邊的那塊小布。連線中、等人、失敗是 `GomokuOnline` 裡自己的一小塊包袱巾（縫線往前縫、兩塊布縫在一起、一角脫線）。這款裡面換頁都不播轉場；結算只留 9:16。
+    規則頁 `/blind-gomoku/rules`（10/25，`RulesPage.tsx`）：一步一張圖配字，圖是遊戲自己的棋盤與棋子畫的 7×7 一角（`RulesSteps.tsx`；只有講翻開那張畫黑白，講一般五子棋那張用另一盤，免得前面的彩色圖等於明牌），首頁的「怎麼玩」連過去、不再開彈窗；對局中的說明彈窗是同一份步驟、一次一步、可以左右滑（`useSwipePager`），彈窗裡只有步驟（出處、署名在規則頁）。分享圖 `scripts/og-games/blind-gomoku.mjs`：青綠底、白絲字，主視覺是裁掉館藏照片灰邊的 `scripts/og-art/blind-gomoku.webp`。
 
   - 騎士巡邏：試做中，視覺在 `feat/game-knights-tour`。
 
