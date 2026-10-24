@@ -563,6 +563,9 @@ html:has(.gmk-root), body:has(.gmk-root) { background: #e4d6bb; }
 }
 /* 連結：底下一道平針縫 */
 .gmk-thread { font-weight: 900; text-decoration: underline dashed rgb(42 37 37 / 0.55); text-decoration-thickness: 2px; text-underline-offset: 6px; }
+/* 連線頁（GomokuOnline）：平針縫一直往前縫（連線中、等朋友；虛線一段 8，走兩段剛好接回原位），空著的那塊布上淡淡的子輕輕浮著 */
+@keyframes gmk-sew { to { stroke-dashoffset: -16; } }
+@keyframes gmk-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
 
 /* ▸ 騎士巡邏（feat/game-knights-tour） */
 

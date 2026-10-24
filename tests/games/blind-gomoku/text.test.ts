@@ -35,6 +35,7 @@ describe('盲眼五子棋的文案', () => {
       expect(t.winBodyYou, l).toContain('{n}');
       expect(t.winBodyAi, l).toContain('{n}');
       expect(t.winBodySide, l).toContain('{side}');
+      expect(t.inviteBody, l).toContain('{side}');
     }
   });
 

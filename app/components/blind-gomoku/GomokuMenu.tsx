@@ -1,17 +1,21 @@
 'use client';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
+import { useRouter } from 'next/navigation';
 import type { IconType } from 'react-icons';
-import { GiBlindfold, GiRobotGolem, GiRuleBook, GiTabletopPlayers } from 'react-icons/gi';
+import { GiBlindfold, GiPaperPlane, GiRobotGolem, GiRuleBook, GiTabletopPlayers } from 'react-icons/gi';
 import { LuChevronRight } from 'react-icons/lu';
 import Modal from '@/components/Modal';
 import PlatformCorner from '@/components/PlatformCorner';
 import { useMessages } from '@/i18n/LocaleProvider';
 import { useTextTable } from '@/i18n/gameText';
-import type { Locale } from '@/i18n/locales';
+import { localePath, type Locale } from '@/i18n/locales';
+import { BLIND_GOMOKU, trialOnline } from '@/i18n/routes';
 import { LEVELS } from '@/games/blind-gomoku/ai';
+import type { Side } from '@/games/blind-gomoku/engine';
+import { newRoomHash } from '@/games/blind-gomoku/online';
 import { TEXT } from '@/games/blind-gomoku/text';
 import { HowToPlay } from './HowToPlay';
-import { KEY_HEX } from './Stone';
+import { ColorFace, KEY_HEX, SideFace } from './Stone';
 import GomokuFrame from './GomokuFrame';
 import { MENU_CLASS, type GomokuMode } from './modeHash';
 import { GMK_BAND, GMK_CORNER, GMK_PANEL } from './palette';
@@ -22,6 +26,7 @@ import { GMK_BAND, GMK_CORNER, GMK_PANEL } from './palette';
  * 下面的清單照包袱巾的做法（globals.css 的 .gmk-*，Zach 10/22：每款的按鈕要有自己的樣子）：
  * 推薦的盲棋是一塊拼起來的青綠布（左上角桃紅三角、白絲縫線），其他是一塊塊白絲或半透明的苧麻布，邊上一圈平針縫；
  * 難度是縫在一起的小布塊（幾塊青綠就是幾級）；「怎麼玩」底下一道縫線。桌機改成左右兩欄。
+ * 邀請朋友：彈窗裡選盲棋或一般、自己執黑或執白，按下去直接換到 /blind-gomoku/online 開房（不播轉場，這款裡面換頁都是直接換）。
  */
 function ModeRow({ icon: Icon, title, desc, primary, onClick }: { icon: IconType; title: string; desc: string; primary?: boolean; onClick: () => void }) {
   return (
@@ -37,13 +42,33 @@ function ModeRow({ icon: Icon, title, desc, primary, onClick }: { icon: IconType
   );
 }
 
+/** 彈窗裡的一組選項：選中的那塊縫線變成實線的黑絲（同選色盤），沒選的是半透明的苧麻布 */
+function Choice({ on, onClick, children }: { on: boolean; onClick: () => void; children: ReactNode }) {
+  return (
+    <button type="button" role="radio" aria-checked={on} onClick={onClick}
+      className={`gmk-patch flex min-h-12 items-center justify-center gap-2 px-3 py-2.5 text-sm font-black active:scale-[0.98] ${
+        on ? '![outline-color:#2a2525] ![outline-offset:-4px] ![outline-style:solid] ![outline-width:2px]' : 'is-ramie'
+      }`}>
+      {children}
+    </button>
+  );
+}
+
 export default function GomokuMenu({ locale, onStart }: { locale: Locale; onStart: (m: GomokuMode) => void }) {
   const t = useTextTable(TEXT);
   const ui = useMessages().ui;
+  const router = useRouter();
   /** 選難度的對象：true 盲棋、false 一般五子棋、null 沒開 */
   const [levelFor, setLevelFor] = useState<boolean | null>(null);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const [inviteBlind, setInviteBlind] = useState(true);
+  const [inviteSide, setInviteSide] = useState<Side>('black');
   const chip = 'gmk-patch px-3 py-2 text-sm font-black active:scale-95';
+  const openRoom = () => {
+    setInviteOpen(false);
+    router.push(localePath(locale, trialOnline(BLIND_GOMOKU)) + newRoomHash(inviteBlind, inviteSide));
+  };
 
   return (
     <GomokuFrame className={`${MENU_CLASS} items-center px-4 pb-5 pt-14 lg:flex-row lg:items-center lg:justify-center lg:gap-12 lg:px-10 lg:py-16`}>
@@ -52,7 +77,7 @@ export default function GomokuMenu({ locale, onStart }: { locale: Locale; onStar
 
       <header className="flex w-full max-w-[440px] flex-col items-center text-center lg:max-w-[520px] lg:items-start lg:text-left">
         <p className="text-xs font-black tracking-wide text-ink-soft">{t.tags}</p>
-        <h1 className="mt-1.5 text-[clamp(2rem,6dvh,3.5rem)] font-black leading-[1.02] tracking-tight">{t.title}</h1>
+        <h1 className="mt-1.5 text-[clamp(2rem,6svh,3.5rem)] font-black leading-[1.02] tracking-tight">{t.title}</h1>
         <p className="mt-1 text-base font-black text-ink-soft lg:text-lg">{t.subtitle}</p>
         <p className="mt-2 text-sm font-bold lg:text-base">{t.tagline}</p>
         {/* 主視覺：那塊包袱巾本身；只有它跟著畫面高度縮 */}
@@ -60,7 +85,7 @@ export default function GomokuMenu({ locale, onStart }: { locale: Locale; onStar
         <div className="mt-3 flex flex-col items-center gap-1 lg:items-start">
           {/* eslint-disable-next-line @next/next/no-img-element -- 靜態匯出，不需要 next/image */}
           <img src="/games/blind-gomoku/pojagi.webp" alt="" aria-hidden="true" width={750} height={746}
-            className="h-[min(14rem,24dvh)] w-auto rounded-sm lg:h-auto lg:w-[min(100%,26rem)]" />
+            className="h-[min(14rem,24svh)] w-auto rounded-sm lg:h-auto lg:w-[min(100%,26rem)]" />
         </div>
       </header>
 
@@ -78,6 +103,7 @@ export default function GomokuMenu({ locale, onStart }: { locale: Locale; onStar
             <button type="button" className={chip} onClick={() => onStart({ opponent: 'local', blind: false })}>{t.classic}</button>
           </span>
         </div>
+        <ModeRow icon={GiPaperPlane} title={t.online} desc={t.onlineDesc} onClick={() => setInviteOpen(true)} />
         <button type="button" onClick={() => setHelpOpen(true)} className="gmk-thread self-center px-3 py-2 text-sm text-ink-soft">
           {t.howTo}
         </button>
@@ -103,6 +129,42 @@ export default function GomokuMenu({ locale, onStart }: { locale: Locale; onStar
               </span>
             </button>
           ))}
+        </div>
+      </Modal>
+
+      <Modal isOpen={inviteOpen} onClose={() => setInviteOpen(false)} title={t.onlineSetup} kicker={t.online}
+        icon={GiPaperPlane} band={GMK_BAND} panelClassName={GMK_PANEL}>
+        <div className="flex flex-col gap-4">
+          <div>
+            <p id="gmk-invite-look" className="text-xs font-black text-ink-soft">{t.look}</p>
+            <div role="radiogroup" aria-labelledby="gmk-invite-look" className="mt-1.5 grid grid-cols-2 gap-2">
+              {/* 盲棋是兩塊彩色的布、一般是黑白兩顆：看得到的就是那個樣子 */}
+              <Choice on={inviteBlind} onClick={() => setInviteBlind(true)}>
+                <span aria-hidden="true" className="flex shrink-0 -space-x-1.5"><ColorFace color="pink" className="size-5" /><ColorFace color="green" className="size-5" /></span>{t.blind}
+              </Choice>
+              <Choice on={!inviteBlind} onClick={() => setInviteBlind(false)}>
+                <span aria-hidden="true" className="flex shrink-0 -space-x-1.5"><SideFace side="black" className="size-5" /><SideFace side="white" className="size-5" /></span>{t.classic}
+              </Choice>
+            </div>
+          </div>
+          <div>
+            <p id="gmk-invite-side" className="text-xs font-black text-ink-soft">{t.sideLabel}</p>
+            <div role="radiogroup" aria-labelledby="gmk-invite-side" className="mt-1.5 grid grid-cols-2 gap-2">
+              {(['black', 'white'] as const).map((s) => (
+                <Choice key={s} on={inviteSide === s} onClick={() => setInviteSide(s)}>
+                  <SideFace side={s} className="size-5 shrink-0" />
+                  <span className="text-left leading-tight">
+                    <span className="block">{s === 'black' ? t.black : t.white}</span>
+                    <span className="block text-xs font-bold text-ink-soft">{s === 'black' ? t.movesFirst : t.movesSecond}</span>
+                  </span>
+                </Choice>
+              ))}
+            </div>
+          </div>
+          <button type="button" onClick={openRoom}
+            className="gmk-patch is-pieced flex h-12 items-center justify-center gap-2 text-base font-black active:scale-[0.98]">
+            {t.createRoom}
+          </button>
         </div>
       </Modal>
 

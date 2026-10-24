@@ -17,7 +17,6 @@ export type BlindGomokuText = {
   subtitle: string;
   tagline: string;
   tags: string;
-  /** 首頁主視覺（朝鮮包袱巾）下面的出處 */
   blindAi: string;
   blindAiDesc: string;
   classicAi: string;
@@ -26,6 +25,25 @@ export type BlindGomokuText = {
   localDesc: string;
   blind: string;
   classic: string;
+  /** 邀請朋友（連線房）：首頁那一列、開房的彈窗 */
+  online: string;
+  onlineDesc: string;
+  onlineSetup: string;
+  look: string;
+  sideLabel: string;
+  /** 開房時選邊：黑方／白方底下的小字 */
+  movesFirst: string;
+  movesSecond: string;
+  createRoom: string;
+  /** 連線對局中，只給讀屏（畫面上不寫「你」，自己那一方用記號標） */
+  youAreWhite: string;
+  /** 等朋友進來的畫面；inviteBody 的 {side} 是 black／white 那兩個字 */
+  waitingFriend: string;
+  inviteHeading: string;
+  inviteBody: string;
+  inviteBlind: string;
+  /** 系統分享面板裡跟著連結的那句 */
+  shareText: string;
   howTo: string;
   pickLevel: string;
   levels: Record<Level, { name: string; desc: string }>;
@@ -88,6 +106,20 @@ export const TEXT: TextTable<BlindGomokuText> = {
     localDesc: '輪流用同一台下',
     blind: '盲棋',
     classic: '一般',
+    online: '邀請朋友',
+    onlineDesc: '傳連結給朋友，各用自己的手機下',
+    onlineSetup: '開一間房',
+    look: '玩法',
+    sideLabel: '你下哪一方',
+    movesFirst: '先下',
+    movesSecond: '後下',
+    createRoom: '開房間',
+    youAreWhite: '你執白後下',
+    waitingFriend: '等朋友加入…',
+    inviteHeading: '把連結傳給朋友',
+    inviteBody: '朋友打開連結就會加入，當{side}。',
+    inviteBlind: '兩邊都只看得到顏色，連成五子才一起翻開。',
+    shareText: '來跟我下一盤盲五子棋',
     howTo: '怎麼玩？',
     pickLevel: '選難度',
     levels: {
@@ -156,6 +188,20 @@ export const TEXT: TextTable<BlindGomokuText> = {
     localDesc: 'Take turns on one device',
     blind: 'Blind',
     classic: 'Classic',
+    online: 'Invite a friend',
+    onlineDesc: 'Send a link — each of you plays on your own device',
+    onlineSetup: 'Open a room',
+    look: 'Mode',
+    sideLabel: 'Your side',
+    movesFirst: 'moves first',
+    movesSecond: 'moves second',
+    createRoom: 'Open room',
+    youAreWhite: 'You play white and move second',
+    waitingFriend: 'Waiting for your friend…',
+    inviteHeading: 'Send your friend the link',
+    inviteBody: 'They join as soon as they open it, playing {side}.',
+    inviteBlind: 'You both see only colours; every stone flips over when someone makes five.',
+    shareText: 'Play Blind Gomoku with me',
     howTo: 'How to play',
     pickLevel: 'Pick a level',
     levels: {
@@ -224,6 +270,20 @@ export const TEXT: TextTable<BlindGomokuText> = {
     localDesc: '1台を交代で使う',
     blind: 'ブラインド',
     classic: '通常',
+    online: '友だちを招待',
+    onlineDesc: 'リンクを送って、それぞれの端末で対局',
+    onlineSetup: '部屋を作る',
+    look: 'ルール',
+    sideLabel: '持つ石',
+    movesFirst: '先手',
+    movesSecond: '後手',
+    createRoom: '部屋を作成',
+    youAreWhite: 'あなたは白（後手）',
+    waitingFriend: '友だちの参加を待っています…',
+    inviteHeading: 'リンクを友だちに送る',
+    inviteBody: '相手がリンクを開くと、{side}で参加します。',
+    inviteBlind: 'どちらも色しか見えません。五つ並んだら、すべての石をめくります。',
+    shareText: 'ブラインド五目並べで対戦しよう',
     howTo: '遊び方',
     pickLevel: 'レベルを選ぶ',
     levels: {
@@ -292,6 +352,20 @@ export const TEXT: TextTable<BlindGomokuText> = {
     localDesc: '한 기기로 번갈아 두기',
     blind: '블라인드',
     classic: '일반',
+    online: '친구 초대',
+    onlineDesc: '링크를 보내고 각자 자기 기기로 두기',
+    onlineSetup: '방 만들기',
+    look: '규칙',
+    sideLabel: '내 돌',
+    movesFirst: '선공',
+    movesSecond: '후공',
+    createRoom: '방 만들기',
+    youAreWhite: '당신은 백(후공)',
+    waitingFriend: '친구를 기다리는 중…',
+    inviteHeading: '친구에게 링크 보내기',
+    inviteBody: '친구가 링크를 열면 바로 {side}으로 참가해요.',
+    inviteBlind: '둘 다 색깔만 보이고, 오목이 완성되면 모든 돌이 뒤집혀요.',
+    shareText: '블라인드 오목 같이 해요',
     howTo: '게임 방법',
     pickLevel: '난이도 선택',
     levels: {
@@ -360,6 +434,20 @@ export const TEXT: TextTable<BlindGomokuText> = {
     localDesc: '轮流用同一台设备下',
     blind: '盲棋',
     classic: '普通',
+    online: '邀请朋友',
+    onlineDesc: '发链接给朋友，各用自己的手机下',
+    onlineSetup: '开一个房间',
+    look: '玩法',
+    sideLabel: '你下哪一方',
+    movesFirst: '先下',
+    movesSecond: '后下',
+    createRoom: '开房间',
+    youAreWhite: '你执白后下',
+    waitingFriend: '等朋友加入…',
+    inviteHeading: '把链接发给朋友',
+    inviteBody: '朋友打开链接就会加入，当{side}。',
+    inviteBlind: '两边都只看得到颜色，连成五子才一起翻开。',
+    shareText: '来跟我下一盘盲五子棋',
     howTo: '怎么玩？',
     pickLevel: '选难度',
     levels: {
@@ -428,6 +516,20 @@ export const TEXT: TextTable<BlindGomokuText> = {
     localDesc: 'ผลัดกันเล่นบนเครื่องเดียว',
     blind: 'ปิดตา',
     classic: 'ปกติ',
+    online: 'ชวนเพื่อน',
+    onlineDesc: 'ส่งลิงก์ให้เพื่อน แต่ละคนเล่นบนเครื่องของตัวเอง',
+    onlineSetup: 'เปิดห้อง',
+    look: 'โหมด',
+    sideLabel: 'ฝ่ายของคุณ',
+    movesFirst: 'เดินก่อน',
+    movesSecond: 'เดินทีหลัง',
+    createRoom: 'เปิดห้อง',
+    youAreWhite: 'คุณเป็นฝ่ายขาว เดินทีหลัง',
+    waitingFriend: 'กำลังรอเพื่อน…',
+    inviteHeading: 'ส่งลิงก์ให้เพื่อน',
+    inviteBody: 'เพื่อนเปิดลิงก์แล้วจะเข้าร่วมทันที เล่น{side}',
+    inviteBlind: 'ทั้งสองฝ่ายเห็นแค่สี เมื่อมีคนเรียงครบห้า หมากทุกตัวจะพลิก',
+    shareText: 'มาเล่นโกโมกุปิดตากัน',
     howTo: 'วิธีเล่น',
     pickLevel: 'เลือกระดับ',
     levels: {

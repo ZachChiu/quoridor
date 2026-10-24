@@ -12,7 +12,7 @@ import { useSound } from '@/hook/useSound';
 import { TEXT } from '@/games/blind-gomoku/text';
 import {
   COLORS, applyMove, createGame, isLegal, lastColor, other, play, pointName, undo,
-  type GomokuState, type Point, type StoneColor,
+  type GomokuState, type Move, type Point, type Side, type StoneColor,
 } from '@/games/blind-gomoku/engine';
 import { GomokuBoard, Ghost, revealMs } from './GomokuBoard';
 import { ColorPicker } from './ColorPicker';
@@ -26,7 +26,21 @@ import { drawGomokuCard } from './shareCard';
 import type { GomokuMode } from './modeHash';
 
 /**
- * 盲眼五子棋的對局畫面。四種模式共用：盲棋／一般 × 對電腦／兩人同機。
+ * 連線（邀請朋友）：局面由房間推導（GomokuOnline 持有），這裡只負責畫、只在輪到自己時能下，下好交給 onMove。
+ * 連線局沒有悔棋與重來（要兩個人都同意，先不做）；結算的「再來一局」是再開一間房（換 hash）。
+ */
+export type OnlineMode = {
+  opponent: 'online';
+  blind: boolean;
+  /** 自己執哪一方 */
+  side: Side;
+  game: GomokuState;
+  onMove: (m: Move) => void;
+  newRoom: () => void;
+};
+
+/**
+ * 盲眼五子棋的對局畫面。六種模式共用：盲棋／一般 × 對電腦／兩人同機／連線。
  *
  * - 手機：上方一排小圓鈕（換模式、聲音、標題、說明、重來），下面狀態、棋盤、選色盤與「下子」。
  *   悔棋（只有一般模式）放在「下子」旁邊：上方加了聲音鈕之後再放悔棋，標題會被擠成「盲五…」
@@ -34,18 +48,21 @@ import type { GomokuMode } from './modeHash';
  * - 桌機（lg）：棋盤在左，右邊一欄放狀態、選色盤與有字的按鈕
  *
  * 盲棋的規矩（docs/games-deep-s1.md §3 的建議）：沒有悔棋、沒有「停在子上偷看黑白」；
- * 電腦落子那顆亮一下就淡掉；結束時依下子順序把每顆子翻開，翻完才畫連線、跳結算。
+ * 電腦（連線是對方）落子那顆亮一下就淡掉；結束時依下子順序把每顆子翻開，翻完才畫連線、跳結算。
+ * 連線的盲棋兩邊畫面一樣只畫顏色、各自選色（沒有「跟你上一手同色」，那是節目裡 AI 的規矩），也一樣沒有閒置動作。
  *
  * 聲音（sounds.ts）：每個顏色是一根伽倻琴的弦，AI 跟色時彈的就是你剛才那根；翻開時刮過整排弦。
  * 結算就是分享圖（shareCard.ts，跟 Wall Go、尼泊爾虎棋一樣的做法），關掉之後停在翻開的終局盤面上。
  */
-export default function GomokuPlay({ mode, onMenu }: { mode: GomokuMode; onMenu: () => void }) {
+export default function GomokuPlay({ mode, onMenu }: { mode: GomokuMode | OnlineMode; onMenu: () => void }) {
   const t = useTextTable(TEXT);
   const ui = useMessages().ui;
   const g = useGameText();
   const locale = useLocale();
   const { prefs: soundPrefs, setPrefs: setSoundPrefs } = useSound();
-  const [game, setGame] = useState<GomokuState>(createGame);
+  const [localGame, setGame] = useState<GomokuState>(createGame);
+  const online = mode.opponent === 'online' ? mode : null;
+  const game = online ? online.game : localGame;
   const [color, setColor] = useState<StoneColor>(COLORS[0]);
   const [aim, setAim] = useState<Point | null>(null);
   /** 盲棋結算：子翻到黑白那面了 */
@@ -60,7 +77,9 @@ export default function GomokuPlay({ mode, onMenu }: { mode: GomokuMode; onMenu:
   const { blind } = mode;
   const { ask, cancel } = useGomokuAi(vsAi);
   const aiTurn = vsAi && !game.winner && game.turn === 'white';
-  const canPlay = !game.winner && !aiTurn;
+  // 連線時輪到對方：跟電腦的回合一樣不能動
+  const theirTurn = !!online && !game.winner && game.turn !== online.side;
+  const canPlay = !game.winner && !aiTurn && !theirTurn;
 
   // 電腦的回合：問 Worker，回來時局面沒變才下（中途重來、悔棋的答案丟掉）
   useEffect(() => {
@@ -71,8 +90,9 @@ export default function GomokuPlay({ mode, onMenu }: { mode: GomokuMode; onMenu:
   }, [aiTurn, level, game, ask, cancel]);
 
   // 分出勝負：盲棋先等最後一顆子落定、亮一下，再依序翻開；翻完才畫線、跳結算
-  // 聲音跟著走：翻開時刮過整排弦，連線畫出來時贏／輸／和局（對電腦看你贏沒有；兩人同機有人贏就是贏的那一句）
-  const endSound = game.winner === 'draw' ? 'draw' : vsAi && game.winner === 'white' ? 'lose' : 'win';
+  // 聲音跟著走：翻開時刮過整排弦，連線畫出來時贏／輸／和局（對電腦、連線看你贏沒有；兩人同機有人贏就是贏的那一句）
+  const mySide: Side | null = online ? online.side : vsAi ? 'black' : null;
+  const endSound = game.winner === 'draw' ? 'draw' : mySide && game.winner !== mySide ? 'lose' : 'win';
   useEffect(() => {
     if (!game.winner) return;
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -103,9 +123,11 @@ export default function GomokuPlay({ mode, onMenu }: { mode: GomokuMode; onMenu:
 
   const place = useCallback((p: Point) => {
     if (!canPlay || !isLegal(game, p)) return;
-    setGame(applyMove(game, { at: p, color: blind ? color : COLORS[0] }));
+    const m = { at: p, color: blind ? color : COLORS[0] };
+    if (online) online.onMove(m);
+    else setGame(applyMove(game, m));
     setAim(null);
-  }, [canPlay, game, blind, color]);
+  }, [canPlay, game, blind, color, online]);
 
   const restart = () => {
     cancel();
@@ -115,11 +137,15 @@ export default function GomokuPlay({ mode, onMenu }: { mode: GomokuMode; onMenu:
     setSettled(false);
     setResultOpen(false);
   };
-  // 悔棋只有一般模式；對電腦時退到「又輪到你」（電腦已經回了就退兩手）
+  // 連線的再來一局是再開一間房
+  const again = online ? online.newRoom : restart;
+  // 悔棋只有一般模式、不連線；對電腦時退到「又輪到你」（電腦已經回了就退兩手）
   const undoSteps = vsAi ? 2 : 1;
-  const canUndo = !blind && canPlay && game.moves.length >= undoSteps;
+  const canUndo = !blind && !online && canPlay && game.moves.length >= undoSteps;
   const doUndo = () => { setGame(undo(game, undoSteps)); setAim(null); };
 
+  // 連線的字跟兩人同機一樣寫黑方／白方，不寫「你」「對方」（太直白，Zach 對 Wall Go 選過用記號不用字）：
+  // 自己是哪一方由狀態底下那兩塊小布標出來（見 seats）
   const resultTitle = game.winner === 'draw' ? t.draw
     : vsAi ? (game.winner === 'black' ? t.youWin : t.youLose)
     : game.winner === 'black' ? t.blackWins : t.whiteWins;
@@ -131,12 +157,13 @@ export default function GomokuPlay({ mode, onMenu }: { mode: GomokuMode; onMenu:
     : vsAi ? t.yourTurn
     : game.turn === 'black' ? t.blackTurn : t.whiteTurn;
   const hint = game.winner ? (settled && blind ? t.revealBody : '')
+    : online ? ''
     : blind ? (vsAi ? t.aiCopies : t.localBlindHint)
     : vsAi ? t.youAreBlack : '';
   const moveNo = fill(t.moveN, { n: game.winner ? game.moves.length : game.moves.length + 1 });
   const modeLabel = level
     ? `${blind ? t.blindAi : t.classicAi} · ${t.levels[level].name}`
-    : `${t.local} · ${blind ? t.blind : t.classic}`;
+    : `${online ? t.online : t.local} · ${blind ? t.blind : t.classic}`;
   const ended = !!game.winner && settled && !resultOpen;
   /** 標題大約幾個字寬（中日韓一個字 1、粗體的拉丁與泰文約 0.7），手機上方一排用它決定字級 */
   const titleEm = Array.from(t.title).reduce((n, ch) => n + (ch.charCodeAt(0) >= 0x2e80 ? 1 : ch === ' ' ? 0.3 : 0.7), 0).toFixed(2);
@@ -171,6 +198,8 @@ export default function GomokuPlay({ mode, onMenu }: { mode: GomokuMode; onMenu:
     fileName: 'blind-gomoku',
     homePath: localePath(locale, BLIND_GOMOKU),
     campaign: 'blind-gomoku',
+    // 只留 9:16（Zach 10/24，跟尼泊爾虎棋一樣）：只給一種，比例切換就不會出現
+    layouts: ['story'],
     fonts: [
       { font: `900 40px ${font}`, text: card.text.name + card.text.title + card.text.brand },
       { font: `700 40px ${font}`, text: card.text.kicker + card.text.sub + card.text.body + card.text.from },
@@ -182,11 +211,28 @@ export default function GomokuPlay({ mode, onMenu }: { mode: GomokuMode; onMenu:
   const wide = 'gmk-patch is-ramie flex h-12 items-center justify-center gap-2 text-sm font-black disabled:opacity-35';
   const ink = 'gmk-patch is-pieced flex h-12 items-center justify-center gap-2 text-sm font-black active:scale-[0.98] disabled:opacity-35';
 
+  // 連線：黑方、白方兩塊小布，自己那塊的縫線是實線的黑絲（跟選色盤選中的那格、等人畫面自己那塊布同一個記號）；
+  // 讀屏另外念一句「你執黑先下」
+  const seats = online && (
+    <div className="mt-1.5 flex gap-1.5">
+      {(['black', 'white'] as const).map((s) => (
+        <span key={s} aria-hidden="true"
+          className={`gmk-patch flex items-center gap-1.5 py-1 pl-1.5 pr-2.5 text-xs font-black ![outline-offset:-3px] ${
+            s === online.side ? '![outline-color:#2a2525] ![outline-style:solid] ![outline-width:1.5px]' : 'is-ramie text-ink-soft'
+          }`}>
+          <SideFace side={s} className="size-3.5" />{s === 'black' ? t.black : t.white}
+        </span>
+      ))}
+      <span className="sr-only">{online.side === 'black' ? t.youAreBlack : t.youAreWhite}</span>
+    </div>
+  );
+
   const statusBlock = (
     <div className="flex items-start justify-between gap-3">
       <div className="min-w-0" aria-live="polite">
         <p className="text-base font-black leading-tight">{status}</p>
         {hint && <p className="mt-0.5 text-xs font-bold leading-snug text-ink-soft">{hint}</p>}
+        {seats}
         {canPlay && <p className="mt-0.5 hidden text-xs font-bold leading-snug text-ink-soft coarse:block">{t.aimHint}</p>}
       </div>
       <span className="gmk-patch is-ramie flex shrink-0 items-center gap-1.5 py-1.5 pl-2 pr-3 text-xs font-black tabular-nums">
@@ -207,7 +253,7 @@ export default function GomokuPlay({ mode, onMenu }: { mode: GomokuMode; onMenu:
   const afterGame = (
     <div className="grid grid-cols-2 gap-2.5">
       <button type="button" onClick={onMenu} className={wide}>{t.menu}</button>
-      <button type="button" onClick={restart} className={ink}>{t.again}</button>
+      <button type="button" onClick={again} className={ink}>{t.again}</button>
     </div>
   );
 
@@ -227,13 +273,15 @@ export default function GomokuPlay({ mode, onMenu }: { mode: GomokuMode; onMenu:
         </div>
         <div className="flex shrink-0 gap-1">
           <button type="button" onClick={() => setHelpOpen(true)} aria-label={t.rules} className={round}><LuCircleHelp aria-hidden="true" /></button>
-          <button type="button" onClick={restart} aria-label={t.restart} className={round}><LuRotateCcw aria-hidden="true" /></button>
+          {/* 連線沒有重來：留一顆同寬的空位，標題才會在正中間 */}
+          {online ? <span aria-hidden="true" className="size-11 shrink-0" />
+            : <button type="button" onClick={restart} aria-label={t.restart} className={round}><LuRotateCcw aria-hidden="true" /></button>}
         </div>
       </div>
       <div className="mt-2 w-full max-w-[520px] lg:hidden">{statusBlock}</div>
 
       {/* 棋盤：手機在剩下的高度裡置中；寬度同時受高度限制，矮的手機也放得下下面的選色盤 */}
-      <div className="flex w-full max-w-[min(520px,calc(100dvh-17rem))] flex-1 items-center py-2 lg:max-w-[min(640px,calc(100dvh-4rem))] lg:flex-none lg:py-0">
+      <div className="flex w-full max-w-[min(520px,calc(100svh-17rem))] flex-1 items-center py-2 lg:max-w-[min(640px,calc(100svh-4rem))] lg:flex-none lg:py-0">
         <GomokuBoard
           board={game.board}
           moves={game.moves}
@@ -259,8 +307,8 @@ export default function GomokuPlay({ mode, onMenu }: { mode: GomokuMode; onMenu:
           <>
             {picker}
             {/* 盲棋沒有悔棋：滑鼠的畫面上這一排是空的，整排藏起來 */}
-            <div className={`gap-2.5 ${blind ? 'hidden coarse:flex' : 'flex'}`}>
-              {!blind && (
+            <div className={`gap-2.5 ${blind || online ? 'hidden coarse:flex' : 'flex'}`}>
+              {!blind && !online && (
                 <button type="button" onClick={doUndo} disabled={!canUndo} className={`${wide} flex-1 coarse:flex-none coarse:px-5`}>
                   <LuUndo2 aria-hidden="true" />{t.undo}
                 </button>
@@ -291,8 +339,8 @@ export default function GomokuPlay({ mode, onMenu }: { mode: GomokuMode; onMenu:
           </div>
         )}
         <div className="grid grid-cols-2 gap-2.5">
-          {!blind && <button type="button" onClick={doUndo} disabled={!canUndo} className={wide}><LuUndo2 aria-hidden="true" />{t.undo}</button>}
-          <button type="button" onClick={restart} className={wide}><LuRotateCcw aria-hidden="true" />{t.restart}</button>
+          {!blind && !online && <button type="button" onClick={doUndo} disabled={!canUndo} className={wide}><LuUndo2 aria-hidden="true" />{t.undo}</button>}
+          {!online && <button type="button" onClick={restart} className={wide}><LuRotateCcw aria-hidden="true" />{t.restart}</button>}
           <button type="button" onClick={() => setHelpOpen(true)} className={wide}><LuCircleHelp aria-hidden="true" />{t.rules}</button>
           <button type="button" onClick={onMenu} className={wide}><LuHouse aria-hidden="true" />{t.menu}</button>
         </div>
@@ -303,10 +351,10 @@ export default function GomokuPlay({ mode, onMenu }: { mode: GomokuMode; onMenu:
         <HowToPlay t={t} prev={ui.prev} next={ui.next} done={ui.close} onDone={() => setHelpOpen(false)} />
       </Modal>
 
-      {/* 結算就是分享圖。關掉還留在棋盤上，可以看翻開後的盤面；下面換成換模式／再來一局。
-          暗遮罩上的按鈕也是這款的布：再來一局是拼起來的青綠布、分享是白絲布；比例切換是白絲的小布塊 */}
+      {/* 結算就是分享圖。關掉還留在棋盤上，可以看翻開後的盤面；下面換成換模式／再來一局（連線是再開一間房）。
+          暗遮罩上的按鈕也是這款的布：再來一局是拼起來的青綠布、分享是白絲布。只留 9:16，比例切換不會出現（toggle 那幾個 class 留著，之後加回比例時用） */}
       <ShareResultModal isOpen={resultOpen} onClose={() => setResultOpen(false)} title={resultTitle} card={share}
-        onRestart={restart} restartLabel={t.again}
+        onRestart={again} restartLabel={t.again}
         srText={`${resultTitle} ${resultBody}${blind ? ` ${t.revealBody}` : ''}`}
         frameClassName="rounded-[3px]"
         classes={{
