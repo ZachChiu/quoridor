@@ -19,7 +19,6 @@ export type KnightsText = {
   metaDescription: string;
   tagline: string;
   /** 首頁「Fig. 1」（歐拉的走法）的圖說 */
-  figCaption: string;
   showMode: string;
   showKicker: string;
   practiceMode: string;
@@ -89,7 +88,6 @@ export const TEXT = {
     metaTitle: "騎士巡遊 Knight's Tour 線上玩",
     metaDescription: '用西洋棋的騎士走遍棋盤每一格，每格只能走一次。照《魔鬼的計謀：死亡密室》的規則挑戰 6×6 → 7×7 → 8×8、總時限 60 分鐘；也能自選 5×5 到 10×10 練習，可以悔棋、看提示。免下載、免註冊。',
     tagline: '騎士走遍每一格，每格只能經過一次',
-    figCaption: '歐拉 1759 年論文裡的走法',
     showMode: '節目挑戰',
     showKicker: '6×6 → 7×7 → 8×8',
     practiceMode: '練習模式',
@@ -161,7 +159,6 @@ export const TEXT = {
     metaTitle: "Knight's Tour – The Devil's Plan Puzzle Online",
     metaDescription: "Move a chess knight so it lands on every square exactly once. Take on the 6×6 → 7×7 → 8×8 challenge from The Devil's Plan: Death Room with a 60-minute limit, or practice any board from 5×5 to 10×10 with undo and hints. Free, no download, no sign-up.",
     tagline: 'Land on every square exactly once',
-    figCaption: 'Euler’s tour from his 1759 paper',
     showMode: 'Show challenge',
     showKicker: '6×6 → 7×7 → 8×8',
     practiceMode: 'Practice',
@@ -234,7 +231,6 @@ export const TEXT = {
     metaTitle: "ナイトツアー（Knight's Tour）をオンラインで遊ぶ",
     metaDescription: 'チェスのナイトで盤のすべてのマスを一度ずつ訪れるパズル。『悪魔の計略 ～デビルズ・プラン～』シーズン2のルールどおり、6×6 → 7×7 → 8×8 に合計60分で挑戦。5×5〜10×10の練習モードでは一手戻しやヒントも使えます。ダウンロード・登録不要。',
     tagline: 'ナイトで全マスを一度ずつ回ろう',
-    figCaption: 'オイラーが1759年の論文で示した巡回',
     showMode: '番組チャレンジ',
     showKicker: '6×6 → 7×7 → 8×8',
     practiceMode: '練習モード',
@@ -307,7 +303,6 @@ export const TEXT = {
     metaTitle: '기사의 여행 게임 하기 – 데블스 플랜 6x6·7x7·8x8',
     metaDescription: '체스의 나이트로 판의 모든 칸을 한 번씩만 밟는 퍼즐. 넷플릭스 「데블스 플랜: 데스룸」 규칙 그대로 6×6 → 7×7 → 8×8을 총 60분 안에 도전하세요. 5×5~10×10 연습 모드에서는 무르기와 힌트도 쓸 수 있어요. 다운로드·가입 없이 무료.',
     tagline: '나이트로 모든 칸을 한 번씩만 밟기',
-    figCaption: '오일러가 1759년 논문에 실은 경로',
     showMode: '방송 챌린지',
     showKicker: '6×6 → 7×7 → 8×8',
     practiceMode: '연습 모드',
@@ -380,7 +375,6 @@ export const TEXT = {
     metaTitle: "骑士巡游 Knight's Tour 在线玩",
     metaDescription: '用国际象棋的骑士走遍棋盘每一格，每格只能走一次。照《魔鬼的计谋：死亡密室》的规则挑战 6×6 → 7×7 → 8×8，总时限 60 分钟；也能自选 5×5 到 10×10 练习，可以悔棋、看提示。免下载、免注册。',
     tagline: '骑士走遍每一格，每格只能经过一次',
-    figCaption: '欧拉 1759 年论文里的走法',
     showMode: '节目挑战',
     showKicker: '6×6 → 7×7 → 8×8',
     practiceMode: '练习模式',
@@ -453,7 +447,6 @@ export const TEXT = {
     metaTitle: "ทางเดินม้า (Knight's Tour) เล่นออนไลน์",
     metaDescription: "พาม้าหมากรุกเดินให้ครบทุกช่องบนกระดาน ช่องละครั้งเดียว ท้าทายตามกติกาของ The Devil's Plan: Death Room กระดาน 6×6 → 7×7 → 8×8 ภายใน 60 นาที หรือฝึกกับกระดาน 5×5 ถึง 10×10 ที่ย้อนตาและขอคำใบ้ได้ ไม่ต้องดาวน์โหลด ไม่ต้องสมัคร",
     tagline: 'พาม้าเดินให้ครบทุกช่อง ช่องละครั้งเดียว',
-    figCaption: 'เส้นทางของออยเลอร์จากบทความปี 1759',
     showMode: 'ท้าทายแบบในรายการ',
     showKicker: '6×6 → 7×7 → 8×8',
     practiceMode: 'โหมดฝึก',

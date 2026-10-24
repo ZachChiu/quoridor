@@ -50,12 +50,12 @@ export default function KnightsTourMenu({ locale, onShow, onPractice }: {
           </h1>
           <p className="mt-[max(0.4rem,1.2dvh)] text-sm font-bold opacity-80 md:text-base">{t.tagline}</p>
           {/* Fig. 1：歐拉的走法 */}
-          <figure className="mt-[max(0.75rem,2.2dvh)] flex w-full flex-col items-center gap-1.5">
+          {/* 出處：歐拉 1759 年論文裡的走法（自己畫的）。畫面上不寫出處（Zach 10/24：插圖不要說明） */}
+          <div className="mt-[max(0.75rem,2.2dvh)] flex w-full flex-col items-center gap-1.5">
             <div className="w-[min(100%,17rem,30dvh)] lg:w-[min(100%,24rem)]">
               <TourBoard n={8} path={EULER_TOUR} showKnight={false} />
             </div>
-            <figcaption className="kt-serif text-xs opacity-80"><span className="italic">Fig. 1.</span> {t.figCaption}</figcaption>
-          </figure>
+          </div>
         </header>
 
         <div className="mt-[max(1rem,3dvh)] flex w-full flex-col gap-2.5 lg:mt-0 lg:w-[380px]">
