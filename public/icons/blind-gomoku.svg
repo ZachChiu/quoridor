@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="盲五子棋 Blind Gomoku">
+  <!-- 顏色：blind-gomoku/Stone.tsx 的 STONE_HEX、palette.ts（朝鮮拼布包袱巾 조각보 取樣） -->
+  <clipPath id="r"><rect width="64" height="64" rx="6"/></clipPath>
+  <g clip-path="url(#r)">
+    <rect width="64" height="64" fill="#f2e4c9"/>
+    <path fill="#046161" d="M0 0H36V36H0Z"/>
+    <path fill="#be3479" d="M0 0H18L0 18Z"/>
+    <path fill="#dfda24" d="M36 0H64V22H36Z"/>
+    <path fill="#0b2859" d="M36 22H64V64H36Z"/>
+    <path fill="#46246b" d="M36 22H64V50Z"/>
+    <path fill="#983c4a" d="M0 36H20V64H0Z"/>
+    <path fill="#b35e40" d="M20 36H36V64H20Z"/>
+    <path fill="none" stroke="#f2e4c9" stroke-width="3" d="M36 0V64M0 36H36M36 22H64M20 36V64M0 18L18 0M36 22L64 50"/>
+  </g>
+</svg>
