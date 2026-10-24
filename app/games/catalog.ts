@@ -24,12 +24,12 @@ export type GameLook = {
   art: string;
   /**
    * 主視覺鋪滿整張卡片，名字壓在底部的漸層上；沒有的話是斜擺在右上角的棋盤 SVG。
-   * Wall Go 10/24 也換成鋪滿（Zach 從五種版型裡選了「跟其他款同一個模板」）。card.svg 是藍底＋斜擺 -14° 的棋盤
+   * Wall Go 10/24 也換成鋪滿（Zach 從五種版型裡選了「跟其他款同一個模板」）。card.svg 是斜擺 -14° 的棋盤
    *（舊卡片的斜度，Zach 同一天要的），盤面是遊戲自己的 AI 對下出來的一局（雙方都有地、中間一排紅藍隔著牆對峙），
-   * 平台大卡片的 key-art.svg 是同一盤。
+   * 底色 10/25 從藍改成 Wall Go 自己的頁面底色 #e8e1d7；大卡片的 hero.svg／hero-square.svg 是同一盤。
    */
   cover?: boolean;
-  /** 平台首頁大卡片用的大圖（橫幅，寬 1600 左右）；沒有就用 art。Wall Go 的大卡片是自己的藍底＋斜擺棋盤，不用這個 */
+  /** 平台首頁大卡片用的大圖（橫幅，寬 1600 左右）；沒有就用 art */
   hero?: string;
   /** 手機大卡片用的方圖：橫幅放在直的大卡片上只露得出一半（尼泊爾虎棋只剩老虎，10/24 Zach） */
   heroSquare?: string;
@@ -71,7 +71,8 @@ export const SEASONS: Season[] = [
     games: [
       // since 是 v25.6.1（第一版）上線那天
       { name: 'Wall Go', names: { 'zh-TW': '牆壁圍棋', 'zh-Hans': '墙壁围棋', ja: '壁囲碁', ko: '벽바둑' }, playable: routes.WALL_GO, since: '2025-06-02',
-        look: { card: 'bg-tile-blue text-tile-cream', wipe: 'rgb(var(--tile-blue))', art: '/games/wall-go/card.svg', cover: true, rules: routes.wallGo('/rules') } },
+        // 底色是 Wall Go 自己的頁面底色 #e8e1d7（10/25 Zach：為什麼要用藍底）；轉場也擴散這個顏色，跟虎羊棋擴散它的紙色一樣
+        look: { card: 'bg-[#e8e1d7] text-tile-ink', wipe: '#e8e1d7', art: '/games/wall-go/card.svg', hero: '/games/wall-go/hero.svg', heroSquare: '/games/wall-go/hero-square.svg', cover: true, rules: routes.wallGo('/rules') } },
       // 中文用節目的「尼泊爾虎棋」（Zach 10/24：命名用 Netflix 版本）、韓文「바그찰」是節目 RULE 卡上的寫法（見 glossary）
       { name: 'Bagh Chal', names: { 'zh-TW': '尼泊爾虎棋', 'zh-Hans': '尼泊尔虎棋', ko: '바그찰' }, playable: routes.BAGH_CHAL,
         look: { card: 'bg-[#e3a43c] text-tile-ink', wipe: '#f1e6cd', art: '/games/bagh-chal/key-art.webp', hero: '/games/bagh-chal/hero.webp', heroSquare: '/games/bagh-chal/hero-square.webp', cover: true, doors: true, rules: routes.baghChal('/rules') } },

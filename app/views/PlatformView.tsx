@@ -11,7 +11,7 @@ import PlatformMark from '@/components/PlatformMark';
 import { NEWEST, PLAYABLE, SEASONS, gameName, playableFirst, type CatalogGame } from '@/games/catalog';
 import { getMessages } from '@/i18n';
 import { localePath, type Locale } from '@/i18n/locales';
-import { BAGH_CHAL, WALL_GO, wallGo } from '@/i18n/routes';
+import { BAGH_CHAL, WALL_GO } from '@/i18n/routes';
 import { pageGraph, ldScript } from '@/i18n/jsonld';
 
 /**
@@ -19,7 +19,7 @@ import { pageGraph, ldScript } from '@/i18n/jsonld';
  *
  * 外殼是 Netflix 式的深色＋紅（Zach 指定），上面一個推薦作品的大區塊，下面依季一排一排橫向捲動，
  * 播出中（或即將播出）的那一季排最上面。**各遊戲保留自己的視覺**：Wall Go 的主視覺是
- * 它自己的藍底與棋盤，點進 /wall-go/ 之後就是原本的平塗撞色。
+ * 它自己頁面底色（#e8e1d7）上的棋盤，點進 /wall-go/ 之後就是原本的平塗撞色。
  *
  * 只有做成線上版的遊戲是有顏色、可以點的卡片；其他是深色卡片、不是連結 ——
  * 規則整理頁還沒做，給一個點了沒東西的連結比不給更糟。
@@ -51,9 +51,7 @@ export default function PlatformView({ locale }: { locale: Locale }) {
             suppressHydrationWarning：data-hero-pick 會在 hydrate 之前被內嵌 script 換掉 */}
         <div data-hero-pick={NEWEST?.playable} suppressHydrationWarning>
           <style dangerouslySetInnerHTML={{ __html: PLAYABLE.map((g) => `[data-hero-pick="${g.playable}"]>[data-slide]:not([data-slide="${g.playable}"]){display:none}`).join('') }} />
-          {PLAYABLE.map((game) => game.playable === WALL_GO
-            ? <WallGoHero key={game.name} locale={locale} />
-            : <GameHero key={game.name} game={game} locale={locale} />)}
+          {PLAYABLE.map((game) => <GameHero key={game.name} game={game} locale={locale} />)}
           <HeroPicker />
         </div>
 
@@ -111,48 +109,19 @@ export default function PlatformView({ locale }: { locale: Locale }) {
  */
 const HERO = 'relative flex min-h-[600px] overflow-hidden rounded-3xl md:min-h-[min(560px,max(460px,48vw))]';
 
-/** Wall Go 的大卡片：它自己的藍底，棋盤放大、斜擺、裁出畫面右上角 */
-function WallGoHero({ locale }: { locale: Locale }) {
+/**
+ * 大卡片：大圖鋪滿，字壓在黑色漸層上（跟下面的卡片同一個做法）。各款的說明在 platform 文案裡，沒有就只放名字。
+ * Wall Go 原本有自己的一張（藍底、字放在藍色色塊上），10/25 Zach 要它跟虎羊棋一樣：底色用 Wall Go 自己的頁面底色、字壓黑色漸層
+ */
+function GameHero({ game, locale }: { game: CatalogGame; locale: Locale }) {
   const t = getMessages(locale);
   const p = t.platform;
-  return (
-    <section data-slide={WALL_GO} className={`${HERO} items-end bg-tile-blue`}>
-      {/* 主視覺：Wall Go 的棋盤放大、斜擺、裁出畫面右上角 */}
-      {/* eslint-disable-next-line @next/next/no-img-element -- 靜態匯出、SVG，不需要 next/image */}
-      <img
-        src="/games/wall-go/key-art.svg"
-        alt=""
-        loading="lazy"
-        className="pointer-events-none absolute right-[clamp(-240px,-8vw,-60px)] top-[clamp(-110px,-6vw,-40px)] w-[clamp(500px,56vw,780px)] rotate-[-14deg]"
-      />
-      <div className="relative flex max-w-[560px] flex-col gap-4 rounded-tr-3xl bg-tile-blue p-[clamp(24px,4vw,56px)]">
-        <span className="self-start rounded-md bg-brand-red px-2.5 py-0.5 text-[13px] font-black text-white">{p.heroBadge}</span>
-        <h2 className="text-[clamp(44px,6vw,84px)] font-black leading-[0.95] tracking-tight">
-          {t.home.titleLine1}
-          {t.home.titleLine2 && <><br />{t.home.titleLine2}</>}
-        </h2>
-        <p className="text-[15px] font-bold">{p.heroMeta}</p>
-        {/* 19px 粗體算大字：米白在藍底上 4.4:1，大字的門檻是 3:1 */}
-        <p className="text-[19px] font-bold leading-relaxed">{p.heroBody}</p>
-        <div className="flex flex-wrap gap-3 pt-1">
-          <WipeLink href={localePath(locale, wallGo())} color={WALL_GO_BLUE} data-game={WALL_GO} className="flex h-[54px] items-center gap-2.5 rounded-xl bg-tile-cream px-7 text-lg font-black text-tile-ink">
-            <LuPlay aria-hidden="true" className="fill-current" />{p.play}
-          </WipeLink>
-          {/* 規則頁的頂部是森綠，轉場就擴散森綠（跟 Wall Go 首頁「遊戲規則」磁磚同色） */}
-          <WipeLink href={localePath(locale, wallGo('/rules'))} color={RULES_GREEN} className="flex h-[54px] items-center gap-2.5 rounded-xl bg-plat-bg px-6 text-lg font-black text-tile-cream">
-            <LuInfo aria-hidden="true" />{p.rules}
-          </WipeLink>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/** 其他遊戲的大卡片：大圖鋪滿，字壓在黑色漸層上（跟下面的卡片同一個做法）。各款的說明在 platform 文案裡，沒有就只放名字 */
-function GameHero({ game, locale }: { game: CatalogGame; locale: Locale }) {
-  const p = getMessages(locale).platform;
   const look = game.look!;
-  const copy = game.playable === BAGH_CHAL ? [p.baghHeroMeta, p.baghHeroBody] : null;
+  const wallGoGame = game.playable === WALL_GO;
+  const copy = wallGoGame ? [p.heroMeta, p.heroBody] : game.playable === BAGH_CHAL ? [p.baghHeroMeta, p.baghHeroBody] : null;
+  // Wall Go 的標題照舊是首頁那兩行（中文名＋Wall Go）；規則頁頂部是森綠，進規則頁就擴散森綠
+  const title = wallGoGame ? <>{t.home.titleLine1}{t.home.titleLine2 && <><br />{t.home.titleLine2}</>}</> : gameName(game, locale);
+  const rulesWipe = wallGoGame ? RULES_GREEN : look.wipe;
   return (
     <section data-slide={game.playable} className={`${HERO} flex-col bg-black md:flex-row md:items-end`}>
       {/* 手機：圖整張放在上面、字接在下面的黑底上（10/24 Zach：手機只看得到老虎 —— 先前圖鋪在字後面，羊被字蓋住）；
@@ -167,7 +136,7 @@ function GameHero({ game, locale }: { game: CatalogGame; locale: Locale }) {
       <span aria-hidden="true" className="absolute inset-0 hidden bg-gradient-to-r from-black/85 from-0% via-black/45 via-40% to-transparent to-100% md:block" />
       <div className="relative flex max-w-[560px] flex-col gap-4 p-[clamp(24px,4vw,56px)]">
         <span className="self-start rounded-md bg-brand-red px-2.5 py-0.5 text-[13px] font-black text-white">{p.heroBadge}</span>
-        <h2 className="text-[clamp(44px,6vw,84px)] font-black leading-[0.95] tracking-tight">{gameName(game, locale)}</h2>
+        <h2 className="text-[clamp(44px,6vw,84px)] font-black leading-[0.95] tracking-tight">{title}</h2>
         {copy && <p className="text-[15px] font-bold">{copy[0]}</p>}
         {copy && <p className="text-[19px] font-bold leading-relaxed">{copy[1]}</p>}
         <div className="flex flex-wrap gap-3 pt-1">
@@ -176,7 +145,7 @@ function GameHero({ game, locale }: { game: CatalogGame; locale: Locale }) {
             <LuPlay aria-hidden="true" className="fill-current" />{p.play}
           </WipeLink>
           {look.rules && (
-            <WipeLink href={localePath(locale, look.rules)} color={look.wipe} doors={look.doors} entrance={look.entrance}
+            <WipeLink href={localePath(locale, look.rules)} color={rulesWipe} doors={look.doors} entrance={look.entrance}
               className="flex h-[54px] items-center gap-2.5 rounded-xl bg-plat-bg/80 px-6 text-lg font-black text-tile-cream">
               <LuInfo aria-hidden="true" />{p.rules}
             </WipeLink>
@@ -189,8 +158,6 @@ function GameHero({ game, locale }: { game: CatalogGame; locale: Locale }) {
 
 const CARD = 'relative block aspect-video w-[240px] overflow-hidden rounded-xl';
 
-/** 進 Wall Go 的轉場顏色：它的主視覺與卡片都是這個藍 */
-const WALL_GO_BLUE = 'rgb(var(--tile-blue))';
 /** 進規則頁的轉場顏色：規則頁頂部與 Wall Go 首頁「遊戲規則」磁磚的森綠 */
 const RULES_GREEN = 'rgb(var(--tile-forest))';
 
