@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useSyncExternalStore } from 'react';
 import { useIsoLayoutEffect } from '@/hook/useIsoLayoutEffect';
 import type { Locale } from '@/i18n/locales';
 import MorrisPlay from './MorrisPlay';
@@ -15,16 +15,21 @@ import { SESSION_KEY, clearSession, loadSession, type Session } from './session'
   hydrate 之後由 layout effect 拿掉。
 */
 const HIDE_STYLE_ID = 'nmm-setup-hide';
+/** 伺服器輸出與 hydration 那一輪是 true，之後（站內換頁進來、換模式回到選單）都是 false */
+const noop = () => () => {};
+const useHydrating = () => useSyncExternalStore(noop, () => false, () => true);
 const HIDE_SETUP = `try{if(sessionStorage.getItem('${SESSION_KEY}')&&!document.getElementById('${HIDE_STYLE_ID}')){var s=document.createElement('style');s.id='${HIDE_STYLE_ID}';s.textContent='.nmm-setup{visibility:hidden}';document.head.appendChild(s)}}catch(e){}`;
 
 /**
- * /nine-mens-morris：選模式與對局在同一頁（第二批試做的寫法，規則頁與連線房之後再補）。
+ * /nine-mens-morris：選模式與對局（本機、跟電腦下）在同一頁；連線對戰另外一頁（/nine-mens-morris/online，MorrisOnline）。
  * 選好模式就換成對局畫面；這一局存在 sessionStorage，重新整理會接回（見 session.ts）。
+ * 對局中按左上的房子或「換模式」就是換回選單 —— 同一頁裡換畫面，不播轉場。
  */
 export default function MorrisGame({ locale }: { locale: Locale }) {
-  // booting：伺服器輸出與 hydration 那一輪。內嵌 script 只在這一輪畫 ——
-  // 之後（換模式回到選單）再畫會讓 React 警告「client 端畫出的 script 不會執行」
+  // booting：還沒讀 sessionStorage 的那一輪。內嵌 script 只在伺服器輸出與 hydration 時畫 ——
+  // 之後（換模式回到選單、從連線頁或平台站內換頁進來）再畫會讓 React 警告「client 端畫出的 script 不會執行」
   const [{ session, booting }, setState] = useState<{ session: Session | null; booting: boolean }>({ session: null, booting: true });
+  const hydrating = useHydrating();
 
   useIsoLayoutEffect(() => {
     document.getElementById(HIDE_STYLE_ID)?.remove();
@@ -33,11 +38,12 @@ export default function MorrisGame({ locale }: { locale: Locale }) {
   }, []);
 
   if (session) {
-    return <MorrisPlay locale={locale} session={session} onMenu={() => { clearSession(); setState({ session: null, booting: false }); }} />;
+    return <MorrisPlay locale={locale} mode={session.mode} showRules={session.showRules} moves={session.moves}
+      onMenu={() => { clearSession(); setState({ session: null, booting: false }); }} />;
   }
   return (
     <>
-      {booting && <script dangerouslySetInnerHTML={{ __html: HIDE_SETUP }} />}
+      {booting && hydrating && <script dangerouslySetInnerHTML={{ __html: HIDE_SETUP }} />}
       <MorrisSetup locale={locale} onStart={(mode, showRules) => setState({ session: { mode, showRules, moves: '' }, booting: false })} />
     </>
   );

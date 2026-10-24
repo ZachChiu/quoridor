@@ -2,12 +2,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { LuArrowLeft, LuCircleHelp, LuHouse, LuRotateCcw, LuUndo2, LuVolume2, LuVolumeX } from 'react-icons/lu';
 import { ShareResultModal, useShareCard } from '@/components/ShareResultModal';
-import { useTransition } from '@/contexts/TransitionContext';
 import { useSound } from '@/hook/useSound';
 import { useGameText, useMessages } from '@/i18n/LocaleProvider';
 import { fill, useTextTable } from '@/i18n/gameText';
 import { localePath, type Locale } from '@/i18n/locales';
-import { NINE_MENS_MORRIS, PLATFORM_HOME } from '@/i18n/routes';
+import { NINE_MENS_MORRIS } from '@/i18n/routes';
 import {
   NEIGHBORS, PIECES, allInMills, applyMove, cellOf, countOnBoard, createGame, decodeMoves, encodeMoves, lastMills, legalMoves, other, phaseOf,
   removable, replay, sideOf, undoPoint, undoTurn, type MorrisState, type Move, type Point, type Side,
@@ -17,24 +16,31 @@ import { TEXT } from '@/games/nine-mens-morris/text';
 import { MorrisBoard, PieceGlyph } from './MorrisBoard';
 import MorrisFrame from './MorrisFrame';
 import { MorrisRulesModal } from './MorrisRules';
-import { clearSession, saveSession, type Session } from './session';
+import { clearSession, saveSession, type MorrisMode } from './session';
 import { drawMorrisCard } from './shareCard';
 import { playMorris } from './sounds';
 
 const LEVELS = ['easy', 'normal', 'hard'] as const;
 
 /** 接回存著的棋譜；壞掉（被改過、規則對不上）就開新局，不畫一盤錯的棋 */
-function restore(session: Session): MorrisState {
+function restore(moves: string, showRules: boolean): MorrisState {
   try {
-    return replay(decodeMoves(session.moves), { showRules: session.showRules });
+    return replay(decodeMoves(moves), { showRules });
   } catch {
-    return createGame({ showRules: session.showRules });
+    return createGame({ showRules });
   }
 }
 
 /**
+ * 連線對戰（MorrisOnline）：局面由房間的走法字串重走出來、從外面傳進來；自己的一手交給 onMove 寫進房間。
+ * 結算的「再來一局」是再開一間房（newRoom），沒有悔棋與重來（要兩個人都同意，先不做，跟虎羊棋一樣）。
+ */
+export type OnlineMode = { kind: 'online'; human: Side; game: MorrisState; onMove: (m: Move) => void; newRoom: () => void };
+export type PlayMode = MorrisMode | OnlineMode;
+
+/**
  * 九子棋的對局畫面。版面照 Bagh Chal 的對局頁：
- * - 手機：上方是回平台的房子鈕、標題與這一局的設定、說明鈕；下面狀態、棋盤，最下面一排悔棋／重來／換模式（拇指搆得到）
+ * - 手機：上方是回九子棋首頁的房子鈕、標題與這一局的設定、說明鈕；下面狀態、棋盤，最下面一排悔棋／重來／換模式（拇指搆得到）
  * - 桌機（lg）：棋盤在左，右邊一欄放狀態與有字的按鈕
  *
  * 一個回合可能是兩段：放（走）一手成三之後，同一個人再點一顆對方的子拿掉。
@@ -42,15 +48,25 @@ function restore(session: Session): MorrisState {
  * 剛連成的那條線用粉筆畫出來 —— 新手最容易卡在「成三之後要做什麼」。被拿掉的子倒下、躺到棋盤下方。
  *
  * 整頁包在《遊戲之書》的畫框裡（MorrisFrame）：群青底上的字是羊皮紙色，按鈕與狀態卡是羊皮紙、沒有框線。
+ *
+ * 左上角的房子與「換模式」都是 onMenu：回九子棋自己的首頁（選模式的畫面），不回平台、不播轉場
+ * （Zach 10/24：九子棋裡面換畫面直接換，跟虎羊棋一樣）。本機與跟電腦下是同一頁換回選單，連線是 router.push 回首頁。
  */
-export default function MorrisPlay({ locale, session, onMenu }: { locale: Locale; session: Session; onMenu: () => void }) {
+export default function MorrisPlay({ locale, mode, showRules, moves = '', onMenu }: {
+  locale: Locale;
+  mode: PlayMode;
+  showRules: boolean;
+  /** 重新整理接回的棋譜（本機、跟電腦下；連線的局面在 mode.game） */
+  moves?: string;
+  onMenu: () => void;
+}) {
   const t = useTextTable(TEXT);
   const m = useMessages();
   const g = useGameText();
-  const { navigate } = useTransition();
   const { prefs: soundPrefs, setPrefs: setSoundPrefs } = useSound();
-  const { mode, showRules } = session;
-  const [game, setGame] = useState<MorrisState>(() => restore(session));
+  const [localGame, setGame] = useState<MorrisState>(() => restore(moves, showRules));
+  const online = mode.kind === 'online';
+  const game = mode.kind === 'online' ? mode.game : localGame;
   const [selected, setSelected] = useState<Point | null>(null);
   const [helpOpen, setHelpOpen] = useState(false);
   // 結算視窗關掉之後就留在終局盤面（看最後一手、或悔棋）；局面一變就重新算
@@ -58,15 +74,19 @@ export default function MorrisPlay({ locale, session, onMenu }: { locale: Locale
   /** 電腦這一回合成三時預先算好的拿子，跟「拿子前的那個局面」綁在一起，局面一變（悔棋、重來）就作廢 */
   const plan = useRef<{ before: MorrisState; move: Move } | null>(null);
 
-  const human: Side | null = mode.kind === 'ai' ? mode.human : null;
-  const aiTurn = !!human && !game.winner && game.turn !== human;
-  const legal = useMemo(() => (aiTurn ? [] : legalMoves(game)), [game, aiTurn]);
+  const human: Side | null = mode.kind === 'local' ? null : mode.human;
+  const aiTurn = mode.kind === 'ai' && !game.winner && game.turn !== mode.human;
+  // 連線時輪到對方：跟電腦的回合一樣不能動，狀態寫「輪到對方」
+  const theirTurn = online && !game.winner && game.turn !== human;
+  const locked = aiTurn || theirTurn;
+  const legal = useMemo(() => (locked ? [] : legalMoves(game)), [game, locked]);
 
-  // 每一步都存起來，重新整理能接回；分出勝負就清掉
+  // 每一步都存起來，重新整理能接回；分出勝負就清掉。連線局不存（房間裡就有整串走法）
   useEffect(() => {
+    if (mode.kind === 'online') return;
     if (game.winner) clearSession();
-    else saveSession({ ...session, moves: encodeMoves(game.history) });
-  }, [game, session]);
+    else saveSession({ mode, showRules, moves: encodeMoves(game.history) });
+  }, [game, mode, showRules]);
 
   // 電腦的回合：讓出一格畫面再算（困難級約 0.2 秒），停一下也像在想。
   // 成三的話先只落那一手，讓人看到連成的線，隔一下再拿子（下一輪 effect 用預先算好的那一顆）
@@ -85,7 +105,7 @@ export default function MorrisPlay({ locale, session, onMenu }: { locale: Locale
     return () => window.clearTimeout(id);
   }, [aiTurn, game, mode]);
 
-  // 音效（跟 Wall Go 共用開關）：剛好多一手才響 —— 悔棋、重來、重整接回都不響。九子棋自己的一套見 sounds.ts
+  // 音效（跟 Wall Go 共用開關）：剛好多一手才響 —— 悔棋、重來、重整接回、連線一次補好幾手都不響。九子棋自己的一套見 sounds.ts
   const heard = useRef(game.history.length);
   useEffect(() => {
     const prev = heard.current;
@@ -97,14 +117,21 @@ export default function MorrisPlay({ locale, session, onMenu }: { locale: Locale
     if (game.winner) {
       const result = game.winner === 'draw' ? 'draw' : !human || game.winner === human ? 'win' : 'lose';
       window.setTimeout(() => playMorris(result), 700);
+    } else if (online && game.turn === human && !game.removing) {
+      // 對方下完（成三的話是拿完子）、換你：分頁在背景也聽得到
+      window.setTimeout(() => playMorris('turn'), 450);
     }
-  }, [game, human]);
+  }, [game, human, online]);
 
-  const commit = (mv: Move) => { setGame(applyMove(game, mv)); setSelected(null); };
+  const commit = (mv: Move) => {
+    if (mode.kind === 'online') mode.onMove(mv);
+    else setGame(applyMove(game, mv));
+    setSelected(null);
+  };
 
   const movable = new Set(legal.flatMap((x) => (x.kind === 'move' ? [x.from] : [])));
   const pick = (p: Point) => {
-    if (aiTurn || game.winner) return;
+    if (locked || game.winner) return;
     if (game.removing) {
       const mv = legal.find((x) => x.kind === 'remove' && x.at === p);
       if (mv) commit(mv);
@@ -131,7 +158,8 @@ export default function MorrisPlay({ locale, session, onMenu }: { locale: Locale
     if (x.kind === 'place') targets.set(x.to, 'place');
     else if (x.kind === 'move' && x.from === selected) targets.set(x.to, 'move');
   }
-  const removableNow = new Set(aiTurn ? [] : removable(game));
+  // 電腦或對方在挑要拿哪一顆時，自己的子不搖（跟電腦下一樣，提示列寫「正在挑」）
+  const removableNow = new Set(locked ? [] : removable(game));
   const h = game.history;
   const last = h[h.length - 1];
   const prev = h[h.length - 2];
@@ -148,26 +176,27 @@ export default function MorrisPlay({ locale, session, onMenu }: { locale: Locale
   const millNoRemoval = !game.removing && last !== undefined && last.kind !== 'remove' && mills.length > 0;
 
   const name = (s: Side) => (s === 'black' ? t.black : t.white);
-  // 狀態卡上的名字：跟電腦下時寫「你／電腦」（是哪一色看旁邊的棋子），兩人同一台寫黑方／白方。
+  // 狀態卡上的名字：跟電腦下時寫「你／電腦」、連線寫「你／對方」（是哪一色看旁邊的棋子），兩人同一台寫黑方／白方。
   // 兩個都寫會太長（日文「白 · コンピューター」在手機上被截掉）
-  const label = (s: Side) => (human ? (s === human ? t.you : t.computer) : name(s));
+  const label = (s: Side) => (human ? (s === human ? t.you : online ? t.opponent : t.computer) : name(s));
   const phase = game.removing ? 'remove' : phaseOf(game);
 
   const undoSide = human ?? undefined;
-  const canUndo = !aiTurn && undoPoint(game, undoSide) >= 0;
+  const canUndo = !locked && !online && undoPoint(game, undoSide) >= 0;
   const doUndo = () => { plan.current = null; setGame(undoTurn(game, undoSide)); setSelected(null); };
   const restart = () => { plan.current = null; setGame(createGame({ showRules })); setSelected(null); };
-  const home = () => navigate(localePath(locale, PLATFORM_HOME));
+  const again = mode.kind === 'online' ? mode.newRoom : restart;
 
   const levels = [m.solo.level1, m.solo.level2, m.solo.level3];
   // 這一局的設定（標題下面那一行）。傳統規則是預設，只有開了節目規則才寫出來
   const summary = [
-    mode.kind === 'ai' ? `${t.vsAi} · ${mode.human === 'black' ? t.first : t.second} · ${levels[LEVELS.indexOf(mode.difficulty)]}` : t.local,
+    mode.kind === 'ai' ? `${t.vsAi} · ${mode.human === 'black' ? t.first : t.second} · ${levels[LEVELS.indexOf(mode.difficulty)]}`
+      : mode.kind === 'online' ? `${t.online} · ${mode.human === 'black' ? t.first : t.second}` : t.local,
     ...(showRules ? [t.showRules] : []),
   ].join(' · ');
 
   const resultTitle = !game.winner ? '' : game.winner === 'draw' ? t.draw
-    : human ? (game.winner === human ? t.youWin : t.aiWins) : fill(t.win, { side: name(game.winner) });
+    : human ? (game.winner === human ? t.youWin : online ? t.opponentWins : t.aiWins) : fill(t.win, { side: name(game.winner) });
   const loser = game.winner && game.winner !== 'draw' ? other(game.winner) : null;
   const resultBody = game.reason === 'pieces' && loser ? fill(t.reason.pieces, { side: name(loser) })
     : game.reason === 'blocked' && loser ? fill(t.reason.blocked, { side: name(loser) })
@@ -175,9 +204,10 @@ export default function MorrisPlay({ locale, session, onMenu }: { locale: Locale
     : game.reason === 'quiet' ? t.reason.quiet
     : game.reason === 'standoff' ? (loser ? fill(t.reason.standoff, { side: name(loser) }) : t.reason.standoffDraw) : '';
 
-  const status = game.winner ? resultTitle : aiTurn ? t.thinking : human ? t.yourTurn : fill(t.turnOf, { side: name(game.turn) });
+  const status = game.winner ? resultTitle : aiTurn ? t.thinking : theirTurn ? t.opponentTurn : human ? t.yourTurn : fill(t.turnOf, { side: name(game.turn) });
   const hint = game.winner ? resultBody
     : aiTurn ? (game.removing ? t.hint.aiRemoving : '')
+    : theirTurn ? (game.removing ? t.hint.opponentRemoving : '')
     : game.removing ? (allInMills(game.board, other(game.turn)) ? t.hint.removeAny : t.hint.remove)
     : millNoRemoval ? t.hint.noRemoval
     : phase === 'place' ? t.hint.place
@@ -208,6 +238,8 @@ export default function MorrisPlay({ locale, session, onMenu }: { locale: Locale
     homePath: localePath(locale, NINE_MENS_MORRIS),
     campaign: 'nine-mens-morris',
     fonts: [{ font: `900 40px ${font}`, text: card.text.title + card.text.brand }, { font: `700 40px ${font}`, text: card.text.kicker + card.text.reason + card.text.from + card.text.moves }],
+    // 只留 9:16（Zach 10/24：「感覺可以留 9:16 就好」，跟虎羊棋一樣）；只有一種就不顯示比例切換
+    layouts: ['story'],
   });
 
   // 群青底上的按鈕是拱頂的羊皮紙小拱（手抄本插圖框的形狀，globals.css 的 .nmm-arch）
@@ -262,7 +294,7 @@ export default function MorrisPlay({ locale, session, onMenu }: { locale: Locale
     <MorrisFrame className="items-center px-4 pb-4 pt-3 lg:flex-row lg:items-center lg:justify-center lg:gap-12 lg:py-10">
       {/* 手機的上方一排 */}
       <div className="flex w-full max-w-[520px] items-center gap-3 lg:hidden">
-        <button type="button" onClick={home} aria-label={t.home} className={round}><LuHouse aria-hidden="true" /></button>
+        <button type="button" onClick={onMenu} aria-label={t.home} className={round}><LuHouse aria-hidden="true" /></button>
         <div className="min-w-0 flex-1">
           <h1 className="truncate text-lg font-black leading-tight">{t.title}</h1>
           <p className="text-xs font-bold leading-snug text-[#eee0c4]/80">{summary}</p>
@@ -277,24 +309,26 @@ export default function MorrisPlay({ locale, session, onMenu }: { locale: Locale
 
       {/* 棋盤在剩下的高度裡置中 */}
       {/* 棋盤比寬多一段（下方放被拿掉的子，106:118），桌機照高度算寬 */}
-      <div className="flex w-full max-w-[500px] flex-1 items-center py-2 lg:max-w-[min(580px,calc((100dvh-5rem)*0.9))] lg:flex-none lg:py-0">
+      <div className="flex w-full max-w-[500px] flex-1 items-center py-2 lg:max-w-[min(580px,calc((100svh-5rem)*0.9))] lg:flex-none lg:py-0">
         <MorrisBoard board={game.board} targets={targets} movable={selected === null ? movable : new Set()} removable={removableNow}
           selected={selected} lastTo={lastTo} lastFrom={lastFrom} mills={mills} removed={removed} last={last} removedSide={removedSide}
-          plies={h.length} idle={game.winner ? null : other(game.turn)} ghost={phase === 'place' && !aiTurn ? game.turn : undefined}
+          plies={h.length} idle={game.winner ? null : other(game.turn)} ghost={phase === 'place' && !locked ? game.turn : undefined}
           labels={{ black: t.black, white: t.white, empty: t.empty, remove: t.phase.remove }} onPick={pick} />
       </div>
 
-      {/* 手機的下方一排 */}
-      <div className="grid w-full max-w-[520px] grid-cols-3 gap-2 lg:hidden">
-        <button type="button" onClick={doUndo} disabled={!canUndo} className={stacked}><LuUndo2 aria-hidden="true" />{t.undo}</button>
-        <button type="button" onClick={restart} className={stacked}><LuRotateCcw aria-hidden="true" />{t.restart}</button>
-        <button type="button" onClick={onMenu} className={stacked}><LuArrowLeft aria-hidden="true" />{t.menu}</button>
-      </div>
+      {/* 手機的下方一排（連線局沒有悔棋、重來，要離開按左上的房子） */}
+      {!online && (
+        <div className="grid w-full max-w-[520px] grid-cols-3 gap-2 lg:hidden">
+          <button type="button" onClick={doUndo} disabled={!canUndo} className={stacked}><LuUndo2 aria-hidden="true" />{t.undo}</button>
+          <button type="button" onClick={restart} className={stacked}><LuRotateCcw aria-hidden="true" />{t.restart}</button>
+          <button type="button" onClick={onMenu} className={stacked}><LuArrowLeft aria-hidden="true" />{t.menu}</button>
+        </div>
+      )}
 
       {/* 桌機的右邊一欄 */}
       <aside className="hidden w-[340px] shrink-0 flex-col gap-5 lg:flex">
         <div className="flex items-start gap-3">
-          <button type="button" onClick={home} aria-label={t.home} className={round}><LuHouse aria-hidden="true" /></button>
+          <button type="button" onClick={onMenu} aria-label={t.home} className={round}><LuHouse aria-hidden="true" /></button>
           <div className="min-w-0 flex-1">
             <h1 className="text-3xl font-black leading-none">{t.title}</h1>
             <p className="mt-1.5 text-sm font-bold text-[#eee0c4]/80">{summary}</p>
@@ -304,8 +338,10 @@ export default function MorrisPlay({ locale, session, onMenu }: { locale: Locale
         {statusCards}
         {statusLine}
         <div className="grid grid-cols-2 gap-2.5">
-          <button type="button" onClick={doUndo} disabled={!canUndo} className={wide}><LuUndo2 aria-hidden="true" />{t.undo}</button>
-          <button type="button" onClick={restart} className={wide}><LuRotateCcw aria-hidden="true" />{t.restart}</button>
+          {!online && <>
+            <button type="button" onClick={doUndo} disabled={!canUndo} className={wide}><LuUndo2 aria-hidden="true" />{t.undo}</button>
+            <button type="button" onClick={restart} className={wide}><LuRotateCcw aria-hidden="true" />{t.restart}</button>
+          </>}
           <button type="button" onClick={() => setHelpOpen(true)} className={wide}><LuCircleHelp aria-hidden="true" />{t.rulesHeading}</button>
           <button type="button" onClick={onMenu} className={wide}><LuArrowLeft aria-hidden="true" />{t.menu}</button>
         </div>
@@ -316,7 +352,7 @@ export default function MorrisPlay({ locale, session, onMenu }: { locale: Locale
       {/* 結算就是分享圖（Zach 10/24：每款都要有結尾的可分享畫面），圖長得像這款自己的頁面（shareCard.ts）；
           關掉就留在終局的盤面上看，換模式在頁面上 */}
       <ShareResultModal isOpen={endOpen} onClose={() => setClosedFor(game)} title={resultTitle} card={share}
-        onRestart={restart} restartLabel={t.again} srText={`${resultBody} ${card.text.moves}`} frameClassName="rounded-[3px]"
+        onRestart={again} restartLabel={t.again} srText={`${resultBody} ${card.text.moves}`} frameClassName="rounded-[3px]"
         classes={{
           primary: 'nmm-arch is-small is-red', secondary: 'nmm-arch is-small',
           toggle: 'bg-[#eee0c4]/15', toggleOn: 'bg-[#eee0c4] text-[#1e120a]', toggleOff: 'text-[#eee0c4]/75 hover:text-[#eee0c4]',

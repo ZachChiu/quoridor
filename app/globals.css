@@ -586,6 +586,12 @@ html:has(.nmm-root), body:has(.nmm-root) { background: #c54915; }
 @media (prefers-reduced-motion: no-preference) { .nmm-teeter { animation: nmm-teeter 0.85s ease-in-out infinite alternate; } }
 @keyframes nmm-teeter { from { rotate: -8deg; } to { rotate: 8deg; } }
 
+/* 連線頁（MorrisOnline）：連線中黑白兩個小人輪流朝對方鞠躬；等人時對方的空位輕輕晃。
+   用獨立的 rotate 屬性，transform-origin 在腳底（元件設好的） */
+@keyframes nmm-bow-r { 0%, 50%, 100% { rotate: 0deg; } 18%, 32% { rotate: 20deg; } }
+@keyframes nmm-bow-l { 0%, 50%, 100% { rotate: 0deg; } 68%, 82% { rotate: -20deg; } }
+@keyframes nmm-wait { 0%, 100% { rotate: -4deg; } 50% { rotate: 4deg; } }
+
 /* ▸ 盲眼五子棋（feat/game-blind-gomoku） */
 
 /* ▸ 騎士巡邏（feat/game-knights-tour） */

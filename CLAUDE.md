@@ -199,7 +199,11 @@ nudge { by, at }          最近一次「催一下」
   各分支改的是自己那一段，依序合併才不會衝突（globals.css 底部的五個標記、catalog.ts 的寫法也是同一個道理）。
 
   - 九子棋（`feat/game-nine-mens-morris`）：原件是《遊戲之書》（1283）的插圖；最外緣朱紅框、四角小方塊裡一朵四瓣小花（`.nmm-frame`；原本畫叉，右上角像關閉鈕，換掉了），群青底撒白點（`.nmm-field`）；主視覺是插圖 `libro.webp`、Grenze Gotisch 字標。
-    10/24 棋盤照插圖做（Zach：「棋盤可以跟視覺圖一樣」）：木頭上的深淺斑（feTurbulence）、線是嵌進去的淺金色木條、下方多一段木頭放被拿掉的子；棋子是插圖裡側面看的鐘形小人（形狀在 `art.ts`，分享圖共用）。拿子不畫紅色 ×，改成可以拿的子以腳底為軸搖晃（`.nmm-teeter`）。音效是骨棋子碰木頭＋撥弦琴（`sounds.ts`），等的那一方會鞠躬、用肩膀頂人（`idleMotion.ts`），結算是分享圖（`shareCard.ts`），右上角彈窗用 `MORRIS_CORNER`。
+    10/24 棋盤照插圖做（Zach：「棋盤可以跟視覺圖一樣」）：木頭上的深淺斑（feTurbulence）、線是嵌進去的淺金色木條、下方多一段木頭放被拿掉的子；棋子是插圖裡側面看的鐘形小人（形狀在 `art.ts`，分享圖共用）。拿子不畫紅色 ×，改成可以拿的子以腳底為軸搖晃（`.nmm-teeter`）。音效是骨棋子碰木頭＋撥弦琴（`sounds.ts`），等的那一方會鞠躬、用肩膀頂人（`idleMotion.ts`），結算是分享圖（`shareCard.ts`，只留 9:16），右上角彈窗用 `MORRIS_CORNER`。
+    對局中的房子與「換模式」都回九子棋自己的首頁（選模式那個畫面），不回平台、不播轉場（10/24 Zach 回報跑去平台最前面、還有 Wall Go 的磁磚轉場）。
+    **邀請朋友**（10/24）：`/nine-mens-morris/online`（`MorrisOnline`），共用的 turnRooms —— s0 黑（先手）、s1 白，開房的人在首頁選邊（`#new=black|white`），首頁的節目規則開關也管連線（`&rules=show` → setup `show`／`classic`，進房的人照著下）；
+    成三之後的拿子是**同一個人的下一筆寫入**（turn 還寫自己，規則看寫入前輪到誰，兩筆都過），對方先看到連成的線、再看到被拿的子。換算都在 `games/nine-mens-morris/online.ts`。
+    連線中（黑白小人在拱窗裡互相鞠躬）、等人（對方是淡淡的空位）、連不上（剩一個倒在地上）都是手抄本拱窗，不用 Wall Go 的紙色面板。連線局沒有悔棋、重來；再來一局＝開新房。
 
   - 盲眼五子棋：試做中，視覺在 `feat/game-blind-gomoku`。
 

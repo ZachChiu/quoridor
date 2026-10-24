@@ -1,14 +1,17 @@
 'use client';
 import { useState } from 'react';
-import { GiBrain, GiTabletopPlayers } from 'react-icons/gi';
+import { useRouter } from 'next/navigation';
+import { GiBrain, GiScrollUnfurled, GiTabletopPlayers } from 'react-icons/gi';
 import { LuChevronRight } from 'react-icons/lu';
 import Modal from '@/components/Modal';
 import PlatformCorner from '@/components/PlatformCorner';
 import { useMessages } from '@/i18n/LocaleProvider';
 import { useTextTable } from '@/i18n/gameText';
-import type { Locale } from '@/i18n/locales';
+import { localePath, type Locale } from '@/i18n/locales';
+import { NINE_MENS_MORRIS, trialOnline } from '@/i18n/routes';
 import type { Side } from '@/games/nine-mens-morris/engine';
 import type { Difficulty } from '@/games/nine-mens-morris/ai';
+import { newRoomHash } from '@/games/nine-mens-morris/online';
 import { TEXT } from '@/games/nine-mens-morris/text';
 import { BlackPieceIcon, PieceGlyph, WhitePieceIcon } from './MorrisBoard';
 import MorrisFrame from './MorrisFrame';
@@ -40,7 +43,11 @@ function DiePips({ n }: { n: 1 | 2 | 3 }) {
  * 介面照手抄本做（globals.css 的 .nmm-*，Zach 10/22：每款的按鈕要有自己的樣子）：卡片是拱頂的羊皮紙、
  * 內側一道朱紅細線；模式前面一格上色首字（朱紅、群青交替）；先後手是朱紅的小拱；節目規則的開關是一顆蠟封；
  * 難度用骰子點數；說明與連結前面是朱紅的段落符 ¶。
- * 插圖是唯一會縮的東西（高度跟著 dvh），手機一個畫面放得下；桌機改成左右兩欄。
+ * 插圖是唯一會縮的東西（高度跟著 svh：工具列收起時不會跟著變大），手機一個畫面放得下；桌機改成左右兩欄。
+ *
+ * 邀請朋友（連線對戰）跟本機對戰一樣是一列，按下去在彈窗裡選自己下先手還是後手（兩個朱紅小拱，跟「跟 AI 下」那張卡一樣），
+ * 再到 /nine-mens-morris/online 開房。不做成跟「跟 AI 下」一樣的整張卡：手機一個畫面會放不下。
+ * 節目規則的開關也管連線：開房的人決定，寫進房間的 setup，進房的人照著下。
  *
  * 中日韓的標題是當地名字，英文名用哥德字標排在下面；英文、泰文的標題本來就是英文名，字標直接當標題。
  * 角落沿用遊戲首頁的 PlatformCorner：左上回平台首頁，右上聯絡我們與語言。
@@ -48,9 +55,13 @@ function DiePips({ n }: { n: 1 | 2 | 3 }) {
 export default function MorrisSetup({ locale, onStart }: { locale: Locale; onStart: (mode: MorrisMode, showRules: boolean) => void }) {
   const t = useTextTable(TEXT);
   const m = useMessages();
+  const router = useRouter();
   const [showRules, setShowRules] = useState(false);
   const [side, setSide] = useState<Side | null>(null);
+  const [inviteOpen, setInviteOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
+  // 九子棋裡面換頁不播轉場（直接 router.push），開好房間後網址會換成 #roomId=…
+  const invite = (s: Side) => { setInviteOpen(false); router.push(localePath(locale, trialOnline(NINE_MENS_MORRIS)) + newRoomHash(s, showRules)); };
   const levels = [m.solo.level1, m.solo.level2, m.solo.level3];
 
   const row = 'nmm-arch is-small flex w-full items-center gap-3 px-4 pb-3 pt-4 text-left';
@@ -66,14 +77,14 @@ export default function MorrisSetup({ locale, onStart }: { locale: Locale; onSta
           {latinTitle ? (
             <h1 className="mt-1.5 w-full">
               <span className="sr-only">{t.title}</span>
-              <MorrisWordmark className="mx-auto h-auto w-[min(100%,24rem,52dvh)] lg:mx-0" />
+              <MorrisWordmark className="mx-auto h-auto w-[min(100%,24rem,52svh)] lg:mx-0" />
               <span className="mt-1.5 block text-base font-black text-[#eee0c4]/90">{t.subtitle}</span>
             </h1>
           ) : (
             <h1 className="mt-1 flex flex-col items-center lg:items-start">
-              <span className="text-[clamp(2.2rem,6.5dvh,3.5rem)] font-black leading-none tracking-[0.06em]">{t.title}</span>
+              <span className="text-[clamp(2.2rem,6.5svh,3.5rem)] font-black leading-none tracking-[0.06em]">{t.title}</span>
               <span className="sr-only">{t.subtitle}</span>
-              <MorrisWordmark className="mt-2 h-[clamp(1.1rem,3.2dvh,1.75rem)] w-auto" />
+              <MorrisWordmark className="mt-2 h-[clamp(1.1rem,3.2svh,1.75rem)] w-auto" />
             </h1>
           )}
           <p className="mt-2 text-sm font-bold text-[#eee0c4]/90 lg:text-base">{t.tagline}</p>
@@ -82,7 +93,7 @@ export default function MorrisSetup({ locale, onStart }: { locale: Locale; onSta
           <div className="mt-3 flex w-full flex-col items-center gap-1 lg:items-start">
             {/* eslint-disable-next-line @next/next/no-img-element -- 靜態匯出，不需要 next/image */}
             <img src={ART} alt="" aria-hidden="true" width={898} height={638}
-              className="h-[min(15rem,26dvh)] w-auto max-w-full rounded-sm object-contain lg:h-auto lg:w-full" />
+              className="h-[clamp(7.5rem,calc(100svh-44.5rem),min(15rem,26svh))] w-auto max-w-full rounded-sm object-contain lg:h-auto lg:w-full" />
           </div>
         </header>
 
@@ -116,6 +127,15 @@ export default function MorrisSetup({ locale, onStart }: { locale: Locale; onSta
             <LuChevronRight aria-hidden="true" className="shrink-0 text-xl text-ink-soft" />
           </button>
 
+          <button type="button" onClick={() => setInviteOpen(true)} className={`${row} active:scale-[0.99]`}>
+            <span className="nmm-initial" aria-hidden="true"><GiScrollUnfurled /></span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-base font-black">{t.invite}</span>
+              <span className="block text-xs font-bold text-ink-soft">{t.inviteNote}</span>
+            </span>
+            <LuChevronRight aria-hidden="true" className="shrink-0 text-xl text-ink-soft" />
+          </button>
+
           <button type="button" role="switch" aria-checked={showRules} onClick={() => setShowRules(!showRules)} className={row}>
             <span className="min-w-0 flex-1">
               <span className="block text-base font-black">{t.showRules}</span>
@@ -141,6 +161,20 @@ export default function MorrisSetup({ locale, onStart }: { locale: Locale; onSta
               className="nmm-arch is-small flex flex-col items-center gap-2.5 pb-4 pt-6 text-xl font-black active:scale-[0.97]">
               <DiePips n={(i + 1) as 1 | 2 | 3} />
               {levels[i]}
+            </button>
+          ))}
+        </div>
+      </Modal>
+
+      {/* 邀請朋友：選自己下哪一邊，跟「跟 AI 下」那張卡同一對朱紅小拱。開了節目規則的話寫在小標，進房的人也照節目規則下 */}
+      <Modal isOpen={inviteOpen} onClose={() => setInviteOpen(false)} title={t.pickSide} kicker={showRules ? `${t.invite} · ${t.showRules}` : t.invite}
+        icon={GiScrollUnfurled} band={MORRIS_BAND} panelClassName={MORRIS_PANEL}>
+        <div className="grid w-full grid-cols-2 gap-3">
+          {(['black', 'white'] as const).map((s) => (
+            <button key={s} type="button" onClick={() => invite(s)}
+              className="nmm-arch is-small is-red flex flex-col items-center gap-2.5 px-2 pb-4 pt-6 text-base font-black active:scale-[0.97]">
+              <span className="grid size-11 place-items-center rounded-full bg-[#eee0c4]"><PieceGlyph side={s} className="size-8" /></span>
+              {s === 'black' ? t.first : t.second}
             </button>
           ))}
         </div>

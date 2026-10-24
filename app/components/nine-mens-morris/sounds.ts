@@ -10,10 +10,11 @@ import { playSynth, type Synth } from '@/utils/sound';
  * - 連成一線：撥弦琴的三個音，D 多利安調式（D、A、D，空五度 —— 中世紀音樂最常見的骨架）
  * - 拿子：被拿掉的子先「喀」一聲被碰倒，掉在木頭上「咚」，再滾一下
  * - 贏：D–F–A–D 往上撥；輸：A–F–E–D 慢慢往下
+ * - 連線時輪到你：輕輕撥兩下 A–D（分頁在背景也聽得到）
  *
  * 撥弦＝三角波快起音、指數衰減，加一個高八度的正弦泛音，像弦被指甲撥到。
  */
-export type MorrisSound = 'place' | 'move' | 'fly' | 'select' | 'mill' | 'remove' | 'win' | 'lose' | 'draw';
+export type MorrisSound = 'place' | 'move' | 'fly' | 'select' | 'mill' | 'remove' | 'turn' | 'win' | 'lose' | 'draw';
 
 /** 骨頭碰木頭 */
 function clack(s: Synth, at: number, vol = 1) {
@@ -51,6 +52,7 @@ export function playMorris(name: MorrisSound) {
         clack(s, t + 0.24, 0.35);
         clack(s, t + 0.31, 0.2);
         break;
+      case 'turn': [69, 74].forEach((n, i) => pluck(s, t + i * 0.12, n, 0.7, 0.7)); break;
       case 'win': [62, 65, 69, 74].forEach((n, i) => pluck(s, t + i * 0.13, n, 1, i === 3 ? 1.6 : 0.8)); break;
       case 'lose': [69, 65, 64, 62].forEach((n, i) => pluck(s, t + i * 0.22, n, 0.8, i === 3 ? 1.4 : 0.8)); break;
       case 'draw': [62, 69].forEach((n, i) => pluck(s, t + i * 0.2, n, 0.8, 1.2)); break;

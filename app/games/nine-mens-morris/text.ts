@@ -21,13 +21,16 @@ export type MorrisText = {
   tagline: string;
   /** 海報頭上方的小標籤：人數、時間、節目出處 */
   tags: string;
-  /** 首頁主視覺（《遊戲之書》插圖）下面的出處 */
   vsAi: string;
   vsAiNote: string;
   first: string;
   second: string;
   local: string;
   localNote: string;
+  /** 首頁的「邀請朋友」（連線對戰）：按下去先選自己下哪一邊（pickSide），再開房 */
+  invite: string;
+  inviteNote: string;
+  pickSide: string;
   showRules: string;
   showRulesNote: string;
   howTo: string;
@@ -41,6 +44,11 @@ export type MorrisText = {
   turnOf: string;
   yourTurn: string;
   thinking: string;
+  /** 連線：對局標題下面那一行、狀態卡上的對手、輪到對手、對手贏了 */
+  online: string;
+  opponent: string;
+  opponentTurn: string;
+  opponentWins: string;
   hint: {
     place: string;
     move: string;
@@ -52,11 +60,13 @@ export type MorrisText = {
     /** 成三了但沒得拿（節目規則：對方的子全在線上） */
     noRemoval: string;
     aiRemoving: string;
+    /** 連線：對手連成一線、正在挑 */
+    opponentRemoving: string;
   };
   undo: string;
   restart: string;
   menu: string;
-  /** 左上角房子鈕的說明（回平台首頁） */
+  /** 對局左上角房子鈕的說明：回九子棋首頁（選模式的畫面），不是平台首頁 */
   home: string;
   youWin: string;
   aiWins: string;
@@ -75,6 +85,13 @@ export type MorrisText = {
   show: string;
   /** 結算分享圖：走了幾手 */
   cardMoves: string;
+  /** 連線等對方加入的畫面：標題、說明（{me}、{them} 代入黑方／白方）、對方那格寫的字、兩顆棋子中間的「對」 */
+  inviteHeading: string;
+  inviteBody: string;
+  waitingOpponent: string;
+  versus: string;
+  /** 系統分享面板裡跟著連結的那句話 */
+  shareText: string;
 };
 
 export const TEXT = {
@@ -91,6 +108,9 @@ export const TEXT = {
     second: '後手（白）',
     local: '本機對戰',
     localNote: '輪流在同一台裝置上下',
+    invite: '邀請朋友',
+    inviteNote: '開一間房，把連結傳給朋友',
+    pickSide: '你要下哪一邊？',
     showRules: '節目規則',
     showRulesNote: '照節目的 RULE 卡下',
     howTo: '怎麼玩？',
@@ -104,6 +124,10 @@ export const TEXT = {
     turnOf: '輪到{side}',
     yourTurn: '輪到你',
     thinking: 'AI 思考中…',
+    online: '連線對戰',
+    opponent: '對方',
+    opponentTurn: '輪到對方',
+    opponentWins: '對方贏了',
     hint: {
       place: '點一個空點，把子放上去',
       move: '選一顆子，沿線走到相鄰的空點',
@@ -113,11 +137,12 @@ export const TEXT = {
       removeAny: '對方的子都在線上，這次可以拿線上的子',
       noRemoval: '連成一線，但對方的子都在線上，這次不能拿',
       aiRemoving: 'AI 連成一線，正在挑要拿哪一顆',
+      opponentRemoving: '對方連成一線，正在挑要拿哪一顆',
     },
     undo: '悔棋',
     restart: '重來',
     menu: '換模式',
-    home: '回平台首頁',
+    home: '回九子棋首頁',
     youWin: '你贏了',
     aiWins: 'AI 贏了',
     win: '{side}贏了',
@@ -146,6 +171,11 @@ export const TEXT = {
     nameNote: '名字：節目裡的中文就叫「九子棋」（中文維基寫「直棋」）。英文 Nine Men\'s Morris 的 morris，一般認為是從拉丁文 merellus（棋子）訛變來的。首頁那幅插圖出自 1283 年西班牙阿方索十世的《遊戲之書》。',
     show: '魔鬼的計謀',
     cardMoves: '共 {n} 手',
+    inviteHeading: '把連結傳給朋友',
+    inviteBody: '朋友打開連結就會加入。你是{me}，對方是{them}，黑方先走。',
+    waitingOpponent: '等對方加入…',
+    versus: '對',
+    shareText: '來跟我下九子棋',
   },
   en: {
     title: "Nine Men's Morris",
@@ -160,6 +190,9 @@ export const TEXT = {
     second: 'Second (White)',
     local: 'Local play',
     localNote: 'Take turns on one device',
+    invite: 'Invite a friend',
+    inviteNote: 'Open a room and send them the link',
+    pickSide: 'Which side do you want?',
     showRules: 'Show rules',
     showRulesNote: "Play by the show's rule card",
     howTo: 'How to play?',
@@ -173,6 +206,10 @@ export const TEXT = {
     turnOf: "{side}'s turn",
     yourTurn: 'Your turn',
     thinking: 'AI is thinking…',
+    online: 'Online',
+    opponent: 'Friend',
+    opponentTurn: "Your friend's turn",
+    opponentWins: 'Your friend wins',
     hint: {
       place: 'Tap an empty point to place a piece',
       move: 'Pick a piece and slide it along a line to an empty neighbor',
@@ -182,11 +219,12 @@ export const TEXT = {
       removeAny: 'All their pieces are in mills, so you may take one from a mill',
       noRemoval: 'A mill, but all their pieces are in mills, so nothing can be taken',
       aiRemoving: 'The AI made a mill and is choosing a piece to take',
+      opponentRemoving: 'Your friend made a mill and is choosing a piece to take',
     },
     undo: 'Undo',
     restart: 'Restart',
     menu: 'Change mode',
-    home: 'Back to all games',
+    home: "Back to Nine Men's Morris",
     youWin: 'You win',
     aiWins: 'The AI wins',
     win: '{side} wins',
@@ -215,6 +253,11 @@ export const TEXT = {
     nameNote: 'The name: the Chinese subtitles call it 九子棋, “nine-piece chess”. The “morris” in Nine Men\'s Morris is usually traced to the Latin merellus, a gaming piece. The picture on the home page comes from Alfonso X\'s Book of Games (1283).',
     show: 'The Devil\'s Plan',
     cardMoves: '{n} moves',
+    inviteHeading: 'Send your friend the link',
+    inviteBody: 'They join as soon as they open it. You play {me}, they play {them}. Black moves first.',
+    waitingOpponent: 'Waiting for your friend…',
+    versus: 'vs',
+    shareText: "Play Nine Men's Morris with me",
   },
   ja: {
     title: 'ナイン・メンズ・モリス',
@@ -229,6 +272,9 @@ export const TEXT = {
     second: '後手（白）',
     local: 'ローカル対戦',
     localNote: '1台の端末で交互に指す',
+    invite: '友だちを招待',
+    inviteNote: '部屋を作ってリンクを送る',
+    pickSide: 'どちらで指しますか？',
     showRules: '番組ルール',
     showRulesNote: '番組のルールカードどおりに遊ぶ',
     howTo: '遊び方は？',
@@ -242,6 +288,10 @@ export const TEXT = {
     turnOf: '{side}の番',
     yourTurn: 'あなたの番',
     thinking: 'AIが考え中…',
+    online: 'オンライン対戦',
+    opponent: '相手',
+    opponentTurn: '相手の番',
+    opponentWins: '相手の勝ち',
     hint: {
       place: '空いている点をタップして駒を置く',
       move: '駒を選んで、線に沿って隣の空いている点へ動かす',
@@ -251,11 +301,12 @@ export const TEXT = {
       removeAny: '相手の駒がすべて並んでいるので、並んでいる駒も取れる',
       noRemoval: '3つ並んだが、相手の駒がすべて並んでいるので取れない',
       aiRemoving: 'AIが3つ並べて、取る駒を選んでいます',
+      opponentRemoving: '相手が3つ並べて、取る駒を選んでいます',
     },
     undo: '待った',
     restart: 'やり直す',
     menu: 'モード変更',
-    home: 'ゲーム一覧へ',
+    home: 'ナイン・メンズ・モリスのトップへ',
     youWin: 'あなたの勝ち',
     aiWins: 'AIの勝ち',
     win: '{side}の勝ち',
@@ -284,6 +335,11 @@ export const TEXT = {
     nameNote: '名前：英語名 Nine Men\'s Morris の「モリス」は、ラテン語の merellus（駒）がなまったものとされています。トップページの絵はアルフォンソ10世の『遊戯の書』（1283年）から。',
     show: '悪魔の計略 ～デビルズ・プラン～',
     cardMoves: '{n} 手',
+    inviteHeading: 'リンクを友だちに送る',
+    inviteBody: '相手がリンクを開くと参加します。あなたが{me}、相手が{them}で、黒が先手です。',
+    waitingOpponent: '相手の参加を待っています…',
+    versus: '対',
+    shareText: 'ナイン・メンズ・モリスで対戦しよう',
   },
   ko: {
     title: '나인 멘스 모리스',
@@ -298,6 +354,9 @@ export const TEXT = {
     second: '후공 (백)',
     local: '로컬 대전',
     localNote: '한 기기에서 번갈아 두기',
+    invite: '친구 초대',
+    inviteNote: '방을 만들고 링크를 보내기',
+    pickSide: '어느 쪽을 할까요?',
     showRules: '방송 규칙',
     showRulesNote: '방송의 RULE 카드대로 하기',
     howTo: '게임 방법은?',
@@ -311,6 +370,10 @@ export const TEXT = {
     turnOf: '{side} 차례',
     yourTurn: '내 차례',
     thinking: 'AI가 생각 중…',
+    online: '온라인 대전',
+    opponent: '친구',
+    opponentTurn: '친구 차례',
+    opponentWins: '친구 승리',
     hint: {
       place: '빈 점을 눌러 말을 놓으세요',
       move: '말을 골라 선을 따라 옆의 빈 점으로 옮기세요',
@@ -320,11 +383,12 @@ export const TEXT = {
       removeAny: '상대 말이 모두 줄에 있어서 줄에 있는 말도 가져올 수 있어요',
       noRemoval: '한 줄을 만들었지만 상대 말이 모두 줄에 있어서 가져올 수 없어요',
       aiRemoving: 'AI가 한 줄을 만들어 가져올 말을 고르는 중이에요',
+      opponentRemoving: '친구가 한 줄을 만들어 가져올 말을 고르는 중이에요',
     },
     undo: '무르기',
     restart: '다시 하기',
     menu: '모드 변경',
-    home: '게임 목록으로',
+    home: '나인 멘스 모리스 첫 화면으로',
     youWin: '내가 이겼어요',
     aiWins: 'AI 승리',
     win: '{side} 승리',
@@ -353,6 +417,11 @@ export const TEXT = {
     nameNote: '이름: 영어 이름 Nine Men\'s Morris의 ‘모리스’는 라틴어 merellus(말)가 변한 것으로 알려져 있습니다. 첫 화면의 그림은 알폰소 10세의 『놀이의 책』(1283)에서 가져왔습니다.',
     show: '데블스 플랜',
     cardMoves: '{n}수',
+    inviteHeading: '친구에게 링크 보내기',
+    inviteBody: '친구가 링크를 열면 바로 참가합니다. 나는 {me}, 친구는 {them}이고 흑이 먼저 둡니다.',
+    waitingOpponent: '친구를 기다리는 중…',
+    versus: '대',
+    shareText: '나인 멘스 모리스 같이 해요',
   },
   'zh-Hans': {
     title: '九子棋',
@@ -367,6 +436,9 @@ export const TEXT = {
     second: '后手（白）',
     local: '本机对战',
     localNote: '轮流在同一台设备上下',
+    invite: '邀请朋友',
+    inviteNote: '开一个房间，把链接发给朋友',
+    pickSide: '你要下哪一边？',
     showRules: '节目规则',
     showRulesNote: '按节目的 RULE 卡下',
     howTo: '怎么玩？',
@@ -380,6 +452,10 @@ export const TEXT = {
     turnOf: '轮到{side}',
     yourTurn: '轮到你',
     thinking: 'AI 思考中…',
+    online: '联机对战',
+    opponent: '对方',
+    opponentTurn: '轮到对方',
+    opponentWins: '对方赢了',
     hint: {
       place: '点一个空点，把棋子放上去',
       move: '选一枚棋子，沿线走到相邻的空点',
@@ -389,11 +465,12 @@ export const TEXT = {
       removeAny: '对方的棋子都在线上，这次可以拿线上的棋子',
       noRemoval: '连成一线，但对方的棋子都在线上，这次不能拿',
       aiRemoving: 'AI 连成一线，正在挑要拿哪一枚',
+      opponentRemoving: '对方连成一线，正在挑要拿哪一枚',
     },
     undo: '悔棋',
     restart: '重来',
     menu: '换模式',
-    home: '回平台首页',
+    home: '回九子棋首页',
     youWin: '你赢了',
     aiWins: 'AI 赢了',
     win: '{side}赢了',
@@ -422,6 +499,11 @@ export const TEXT = {
     nameNote: '名字：节目里的中文就叫“九子棋”（中文维基写“直棋”）。英文 Nine Men\'s Morris 的 morris，一般认为是从拉丁文 merellus（棋子）讹变来的。首页那幅插图出自 1283 年西班牙阿方索十世的《游戏之书》。',
     show: '魔鬼的计谋',
     cardMoves: '共 {n} 步',
+    inviteHeading: '把链接发给朋友',
+    inviteBody: '朋友打开链接就会加入。你是{me}，对方是{them}，黑方先走。',
+    waitingOpponent: '等对方加入…',
+    versus: '对',
+    shareText: '来跟我下九子棋',
   },
   th: {
     title: "Nine Men's Morris",
@@ -436,6 +518,9 @@ export const TEXT = {
     second: 'เดินหลัง (ขาว)',
     local: 'เล่นในเครื่อง',
     localNote: 'ผลัดกันเล่นบนเครื่องเดียว',
+    invite: 'ชวนเพื่อน',
+    inviteNote: 'เปิดห้องแล้วส่งลิงก์ให้เพื่อน',
+    pickSide: 'อยากเล่นฝั่งไหน',
     showRules: 'กติกาในรายการ',
     showRulesNote: 'เล่นตามการ์ดกติกาในรายการ',
     howTo: 'เล่นยังไง?',
@@ -449,6 +534,10 @@ export const TEXT = {
     turnOf: 'ตาของ{side}',
     yourTurn: 'ตาของคุณ',
     thinking: 'AI กำลังคิด…',
+    online: 'เล่นออนไลน์',
+    opponent: 'เพื่อน',
+    opponentTurn: 'ตาของเพื่อน',
+    opponentWins: 'เพื่อนชนะ',
     hint: {
       place: 'แตะจุดว่างเพื่อวางหมาก',
       move: 'เลือกหมาก แล้วเดินตามเส้นไปยังจุดว่างที่อยู่ติดกัน',
@@ -458,11 +547,12 @@ export const TEXT = {
       removeAny: 'หมากของอีกฝ่ายเรียงอยู่ทุกตัว ครั้งนี้หยิบตัวที่เรียงอยู่ได้',
       noRemoval: 'เรียงครบ 3 ตัว แต่หมากของอีกฝ่ายเรียงอยู่ทุกตัว จึงหยิบไม่ได้',
       aiRemoving: 'AI เรียงครบ 3 ตัว กำลังเลือกหมากที่จะหยิบ',
+      opponentRemoving: 'เพื่อนเรียงครบ 3 ตัว กำลังเลือกหมากที่จะหยิบ',
     },
     undo: 'ย้อนตา',
     restart: 'เริ่มใหม่',
     menu: 'เปลี่ยนโหมด',
-    home: 'กลับไปหน้ารวมเกม',
+    home: "กลับหน้าแรก Nine Men's Morris",
     youWin: 'คุณชนะ',
     aiWins: 'AI ชนะ',
     win: '{side}ชนะ',
@@ -491,5 +581,10 @@ export const TEXT = {
     nameNote: 'ชื่อ: คำว่า morris ใน Nine Men\'s Morris เชื่อกันว่าเพี้ยนมาจากคำละติน merellus (ตัวหมาก) ภาพที่หน้าแรกมาจาก “หนังสือแห่งเกม” ของพระเจ้าอัลฟองโซที่ 10 (ค.ศ. 1283)',
     show: 'The Devil\'s Plan',
     cardMoves: '{n} ตา',
+    inviteHeading: 'ส่งลิงก์ให้เพื่อน',
+    inviteBody: 'เพื่อนเปิดลิงก์แล้วจะเข้าร่วมทันที คุณเล่น{me} เพื่อนเล่น{them} ฝ่ายดำเดินก่อน',
+    waitingOpponent: 'กำลังรอเพื่อน…',
+    versus: 'ปะทะ',
+    shareText: "มาเล่น Nine Men's Morris กัน",
   },
 } satisfies TextTable<MorrisText>;
