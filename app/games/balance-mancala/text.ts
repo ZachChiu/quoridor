@@ -88,7 +88,6 @@ export type BalanceMancalaText = {
   nameNote: string;
   credit: string;
   /** 首頁主視覺（三件黃金砝碼）的出處 */
-  artCredit: string;
 };
 
 export const TEXT: TextTable<BalanceMancalaText> = {
@@ -173,7 +172,6 @@ export const TEXT: TextTable<BalanceMancalaText> = {
     showNote: '出自 Netflix《魔鬼的計謀：死亡密室》第 5 天主賽。這是非官方的粉絲版本；節目原本 7 人，這裡預設 4 席、由 AI 補位。',
     nameNote: '名字：節目裡的中文是「平衡播棋」（第二季第 5 天主賽）。「播棋」是曼卡拉（mancala）這一類遊戲的中文名稱：把一格的子全部拿起來，沿路一格放一顆，像在播種。',
     credit: '圖示：game-icons.net（CC BY 3.0）。外框是 Adinkra 印花布的布邊：上下是寶螺殼（Nsirewa，財富）、左右是曲折（Nkyimkyim，隨機應變）、四角是連在一起的心（Akoma ntoaso，同心），符號取自 R. S. Rattray《Religion and Art in Ashanti》（1927）。',
-    artCredit: '阿坎（今迦納）19 世紀的黃金砝碼 · 克里夫蘭美術館（CC0）',
   },
   en: {
     title: 'Balance Mancala',
@@ -256,7 +254,6 @@ export const TEXT: TextTable<BalanceMancalaText> = {
     showNote: "From the Day 5 main match of Netflix's The Devil's Plan: Death Room. This is an unofficial fan version; the show had 7 players, here the default is 4 seats with AI players filling in.",
     nameNote: 'The name: the show (season 2, day 5 main match) calls it Balance Mancala; in Chinese it is 平衡播棋. Mancala (播棋 in Chinese) is the family of sowing games: pick up every piece in a cell and drop them one per cell along the way.',
     credit: 'Icons: game-icons.net (CC BY 3.0). The border is the edge of an adinkra cloth: cowries (Nsirewa, wealth) along the top and bottom, twisting (Nkyimkyim, adaptability) down the sides and linked hearts (Akoma ntoaso, unity) in the corners. Symbols from R. S. Rattray, Religion and Art in Ashanti (1927).',
-    artCredit: 'Akan gold weights, Ghana, 1800s · Cleveland Museum of Art (CC0)',
   },
   ja: {
     title: 'バランス・マンカラ',
@@ -339,7 +336,6 @@ export const TEXT: TextTable<BalanceMancalaText> = {
     showNote: 'Netflix『悪魔の計略 ～デビルズ・プラン～』シーズン2・5日目のメインマッチより。非公式のファン版です。番組は7人でしたが、ここでは4席が基本で、空いた席はAIが入ります。',
     nameNote: '名前：番組（シーズン2・5日目のメインマッチ）では Balance Mancala、中国語では「平衡播棋」。マンカラ（中国語で「播棋」）は、1マスの駒をすべて取って道なりに1つずつまいていく「種まき」の遊びの仲間です。',
     credit: 'アイコン：game-icons.net（CC BY 3.0）。外枠はアディンクラ布の縁取り：上下は子安貝（Nsirewa、富）、左右はねじれ（Nkyimkyim、臨機応変）、四隅はつながった心（Akoma ntoaso、団結）。記号は R. S. Rattray『Religion and Art in Ashanti』（1927）より。',
-    artCredit: 'アカンの金の分銅（ガーナ、19世紀）· クリーブランド美術館（CC0）',
   },
   ko: {
     title: '균형의 만칼라',
@@ -422,7 +418,6 @@ export const TEXT: TextTable<BalanceMancalaText> = {
     showNote: '넷플릭스 「데블스 플랜: 데스룸」 5일차 메인 매치에서 나온 게임입니다. 비공식 팬 버전이며, 방송은 7명이었지만 여기서는 기본 4자리에 빈자리는 AI가 채웁니다.',
     nameNote: '이름: 방송 RULE 카드에 적힌 이름은 ‘균형의 만칼라’이고, 중국어로는 ‘平衡播棋’라고 합니다. 만칼라(중국어로 ‘播棋’)는 한 칸의 말을 모두 집어 한 칸씩 뿌려 나가는 씨뿌리기 놀이 계열을 말합니다.',
     credit: '아이콘: game-icons.net (CC BY 3.0). 테두리는 아딘크라 천의 가장자리입니다: 위아래는 개오지 조개(Nsirewa, 부), 양옆은 굽이(Nkyimkyim, 융통성), 네 모서리는 이어진 심장(Akoma ntoaso, 화합). 기호는 R. S. Rattray, 『Religion and Art in Ashanti』(1927)에서 가져왔습니다.',
-    artCredit: '아칸족의 금 저울추(가나, 19세기) · 클리블랜드 미술관(CC0)',
   },
   'zh-Hans': {
     title: '平衡播棋',
@@ -505,7 +500,6 @@ export const TEXT: TextTable<BalanceMancalaText> = {
     showNote: '出自 Netflix《魔鬼的计谋：死亡密室》第 5 天主赛。这是非官方的粉丝版本；节目原本 7 人，这里默认 4 席、由 AI 补位。',
     nameNote: '名字：节目里的中文是“平衡播棋”（第二季第 5 天主赛）。“播棋”是曼卡拉（mancala）这一类游戏的中文名称：把一格的棋子全部拿起来，沿路一格放一颗，像在播种。',
     credit: '图标：game-icons.net（CC BY 3.0）。外框是阿丁克拉（Adinkra）印花布的布边：上下是宝螺（Nsirewa，财富）、左右是曲折（Nkyimkyim，随机应变）、四角是连在一起的心（Akoma ntoaso，同心），符号取自 R. S. Rattray《Religion and Art in Ashanti》（1927）。',
-    artCredit: '阿坎（今加纳）19 世纪的黄金砝码 · 克利夫兰艺术博物馆（CC0）',
   },
   th: {
     title: 'แมนคาลาสมดุล',
@@ -588,6 +582,5 @@ export const TEXT: TextTable<BalanceMancalaText> = {
     showNote: "จากเกมหลักวันที่ 5 ของ The Devil's Plan: Death Room บน Netflix นี่เป็นเวอร์ชันแฟนเมดที่ไม่เป็นทางการ ในรายการเล่น 7 คน ที่นี่ตั้งต้นที่ 4 ที่นั่ง ที่ว่างให้ AI เล่นแทน",
     nameNote: 'ชื่อ: ในรายการ (ซีซัน 2 เกมหลักวันที่ 5) เกมนี้ชื่อ Balance Mancala ภาษาจีนเรียกว่า 平衡播棋 ส่วนแมนคาลา (ภาษาจีนเรียก 播棋) คือตระกูลเกม “หว่านเมล็ด” ที่หยิบหมากทั้งช่องขึ้นมาแล้ววางทีละตัวไปตามทาง',
     credit: 'ไอคอน: game-icons.net (CC BY 3.0) กรอบคือขอบผ้าอาดิงกรา (adinkra): บนและล่างเป็นเปลือกหอยเบี้ย (Nsirewa ความมั่งคั่ง) ซ้ายและขวาเป็นเส้นคดเคี้ยว (Nkyimkyim การปรับตัว) สี่มุมเป็นหัวใจที่เชื่อมกัน (Akoma ntoaso ความสามัคคี) สัญลักษณ์จาก R. S. Rattray, Religion and Art in Ashanti (1927)',
-    artCredit: 'ตุ้มน้ำหนักทองคำของชาวอาคาน (กานา ศตวรรษที่ 19) · พิพิธภัณฑ์ศิลปะคลีฟแลนด์ (CC0)',
   },
 };

@@ -54,12 +54,12 @@ export default function MancalaSetup({ locale, initial, onStart }: { locale: Loc
       <PlatformCorner locale={locale} theme={MCL_CORNER} offset="calc(var(--mcl-frame, 28px) + 6px)" />
       <div className="w-full max-w-[460px] px-5 pt-[60px]">
         <header className="flex flex-col items-center text-center">
-          <figure className="flex w-full flex-col items-center gap-1">
+          {/* 出處：阿坎（今迦納）19 世紀的黃金砝碼，克里夫蘭美術館（CC0）。畫面上不寫出處（Zach 10/24：插圖不要說明） */}
+          <div className="flex w-full flex-col items-center gap-1">
             {/* eslint-disable-next-line @next/next/no-img-element -- 靜態匯出的單張主視覺，不需要 next/image */}
             <img src={KEY_ART} alt="" aria-hidden="true" width={1000} height={264}
               className="block h-auto w-[min(100%,24rem,calc(19dvh*3.79))]" />
-            <figcaption className="text-[10px] font-bold text-ink-soft">{t.artCredit}</figcaption>
-          </figure>
+          </div>
           <p className="mt-4 text-[11px] font-bold tracking-wide text-ink-soft">{t.showRef}</p>
           <h1 className="mt-1 text-[clamp(2rem,6dvh,3.25rem)] font-black leading-[1.05] tracking-tight">{t.title}</h1>
           {t.altName && <p className="mt-1 text-sm font-bold text-ink-soft">{t.altName}</p>}
