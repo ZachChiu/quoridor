@@ -52,7 +52,7 @@ zh-TW 不加前綴（`app/(default)/`），en / ja / ko / zh-Hans / th 加前綴
 | `/bagh-chal/rules` | 規則頁，每步一張小棋盤（`BaghRulesSteps`，對局中的說明彈窗共用） |
 | `/bagh-chal/solo#tiger-normal`、`/bagh-chal/local` | 跟電腦下（hash 是邊＋難度，沒帶就在頁面上選）、兩人同一台。noindex |
 | `/bagh-chal/online#new=tiger\|goat`、`#roomId=…` | 邀請朋友。房間在 RTDB `baghRooms/`（跟 Wall Go 的 `rooms/` 分開，結構見 `types/baghRoom.ts`），存走法字串（`encodeMoves`），只有輪到的人能寫。noindex |
-| `/time-auction`、`/nine-mens-morris`、`/blind-gomoku`、`/balance-mancala`、`/knights-tour` | 第二批五款**試做**（2026-10-20）：每款一頁、選模式與對局都在那一頁（騎士巡邏的模式放 hash：`#show`、`#practice-N`）。規則在 `app/games/<id>/`、畫面在 `app/components/<id>/`、六語系文案在各自的 `app/games/<id>/text.ts`（不進 `messages/`，key 的縮排與順序見 `i18n/gameText.ts`）。metadata 用 `trialGameMetadata`：noindex、不進 sitemap、分享圖暫用平台首頁那張。沒有 GA 事件。**連線版**（10/24 Zach：有兩方互動的都補，騎士巡遊不用）各自在自己的分支上做：九子棋、盲眼五子棋、均衡曼卡拉共用 `turnRooms`（`hook/useTurnRoom.ts`，結構見 `types/turnRoom.ts`），時間拍賣是同時出價、另有自己的房間；網址 `<遊戲>/online#new=…`／`#roomId=…`（`routes.ts` 的 `trialOnline`）。**平台上一款一款開**（2026-10-22 Zach）：`feat/platform-bagh` 只上平台＋虎羊棋＋Wall Go，五款的卡片照「還沒做」的樣子；每款的視覺在自己的 `feat/game-<id>` 分支，那條分支把 `catalog.ts` 裡自己那一行換回 playable＋look |
+| `/time-auction`、`/nine-mens-morris`、`/blind-gomoku`、`/balance-mancala`、`/knights-tour` | 第二批五款**試做**（2026-10-20）：每款一頁、選模式與對局都在那一頁（騎士巡邏的模式放 hash：`#show`、`#practice-N`）。規則在 `app/games/<id>/`、畫面在 `app/components/<id>/`、六語系文案在各自的 `app/games/<id>/text.ts`（不進 `messages/`，key 的縮排與順序見 `i18n/gameText.ts`）。metadata 用 `trialGameMetadata`：noindex、不進 sitemap、分享圖用那款自己的（`scripts/og-games/<id>.mjs`，還沒有的用平台那張）。沒有 GA 事件。**規則頁** `<遊戲>/rules`（10/25 Zach：「怎麼玩都沒有換新頁，最好跟 Wall Go 一樣圖配字」；`routes.ts` 的 `trialRules`，各款在自己的分支做）：一步一張圖配字，對局中的說明彈窗是同一份步驟、一次一步、可以左右滑（`hook/useSwipePager.ts`，Wall Go 的遊玩方式、虎棋的說明彈窗也用它）。平台大卡片上的介紹在各款的 `app/games/<id>/blurb.ts`（`games/blurbs.ts` 依路徑查）。**連線版**（10/24 Zach：有兩方互動的都補，騎士巡遊不用）各自在自己的分支上做：九子棋、盲眼五子棋、均衡曼卡拉共用 `turnRooms`（`hook/useTurnRoom.ts`，結構見 `types/turnRoom.ts`），時間拍賣是同時出價、另有自己的房間；網址 `<遊戲>/online#new=…`／`#roomId=…`（`routes.ts` 的 `trialOnline`）。**平台上一款一款開**（2026-10-22 Zach）：`feat/platform-bagh` 只上平台＋虎羊棋＋Wall Go，五款的卡片照「還沒做」的樣子；每款的視覺在自己的 `feat/game-<id>` 分支，那條分支把 `catalog.ts` 裡自己那一行換回 playable＋look |
 | 舊網址 `/rules`、`/solo`、`/local`、`/online`、`/replay`、`/match`（各語系） | CloudFront 301 到 `/wall-go/…`（`infra/cloudfront-redirects.js`，表要跟 `routes.ts` 的 `MOVED` 一致，`tests/infra/redirects.test.ts` 會比對）；舊路徑上另有瀏覽器端轉址當備援（`components/LegacyRedirect.tsx`），noindex、不進 sitemap |
 
 **`/replay` 是用來看玩家回饋的。** 每則回饋都附帶那一局的 WGF（`feedback/*/wgf`），
@@ -257,11 +257,14 @@ nudge { by, at }          最近一次「催一下」
 - **換語言是整頁跳轉**，瀏覽器的 back-forward cache 會把離開時的畫面凍結起來；會在整頁跳轉前打開的東西（語言選單）要在點下去時關掉，並在 `pageshow`（persisted）時再關一次。
 - **Modal** 共用 `app/components/Modal.tsx`，掛載後一律用 portal 渲染到 `<body>`，層級固定 `z-[55]`（頁面元件最高 z-50、換頁轉場 z-[60]；不能與頁面同層級，站內換頁後新頁面會排到 portal 後面蓋過 Modal）：祖先只要有 `backdrop-filter`／`filter`／`transform`，裡面的 `fixed` 就會改成相對那個祖先（規則頁毛玻璃頂部列裡的語言選單就這樣被壓成一條）。關閉時務必保留 `inert` ——
   只用 `opacity-0` 不會把內容移出無障礙樹。
-- **分享圖**（og:image）**每頁每語系各一張**，共 36 張，由
+- **分享圖**（og:image）**每頁每語系各一張**，由
   `scripts/build-og-images.mjs` 產生到 `public/og/{page}-{locale}.png`，
   版面在 `scripts/og-design.mjs`。圖上只有節目名與標題、**不放描述句**（Zach 拔掉的）。
   改了標題相關文案（`metaTitle`、`titleLine1/2`、`showName`）要跑 `npm run og:build`，
-  CI 有 `og:check` 擋著。
+  CI 有 `og:check` 擋著（比對表一頁一份：`public/og/copy/<頁>.json`）。`npm run og:build -- <頁>…` 只重建那幾頁 —— 各款的分支只重建自己的，合併才不會撞。
+  2026-10-25：平台首頁是**七款卡片斜排的一面牆**（Zach：「可以放多個遊戲集結的感覺」；背景 `scripts/og-art/platform.jpg` 由同資料夾的 `collage.mjs` 在七款都合進來的 beta 上產生）、
+  尼泊爾虎棋換成虎棋自己的顏色＋平台那張真棋盤方圖（原本是舊版棋盤的 key-art.svg）、第二批五款各一份 `scripts/og-games/<id>.mjs`（格式見那裡的 README）。
+  有照片的圖轉成 256 色 PNG：直接輸出 400KB–1MB，WhatsApp 超過約 300KB 就不顯示預覽。
   **不要改用 Next 的 `opengraph-image.tsx`** —— 那個慣例產出的檔案沒有副檔名
   （`out/rules/opengraph-image-1mfdno`），`aws s3 sync` 推不出 Content-Type，
   抓取器拿到 `binary/octet-stream` 就不顯示圖。實測確認過。

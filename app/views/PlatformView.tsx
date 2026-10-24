@@ -12,6 +12,7 @@ import { NEWEST, PLAYABLE, SEASONS, gameName, playableFirst, type CatalogGame } 
 import { getMessages } from '@/i18n';
 import { localePath, type Locale } from '@/i18n/locales';
 import { BAGH_CHAL, WALL_GO } from '@/i18n/routes';
+import { BLURBS } from '@/games/blurbs';
 import { pageGraph, ldScript } from '@/i18n/jsonld';
 
 /**
@@ -110,7 +111,7 @@ export default function PlatformView({ locale }: { locale: Locale }) {
 const HERO = 'relative flex min-h-[600px] overflow-hidden rounded-3xl md:min-h-[min(560px,max(460px,48vw))]';
 
 /**
- * 大卡片：大圖鋪滿，字壓在黑色漸層上（跟下面的卡片同一個做法）。各款的說明在 platform 文案裡，沒有就只放名字。
+ * 大卡片：大圖鋪滿，字壓在黑色漸層上（跟下面的卡片同一個做法）。各款的說明：Wall Go、虎棋在 platform 文案裡，第二批五款在 games/blurbs.ts，沒有就只放名字。
  * Wall Go 原本有自己的一張（藍底、字放在藍色色塊上），10/25 Zach 要它跟虎羊棋一樣：底色用 Wall Go 自己的頁面底色、字壓黑色漸層
  */
 function GameHero({ game, locale }: { game: CatalogGame; locale: Locale }) {
@@ -118,7 +119,8 @@ function GameHero({ game, locale }: { game: CatalogGame; locale: Locale }) {
   const p = t.platform;
   const look = game.look!;
   const wallGoGame = game.playable === WALL_GO;
-  const copy = wallGoGame ? [p.heroMeta, p.heroBody] : game.playable === BAGH_CHAL ? [p.baghHeroMeta, p.baghHeroBody] : null;
+  const blurb = BLURBS[game.playable!]?.[locale];
+  const copy = wallGoGame ? [p.heroMeta, p.heroBody] : game.playable === BAGH_CHAL ? [p.baghHeroMeta, p.baghHeroBody] : blurb ? [blurb.meta, blurb.body] : null;
   // Wall Go 的標題照舊是首頁那兩行（中文名＋Wall Go）；規則頁頂部是森綠，進規則頁就擴散森綠
   const title = wallGoGame ? <>{t.home.titleLine1}{t.home.titleLine2 && <><br />{t.home.titleLine2}</>}</> : gameName(game, locale);
   const rulesWipe = wallGoGame ? RULES_GREEN : look.wipe;

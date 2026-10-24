@@ -1,0 +1,38 @@
+{
+  "zh-TW": {
+    "kicker": "牆壁圍棋 Wall Go",
+    "title": [
+      "棋譜回放"
+    ]
+  },
+  "en": {
+    "kicker": "Wall Go",
+    "title": [
+      "Replay"
+    ]
+  },
+  "ja": {
+    "kicker": "壁囲碁 Wall Go",
+    "title": [
+      "棋譜再生"
+    ]
+  },
+  "ko": {
+    "kicker": "벽바둑 Wall Go",
+    "title": [
+      "기보 다시보기"
+    ]
+  },
+  "zh-Hans": {
+    "kicker": "墙壁围棋 Wall Go",
+    "title": [
+      "棋谱回放"
+    ]
+  },
+  "th": {
+    "kicker": "Wall Go",
+    "title": [
+      "ดูย้อนหลัง"
+    ]
+  }
+}
