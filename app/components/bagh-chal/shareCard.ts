@@ -36,7 +36,7 @@ const P = BAGH;
 /** 字標與遊戲名用頁面上同一個深墨（tile-ink） */
 const INK = '#141010';
 
-/** 米提拉畫框：兩條線中間夾一排往內指的三角形（同 globals.css 的 .bagh-totem），四角一個小方塊 */
+/** 米提拉畫框：兩條線中間夾一排往內指的三角形（按鈕上也做過，Zach 10/24 要按鈕拿掉；分享圖照舊），四角一個小方塊 */
 function totemFrame(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, band: number) {
   ctx.save();
   ctx.strokeStyle = P.brown;

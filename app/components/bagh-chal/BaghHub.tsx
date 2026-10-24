@@ -25,7 +25,7 @@ const intercept = (fn: () => void) => (e: React.MouseEvent<HTMLAnchorElement>) =
  * —— Zach 10/24 在英文、日文頁遇到。/solo 本來就 noindex，不給連結也不損失什麼。連線要先選邊所以也沒有。
  */
 function Choice({ src, label, sub, href, onClick }: { src: string; label: string; sub: string; href?: string; onClick: () => void }) {
-  const cls = 'bagh-totem group flex flex-col items-center justify-center gap-1 bg-[#f2e4c4] px-2 py-[max(0.75rem,2dvh)] text-center transition fine:hover:bg-[#ead8ad] active:scale-[0.97]';
+  const cls = 'bagh-line group flex flex-col items-center justify-center gap-1 bg-[#f2e4c4] px-2 py-[max(0.75rem,2dvh)] text-center transition fine:hover:bg-[#ead8ad] active:scale-[0.97]';
   const inner = (
     <>
       {/* 背景圖、影子用 box-shadow（不用 <img>＋filter，iPhone 的 WebKit 會漏畫，見 BaghBoard） */}
@@ -89,7 +89,7 @@ export default function BaghHub() {
             return (
               <button key={s} type="button"
                 onClick={() => { setInviteOpen(false); router.push(localePath(locale, baghChal('/online')) + `#new=${s}`); }}
-                className="bagh-totem flex flex-col items-center gap-2 bg-[#f2e4c4] py-5 text-xl font-black text-tile-ink transition hover:bg-[#ead8ad] active:scale-[0.97]">
+                className="bagh-line flex flex-col items-center gap-2 bg-[#f2e4c4] py-5 text-xl font-black text-tile-ink transition hover:bg-[#ead8ad] active:scale-[0.97]">
                 <Icon className="text-6xl" />{s === 'tiger' ? b.tiger : b.goat}
               </button>
             );

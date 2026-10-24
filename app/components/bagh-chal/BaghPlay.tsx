@@ -271,7 +271,7 @@ export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghM
         onRestart={again} restartLabel={b.again} srText={`${result.title} ${result.body} ${card.text.capturedLabel} · ${card.text.moves}`}
         frameClassName=""
         classes={{
-          primary: 'bagh-totem-on bg-[#5b6620] text-[#fbf4e1] hover:bg-[#4d5719]',
+          primary: 'bagh-line-on bg-[#5b6620] text-[#fbf4e1] hover:bg-[#4d5719]',
           secondary: 'bagh-line bg-[#f2e4c4] text-tile-ink hover:bg-[#ead8ad]',
           toggle: 'bg-[#fbf4e1]/15', toggleOn: 'bg-[#e3a43c] text-tile-ink', toggleOff: 'text-[#fbf4e1]/75 hover:text-[#fbf4e1]',
           button: 'font-black', placeholder: 'bg-[#e3a43c]/30',
