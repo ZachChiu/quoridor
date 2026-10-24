@@ -67,7 +67,15 @@ export type KnightsText = {
   assisted: string;
   doneTitle: string;
   doneBody: string;
+  /** 規則的每一步（規則頁一步一張圖、對局中的說明彈窗一次一步；兩邊共用 components/knights-tour/RulesSteps.tsx 的圖） */
   howSteps: readonly string[];
+  /** 每一步的小標，跟 howSteps 一一對應 */
+  howTitles: readonly string[];
+  /** 規則頁（/knights-tour/rules）：大標、分享與搜尋的標題與描述、最下面回首頁的那顆鈕 */
+  rulesTitle: string;
+  rulesMetaTitle: string;
+  rulesMetaDescription: string;
+  rulesCta: string;
   source: string;
   /** 規則最後一段：名字的由來（節目相關的中文名、數學上的叫法）。Zach 10/24：遊戲名照 Netflix 版本，在規則裡介紹 */
   nameNote: string;
@@ -141,9 +149,14 @@ export const TEXT = {
       '先點一格放下騎士，之後點有圓點的格子前進。每一格只能經過一次，最後不必回到起點。',
       '走遍全部格子就完成。節目挑戰是 6×6 → 7×7 → 8×8 連續三關、總時限 60 分鐘；走到走過的格子或沒路可走，這一關整盤清空重來。',
       '7×7 這種奇數盤，只有從跟四個角同色的格子出發才走得完；打 × 的格子出發一定失敗。',
-      '練習模式可以選 5×5 到 10×10，能悔棋、看提示，還會即時告訴你現在還走不走得完。',
-      '訣竅：先走「下一步出路最少」的格子，角落和邊緣先清掉，中間留到最後。',
+      '練習模式可以選 5×5 到 10×10，能悔棋、看提示，每走一步都會即時判定接下來還走不走得完。',
+      '先走「下一步出路最少」的格子，角落和邊緣先清掉，中間留到最後。',
     ],
+    howTitles: ['騎士怎麼走', '出發與前進', '走完全盤', '奇數盤的起點', '練習模式', '訣竅'],
+    rulesTitle: '騎士巡遊規則',
+    rulesMetaTitle: "騎士巡遊 Knight's Tour 規則與玩法",
+    rulesMetaDescription: '騎士巡遊完整規則，附圖一步一步說明：騎士走「日」字、每格只能經過一次、走遍全盤就完成；節目挑戰 6×6 → 7×7 → 8×8 限時 60 分鐘，奇數盤要從跟四個角同色的格子出發。《魔鬼的計謀：死亡密室》的隱藏關卡。',
+    rulesCta: '回首頁選模式',
     source: '出自 Netflix《魔鬼的計謀：死亡密室》第 2 天的隱藏關卡。',
     nameNote: "名字：節目裡的中文是「騎士巡遊」（第 2 季《魔鬼的計謀：死亡密室》）。這道題在數學上也叫「騎士巡邏」（knight's tour problem），歐拉在 1759 年寫過一篇論文研究它。",
     closedTour: '首尾相接',
@@ -213,8 +226,13 @@ export const TEXT = {
       'Visit every square to finish. The show challenge is three boards in a row — 6×6, 7×7, 8×8 — with 60 minutes in total; land on a visited square or run out of moves and that board is wiped clean.',
       'On odd boards like 7×7, only squares the same color as the corners can start a full tour. Squares marked × always fail.',
       'Practice lets you pick any board from 5×5 to 10×10, undo, ask for hints, and see right away whether the tour can still be finished.',
-      'Tip: go where the knight will have the fewest onward moves — clear the corners and edges early and leave the middle for last.',
+      'Go where the knight will have the fewest onward moves — clear the corners and edges early and leave the middle for last.',
     ],
+    howTitles: ['How the knight moves', 'Start and move', 'Cover the board', 'Starting on odd boards', 'Practice mode', 'Tip'],
+    rulesTitle: "Knight's Tour Rules",
+    rulesMetaTitle: "Knight's Tour Rules: How to Play the Knight Puzzle",
+    rulesMetaDescription: "Knight's Tour rules with pictures, step by step: the knight moves in an L, each square can be visited only once, and covering the whole board wins. The show challenge is 6×6 → 7×7 → 8×8 in 60 minutes; on odd boards you must start on the corners' color. A hidden game from The Devil's Plan: Death Room.",
+    rulesCta: 'Choose a mode',
     source: "From a hidden game on day 2 of Netflix's The Devil's Plan: Death Room.",
     nameNote: "The name: the show (season 2, The Devil's Plan: Death Room) calls it Knight's Tour. Mathematicians know it as the knight's tour problem, which Euler studied in a 1759 paper.",
     closedTour: 'Closed tour',
@@ -285,8 +303,13 @@ export const TEXT = {
       'すべてのマスを回ればクリア。番組チャレンジは 6×6 → 7×7 → 8×8 の3連戦で、制限時間は合計60分。通ったマスに入るか、動けなくなるとその盤は最初からやり直しです。',
       '7×7のような奇数の盤では、四隅と同じ色のマスから始めないと回りきれません。×のマスから始めると必ず失敗します。',
       '練習モードでは5×5〜10×10から選べて、一手戻し、ヒント、そして「まだ回りきれるか」の判定が使えます。',
-      'コツ：次に進めるマスが一番少ないマスを優先。角と端を先に埋めて、真ん中は最後に残しましょう。',
+      '次に進めるマスが一番少ないマスを優先。角と端を先に埋めて、真ん中は最後に残しましょう。',
     ],
+    howTitles: ['ナイトの動き', 'スタートと移動', '全マスを回る', '奇数の盤のスタート', '練習モード', 'コツ'],
+    rulesTitle: 'ナイトツアーのルール',
+    rulesMetaTitle: "ナイトツアー（Knight's Tour）のルールと遊び方",
+    rulesMetaDescription: 'ナイトツアーのルールを図で一つずつ解説：ナイトはL字に動き、同じマスは一度だけ、全マスを回ればクリア。番組チャレンジは 6×6 → 7×7 → 8×8 を合計60分で。奇数の盤は四隅と同じ色のマスからスタート。『悪魔の計略 ～デビルズ・プラン～』シーズン2の隠しゲーム。',
+    rulesCta: 'トップでモードを選ぶ',
     source: 'Netflix『悪魔の計略 ～デビルズ・プラン～』シーズン2の2日目に登場した隠しゲームです。',
     nameNote: "名前：ナイトツアー（Knight's Tour）は数学の古典的な問題で、オイラーが1759年の論文で研究しました。",
     closedTour: 'スタートに戻れる',
@@ -357,8 +380,13 @@ export const TEXT = {
       '모든 칸을 밟으면 완료. 방송 챌린지는 6×6 → 7×7 → 8×8 세 판 연속, 제한 시간은 총 60분이에요. 지나간 칸을 밟거나 더 갈 곳이 없으면 그 판은 처음부터 다시 해야 해요.',
       '7×7 같은 홀수 판에서는 네 모서리와 같은 색 칸에서 출발해야 끝까지 갈 수 있어요. × 표시 칸에서 출발하면 반드시 실패해요.',
       '연습 모드에서는 5×5~10×10 중에 고를 수 있고, 무르기와 힌트, "아직 끝까지 갈 수 있는지" 판정을 쓸 수 있어요.',
-      '요령: 다음에 갈 곳이 가장 적은 칸부터 가세요. 모서리와 가장자리를 먼저 채우고 가운데는 마지막에 남기세요.',
+      '다음에 갈 곳이 가장 적은 칸부터 가세요. 모서리와 가장자리를 먼저 채우고 가운데는 마지막에 남기세요.',
     ],
+    howTitles: ['나이트의 움직임', '출발과 이동', '모든 칸 밟기', '홀수 판의 출발 칸', '연습 모드', '요령'],
+    rulesTitle: '기사의 여행 규칙',
+    rulesMetaTitle: "기사의 여행 Knight's Tour 규칙과 하는 법",
+    rulesMetaDescription: '기사의 여행 규칙을 그림으로 하나씩: 나이트는 L자로 움직이고, 같은 칸은 한 번만, 모든 칸을 밟으면 완료. 방송 챌린지는 6×6 → 7×7 → 8×8을 총 60분 안에. 홀수 판은 네 모서리와 같은 색 칸에서 출발. 「데블스 플랜: 데스룸」의 숨겨진 게임.',
+    rulesCta: '처음 화면에서 모드 고르기',
     source: '넷플릭스 「데블스 플랜: 데스룸」 2일차에 나온 숨겨진 게임이에요.',
     nameNote: "이름: 기사의 여행(Knight's Tour)은 수학의 오래된 문제로, 오일러가 1759년 논문에서 연구했어요.",
     closedTour: '처음 칸으로 이어짐',
@@ -428,9 +456,14 @@ export const TEXT = {
       '先点一格放下骑士，之后点有圆点的格子前进。每一格只能经过一次，最后不必回到起点。',
       '走遍全部格子就完成。节目挑战是 6×6 → 7×7 → 8×8 连续三关，总时限 60 分钟；走到走过的格子或没路可走，这一关整盘清空重来。',
       '7×7 这种奇数棋盘，只有从和四个角同色的格子出发才走得完；打 × 的格子出发一定失败。',
-      '练习模式可以选 5×5 到 10×10，能悔棋、看提示，还会即时告诉你现在还走不走得完。',
-      '诀窍：先走“下一步出路最少”的格子，角落和边缘先清掉，中间留到最后。',
+      '练习模式可以选 5×5 到 10×10，能悔棋、看提示，每走一步都会即时判定接下来还走不走得完。',
+      '先走“下一步出路最少”的格子，角落和边缘先清掉，中间留到最后。',
     ],
+    howTitles: ['骑士怎么走', '出发与前进', '走完全盘', '奇数棋盘的起点', '练习模式', '诀窍'],
+    rulesTitle: '骑士巡游规则',
+    rulesMetaTitle: "骑士巡游 Knight's Tour 规则与玩法",
+    rulesMetaDescription: '骑士巡游完整规则，附图一步一步说明：骑士走“日”字、每格只能经过一次、走遍全盘就完成；节目挑战 6×6 → 7×7 → 8×8 限时 60 分钟，奇数棋盘要从和四个角同色的格子出发。《魔鬼的计谋：死亡密室》的隐藏关卡。',
+    rulesCta: '回首页选模式',
     source: '出自 Netflix《魔鬼的计谋：死亡密室》第 2 天的隐藏关卡。',
     nameNote: "名字：节目里的中文是“骑士巡游”（第 2 季《魔鬼的计谋：死亡密室》）。这道题在数学上也叫“骑士巡逻”（knight's tour problem），欧拉在 1759 年写过一篇论文研究它。",
     closedTour: '首尾相接',
@@ -501,8 +534,13 @@ export const TEXT = {
       'เดินครบทุกช่องคือสำเร็จ แบบในรายการต้องผ่านกระดาน 6×6 → 7×7 → 8×8 ติดกันสามด่าน รวมเวลา 60 นาที ถ้าเดินซ้ำช่องเดิมหรือไม่มีทางไปต่อ ด่านนั้นต้องเริ่มใหม่ทั้งกระดาน',
       'กระดานขนาดคี่อย่าง 7×7 ต้องเริ่มจากช่องสีเดียวกับมุมกระดานเท่านั้นจึงจะเดินครบได้ ช่องที่มี × เริ่มแล้วไม่สำเร็จแน่นอน',
       'โหมดฝึกเลือกกระดานได้ตั้งแต่ 5×5 ถึง 10×10 ย้อนตาได้ ขอคำใบ้ได้ และบอกทันทีว่ายังเดินครบได้อยู่ไหม',
-      'เคล็ดลับ: ไปช่องที่มีทางไปต่อน้อยที่สุดก่อน เก็บมุมและขอบกระดานให้หมดก่อน แล้วค่อยเก็บตรงกลางทีหลัง',
+      'ไปช่องที่มีทางไปต่อน้อยที่สุดก่อน เก็บมุมและขอบกระดานให้หมดก่อน แล้วค่อยเก็บตรงกลางทีหลัง',
     ],
+    howTitles: ['ม้าเดินอย่างไร', 'เริ่มและเดิน', 'เดินให้ครบกระดาน', 'ช่องเริ่มบนกระดานขนาดคี่', 'โหมดฝึก', 'เคล็ดลับ'],
+    rulesTitle: 'กติกาทางเดินม้า',
+    rulesMetaTitle: "กติกาทางเดินม้า (Knight's Tour) และวิธีเล่น",
+    rulesMetaDescription: "กติกาทางเดินม้าพร้อมภาพทีละขั้น: ม้าเดินเป็นรูปตัว L แต่ละช่องผ่านได้ครั้งเดียว เดินครบทุกช่องคือสำเร็จ แบบในรายการคือ 6×6 → 7×7 → 8×8 ภายใน 60 นาที กระดานขนาดคี่ต้องเริ่มจากช่องสีเดียวกับมุมกระดาน เกมลับจาก The Devil's Plan: Death Room",
+    rulesCta: 'กลับไปเลือกโหมด',
     source: "มาจากเกมลับในวันที่ 2 ของ The Devil's Plan: Death Room ทาง Netflix",
     nameNote: "ชื่อ: ทางเดินม้า (Knight's Tour) เป็นโจทย์คณิตศาสตร์เก่าแก่ ออยเลอร์เคยศึกษาไว้ในบทความปี 1759",
     closedTour: 'วนกลับถึงช่องแรก',

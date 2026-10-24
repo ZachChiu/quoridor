@@ -1,15 +1,15 @@
 'use client';
 import { useState } from 'react';
+import Link from 'next/link';
 import { GiChessKnight, GiStopwatch } from 'react-icons/gi';
 import { LuChevronRight } from 'react-icons/lu';
 import PlatformCorner from '@/components/PlatformCorner';
 import { useTextTable } from '@/i18n/gameText';
 import { localePath, type Locale } from '@/i18n/locales';
-import { KNIGHTS_TOUR } from '@/i18n/routes';
+import { KNIGHTS_TOUR, trialRules } from '@/i18n/routes';
 import { SIZES } from '@/games/knights-tour/engine';
 import { EULER_TOUR } from '@/games/knights-tour/euler';
 import { TEXT, type KnightsText } from '@/games/knights-tour/text';
-import HowToPlay from './HowToPlay';
 import KtFrame from './KtFrame';
 import SizePicker from './SizePicker';
 import TourBoard from './TourBoard';
@@ -22,7 +22,8 @@ import { formatTime, sizeLabel } from './ui';
  * 主視覺是「Fig. 1」：歐拉 1759 年論文裡那條 8×8 走法，用對局同一個棋盤畫（深格斜線、舊式數字、紅粉筆路徑）——
  * 不用另外畫插圖，也跟點進去的棋盤是同一套東西。
  *
- * 模式是兩張沒有框線的卡片：節目挑戰墨色（主要）、練習淡墨（次要），照 Wall Go 的兩種按鈕；規則放成文字連結。
+ * 模式是兩張沒有框線的卡片：節目挑戰墨色（主要）、練習淡墨（次要），照 Wall Go 的兩種按鈕；規則放成文字連結，
+ * 連到規則頁（/knights-tour/rules，2026-10-25 起不再開彈窗；一般的 Link，這款裡面換頁不播轉場）。
  * 節目挑戰是真的 `<a href="#show">`（新分頁開也對），點擊在當下交給上層 pushState（WebKit 的返回鍵規則）。
  * 字級、間距、插圖跟著畫面高度縮放時用 svh 不用 dvh：往下捲、工具列收起時 dvh 變大，字和圖會跟著放大。
  */
@@ -33,7 +34,6 @@ export default function KnightsTourMenu({ locale, onShow, onPractice }: {
 }) {
   const t = useTextTable<KnightsText>(TEXT);
   const best = useBestTimes();
-  const [helpOpen, setHelpOpen] = useState(false);
   const [sizeOpen, setSizeOpen] = useState(false);
   const records = ([['show', t.showMode], ...SIZES.map((n) => [practiceKey(n), sizeLabel(n)])] as [RecordKey, string][])
     .flatMap(([key, name]) => { const ms = best[key]; return ms === undefined ? [] : [{ key, name, ms }]; });
@@ -77,9 +77,9 @@ export default function KnightsTourMenu({ locale, onShow, onPractice }: {
             </span>
             <LuChevronRight aria-hidden="true" className="shrink-0 text-xl opacity-60" />
           </button>
-          <button type="button" onClick={() => setHelpOpen(true)} className="self-center px-3 py-2 text-sm font-black underline decoration-1 underline-offset-4 opacity-80 transition before:mr-1.5 before:inline-block before:font-serif before:text-base before:italic before:content-['§'] hover:opacity-100">
+          <Link href={localePath(locale, trialRules(KNIGHTS_TOUR))} className="self-center px-3 py-2 text-sm font-black underline decoration-1 underline-offset-4 opacity-80 transition before:mr-1.5 before:inline-block before:font-serif before:text-base before:italic before:content-['§'] hover:opacity-100">
             {t.rules}
-          </button>
+          </Link>
           {records.length > 0 && (
             <section className="w-full">
               <h2 className="text-xs font-black opacity-70">{t.best}</h2>
@@ -96,7 +96,6 @@ export default function KnightsTourMenu({ locale, onShow, onPractice }: {
         </div>
       </main>
 
-      <HowToPlay open={helpOpen} onClose={() => setHelpOpen(false)} />
       <SizePicker open={sizeOpen} onClose={() => setSizeOpen(false)} onPick={(n) => { setSizeOpen(false); onPractice(n); }} />
     </KtFrame>
   );
