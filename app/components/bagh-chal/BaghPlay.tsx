@@ -278,7 +278,7 @@ export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghM
 
       <Modal skin="bagh" isOpen={helpOpen} onClose={() => setHelpOpen(false)} title={b.rulesHeading} kicker={b.name}
         icon={RulesToken} band={{ className: 'bg-[#5b6620]', fg: 'text-tile-cream' }}>
-        <RulesStepsPaged rules={b.rules} prev={t.ui.prev} next={t.ui.next} done={t.ui.close} onDone={() => setHelpOpen(false)} />
+        <RulesStepsPaged open={helpOpen} rules={b.rules} prev={t.ui.prev} next={t.ui.next} done={t.ui.close} onDone={() => setHelpOpen(false)} />
       </Modal>
 
       {/* 關掉就留在終局的盤面上看（跟 Wall Go 一樣）；再來一局在圖下面 */}
