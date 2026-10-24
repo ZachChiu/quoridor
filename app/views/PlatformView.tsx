@@ -6,7 +6,7 @@ import PlatformLanguageMenu from '@/components/platform/PlatformLanguageMenu';
 import PlatformContact from '@/components/platform/PlatformContact';
 import HeroPicker from '@/components/platform/HeroPicker';
 import CardRow from '@/components/platform/CardRow';
-import { BRAND } from '@/brand';
+import { brandName } from '@/brand';
 import PlatformMark from '@/components/PlatformMark';
 import { NEWEST, PLAYABLE, SEASONS, gameName, playableFirst, type CatalogGame } from '@/games/catalog';
 import { getMessages } from '@/i18n';
@@ -35,7 +35,7 @@ export default function PlatformView({ locale }: { locale: Locale }) {
     <div className="platform-root min-h-dvh bg-plat-bg font-[family-name:var(--font-app)] text-tile-cream">
       <header className="mx-auto flex max-w-[1360px] items-center justify-between gap-4 p-4">
         {/* 只放骰子 logo、不放平台名（Zach：有 LOGO 了）。跟遊戲首頁左上那顆同一個圖示、同一個位置 */}
-        <Link href={localePath(locale, '/')} aria-label={BRAND} title={BRAND} className="transition hover:brightness-110">
+        <Link href={localePath(locale, '/')} aria-label={brandName(locale)} title={brandName(locale)} className="transition hover:brightness-110">
           <PlatformMark />
         </Link>
         {/* 平台自己的元件（components/platform/），不是 Wall Go 的圓鈕與奶油底 Modal。

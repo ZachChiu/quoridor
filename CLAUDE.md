@@ -36,7 +36,7 @@ zh-TW 不加前綴（`app/(default)/`），en / ja / ko / zh-Hans / th 加前綴
 兩邊的 page 都是薄殼，畫面實作在 `app/views/`。
 
 **2026-10 平台化**：`/` 是《魔鬼的計謀》遊戲平台的首頁，Wall Go 全部搬進 `/wall-go/`（一款遊戲一個資料夾）。
-路徑集中在 `app/i18n/routes.ts`（`wallGo('/rules')`），**不要在元件裡寫死路徑字串**。平台名是 `app/brand.ts` 的 `BRAND`，**還沒定案，佔位字不能上線**。
+路徑集中在 `app/i18n/routes.ts`（`wallGo('/rules')`），**不要在元件裡寫死路徑字串**。平台名**骰子惡魔**（2026-10-25 定案，對應長角的藍骰子 logo）在 `app/brand.ts`：用 `brandName(locale)`，中文讀者看「骰子惡魔／骰子恶魔」、其他語系是「Dice Devil」。
 
 | 路由 | 說明 |
 |---|---|
