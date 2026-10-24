@@ -3,6 +3,7 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import OrderEditor from '@/components/balance-mancala/OrderEditor';
 import { humanSeatsOf, localSeats } from '@/components/balance-mancala/match';
+import { STEP_COUNT } from '@/components/balance-mancala/MancalaRulesSteps';
 import { TEXT } from '@/games/balance-mancala/text';
 import { createGame, sow, seatOfLetter, CELLS, type MancalaState, type Scores } from '@/games/balance-mancala/engine';
 
@@ -59,5 +60,15 @@ describe('座位分配', () => {
     expect(humanSeatsOf({ mode: 'local', seats: 4, humans: 2, difficulty: 'normal' })).toEqual([0, 2]);
     expect(humanSeatsOf({ mode: 'local', seats: 4, humans: 3, difficulty: 'normal' })).toEqual([0, 1, 3]);
     expect(humanSeatsOf({ mode: 'local', seats: 7, humans: 7, difficulty: 'normal' })).toEqual([0, 1, 2, 3, 4, 5, 6]);
+  });
+});
+
+describe('規則的七步', () => {
+  // 圖不分語言、文字分（規則頁與說明彈窗共用）：兩邊靠索引對齊，少一條就會有一張圖沒有字
+  it('每個語系的規則與小標都剛好一步一條', () => {
+    for (const [locale, t] of Object.entries(TEXT)) {
+      expect(t.rules, locale).toHaveLength(STEP_COUNT);
+      expect(t.ruleTitles, locale).toHaveLength(STEP_COUNT);
+    }
   });
 });

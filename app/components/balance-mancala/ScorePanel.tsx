@@ -17,7 +17,7 @@ const pct = (v: number) => `${(Math.min(v, SCALE) / SCALE) * 100}%`;
  * 不在畫面上寫「你」）。列是切角的（.mcl-cut），框也要切角 —— clip-path 會把 box-shadow／outline 切掉，
  * 所以框是外面兩層：座位色一層、布色一層（那道縫），列本身照舊。
  */
-export default function ScorePanel({ scores, names, turn, gain, colourShort, finalLabel, mine = null }: {
+export default function ScorePanel({ scores, names, turn, gain, colourShort, finalLabel, mine = null, compact = false }: {
   scores: Scores[];
   names: string[];
   turn: Seat | null;
@@ -26,6 +26,8 @@ export default function ScorePanel({ scores, names, turn, gain, colourShort, fin
   finalLabel: string;
   /** 這台裝置上的人坐哪（連線）；null＝沒有「自己」（本機對戰、跟 AI 玩時名字已經寫「你」） */
   mine?: Seat | null;
+  /** 不寫名字（規則頁的小圖：子上已經印了座位字母，窄的圖裡把寬度留給分數條）；讀屏照舊念名字 */
+  compact?: boolean;
 }) {
   return (
     <div className="flex w-full flex-col gap-1">
@@ -38,7 +40,7 @@ export default function ScorePanel({ scores, names, turn, gain, colourShort, fin
           <div key={seat} className={`mcl-cut flex items-center gap-2 px-2 py-1 ${turn === seat ? 'bg-[#201211]/[0.08]' : ''}`}
             aria-label={`${names[seat]}: ${COLOURS.map((c) => `${colourShort[c]} ${sc[c]}`).join(', ')}; ${finalLabel} ${f}`}>
             <PieceDisc seat={seat} size="1.65rem" />
-            <p className="w-[4.25rem] shrink-0 truncate text-xs font-black">{names[seat]}</p>
+            {!compact && <p className="w-[4.25rem] shrink-0 truncate text-xs font-black">{names[seat]}</p>}
             <div className="flex min-w-0 flex-1 flex-col gap-[3px]" aria-hidden="true">
               {COLOURS.map((c) => {
                 const v = sc[c];

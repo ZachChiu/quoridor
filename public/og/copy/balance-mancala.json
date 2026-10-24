@@ -1,0 +1,49 @@
+{
+  "zh-TW": {
+    "kicker": "骰子惡魔",
+    "title": [
+      "平衡播棋",
+      "Balance Mancala"
+    ],
+    "titleSize": 57
+  },
+  "en": {
+    "kicker": "Dice Devil",
+    "title": [
+      "Balance Mancala"
+    ],
+    "titleSize": 57
+  },
+  "ja": {
+    "kicker": "Dice Devil",
+    "title": [
+      "バランス・マンカラ",
+      "Balance Mancala"
+    ],
+    "titleSize": 56
+  },
+  "ko": {
+    "kicker": "Dice Devil",
+    "title": [
+      "균형의 만칼라",
+      "Balance Mancala"
+    ],
+    "titleSize": 57
+  },
+  "zh-Hans": {
+    "kicker": "骰子恶魔",
+    "title": [
+      "平衡播棋",
+      "Balance Mancala"
+    ],
+    "titleSize": 57
+  },
+  "th": {
+    "kicker": "Dice Devil",
+    "title": [
+      "แมนคาลาสมดุล",
+      "Balance Mancala"
+    ],
+    "titleSize": 57
+  }
+}

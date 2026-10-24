@@ -24,7 +24,12 @@ import { playIdle } from './idleMotion';
 const R = 37;
 const D = 15;
 const rad = (i: number) => ((-90 + (i * 360) / CELLS) * Math.PI) / 180;
-const pos = (i: number, r: number) => ({ left: `${50 + r * Math.cos(rad(i))}%`, top: `${50 + r * Math.sin(rad(i))}%` });
+/**
+ * 座標寫成字串前先取到小數三位：Math.cos／sin 在 Node 與各家瀏覽器差在最後一位（實測 21.0722351486829 vs 21.072235148682896），
+ * 規則頁的圓盤是伺服器先畫好的，不取整的話每一格都對不上（hydration mismatch）。千分之一個百分比在畫面上看不出來。
+ */
+const fx = (v: number) => v.toFixed(3);
+const pos = (i: number, r: number) => ({ left: `${fx(50 + r * Math.cos(rad(i)))}%`, top: `${fx(50 + r * Math.sin(rad(i)))}%` });
 
 /** 種子落地的那一刻（飛行時間的 85%）：坑裡真的那顆、得分標記、秤盤下沉、音效都對著這一刻 */
 export const LAND = 0.85;
@@ -177,7 +182,7 @@ export default function MancalaRing({
           return (
             <path key={i} d="M -0.55 -0.75 L 0.45 0 L -0.55 0.75" fill="none" stroke={BRASS} strokeWidth={0.42}
               strokeLinecap="round" strokeLinejoin="round" strokeOpacity={0.85}
-              transform={`translate(${50 + R * Math.cos(a)} ${50 + R * Math.sin(a)}) rotate(${deg})`} />
+              transform={`translate(${fx(50 + R * Math.cos(a))} ${fx(50 + R * Math.sin(a))}) rotate(${fx(deg)})`} />
           );
         })}
       </svg>
