@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="平衡播棋 Balance Mancala">
+  <!-- 顏色：balance-mancala/palette.ts（木頭、黃銅、布取樣）；三顆子是站上的玩家色 player-A／B／C（同盤子） -->
+  <circle cx="32" cy="32" r="31" fill="#362522"/>
+  <circle cx="32" cy="32" r="24.5" fill="none" stroke="#af9b71" stroke-width="3"/>
+  <g stroke="#fef2ec" stroke-width="2.4">
+    <circle cx="32" cy="20.5" r="8" fill="#cd4642"/>
+    <circle cx="21.5" cy="38.5" r="8" fill="#2478b7"/>
+    <circle cx="42.5" cy="38.5" r="8" fill="#0e8142"/>
+  </g>
+</svg>
