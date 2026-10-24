@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { getMessages } from './index';
-import { BRAND } from '@/brand';
+import { brandName } from '@/brand';
 import { LOCALES, DEFAULT_LOCALE, HREFLANG, OG_LOCALE, localePath, type Locale } from './locales';
 
 const SITE = process.env.SITE_URL || 'https://quoridorgame.com';
@@ -101,7 +101,7 @@ function openGraph(locale: Locale, path: PagePath) {
       url: SITE + localePath(locale, path),
       title: c.ogTitle,
       description: c.ogDescription,
-      siteName: BRAND,
+      siteName: brandName(locale),
       images: img.og,
     },
     twitter: {
@@ -154,8 +154,8 @@ function gameIcons(path: string): Pick<Metadata, 'icons'> {
 }
 
 /** Wall Go 以外的遊戲：根 layout 的標題格式是「… | 牆壁圍棋 Wall Go」，改接平台名 */
-function otherGameTitle(path: PagePath, title: string | undefined): Metadata {
-  return path.startsWith('/bagh-chal') && title ? { title: { absolute: `${title} | ${BRAND}` } } : {};
+function otherGameTitle(locale: Locale, path: PagePath, title: string | undefined): Metadata {
+  return path.startsWith('/bagh-chal') && title ? { title: { absolute: `${title} | ${brandName(locale)}` } } : {};
 }
 
 /**
@@ -183,10 +183,10 @@ export function localeMetadata(locale: Locale, path: PagePath): Metadata {
     ...openGraph(locale, path),
     // 首頁在各語系用自己的完整標題，不套 template：
     // 平台首頁是「節目遊戲整理｜平台名」，Wall Go 首頁維持原本的標題
-    ...(path === '/' ? { title: { absolute: `${t.platform.metaTitle} | ${BRAND}` } } : {}),
+    ...(path === '/' ? { title: { absolute: `${t.platform.metaTitle} | ${brandName(locale)}` } } : {}),
     ...(path === '/wall-go' ? { title: { absolute: t.meta.titleDefault } } : {}),
     // 其他遊戲不套 Wall Go 的標題格式（「… | 牆壁圍棋 Wall Go」），接平台名
-    ...otherGameTitle(path, c.title),
+    ...otherGameTitle(locale, path, c.title),
     ...gameIcons(path),
     ...(locale === DEFAULT_LOCALE ? {} : {}),
   };
@@ -214,7 +214,7 @@ export function playMetadata(locale: Locale, path: PagePath): Metadata {
   const title = copy(locale, path).title;
   return {
     title,
-    ...otherGameTitle(path, title),
+    ...otherGameTitle(locale, path, title),
     ...gameIcons(path),
     robots: { index: false, follow: true },
     ...openGraph(locale, path),
@@ -228,7 +228,7 @@ export function playMetadata(locale: Locale, path: PagePath): Metadata {
 export function trialGameMetadata(locale: Locale, path: string, title: string, description: string): Metadata {
   const url = ogImageUrl(locale, '/');
   return {
-    title: { absolute: `${title} | ${BRAND}` },
+    title: { absolute: `${title} | ${brandName(locale)}` },
     description,
     ...gameIcons(path),
     robots: { index: false, follow: true },
@@ -238,7 +238,7 @@ export function trialGameMetadata(locale: Locale, path: string, title: string, d
       url: SITE + localePath(locale, path),
       title,
       description,
-      siteName: BRAND,
+      siteName: brandName(locale),
       images: [{ url, ...OG_SIZE, alt: title }],
     },
     twitter: { card: 'summary_large_image', title, description, images: [url] },

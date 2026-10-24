@@ -324,8 +324,15 @@ export async function sendFeedback(data: Feedback, uid: string): Promise<void> {
     uid,
     createdAt: Date.now(),
     locale: typeof navigator !== 'undefined' ? navigator.language : 'unknown',
+    page: currentPage(),
   });
 }
+
+/**
+ * 從哪一頁送的（例如 `/bagh-chal/solo/`、`/en/wall-go/`、平台首頁是 `/`）：平台有好幾款遊戲之後，
+ * 光看留言分不出是在哪一款寫的（10/25 Zach 問）。只取路徑 —— hash 裡有房號、query 可能有追蹤參數，都不帶
+ */
+const currentPage = () => (typeof location !== 'undefined' ? location.pathname.slice(0, 100) : 'unknown');
 
 /**
  * 首頁「聯絡我們」。跟 sendFeedback 同一條路徑、同一套規則，
@@ -342,5 +349,6 @@ export async function sendContact(data: ContactMessage, uid: string): Promise<vo
     uid,
     createdAt: Date.now(),
     locale: typeof navigator !== 'undefined' ? navigator.language : 'unknown',
+    page: currentPage(),
   });
 }

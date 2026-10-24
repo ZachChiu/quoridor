@@ -161,7 +161,7 @@ const DEFAULT_CLASSES: ShareClasses = {
 };
 
 export function ShareResultModal({
-  isOpen, onClose, title, card, onRestart, restartLabel, classes, srText, frameClassName = 'rounded-2xl',
+  isOpen, onClose, title, card, onRestart, restartLabel, classes, srText, frameClassName = 'rounded-2xl', onFeedback,
 }: {
   isOpen: boolean;
   onClose: () => void;
@@ -175,6 +175,8 @@ export function ShareResultModal({
   srText?: string;
   /** 預覽圖的外框（圓角、細框），各遊戲自己決定 */
   frameClassName?: string;
+  /** 給了就在最底一行多一個「給點意見」（跟 Wall Go 的結算同一個位置）；打開哪個視窗由各遊戲決定 */
+  onFeedback?: () => void;
 }) {
   const g = useGameText();
   const t = useMessages();
@@ -216,7 +218,10 @@ export function ShareResultModal({
             ? <button type="button" className={`${btn} ${c.primary}`} onClick={onRestart}>{restartLabel}</button>
             : <button type="button" className={`${btn} ${c.primary}`} onClick={onShare} disabled={!ready}>{shareLabel}</button>}
         </div>
-        <p className="w-0 min-w-full px-1 text-xs font-bold text-white/70 short:col-start-2 short:row-start-4">{g.share.holdToSave}</p>
+        <div className="flex w-0 min-w-full flex-wrap items-center justify-between gap-x-3 gap-y-1 px-1 text-xs font-bold text-white/70 short:col-start-2 short:row-start-4">
+          <span>{g.share.holdToSave}</span>
+          {onFeedback && <button type="button" onClick={onFeedback} className="shrink-0 underline-offset-2 hover:text-white hover:underline">{g.champion.feedback}</button>}
+        </div>
       </div>
       {srText && <p className="sr-only">{srText}</p>}
     </Modal>

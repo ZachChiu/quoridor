@@ -18,8 +18,10 @@ export default function BaghChalView({ locale }: { locale: Locale }) {
     <BaghFrame variant="hub">
       <BaghHeader locale={locale} />
       <div className="flex flex-1 justify-center gap-[clamp(2rem,5vw,4.5rem)] px-4 pb-[max(1rem,3svh)] pt-1">
+        {/* 概念圖：老虎追羊（10/24 Zach：「只是個概念圖、老虎追羊就蠻適合、它不是棋盤本身」）——
+            平台卡片那張重新排成正方形，跟平台上看到的同一張畫 */}
         {/* eslint-disable-next-line @next/next/no-img-element -- 靜態匯出，已是 webp */}
-        <img src="/games/bagh-chal/board-art.webp" alt="" width={760} height={760}
+        <img src="/games/bagh-chal/chase.webp" alt="" width={1000} height={1000}
           className="my-auto hidden aspect-square w-[min(500px,64svh,40vw)] rounded-[24px] lg:block" />
         <main className="my-auto flex w-full max-w-[400px] flex-col items-center">
           <h1 className="flex flex-col items-center text-center">

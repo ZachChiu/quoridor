@@ -2,7 +2,7 @@ import { getMessages, siteName } from './index';
 import { FAQ_TEXT } from './content/faq';
 import { localePath, type Locale } from './locales';
 import { wallGo } from './routes';
-import { BRAND } from '@/brand';
+import { brandName } from '@/brand';
 import { ogImageUrl, OG_SIZE } from './metadata';
 
 const SITE = process.env.SITE_URL || 'https://quoridorgame.com';
@@ -59,11 +59,11 @@ function seriesNode(locale: Locale) {
   };
 }
 
-function organizationNode() {
+function organizationNode(locale: Locale) {
   return {
     '@type': 'Organization',
     '@id': id('organization'),
-    name: BRAND,
+    name: brandName(locale),
     url: SITE,
     logo: { '@type': 'ImageObject', url: `${SITE}/icon-192.png`, width: 192, height: 192 },
   };
@@ -74,7 +74,7 @@ function websiteNode(locale: Locale) {
     '@type': 'WebSite',
     '@id': id('website'),
     url: SITE,
-    name: BRAND,
+    name: brandName(locale),
     publisher: { '@id': id('organization') },
     inLanguage: locale,
   };
@@ -137,7 +137,7 @@ export function pageGraph(locale: Locale, kind: PageKind) {
   const path = kind === 'platform' ? '/' : kind === 'home' ? wallGo() : wallGo(`/${kind}`);
   const pageUrl = SITE + localePath(locale, path);
 
-  const base = [organizationNode(), websiteNode(locale), seriesNode(locale), gameNode(locale)];
+  const base = [organizationNode(locale), websiteNode(locale), seriesNode(locale), gameNode(locale)];
 
   if (kind === 'platform') {
     // 平台首頁：節目遊戲的總覽。目前能玩的只有 Wall Go，用 hasPart 指過去
@@ -149,7 +149,7 @@ export function pageGraph(locale: Locale, kind: PageKind) {
           '@type': 'CollectionPage',
           '@id': `${pageUrl}#webpage`,
           url: pageUrl,
-          name: `${t.platform.metaTitle} | ${BRAND}`,
+          name: `${t.platform.metaTitle} | ${brandName(locale)}`,
           description: t.platform.metaDescription,
           isPartOf: { '@id': id('website') },
           about: { '@id': id('series') },

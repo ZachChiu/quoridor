@@ -2,6 +2,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { LuCircleHelp, LuHouse, LuRotateCcw, LuUndo2, LuVolume2, LuVolumeX } from 'react-icons/lu';
 import Modal from '@/components/Modal';
+import FeedbackModal from '@/components/FeedbackModal';
+import { useUser } from '@/contexts/UserContext';
+import { sendFeedback } from '@/utils/gameService';
 import { ShareResultModal, useShareCard } from '@/components/ShareResultModal';
 import { fmt as fill } from '@/i18n/content/game';
 import { useRouter } from 'next/navigation';
@@ -10,13 +13,13 @@ import { useSound } from '@/hook/useSound';
 import { playBagh } from './sounds';
 import { localePath, type Locale } from '@/i18n/locales';
 import { BAGH_CHAL, baghChal } from '@/i18n/routes';
-import { createGame, legalMoves, applyMove, undo, GOATS, type BaghState, type Point, type Side, type Move } from '@/games/bagh-chal/engine';
+import { createGame, legalMoves, applyMove, undo, encodeMoves, GOATS, type BaghState, type Point, type Side, type Move } from '@/games/bagh-chal/engine';
 import { chooseMove, type Difficulty } from '@/games/bagh-chal/ai';
 import { BaghBoard } from './BaghBoard';
 import { GoatToken, RulesToken, TigerToken } from './tokens';
 import { RulesStepsPaged } from './BaghRulesSteps';
 import BaghFrame from './BaghFrame';
-import { BAGH_PRIMARY, BAGH_ROUND, BAGH_SECONDARY } from './styles';
+import { BAGH_CORNER, BAGH_PRIMARY, BAGH_ROUND, BAGH_SECONDARY } from './styles';
 import BaghWordmark from './BaghWordmark';
 import { labelled } from './BaghUi';
 import { BAGH_CARD_IMAGES, drawBaghCard } from './shareCard';
@@ -50,6 +53,8 @@ export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghM
   const online = mode.kind === 'online';
   const [selected, setSelected] = useState<Point | null>(null);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const { ensureUser } = useUser();
 
   const aiSide: Side | null = mode.kind === 'ai' ? (mode.human === 'tiger' ? 'goat' : 'tiger') : null;
   const aiTurn = !!aiSide && !game.winner && game.turn === aiSide;
@@ -277,7 +282,9 @@ export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghM
       </Modal>
 
       {/* 關掉就留在終局的盤面上看（跟 Wall Go 一樣）；再來一局在圖下面 */}
+      {/* 給點意見（10/25 Zach：結算怎麼沒有聯絡我們）：跟 Wall Go 一樣先關掉結算再開回饋，附上這局的走法（record） */}
       <ShareResultModal isOpen={endOpen} onClose={() => setClosedFor(game)} title={result.title} card={share}
+        onFeedback={() => { setClosedFor(game); setFeedbackOpen(true); }}
         onRestart={again} restartLabel={b.again} srText={`${result.title} ${result.body} ${card.text.capturedLabel} · ${card.text.moves}`}
         frameClassName=""
         classes={{
@@ -285,6 +292,20 @@ export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghM
           secondary: 'bagh-line bg-[#f2e4c4] text-tile-ink hover:bg-[#ead8ad]',
           button: 'font-black', placeholder: 'bg-[#e3a43c]/30',
         }} />
+      <FeedbackModal isOpen={feedbackOpen} onClose={() => setFeedbackOpen(false)} theme={BAGH_CORNER} placeholder={b.feedbackPlaceholder}
+        // 對局回饋的評分是必選（視窗沒選不給送），這裡的 null 只是型別上的可能
+        onSubmit={async (rating, message, contact) => rating === null ? undefined :
+          sendFeedback({
+            rating, message, contact: contact || undefined,
+            record: encodeMoves(game.history),
+            mode: mode.kind === 'online' ? 'online' : mode.kind === 'ai' ? 'ai' : 'local',
+            playersNum: 2,
+            result: result.title.slice(0, 40),
+            // 尼泊爾虎棋沒有投降：分出勝負就是照規則下完
+            ended: game.winner ? 'natural' : 'unfinished',
+            ua: typeof navigator !== 'undefined' ? navigator.userAgent.slice(0, 400) : '',
+            viewport: typeof window !== 'undefined' ? `${window.innerWidth}x${window.innerHeight}@${window.devicePixelRatio}` : '',
+          }, await ensureUser())} />
     </div>
     </BaghFrame>
   );

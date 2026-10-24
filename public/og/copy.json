@@ -1,7 +1,7 @@
 {
   "zh-TW": {
     "platform": {
-      "kicker": "［平台名］",
+      "kicker": "骰子惡魔",
       "title": [
         "《魔鬼的計謀》",
         "遊戲"
@@ -56,7 +56,7 @@
   },
   "en": {
     "platform": {
-      "kicker": "［平台名］",
+      "kicker": "Dice Devil",
       "title": [
         "The Devil's Plan",
         "games"
@@ -110,7 +110,7 @@
   },
   "ja": {
     "platform": {
-      "kicker": "［平台名］",
+      "kicker": "Dice Devil",
       "title": [
         "『悪魔の計略』の",
         "ゲーム"
@@ -165,7 +165,7 @@
   },
   "ko": {
     "platform": {
-      "kicker": "［平台名］",
+      "kicker": "Dice Devil",
       "title": [
         "『데블스 플랜』",
         "게임"
@@ -220,7 +220,7 @@
   },
   "zh-Hans": {
     "platform": {
-      "kicker": "［平台名］",
+      "kicker": "骰子恶魔",
       "title": [
         "《魔鬼的计谋》",
         "游戏"
@@ -275,7 +275,7 @@
   },
   "th": {
     "platform": {
-      "kicker": "［平台名］",
+      "kicker": "Dice Devil",
       "title": [
         "เกมใน",
         "The Devil's Plan"
