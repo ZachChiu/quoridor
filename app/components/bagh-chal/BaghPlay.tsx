@@ -16,7 +16,7 @@ import { BaghBoard } from './BaghBoard';
 import { GoatToken, RulesToken, TigerToken } from './tokens';
 import { RulesStepsPaged } from './BaghRulesSteps';
 import BaghFrame from './BaghFrame';
-import { BAGH_ROUND, BAGH_SECONDARY } from './styles';
+import { BAGH_PRIMARY, BAGH_ROUND, BAGH_SECONDARY } from './styles';
 import BaghWordmark from './BaghWordmark';
 import { labelled } from './BaghUi';
 import { BAGH_CARD_IMAGES, drawBaghCard } from './shareCard';
@@ -165,6 +165,7 @@ export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghM
     campaign: 'bagh-chal',
     fonts: [{ font: `900 40px ${font}`, text: card.text.title + card.text.name }, { font: `700 40px ${font}`, text: card.text.kicker + card.text.from }],
     images: BAGH_CARD_IMAGES,
+    layouts: ['story'],
   });
 
   // 虎羊棋自己的按鈕（BaghUi）：紙色底、橄欖綠外圈的圓鈕，深墨框的寬鈕 —— 不沿用 Wall Go 的灰色無框鈕
@@ -199,6 +200,14 @@ export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghM
     </p>
   );
 
+  // 結算關掉之後留在終局的盤面上看，狀態那一行換成叫回結算的鈕（Zach 10/24：「結尾 Modal 點掉以後沒有地方可以點回來」）
+  const reopen = !!game.winner && !endOpen && (
+    <button type="button" onClick={() => setClosedFor(null)} className={`${BAGH_PRIMARY} h-12 w-full px-4 text-sm`}>
+      {game.winner === 'tiger' ? <TigerToken className="shrink-0 text-[26px]" /> : game.winner === 'goat' ? <GoatToken className="shrink-0 text-[26px]" /> : null}
+      {result.title} · {g.champion.seeResult}
+    </button>
+  );
+
   const soundButton = (
     <button type="button" onClick={() => setSoundPrefs({ sfx: !soundPrefs.sfx })} aria-pressed={soundPrefs.sfx} aria-label={g.sound.button} className={round}>
       {soundPrefs.sfx ? <LuVolume2 aria-hidden="true" /> : <LuVolumeX aria-hidden="true" />}
@@ -220,7 +229,7 @@ export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghM
       </div>
       <div className="mt-4 flex w-full max-w-[520px] flex-col items-center gap-2 lg:hidden">
         {statusCards}
-        {mobileLine}
+        {reopen || mobileLine}
       </div>
 
       {/* 手機：棋盤在剩下的高度裡置中，不貼在狀態列下面、底下空一大塊 */}
@@ -250,7 +259,7 @@ export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghM
           {soundButton}
         </div>
         {statusCards}
-        {statusLine}
+        {reopen || statusLine}
         <div className="grid grid-cols-2 gap-2.5">
           {!online && <>
             <button type="button" onClick={doUndo} disabled={!canUndo} className={wide}><LuUndo2 aria-hidden="true" />{b.undo}</button>
@@ -273,7 +282,6 @@ export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghM
         classes={{
           primary: 'bagh-line-on bg-[#5b6620] text-[#fbf4e1] hover:bg-[#4d5719]',
           secondary: 'bagh-line bg-[#f2e4c4] text-tile-ink hover:bg-[#ead8ad]',
-          toggle: 'bg-[#fbf4e1]/15', toggleOn: 'bg-[#e3a43c] text-tile-ink', toggleOff: 'text-[#fbf4e1]/75 hover:text-[#fbf4e1]',
           button: 'font-black', placeholder: 'bg-[#e3a43c]/30',
         }} />
     </div>

@@ -17,6 +17,8 @@ import { CARD_SIZE, renderCard, type CardLayout, type ShareAssets, type ShareDra
 
 const SITE = process.env.SITE_URL || 'https://quoridorgame.com';
 
+/** 每款預設三種比例都給；只給一種就不顯示切換 */
+const ALL_LAYOUTS: CardLayout[] = ['story', 'poster', 'square'];
 const LAYOUTS: { id: CardLayout; label: string }[] = [
   { id: 'story', label: '9:16' },
   { id: 'poster', label: '4:5' },
@@ -38,10 +40,12 @@ export type ShareCardOptions = {
   fonts?: { font: string; text: string }[];
   /** 畫之前要先載好的圖（public/ 底下的路徑），照順序交給 draw 的 assets.images */
   images?: string[];
+  /** 這款給哪幾種比例，第一個是預設；只給一種就拿掉比例切換（尼泊爾虎棋只留 9:16，Zach 10/24） */
+  layouts?: CardLayout[];
 };
 
-export function useShareCard({ isOpen, draw, contentKey, fileName, homePath, campaign, fonts = [], images = [] }: ShareCardOptions) {
-  const [layout, setLayout] = useState<CardLayout>('story');
+export function useShareCard({ isOpen, draw, contentKey, fileName, homePath, campaign, fonts = [], images = [], layouts = ALL_LAYOUTS }: ShareCardOptions) {
+  const [layout, setLayout] = useState<CardLayout>(layouts[0]);
   // file：存檔、分享用的原尺寸；url：畫面上的預覽（照預覽框的大小另外畫一張）
   const [img, setImg] = useState<{ url: string; file: File; key: string } | null>(null);
   const box = useRef<HTMLDivElement>(null);
@@ -112,7 +116,7 @@ export function useShareCard({ isOpen, draw, contentKey, fileName, homePath, cam
     }
   };
 
-  return { layout, setLayout, box, ready, canShareFile, save, shareFile };
+  return { layout, setLayout, layouts, box, ready, canShareFile, save, shareFile };
 }
 
 /*
@@ -170,7 +174,7 @@ export function ShareResultModal({
   const g = useGameText();
   const t = useMessages();
   const c = { ...DEFAULT_CLASSES, ...classes };
-  const { layout, setLayout, box, ready, canShareFile, save, shareFile } = card;
+  const { layout, setLayout, layouts, box, ready, canShareFile, save, shareFile } = card;
   const shareLabel = canShareFile ? g.share.shareImage : g.share.save;
   const onShare = canShareFile ? () => shareFile(title) : save;
   const ratio = layout === 'story' ? 'aspect-[9/16]' : layout === 'square' ? 'aspect-square' : 'aspect-[4/5]';
@@ -180,14 +184,14 @@ export function ShareResultModal({
     <Modal isOpen={isOpen} onClose={onClose} title={title} band={{ fg: '' }} bare
       backdropClassName="bg-black/85 backdrop-blur-sm" panelClassName="w-fit max-w-full">
       <div className="grid justify-items-center gap-3 short:grid-cols-[auto_13rem] short:grid-rows-[1fr_auto_auto_auto_1fr] short:gap-x-5">
-        <div role="radiogroup" aria-label={g.share.cardFormat} className={`flex gap-1 rounded-full p-1 short:col-start-2 short:row-start-2 ${c.toggle}`}>
-          {LAYOUTS.map(({ id, label }) => (
+        {layouts.length > 1 && <div role="radiogroup" aria-label={g.share.cardFormat} className={`flex gap-1 rounded-full p-1 short:col-start-2 short:row-start-2 ${c.toggle}`}>
+          {LAYOUTS.filter(({ id }) => layouts.includes(id)).map(({ id, label }) => (
             <button key={id} type="button" role="radio" aria-checked={layout === id} onClick={() => setLayout(id)}
               className={`rounded-full px-4 py-1.5 text-sm font-black tabular-nums transition ${layout === id ? c.toggleOn : c.toggleOff}`}>
               {label}
             </button>
           ))}
-        </div>
+        </div>}
         <div className="relative short:col-start-1 short:row-span-5 short:row-start-1">
           <div ref={box} className={`relative shrink-0 overflow-hidden ${ratio} ${SIZE[layout]} ${frameClassName}`}>
             {ready
