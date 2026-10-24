@@ -1,0 +1,50 @@
+{
+  "zh-TW": {
+    "kicker": "魔鬼的計謀：死亡密室",
+    "title": [
+      "Bagh Chal",
+      "尼泊爾虎棋"
+    ],
+    "titleSize": 92
+  },
+  "en": {
+    "kicker": "The Devil's Plan: Death Room",
+    "title": [
+      "Bagh Chal",
+      "Tigers and Goats"
+    ],
+    "titleSize": 56
+  },
+  "ja": {
+    "kicker": "悪魔の計略 ～デビルズ・プラン～",
+    "title": [
+      "Bagh Chal",
+      "トラとヤギ"
+    ],
+    "titleSize": 92
+  },
+  "ko": {
+    "kicker": "데블스 플랜: 데스룸",
+    "title": [
+      "Bagh Chal",
+      "바그찰"
+    ],
+    "titleSize": 92
+  },
+  "zh-Hans": {
+    "kicker": "魔鬼的计谋：死亡密室",
+    "title": [
+      "Bagh Chal",
+      "尼泊尔虎棋"
+    ],
+    "titleSize": 92
+  },
+  "th": {
+    "kicker": "The Devil's Plan: Death Room",
+    "title": [
+      "Bagh Chal",
+      "เสือกับแพะ"
+    ],
+    "titleSize": 86
+  }
+}
