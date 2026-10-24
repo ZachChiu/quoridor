@@ -214,7 +214,7 @@ nudge { by, at }          最近一次「催一下」
     動作（`idleMotion.ts`）：落子壓一下布、旁邊的子跟著滑；閒置動作只在一般模式、只動等待那一方 —— **盲棋沒有閒置動作**（只動一方就等於告訴你哪些是對方的子）。
     邀請朋友（10/24）：共用的 `turnRooms`，`s0` 黑、`s1` 白，setup 是 `blind`／`classic`，moves 是 engine 的 `encodeMoves`（`games/blind-gomoku/online.ts`）；首頁的彈窗選玩法與自己執黑或執白 → `/blind-gomoku/online#new=blind-black`。對局沿用 `GomokuPlay`（只有輪到自己能下、沒有悔棋與重來、再來一局＝開新房）；盲棋兩邊都只畫顏色、各自選色（沒有 AI 的跟色）；畫面上寫黑方／白方、不寫「你」「對方」，自己那方是狀態底下實線縫邊的那塊小布。連線中、等人、失敗是 `GomokuOnline` 裡自己的一小塊包袱巾（縫線往前縫、兩塊布縫在一起、一角脫線）。這款裡面換頁都不播轉場；結算只留 9:16。
 
-  - 騎士巡遊（`feat/game-knights-tour`）：原件是歐拉 1759 的數學版畫、18 世紀紅粉筆素描；最外緣銅版雙線框（`.kt-frame`）；主視覺 `plate.webp`，首頁 Fig. 1 是歐拉的走法（`euler.ts`，有測試）。
+  - 騎士巡遊（`feat/game-knights-tour`）：原件是歐拉 1759 的數學版畫、18 世紀紅粉筆素描；最外緣銅版雙線框（`.kt-frame`）；主視覺 `plate.webp`，首頁 Fig. 1 是歐拉的走法（`euler.ts`，有測試）。favicon 是紙上一匹紅粉筆的騎士、外圈一道墨線（`public/icons/knights-tour.*`）。
     聲音是歐拉那個年代的書房（`knights-tour/sounds.ts`，配方寫在檔頭）：騎士每跳一步彈一聲大鍵琴、音高看落在第幾列（D 大調，整條路就是一段旋律），點錯是鵝毛筆刮紙、悔棋是擦紅粉筆、重來是翻一頁紙，走完琶音、封閉巡遊再加一段終止式顫音；聲音開關在對局右上（手機）／標題旁（桌機）。
     騎士沿「日」字的弧線跳、紅粉筆跟著畫過去、走完步數照順序念一遍、閒著會望向落點（`motion.ts`）；結算就是分享圖（`shareCard.ts`：一張銅版圖版，走完的棋盤當 Fig.，節目挑戰三關都畫、寫用時；**只有 9:16**，10/24 Zach），右上角聯絡／語言是 `styles.ts` 的 `KT_CORNER`。
     對局左上的房子回這款的選單（換 hash，不播轉場；從選單進來的是 `history.back()`，直接開 `#show`／`#practice-N` 的是 `replaceState`），只有首頁左上的骰子去平台。不做連線版（一個人解的謎題，10/24 Zach）。
