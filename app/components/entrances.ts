@@ -34,7 +34,7 @@ const LOADERS: Record<string, () => Promise<{ default: EntranceScene }>> = {
 
   // 騎士巡邏（feat/game-knights-tour 打開這一行）
 
-  // 均衡曼卡拉（feat/game-balance-mancala 打開這一行）
+  'balance-mancala': () => import('./balance-mancala/Entrance'),
 };
 
 const ready = new Map<string, EntranceScene>();

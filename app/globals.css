@@ -644,3 +644,69 @@ html:has(.gmk-root), body:has(.gmk-root) { background: #e4d6bb; }
 /* ▸ 時間拍賣（feat/game-time-auction） */
 
 /* ▸ 均衡曼卡拉（feat/game-balance-mancala） */
+/* 均衡曼卡拉（MancalaFrame）：一塊阿坎（今迦納）的 Adinkra 印花布。.mcl-frame 是蓋了印的布邊 —— 兩側各兩道梳子畫的細線
+   （nwomu），中間一排印章：上下寶螺殼（Nsirewa）、左右曲折（Nkyimkyim）、四角連在一起的心（Akoma ntoaso）。
+   符號摳自 Rattray 1927 的圖版（公有領域），做成 3 倍的點陣圖 public/games/balance-mancala/frame.png（尺寸與做法見 MancalaFrame.tsx）。
+   唯一的裝飾，只有這一層。邊段 round 重複，任何長度都是整數個印章；梳線在四角交叉（布上的格線本來就是交叉的）。
+   副字色換成羚羊砝碼的青銅 #5e4b3f（布上 5.7:1）。顏色見 components/balance-mancala/palette.ts。 */
+html:has(.mcl-root), body:has(.mcl-root) { background: #ebd2cb; }
+html:has(.mcl-root) { --ink-soft: #5e4b3f; }
+.mcl-frame {
+  border: var(--mcl-frame, 28px) solid #201211;
+  border-image: url('/games/balance-mancala/frame.png') 84 / var(--mcl-frame, 28px) round;
+}
+@media (max-width: 640px) { .mcl-frame { --mcl-frame: 20px; } }
+
+/* 均衡曼卡拉的介面零件：照阿坎的東西做 —— 主要動作是黃銅砝碼的牌子（黃銅底、四角切角，像鑄出來的金屬牌）；
+   次要動作是一條印花布，上下各兩道梳子畫的細線（nwomu，布上隔開方格的線），左右不封；難度用小塊的黃銅砝碼（一到三塊；
+   寶螺殼印章試過，縮小後像鍵盤的 ⌘）；
+   連結底下兩道線。不疊花紋：裝飾仍只有最外緣的布邊。顏色同 components/balance-mancala/palette.ts。 */
+.mcl-plaque {
+  background: #af9b71; color: #201211;
+  clip-path: polygon(7px 0, calc(100% - 7px) 0, 100% 7px, 100% calc(100% - 7px), calc(100% - 7px) 100%, 7px 100%, 0 calc(100% - 7px), 0 7px);
+  box-shadow: inset 0 0 0 2px rgb(32 18 17 / 0.28);
+  transition: filter 0.15s;
+}
+@media (pointer: fine) { .mcl-plaque:hover:not(:disabled) { filter: brightness(1.06); } }
+.mcl-plaque.is-small { clip-path: polygon(4px 0, calc(100% - 4px) 0, 100% 4px, 100% calc(100% - 4px), calc(100% - 4px) 100%, 4px 100%, 0 calc(100% - 4px), 0 4px); }
+.mcl-cut { clip-path: polygon(5px 0, calc(100% - 5px) 0, 100% 5px, 100% calc(100% - 5px), calc(100% - 5px) 100%, 5px 100%, 0 calc(100% - 5px), 0 5px); }
+.mcl-cloth {
+  --comb: rgb(32 18 17 / 0.55);
+  background:
+    linear-gradient(var(--comb) 0 0) left 0 top 3px / 100% 1px no-repeat,
+    linear-gradient(var(--comb) 0 0) left 0 top 6px / 100% 1px no-repeat,
+    linear-gradient(var(--comb) 0 0) left 0 bottom 3px / 100% 1px no-repeat,
+    linear-gradient(var(--comb) 0 0) left 0 bottom 6px / 100% 1px no-repeat,
+    #fef2ec;
+  color: #201211; transition: background-color 0.15s;
+}
+@media (pointer: fine) { .mcl-cloth:hover:not(:disabled) { --comb: rgb(32 18 17 / 0.85); } }
+/* 小塊黃銅砝碼（難度的級數）：深一階的黃銅，疊在淺布上才看得清楚（對比 4.4:1） */
+.mcl-weight { display: inline-block; width: 10px; height: 13px; background: #856f4c;
+  clip-path: polygon(2.5px 0, calc(100% - 2.5px) 0, 100% 2.5px, 100% calc(100% - 2.5px), calc(100% - 2.5px) 100%, 2.5px 100%, 0 calc(100% - 2.5px), 0 2.5px); }
+.mcl-link { font-weight: 900; text-decoration: underline double rgb(32 18 17 / 0.6); text-underline-offset: 5px; }
+/* 暗底上（結算分享圖的遮罩）的次要鈕：一條木頭（盤面的木色），同一組上下兩道梳線換成亮布色。
+   不用半透明：遮罩底下的盤面會從鈕裡透出來 */
+.mcl-wood {
+  --comb: rgb(254 242 236 / 0.5);
+  background:
+    linear-gradient(var(--comb) 0 0) left 0 top 3px / 100% 1px no-repeat,
+    linear-gradient(var(--comb) 0 0) left 0 top 6px / 100% 1px no-repeat,
+    linear-gradient(var(--comb) 0 0) left 0 bottom 3px / 100% 1px no-repeat,
+    linear-gradient(var(--comb) 0 0) left 0 bottom 6px / 100% 1px no-repeat,
+    #362522;
+  color: #fef2ec;
+}
+@media (pointer: fine) { .mcl-wood:hover:not(:disabled) { --comb: rgb(254 242 236 / 0.85); } }
+/* 播種：飛過去的那顆種子落地後，坑裡才出現真的那顆（mcl-land，延遲＝飛行時間，由元件給 --mcl-delay）；
+   坑裡已經有同一個人的子（合成一顆顯示）時只彈一下（mcl-receive）。分數變了的數字跳一下（mcl-pop）。
+   只動 scale／opacity 獨立屬性，不蓋掉元件本身的 transform。減少動態效果時全部關掉。 */
+@keyframes mcl-land { 0% { scale: 0.4; opacity: 0; } 60% { scale: 1.14; opacity: 1; } 100% { scale: 1; opacity: 1; } }
+@keyframes mcl-receive { 0%, 100% { scale: 1; } 45% { scale: 1.18; } }
+@keyframes mcl-pop { 0% { scale: 1; } 35% { scale: 1.35; } 100% { scale: 1; } }
+.mcl-land { animation: mcl-land 220ms var(--mo-snap) both; animation-delay: var(--mcl-delay, 0ms); }
+.mcl-receive { animation: mcl-receive 260ms ease-out both; animation-delay: var(--mcl-delay, 0ms); }
+.mcl-pop { display: inline-block; animation: mcl-pop 420ms var(--mo-snap); }
+@media (prefers-reduced-motion: reduce) { .mcl-land, .mcl-receive, .mcl-pop { animation: none !important; } }
+/* 連線的等人畫面：圓木桌上還空著的座位（黃銅虛線圈）輕輕浮著、亮一點又淡回去（MancalaOnline.tsx，只在 motion-safe 時掛上） */
+@keyframes mcl-wait { 0%, 100% { translate: 0 0; opacity: 0.5; } 50% { translate: 0 -8%; opacity: 0.95; } }
