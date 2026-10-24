@@ -22,7 +22,6 @@ export type MorrisText = {
   /** 海報頭上方的小標籤：人數、時間、節目出處 */
   tags: string;
   /** 首頁主視覺（《遊戲之書》插圖）下面的出處 */
-  artCredit: string;
   vsAi: string;
   vsAiNote: string;
   first: string;
@@ -86,7 +85,6 @@ export const TEXT = {
     metaDescription: "Netflix《魔鬼的計謀》第 1 季決賽第一戰的九子棋（Nine Men's Morris）。雙方各 9 顆子，在 24 個點上輪流放子、走子，連成一線就拿掉對方一顆。可以跟 AI 下或兩人同一台玩，免下載、免註冊。",
     tagline: '連成一線，就拿掉對方一顆子',
     tags: '2 人 · 約 10 分鐘 · 第 1 季決賽',
-    artCredit: '插圖：阿方索十世《遊戲之書》（1283），公有領域',
     vsAi: '跟 AI 下',
     vsAiNote: '選先後手，再選難度',
     first: '先手（黑）',
@@ -156,7 +154,6 @@ export const TEXT = {
     metaDescription: "Nine Men's Morris, game one of the Season 1 final of Netflix's The Devil's Plan. Each side has 9 pieces on a 24-point board: place them, move them, and line up three in a row to remove an opponent's piece. Play the AI or two players on one device. No download, no sign-up.",
     tagline: 'Line up three to take a piece',
     tags: '2 players · about 10 min · Season 1 final',
-    artCredit: 'Illustration: Libro de los juegos, Alfonso X (1283), public domain',
     vsAi: 'Play the AI',
     vsAiNote: 'Pick a side, then a level',
     first: 'First (Black)',
@@ -226,7 +223,6 @@ export const TEXT = {
     metaDescription: "Netflix『悪魔の計略 ～デビルズ・プラン～』シーズン1決勝の第1戦、ナイン・メンズ・モリス（Nine Men's Morris）。24の点にお互い9個の駒を置いて動かし、3つ並べると相手の駒を1つ取れます。AIと対戦、または1台で2人で遊べます。ダウンロード・登録不要。",
     tagline: '3つ並べたら相手の駒を1つ取る',
     tags: '2人 · 約10分 · シーズン1決勝',
-    artCredit: '挿絵：アルフォンソ10世『遊戯の書』（1283年）、パブリックドメイン',
     vsAi: 'AIと',
     vsAiNote: '先手か後手を選んでからレベルを選ぶ',
     first: '先手（黒）',
@@ -296,7 +292,6 @@ export const TEXT = {
     metaDescription: "넷플릭스 『데블스 플랜』 시즌 1 결승 1차전의 나인 멘스 모리스(Nine Men's Morris). 24개의 점 위에 각자 말 9개를 놓고 움직여, 한 줄에 3개를 만들면 상대 말 1개를 가져옵니다. AI와 두거나 한 기기에서 둘이 즐길 수 있습니다. 설치도 가입도 필요 없습니다.",
     tagline: '한 줄에 3개면 상대 말 하나를 가져온다',
     tags: '2인 · 약 10분 · 시즌 1 결승',
-    artCredit: '삽화: 알폰소 10세 《놀이의 책》(1283), 퍼블릭 도메인',
     vsAi: 'AI와',
     vsAiNote: '선공·후공을 고른 뒤 난이도 선택',
     first: '선공 (흑)',
@@ -366,7 +361,6 @@ export const TEXT = {
     metaDescription: "Netflix《魔鬼的计谋》第 1 季决赛第一战的九子棋（Nine Men's Morris）。双方各 9 枚棋子，在 24 个点上轮流落子、走子，连成一线就拿掉对方一枚。可以跟 AI 下，也可以两人同一台玩，免下载、免注册。",
     tagline: '连成一线，就拿掉对方一枚棋子',
     tags: '2 人 · 约 10 分钟 · 第 1 季决赛',
-    artCredit: '插图：阿方索十世《游戏之书》（1283），公有领域',
     vsAi: '跟 AI 下',
     vsAiNote: '选先后手，再选难度',
     first: '先手（黑）',
@@ -436,7 +430,6 @@ export const TEXT = {
     metaDescription: "Nine Men's Morris เกมแรกในรอบชิงชนะเลิศซีซัน 1 ของ The Devil's Plan บน Netflix แต่ละฝ่ายมีหมาก 9 ตัวบนกระดาน 24 จุด ผลัดกันวางและเดินหมาก เรียงครบ 3 ตัวในแนวเดียวเมื่อไหร่ก็หยิบหมากของอีกฝ่ายออกได้ 1 ตัว เล่นกับ AI หรือเล่นสองคนบนเครื่องเดียวได้ ไม่ต้องดาวน์โหลด",
     tagline: 'เรียงครบ 3 ตัว หยิบหมากอีกฝ่ายออก 1 ตัว',
     tags: '2 คน · ประมาณ 10 นาที · รอบชิงซีซัน 1',
-    artCredit: 'ภาพประกอบ: Libro de los juegos ของอัลฟองโซที่ 10 (ค.ศ. 1283) สาธารณสมบัติ',
     vsAi: 'เล่นกับ AI',
     vsAiNote: 'เลือกเดินก่อนหรือหลัง แล้วเลือกระดับ',
     first: 'เดินก่อน (ดำ)',

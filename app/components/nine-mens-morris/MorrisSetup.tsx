@@ -78,12 +78,12 @@ export default function MorrisSetup({ locale, onStart }: { locale: Locale; onSta
           )}
           <p className="mt-2 text-sm font-bold text-[#eee0c4]/90 lg:text-base">{t.tagline}</p>
           {/* 主視覺：《遊戲之書》的插圖本身（插圖自己畫了框，不再另外加框）；只有它會跟著畫面高度縮 */}
-          <figure className="mt-3 flex w-full flex-col items-center gap-1 lg:items-start">
+          {/* 出處：阿方索十世《遊戲之書》（1283），公有領域。畫面上不寫出處（Zach 10/24：插圖不要說明） */}
+          <div className="mt-3 flex w-full flex-col items-center gap-1 lg:items-start">
             {/* eslint-disable-next-line @next/next/no-img-element -- 靜態匯出，不需要 next/image */}
             <img src={ART} alt="" aria-hidden="true" width={898} height={638}
               className="h-[min(15rem,26dvh)] w-auto max-w-full rounded-sm object-contain lg:h-auto lg:w-full" />
-            <figcaption className="text-[11px] font-bold text-[#eee0c4]/70">{t.artCredit}</figcaption>
-          </figure>
+          </div>
         </header>
 
         <div className="flex flex-col gap-3 lg:w-[400px] lg:justify-center">
