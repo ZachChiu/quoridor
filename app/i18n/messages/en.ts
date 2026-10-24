@@ -36,6 +36,8 @@ const en: Messages = {
     heroBadge: 'Play now',
     heroMeta: 'Season 2: Death Room · 2–3 players · No download',
     heroBody: 'A 7×7 board. Each turn, move a piece and build one wall to claim territory. Play the computer, or open a room and send the link to friends.',
+    baghHeroMeta: 'Season 2 finale · 2 players · No download',
+    baghHeroBody: 'Four tigers against twenty goats. The tigers win by capturing five goats; the goats win by trapping every tiger. Play the computer, share one device, or send a link to a friend.',
     play: 'Play',
     rules: 'Rules',
     s3: 'Season 3: Dead Again',

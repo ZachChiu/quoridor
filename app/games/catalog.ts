@@ -20,13 +20,17 @@ export type GameLook = {
   card: string;
   /** 從平台點進去時轉場擴散的顏色 */
   wipe: string;
-  /** 主視覺（public/ 底下的圖） */
+  /** 卡片的主視覺（public/ 底下的圖） */
   art: string;
   /**
-   * 主視覺鋪滿整張卡片（AI 畫的橫幅插畫）；沒有的話是 Wall Go 那種斜擺在右上角的棋盤 SVG。
-   * 名字壓在底部的漸層上。
+   * 主視覺鋪滿整張卡片，名字壓在底部的漸層上；沒有的話是斜擺在右上角的棋盤 SVG。
+   * Wall Go 10/24 也換成鋪滿（Zach 從五種版型裡選了「跟其他款同一個模板」），圖是 key-art.svg 裁出來的 card.svg。
    */
   cover?: boolean;
+  /** 平台首頁大卡片用的大圖（橫幅，寬 1600 左右）；沒有就用 art。Wall Go 的大卡片是自己的藍底＋斜擺棋盤，不用這個 */
+  hero?: string;
+  /** 規則頁的站內路徑：有的話大卡片多一顆「規則與玩法」 */
+  rules?: string;
   /** 點進去走木窗門轉場而不是擴散色塊（虎羊棋） */
   doors?: boolean;
   /**
@@ -43,6 +47,11 @@ export type CatalogGame = {
   names?: Partial<Record<string, string>>;
   playable?: string;
   look?: GameLook;
+  /**
+   * 開放可以玩的那一天（YYYY-MM-DD，那一版上線的日期）。平台首頁的大卡片預設放最新上線的那一款。
+   * 能玩但沒寫的，算「這一版才要上線」（最新）—— 打版上線後補上日期。
+   */
+  since?: string;
 };
 
 export type Season = {
@@ -56,11 +65,12 @@ export const SEASONS: Season[] = [
   {
     id: 's2',
     games: [
-      { name: 'Wall Go', names: { 'zh-TW': '牆壁圍棋', 'zh-Hans': '墙壁围棋', ja: '壁囲碁', ko: '벽바둑' }, playable: routes.WALL_GO,
-        look: { card: 'bg-tile-blue text-tile-cream', wipe: 'rgb(var(--tile-blue))', art: '/games/wall-go/key-art.svg' } },
+      // since 是 v25.6.1（第一版）上線那天
+      { name: 'Wall Go', names: { 'zh-TW': '牆壁圍棋', 'zh-Hans': '墙壁围棋', ja: '壁囲碁', ko: '벽바둑' }, playable: routes.WALL_GO, since: '2025-06-02',
+        look: { card: 'bg-tile-blue text-tile-cream', wipe: 'rgb(var(--tile-blue))', art: '/games/wall-go/card.svg', cover: true, rules: routes.wallGo('/rules') } },
       // 中文用節目的「尼泊爾虎棋」（Zach 10/24：命名用 Netflix 版本）、韓文「바그찰」是節目 RULE 卡上的寫法（見 glossary）
       { name: 'Bagh Chal', names: { 'zh-TW': '尼泊爾虎棋', 'zh-Hans': '尼泊尔虎棋', ko: '바그찰' }, playable: routes.BAGH_CHAL,
-        look: { card: 'bg-[#e3a43c] text-tile-ink', wipe: '#f1e6cd', art: '/games/bagh-chal/key-art.webp', cover: true, doors: true } },
+        look: { card: 'bg-[#e3a43c] text-tile-ink', wipe: '#f1e6cd', art: '/games/bagh-chal/key-art.webp', hero: '/games/bagh-chal/hero.webp', cover: true, doors: true, rules: routes.baghChal('/rules') } },
       { name: 'Crooked Cops', names: { 'zh-TW': '腐敗警察', 'zh-Hans': '腐败警察' } },
       { name: 'Remove One', names: { 'zh-TW': '移除一個', 'zh-Hans': '移除一个' } },
       { name: 'Unknown', names: { 'zh-TW': '未知', 'zh-Hans': '未知' } },
@@ -106,6 +116,12 @@ export function gameName(game: CatalogGame, locale: string): string {
 
 /** 已經能玩的遊戲（平台首頁最上面那一排），新的一季排前面 */
 export const PLAYABLE: CatalogGame[] = SEASONS.flatMap((s) => s.games).filter((g) => g.playable && g.look);
+
+/**
+ * 平台首頁大卡片預設放的那一款：最新上線的（10/24 Zach：哪一個最新上線就放那個）。
+ * 沒寫 since 的算最新；一樣新的照 PLAYABLE 的順序（排序是穩定的）。使用者點過哪一款就換成那一款，在 components/platform/HeroPicker.tsx。
+ */
+export const NEWEST: CatalogGame | undefined = [...PLAYABLE].sort((a, b) => (b.since ?? '9999').localeCompare(a.since ?? '9999'))[0];
 
 /** 一季裡能玩的排前面，其他照節目播出順序 */
 export function playableFirst(games: CatalogGame[]): CatalogGame[] {

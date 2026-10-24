@@ -40,7 +40,7 @@ zh-TW 不加前綴（`app/(default)/`），en / ja / ko / zh-Hans / th 加前綴
 
 | 路由 | 說明 |
 |---|---|
-| `/` | 平台首頁（`PlatformView`）— Netflix 式深色外殼＋紅（`--brand-red`），推薦作品大區塊＋依季橫向捲動的遊戲卡；遊戲清單在 `app/games/catalog.ts`（英文官方名，譯名查證後才補） |
+| `/` | 平台首頁（`PlatformView`）— Netflix 式深色外殼＋紅（`--brand-red`），推薦作品大區塊（預設放最新上線的那款＝catalog 的 `since`、使用者真的點過哪款就換成那款，見 `components/platform/HeroPicker.tsx`；10/24）＋依季橫向捲動的遊戲卡（還沒做的卡角落是骰子惡魔的淡剪影）；遊戲清單在 `app/games/catalog.ts`（英文官方名，譯名查證後才補） |
 | `/wall-go` | Wall Go 首頁（`HomeView` → `HomeClient`）— 選模式、建立連線房間 |
 | `/wall-go/rules` | 規則頁，SEO 主力落地頁 |
 | `/wall-go/solo#easy\|normal\|hard` | 單人對戰。難度放 hash，由 `SoloClient` 以 prop 交給 `PlayClient` |
@@ -52,7 +52,7 @@ zh-TW 不加前綴（`app/(default)/`），en / ja / ko / zh-Hans / th 加前綴
 | `/bagh-chal/rules` | 規則頁，每步一張小棋盤（`BaghRulesSteps`，對局中的說明彈窗共用） |
 | `/bagh-chal/solo#tiger-normal`、`/bagh-chal/local` | 跟電腦下（hash 是邊＋難度，沒帶就在頁面上選）、兩人同一台。noindex |
 | `/bagh-chal/online#new=tiger\|goat`、`#roomId=…` | 邀請朋友。房間在 RTDB `baghRooms/`（跟 Wall Go 的 `rooms/` 分開，結構見 `types/baghRoom.ts`），存走法字串（`encodeMoves`），只有輪到的人能寫。noindex |
-| `/time-auction`、`/nine-mens-morris`、`/blind-gomoku`、`/balance-mancala`、`/knights-tour` | 第二批五款**試做**（2026-10-20）：每款一頁、選模式與對局都在那一頁（騎士巡邏的模式放 hash：`#show`、`#practice-N`）。規則在 `app/games/<id>/`、畫面在 `app/components/<id>/`、六語系文案在各自的 `app/games/<id>/text.ts`（不進 `messages/`，key 的縮排與順序見 `i18n/gameText.ts`）。metadata 用 `trialGameMetadata`：noindex、不進 sitemap、分享圖暫用平台首頁那張。沒有連線、沒有 GA 事件。**平台上一款一款開**（2026-10-22 Zach）：`feat/platform-bagh` 只上平台＋虎羊棋＋Wall Go，五款的卡片照「還沒做」的樣子；每款的視覺在自己的 `feat/game-<id>` 分支，那條分支把 `catalog.ts` 裡自己那一行換回 playable＋look |
+| `/time-auction`、`/nine-mens-morris`、`/blind-gomoku`、`/balance-mancala`、`/knights-tour` | 第二批五款**試做**（2026-10-20）：每款一頁、選模式與對局都在那一頁（騎士巡邏的模式放 hash：`#show`、`#practice-N`）。規則在 `app/games/<id>/`、畫面在 `app/components/<id>/`、六語系文案在各自的 `app/games/<id>/text.ts`（不進 `messages/`，key 的縮排與順序見 `i18n/gameText.ts`）。metadata 用 `trialGameMetadata`：noindex、不進 sitemap、分享圖暫用平台首頁那張。沒有 GA 事件。**連線版**（10/24 Zach：有兩方互動的都補，騎士巡遊不用）各自在自己的分支上做：九子棋、盲眼五子棋、均衡曼卡拉共用 `turnRooms`（`hook/useTurnRoom.ts`，結構見 `types/turnRoom.ts`），時間拍賣是同時出價、另有自己的房間；網址 `<遊戲>/online#new=…`／`#roomId=…`（`routes.ts` 的 `trialOnline`）。**平台上一款一款開**（2026-10-22 Zach）：`feat/platform-bagh` 只上平台＋虎羊棋＋Wall Go，五款的卡片照「還沒做」的樣子；每款的視覺在自己的 `feat/game-<id>` 分支，那條分支把 `catalog.ts` 裡自己那一行換回 playable＋look |
 | 舊網址 `/rules`、`/solo`、`/local`、`/online`、`/replay`、`/match`（各語系） | CloudFront 301 到 `/wall-go/…`（`infra/cloudfront-redirects.js`，表要跟 `routes.ts` 的 `MOVED` 一致，`tests/infra/redirects.test.ts` 會比對）；舊路徑上另有瀏覽器端轉址當備援（`components/LegacyRedirect.tsx`），noindex、不進 sitemap |
 
 **`/replay` 是用來看玩家回饋的。** 每則回饋都附帶那一局的 WGF（`feedback/*/wgf`），
@@ -246,6 +246,7 @@ nudge { by, at }          最近一次「催一下」
   所以關著的 Modal 遮罩要 `display:none`；換頁轉場（`WipeOverlay`）的根節點用 `absolute` 定位在目前的捲動位置而不是 `fixed` ——
   fixed 的話工具列會慢一拍染成磁磚色，畫面都換好了才變回來。上下各內縮 1px 沒有用，實測過。
 - **各款的進場**（從平台卡片點進去的那一下）：Wall Go 是磁磚脹開、虎羊棋是木窗門（`WipeOverlay` 的 doors）；其他有自己識別的遊戲各自一個（2026-10-22 Zach：「為啥每一個進場都跟 Wall Go 一樣」）。做法：在那款的資料夾放 `Entrance.tsx`（`Scene`＋`play`），在 `components/entrances.ts` 的表打開自己那一行，catalog 的 `look.entrance` 帶同一個 id。平台卡片閒置時先載好，沒載好就退回擴散色塊。進場一樣只動 transform／opacity。
+- **轉場播放中擋住捲動**（`TransitionContext`：touchmove、wheel、捲動鍵）：遮罩是 absolute、定在點下去那一刻的捲動位置，一滑就露出底下的頁面（10/24 Zach）。不用 `useScrollLock` 的 fixed body —— 解鎖時會把舊頁的捲動位置還原到新頁上。
 - **換頁轉場用瀏覽器原生的 Web Animations API**（`element.animate()`），不用 JS 每格寫 style。transform 由合成執行緒（GPU）跑，換頁時 React 佔住主執行緒也不會凍住動畫 —— 先前用 anime.js，主執行緒卡住的 400ms 內畫面 0 格，手機上一直卡。圖示的反向縮放（色塊 s、圖示 1/s）事先取樣成關鍵影格（`components/wipeKeyframes.ts`，自適應取樣、誤差 <1% 由測試鎖住）。**不要再加回每格由 JS 驅動的動畫。**
 - **站內換頁的歷史紀錄要在點擊當下建立**（`TransitionContext.navigate` 先 `pushState` 複製目前紀錄，動畫播完才 `router.replace`）。WebKit（Safari 與 iPhone 上的 Chrome）會把「沒有使用者手勢時 JS 新增過紀錄」的那一頁在返回時跳過；動畫播完才 push 就沒有手勢了，從規則頁按返回會越過首頁。沒有手勢的 `replaceState` 不受影響（實測）。**驗證這類問題要用瀏覽器真正的返回（WebDriver `/back`），`history.back()` 不會跳過，測不出來。**
 - **換語言是整頁跳轉**，瀏覽器的 back-forward cache 會把離開時的畫面凍結起來；會在整頁跳轉前打開的東西（語言選單）要在點下去時關掉，並在 `pageshow`（persisted）時再關一次。
