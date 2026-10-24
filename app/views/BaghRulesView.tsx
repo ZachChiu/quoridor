@@ -21,20 +21,19 @@ export default function BaghRulesView({ locale }: { locale: Locale }) {
   return (
     <BaghFrame variant="page">
       <header className="sticky top-0 z-40 rounded-t-[9px] border-b-2 border-[#4a2616]/10 bg-[#fbf4e1]/95 backdrop-blur">
-        <div className="mx-auto flex max-w-[46rem] items-center gap-3 px-4 py-2.5">
-          <Link href={localePath(locale, baghChal())} aria-label={t.nav.backHome} className={BAGH_ROUND}>
+        {/* 置頂列只放字標（logo），名字寫在下面的大標 —— 同一排擠天城體＋中文、大標再一次中文＋英文，一眼三種文字（Zach 10/24：文案偏亂） */}
+        <div className="mx-auto grid max-w-[46rem] grid-cols-[1fr_auto_1fr] items-center px-4 py-2.5">
+          <Link href={localePath(locale, baghChal())} aria-label={t.nav.backHome} className={`${BAGH_ROUND} justify-self-start`}>
             <LuHouse aria-hidden="true" />
           </Link>
-          <span className="flex min-w-0 flex-1 items-center gap-2 truncate text-sm font-black">
-            <BaghWordmark className="h-5 w-auto shrink-0" />{b.subtitle}
-          </span>
-          <LanguageSwitcher theme={BAGH_CORNER} />
+          <BaghWordmark className="h-6 w-auto" />
+          <div className="justify-self-end"><LanguageSwitcher theme={BAGH_CORNER} /></div>
         </div>
       </header>
 
-      <div className="mx-auto max-w-[46rem] px-5 pb-[max(3rem,6dvh)] pt-8">
-        <p className="text-sm font-bold text-ink-soft">{b.title} · {b.tagline}</p>
-        <h1 className="mt-1 text-[clamp(1.75rem,7vw,3rem)] font-black leading-[1.1] tracking-tight">{b.rulesMetaTitle}</h1>
+      <div className="mx-auto max-w-[46rem] px-5 pb-[max(3rem,6svh)] pt-8">
+        <h1 className="text-balance text-center text-[clamp(1.75rem,7vw,3rem)] font-black leading-[1.15] tracking-tight">{b.rulesTitle}</h1>
+        <p className="mt-2 text-center text-sm font-bold text-ink-soft">{b.tagline}</p>
         <div className="mt-6"><RulesStepsList rules={b.rules} /></div>
         <p className="mt-6 text-sm leading-relaxed text-ink-soft">{b.showNote}</p>
         {/* 名字的由來（Zach 10/24：遊戲命名用 Netflix 版本，可以在遊戲規則裡面介紹） */}

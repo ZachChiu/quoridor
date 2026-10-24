@@ -62,6 +62,8 @@ const zhTW = {
     ogDescription: '4 隻老虎對 20 隻羊的尼泊爾傳統棋，《魔鬼的計謀》第 2 季決賽。免下載、免註冊。',
     title: 'Bagh Chal',
     subtitle: '尼泊爾虎棋',
+    /** 畫面上的名字：用讀者的文字寫一個就好（天城體字標是 logo、Bagh Chal 只留在網頁標題與名字由來，見 glossary） */
+    name: '尼泊爾虎棋',
     tagline: '4 隻老虎對 20 隻羊',
     local: '本機對戰',
     vsAi: '跟 AI 下',
@@ -108,6 +110,8 @@ const zhTW = {
     rulesCta: '回首頁選玩法',
     onlineTitle: '連線對戰',
     rulesMetaTitle: '尼泊爾虎棋 Bagh Chal 規則與玩法',
+    /** 規則頁畫面上的大標（網頁標題 rulesMetaTitle 照舊帶 Bagh Chal 給搜尋） */
+    rulesTitle: '尼泊爾虎棋規則',
     rulesMetaDescription: '尼泊爾虎棋（Bagh Chal，也叫虎羊棋）完整規則：5×5 棋盤、4 隻老虎對 20 隻羊、放羊、老虎跳吃、羊把老虎困住。附圖一步一步說明，《魔鬼的計謀》第 2 季決賽的遊戲。',
     rulesHeading: '怎麼玩',
     rules: [

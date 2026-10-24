@@ -15,7 +15,7 @@ import { pageGraph, ldScript } from '@/i18n/jsonld';
 export default function HomeView({ locale }: { locale: Locale }) {
   const t = getMessages(locale);
   return (
-      <div className="flex h-dvh min-h-dvh flex-col items-center justify-center px-5 py-[max(1rem,3dvh)] font-[family-name:var(--font-app)]">
+      <div className="flex h-dvh min-h-dvh flex-col items-center justify-center px-5 py-[max(1rem,3svh)] font-[family-name:var(--font-app)]">
         {/*
           左上平台 logo、右上聯絡我們＋語言（PlatformCorner）。
           放角落而不是磁磚底下：這些東西不能放進流程裡多吃一列高度，
@@ -32,19 +32,19 @@ export default function HomeView({ locale }: { locale: Locale }) {
           <header className="text-center">
             {/* 直式又很矮（640–680 高的舊手機）時字縮一點：那時留白縮到 0、標題貼到頂，
                 右上角的圓鈕會碰到第一行的最後一個字。 */}
-            <h1 className="mt-1 text-[clamp(2.25rem,7dvh,3.75rem)] font-black leading-[0.95] tracking-tight [@media(orientation:portrait)_and_(max-height:680px)]:text-[clamp(2.25rem,6.5dvh,3.75rem)]">
+            <h1 className="mt-1 text-[clamp(2.25rem,7svh,3.75rem)] font-black leading-[0.95] tracking-tight [@media(orientation:portrait)_and_(max-height:680px)]:text-[clamp(2.25rem,6.5svh,3.75rem)]">
               {t.home.titleLine1}
               {/* 第二行是各語系的另一個叫法（中文配 Wall Go、日文配 Wall Go…）。
                   英文沒有第二個叫法，空字串時連換行一起省掉 ——
                   留著 <br> 會在標題下面多撐出一行空白。 */}
               {t.home.titleLine2 && <><br />{t.home.titleLine2}</>}
             </h1>
-            <p className="mt-[max(0.5rem,1.5dvh)] text-sm font-bold text-ink-soft md:text-base">
+            <p className="mt-[max(0.5rem,1.5svh)] text-sm font-bold text-ink-soft md:text-base">
               {t.home.tagline}
             </p>
           </header>
 
-          <div className="home-grid mt-[max(1rem,3dvh)] w-full">
+          <div className="home-grid mt-[max(1rem,3svh)] w-full">
             <HomeClient />
           </div>
 
