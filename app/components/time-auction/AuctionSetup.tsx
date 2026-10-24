@@ -8,7 +8,7 @@ import Modal from '@/components/Modal';
 import PlatformMark from '@/components/PlatformMark';
 import ContactButton from '@/components/ContactButton';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
-import { BRAND } from '@/brand';
+import { brandName } from '@/brand';
 import { useMessages } from '@/i18n/LocaleProvider';
 import { fill, useTextTable } from '@/i18n/gameText';
 import { localePath, type Locale } from '@/i18n/locales';
@@ -90,7 +90,7 @@ export default function AuctionSetup({ locale, value, onChange, onStart }: {
   return (
     <TauFrame className="items-center px-4 pb-6 pt-3 lg:px-8">
       <div className="flex w-full max-w-[460px] items-center justify-between lg:max-w-[960px]">
-        <Link href={localePath(locale, '/')} aria-label={BRAND} title={BRAND} className="transition hover:brightness-110 active:scale-95">
+        <Link href={localePath(locale, '/')} aria-label={brandName(locale)} title={brandName(locale)} className="transition hover:brightness-110 active:scale-95">
           <PlatformMark className="!size-11" />
         </Link>
         <div className="flex gap-1.5">

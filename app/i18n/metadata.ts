@@ -140,7 +140,7 @@ const GAME_ICONS: Record<string, Metadata['icons'] | undefined> = {
 
   'nine-mens-morris': undefined,
 
-  'time-auction': undefined,
+  'time-auction': iconSet('time-auction', true),
 
   'blind-gomoku': undefined,
 
