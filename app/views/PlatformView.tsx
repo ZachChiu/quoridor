@@ -124,29 +124,31 @@ function GameHero({ game, locale }: { game: CatalogGame; locale: Locale }) {
   const rulesWipe = wallGoGame ? RULES_GREEN : look.wipe;
   return (
     <section data-slide={game.playable} className={`${HERO} flex-col bg-black md:flex-row md:items-end`}>
-      {/* 手機：圖整張放在上面、字接在下面的黑底上（10/24 Zach：手機只看得到老虎 —— 先前圖鋪在字後面，羊被字蓋住）；
-          有方圖就用方圖。桌機：橫幅鋪滿、字在左邊 */}
+      {/* 手機：方圖放在上面，字往上蓋住圖的下半、壓在黑色漸層上（10/25 Zach 給了 Netflix 手機版的截圖：「資訊往上蓋沒關係」）。
+          10/24 先改成過字整段接在圖下面 —— 那時圖是橫幅，鋪在字後面只剩老虎；現在是方圖，蓋掉下面一截也看得到整盤。
+          桌機：橫幅鋪滿、字在左邊 */}
       <div className={`relative w-full shrink-0 md:absolute md:inset-0 md:aspect-auto md:h-full ${look.heroSquare ? 'aspect-square' : 'aspect-[4/3]'}`}>
         <picture>
           {look.heroSquare && <source media="(max-width: 767px)" srcSet={look.heroSquare} />}
           <img src={look.hero ?? look.art} alt="" loading="lazy" className="pointer-events-none absolute inset-0 size-full object-cover" />
         </picture>
-        <span aria-hidden="true" className="absolute inset-x-0 bottom-0 h-1/4 bg-gradient-to-t from-black to-transparent md:hidden" />
+        <span aria-hidden="true" className="absolute inset-x-0 bottom-0 h-3/5 bg-gradient-to-t from-black from-25% via-black/70 to-transparent md:hidden" />
       </div>
       <span aria-hidden="true" className="absolute inset-0 hidden bg-gradient-to-r from-black/85 from-0% via-black/45 via-40% to-transparent to-100% md:block" />
-      <div className="relative flex max-w-[560px] flex-col gap-4 p-[clamp(24px,4vw,56px)]">
+      <div className="relative mt-[-38%] flex max-w-[560px] flex-col gap-4 p-[clamp(24px,4vw,56px)] md:mt-0">
         <span className="self-start rounded-md bg-brand-red px-2.5 py-0.5 text-[13px] font-black text-white">{p.heroBadge}</span>
         <h2 className="text-[clamp(44px,6vw,84px)] font-black leading-[0.95] tracking-tight">{title}</h2>
         {copy && <p className="text-[15px] font-bold">{copy[0]}</p>}
         {copy && <p className="text-[19px] font-bold leading-relaxed">{copy[1]}</p>}
-        <div className="flex flex-wrap gap-3 pt-1">
+        {/* 手機：兩顆按鈕一顆一列、拉滿寬（10/25 Zach：「開始玩跟規則那個可以寬滿版拉長」，跟 Netflix 手機版一樣）；桌機照舊並排 */}
+        <div className="flex flex-col gap-2.5 pt-1 md:flex-row md:flex-wrap md:gap-3">
           <WipeLink href={localePath(locale, game.playable!)} color={look.wipe} doors={look.doors} entrance={look.entrance} data-game={game.playable}
-            className="flex h-[54px] items-center gap-2.5 rounded-xl bg-tile-cream px-7 text-lg font-black text-tile-ink">
+            className="flex h-[54px] items-center justify-center gap-2.5 rounded-xl bg-tile-cream px-7 text-lg font-black text-tile-ink md:justify-start">
             <LuPlay aria-hidden="true" className="fill-current" />{p.play}
           </WipeLink>
           {look.rules && (
             <WipeLink href={localePath(locale, look.rules)} color={rulesWipe} doors={look.doors} entrance={look.entrance}
-              className="flex h-[54px] items-center gap-2.5 rounded-xl bg-plat-bg/80 px-6 text-lg font-black text-tile-cream">
+              className="flex h-[54px] items-center justify-center gap-2.5 rounded-xl bg-white/15 px-6 text-lg font-black text-tile-cream md:justify-start md:bg-plat-bg/80">
               <LuInfo aria-hidden="true" />{p.rules}
             </WipeLink>
           )}
