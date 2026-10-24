@@ -74,12 +74,12 @@ export default function AuctionSetup({ locale, value, onChange, onStart }: {
       <main className="mt-3 flex w-full max-w-[460px] flex-col gap-4 lg:my-auto lg:max-w-[960px] lg:flex-row lg:items-center lg:gap-10">
         <header className="flex flex-col lg:flex-1">
           {/* 主視覺：拍賣場本身（自己畫了框線，不再加框）；只有它跟著畫面高度縮 */}
-          <figure className="flex flex-col gap-1">
+          {/* 出處：George Cruikshank〈Sales by Auction〉（1819），芝加哥藝術博物館，公有領域。畫面上不寫出處（Zach 10/24：插圖不要說明） */}
+          <div className="flex flex-col gap-1">
             {/* eslint-disable-next-line @next/next/no-img-element -- 靜態匯出，不需要 next/image */}
             <img src={KEY_ART} alt="" aria-hidden="true" width={818} height={462}
               className="h-[clamp(7rem,21dvh,14rem)] w-full rounded-sm object-cover lg:h-auto" />
-            <figcaption className="text-[11px] font-bold text-ink-soft">{t.artCredit}</figcaption>
-          </figure>
+          </div>
           <div className="mt-3 text-center lg:text-left">
             <p className="text-xs font-bold tracking-wide text-ink-soft">{t.tag}</p>
             {latinTitle ? (

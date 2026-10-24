@@ -19,7 +19,6 @@ type Text = {
   tag: string;
   tagline: string;
   /** 首頁主視覺（Cruikshank 的拍賣畫）下面的出處 */
-  artCredit: string;
   metaTitle: string;
   metaDescription: string;
   home: string;
@@ -92,7 +91,6 @@ export const TEXT: TextTable<Text> = {
     nameEn: 'Time Auction',
     tag: '第 2 季《死亡密室》．4–6 人．約 10 分鐘',
     tagline: '按住出價，最後放手的人得標',
-    artCredit: '圖：George Cruikshank〈Sales by Auction〉（1819），芝加哥藝術博物館，公有領域',
     metaTitle: '時間拍賣 Time Auction 線上玩',
     metaDescription: 'Netflix《魔鬼的計謀》第 2 季的時間拍賣：每人一筆時間，按住按鈕出價，最後放手的人得標，但每個人都要付掉自己按住的時間。跟 3–5 個 AI 對手拍賣 19 回合，免下載、免註冊。',
     home: '回平台首頁',
@@ -174,7 +172,6 @@ export const TEXT: TextTable<Text> = {
     nameEn: 'Time Auction',
     tag: 'Season 2: Death Room · 4–6 players · ~10 min',
     tagline: 'Hold to bid. The last to let go wins.',
-    artCredit: 'Image: George Cruikshank, Sales by Auction (1819), Art Institute of Chicago, public domain',
     metaTitle: 'Time Auction – Play Online',
     metaDescription: "Time Auction from Netflix's The Devil's Plan season 2: everyone has a bank of time, you bid by holding a button, and the last player to let go wins the round — but everyone pays for the time they held. 19 rounds against 3–5 AI bidders. Free, no download, no sign-up.",
     home: 'Back to all games',
@@ -256,7 +253,6 @@ export const TEXT: TextTable<Text> = {
     nameEn: 'Time Auction',
     tag: 'シーズン2・4〜6人・約10分',
     tagline: '押し続けて入札、最後に離した人が落札',
-    artCredit: '画像：ジョージ・クルックシャンク《Sales by Auction》（1819年）、シカゴ美術館、パブリックドメイン',
     metaTitle: 'タイムオークション（Time Auction）をオンラインで遊ぶ',
     metaDescription: 'Netflix『悪魔の計略 ～デビルズ・プラン～』シーズン2のタイムオークション。全員が同じ持ち時間でスタートし、ボタンを押し続けて入札します。最後に手を離した人が落札しますが、全員が自分の押した時間を支払います。AI3〜5人と19ラウンド。インストール不要・登録不要。',
     home: 'ゲーム一覧へ',
@@ -338,7 +334,6 @@ export const TEXT: TextTable<Text> = {
     nameEn: 'Time Auction',
     tag: '시즌2 『데스룸』 · 4~6인 · 약 10분',
     tagline: '누르고 있으면 입찰, 마지막에 손을 뗀 사람이 낙찰',
-    artCredit: '이미지: 조지 크룩섕크 〈Sales by Auction〉(1819), 시카고 미술관, 퍼블릭 도메인',
     metaTitle: '시간 경매 (Time Auction) 온라인 게임',
     metaDescription: '넷플릭스 『데블스 플랜: 데스룸』의 시간 경매. 모두 같은 시간을 갖고 시작해, 버튼을 누르고 있는 동안 입찰합니다. 마지막까지 버틴 사람이 낙찰받지만, 모두가 자신이 누른 시간만큼 냅니다. AI 3~5명과 19라운드. 설치·가입 없이 무료.',
     home: '게임 목록으로',
@@ -420,7 +415,6 @@ export const TEXT: TextTable<Text> = {
     nameEn: 'Time Auction',
     tag: '第 2 季《死亡密室》·4–6 人·约 10 分钟',
     tagline: '按住出价，最后松手的人得标',
-    artCredit: '图：George Cruikshank《Sales by Auction》（1819），芝加哥艺术博物馆，公有领域',
     metaTitle: '时间拍卖 Time Auction 在线玩',
     metaDescription: 'Netflix《魔鬼的计谋》第 2 季的时间拍卖：每人一笔时间，按住按钮出价，最后松手的人得标，但每个人都要付掉自己按住的时间。和 3–5 个 AI 对手拍卖 19 回合，免下载、免注册。',
     home: '回平台首页',
@@ -502,7 +496,6 @@ export const TEXT: TextTable<Text> = {
     nameEn: 'Time Auction',
     tag: 'ซีซัน 2 Death Room · 4–6 คน · ประมาณ 10 นาที',
     tagline: 'กดค้างเพื่อประมูล ใครปล่อยมือคนสุดท้ายชนะ',
-    artCredit: 'ภาพ: George Cruikshank, Sales by Auction (ค.ศ. 1819) สถาบันศิลปะชิคาโก สาธารณสมบัติ',
     metaTitle: 'ประมูลเวลา (Time Auction) เล่นออนไลน์',
     metaDescription: "ประมูลเวลา (Time Auction) จาก The Devil's Plan ซีซัน 2 ทาง Netflix ทุกคนเริ่มด้วยเวลาเท่ากัน กดปุ่มค้างไว้เพื่อประมูล คนที่ปล่อยมือคนสุดท้ายชนะรอบนั้น แต่ทุกคนต้องจ่ายเวลาที่ตัวเองกดค้างไว้ เล่น 19 รอบกับ AI 3–5 ตัว ฟรี ไม่ต้องดาวน์โหลด ไม่ต้องสมัคร",
     home: 'กลับไปหน้ารวมเกม',
