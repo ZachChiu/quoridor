@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { GiBrain, GiScrollUnfurled, GiTabletopPlayers } from 'react-icons/gi';
 import { LuChevronRight } from 'react-icons/lu';
@@ -8,7 +9,7 @@ import PlatformCorner from '@/components/PlatformCorner';
 import { useMessages } from '@/i18n/LocaleProvider';
 import { useTextTable } from '@/i18n/gameText';
 import { localePath, type Locale } from '@/i18n/locales';
-import { NINE_MENS_MORRIS, trialOnline } from '@/i18n/routes';
+import { NINE_MENS_MORRIS, trialOnline, trialRules } from '@/i18n/routes';
 import type { Side } from '@/games/nine-mens-morris/engine';
 import type { Difficulty } from '@/games/nine-mens-morris/ai';
 import { newRoomHash } from '@/games/nine-mens-morris/online';
@@ -17,7 +18,6 @@ import { BlackPieceIcon, PieceGlyph, WhitePieceIcon } from './MorrisBoard';
 import MorrisFrame from './MorrisFrame';
 import { MORRIS_BAND, MORRIS_CORNER, MORRIS_PANEL } from './ui';
 import MorrisWordmark from './MorrisWordmark';
-import { MorrisRulesModal } from './MorrisRules';
 import type { MorrisMode } from './session';
 
 /** 主視覺：阿方索十世《遊戲之書》（1283）裡擲骰子的九子棋那頁（公有領域，Wikimedia Commons） */
@@ -43,6 +43,7 @@ function DiePips({ n }: { n: 1 | 2 | 3 }) {
  * 介面照手抄本做（globals.css 的 .nmm-*，Zach 10/22：每款的按鈕要有自己的樣子）：卡片是拱頂的羊皮紙、
  * 內側一道朱紅細線；模式前面一格上色首字（朱紅、群青交替）；先後手是朱紅的小拱；節目規則的開關是一顆蠟封；
  * 難度用骰子點數；說明與連結前面是朱紅的段落符 ¶。
+ * 「怎麼玩？」連到規則頁（/nine-mens-morris/rules，一步一張圖；2026-10-25 起不再開彈窗），一般的 Link、不播轉場。
  * 插圖是唯一會縮的東西（高度跟著 svh：工具列收起時不會跟著變大），手機一個畫面放得下；桌機改成左右兩欄。
  *
  * 邀請朋友（連線對戰）跟本機對戰一樣是一列，按下去在彈窗裡選自己下先手還是後手（兩個朱紅小拱，跟「跟 AI 下」那張卡一樣），
@@ -59,7 +60,6 @@ export default function MorrisSetup({ locale, onStart }: { locale: Locale; onSta
   const [showRules, setShowRules] = useState(false);
   const [side, setSide] = useState<Side | null>(null);
   const [inviteOpen, setInviteOpen] = useState(false);
-  const [helpOpen, setHelpOpen] = useState(false);
   // 九子棋裡面換頁不播轉場（直接 router.push），開好房間後網址會換成 #roomId=…
   const invite = (s: Side) => { setInviteOpen(false); router.push(localePath(locale, trialOnline(NINE_MENS_MORRIS)) + newRoomHash(s, showRules)); };
   const levels = [m.solo.level1, m.solo.level2, m.solo.level3];
@@ -145,9 +145,9 @@ export default function MorrisSetup({ locale, onStart }: { locale: Locale; onSta
             <span aria-hidden="true" className={`nmm-seal ${showRules ? 'is-on' : ''}`}>✓</span>
           </button>
 
-          <button type="button" onClick={() => setHelpOpen(true)} className="nmm-pilcrow self-center px-4 py-2 text-sm font-black text-[#eee0c4] underline decoration-2 underline-offset-4 transition [--nmm-rubric:#eee0c4] hover:text-white">
+          <Link href={localePath(locale, trialRules(NINE_MENS_MORRIS))} className="nmm-pilcrow self-center px-4 py-2 text-sm font-black text-[#eee0c4] underline decoration-2 underline-offset-4 transition [--nmm-rubric:#eee0c4] hover:text-white">
             {t.howTo}
-          </button>
+          </Link>
         </div>
       </main>
 
@@ -179,8 +179,6 @@ export default function MorrisSetup({ locale, onStart }: { locale: Locale; onSta
           ))}
         </div>
       </Modal>
-
-      <MorrisRulesModal t={t} open={helpOpen} onClose={() => setHelpOpen(false)} showRules={showRules} />
     </MorrisFrame>
   );
 }
