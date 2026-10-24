@@ -1,0 +1,50 @@
+{
+  "zh-TW": {
+    "kicker": "骰子惡魔",
+    "title": [
+      "《魔鬼的計謀》",
+      "遊戲"
+    ],
+    "titleSize": 71
+  },
+  "en": {
+    "kicker": "Dice Devil",
+    "title": [
+      "The Devil's Plan",
+      "games"
+    ],
+    "titleSize": 56
+  },
+  "ja": {
+    "kicker": "Dice Devil",
+    "title": [
+      "『悪魔の計略』の",
+      "ゲーム"
+    ],
+    "titleSize": 62
+  },
+  "ko": {
+    "kicker": "Dice Devil",
+    "title": [
+      "『데블스 플랜』",
+      "게임"
+    ],
+    "titleSize": 65
+  },
+  "zh-Hans": {
+    "kicker": "骰子恶魔",
+    "title": [
+      "《魔鬼的计谋》",
+      "游戏"
+    ],
+    "titleSize": 71
+  },
+  "th": {
+    "kicker": "Dice Devil",
+    "title": [
+      "เกมใน",
+      "The Devil's Plan"
+    ],
+    "titleSize": 56
+  }
+}

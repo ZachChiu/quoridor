@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { createHash } from 'node:crypto';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { getMessages } from './index';
 import { brandName } from '@/brand';
@@ -48,8 +48,20 @@ function ogHash(file: string): string {
   return h;
 }
 export function ogImageUrl(locale: Locale, path: PagePath): string {
-  const file = `${PAGE_KEY[path]}-${locale}.png`;
+  return ogFileUrl(`${PAGE_KEY[path]}-${locale}.png`);
+}
+
+function ogFileUrl(file: string): string {
   return `${SITE}/og/${file}?v=${ogHash(file)}`;
+}
+
+/**
+ * 第二批五款的分享圖：`public/og/<遊戲>-<語系>.png`（那款的分支用 scripts/og-games/<遊戲>.mjs 產生），
+ * 規則頁、連線頁跟首頁同一張。還沒有的話用平台首頁那張（10/25 之前五款都是這樣）。
+ */
+function trialOgUrl(locale: Locale, path: string): string {
+  const file = `${path.split('/')[1]}-${locale}.png`;
+  return existsSync(join(process.cwd(), 'public', 'og', file)) ? ogFileUrl(file) : ogImageUrl(locale, '/');
 }
 
 function shareImage(locale: Locale, path: PagePath) {
@@ -222,11 +234,11 @@ export function playMetadata(locale: Locale, path: PagePath): Metadata {
 }
 
 /**
- * 試做中的遊戲頁（第二批五款）：先不讓搜尋引擎收錄，分享圖暫用平台首頁那張。
- * 標題與描述由各遊戲的文案表傳進來（不經過 messages/）。正式上線前改成 localeMetadata 並補分享圖。
+ * 試做中的遊戲頁（第二批五款）：先不讓搜尋引擎收錄。分享圖用那款自己的（見 trialOgUrl），還沒做的用平台首頁那張。
+ * 標題與描述由各遊戲的文案表傳進來（不經過 messages/）。正式上線前改成 localeMetadata。
  */
 export function trialGameMetadata(locale: Locale, path: string, title: string, description: string): Metadata {
-  const url = ogImageUrl(locale, '/');
+  const url = trialOgUrl(locale, path);
   return {
     title: { absolute: `${title} | ${brandName(locale)}` },
     description,

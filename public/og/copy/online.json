@@ -1,0 +1,38 @@
+{
+  "zh-TW": {
+    "kicker": "牆壁圍棋 Wall Go",
+    "title": [
+      "連線對戰"
+    ]
+  },
+  "en": {
+    "kicker": "Wall Go",
+    "title": [
+      "Online play"
+    ]
+  },
+  "ja": {
+    "kicker": "壁囲碁 Wall Go",
+    "title": [
+      "オンライン対戦"
+    ]
+  },
+  "ko": {
+    "kicker": "벽바둑 Wall Go",
+    "title": [
+      "온라인 대전"
+    ]
+  },
+  "zh-Hans": {
+    "kicker": "墙壁围棋 Wall Go",
+    "title": [
+      "联机对战"
+    ]
+  },
+  "th": {
+    "kicker": "Wall Go",
+    "title": [
+      "เล่นออนไลน์"
+    ]
+  }
+}

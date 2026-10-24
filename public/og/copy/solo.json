@@ -1,0 +1,38 @@
+{
+  "zh-TW": {
+    "kicker": "牆壁圍棋 Wall Go",
+    "title": [
+      "單人對戰"
+    ]
+  },
+  "en": {
+    "kicker": "Wall Go",
+    "title": [
+      "Solo play"
+    ]
+  },
+  "ja": {
+    "kicker": "壁囲碁 Wall Go",
+    "title": [
+      "ひとりで遊ぶ"
+    ]
+  },
+  "ko": {
+    "kicker": "벽바둑 Wall Go",
+    "title": [
+      "벽바둑 혼자 하기"
+    ]
+  },
+  "zh-Hans": {
+    "kicker": "墙壁围棋 Wall Go",
+    "title": [
+      "人机对战"
+    ]
+  },
+  "th": {
+    "kicker": "Wall Go",
+    "title": [
+      "เล่นกับคอมพิวเตอร์"
+    ]
+  }
+}

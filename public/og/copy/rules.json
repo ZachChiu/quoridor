@@ -1,0 +1,38 @@
+{
+  "zh-TW": {
+    "kicker": "牆壁圍棋 Wall Go",
+    "title": [
+      "遊戲規則"
+    ]
+  },
+  "en": {
+    "kicker": "Wall Go",
+    "title": [
+      "Rules"
+    ]
+  },
+  "ja": {
+    "kicker": "壁囲碁 Wall Go",
+    "title": [
+      "ルール"
+    ]
+  },
+  "ko": {
+    "kicker": "벽바둑 Wall Go",
+    "title": [
+      "벽바둑 규칙과 하는 법"
+    ]
+  },
+  "zh-Hans": {
+    "kicker": "墙壁围棋 Wall Go",
+    "title": [
+      "游戏规则"
+    ]
+  },
+  "th": {
+    "kicker": "Wall Go",
+    "title": [
+      "กติกา"
+    ]
+  }
+}
