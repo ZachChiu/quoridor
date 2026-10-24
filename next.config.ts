@@ -24,7 +24,7 @@ const pkg = JSON.parse(
   readFileSync(path.join(process.cwd(), "package.json"), "utf8")
 ) as { version: string };
 //
-// 只有 main 的部署用版號。dev 分支（部署到開發用的 bucket）用 commit SHA：
+// 只有 main 的部署用版號。beta 分支（部署到 beta.quoridorgame.com）用 commit SHA：
 // 它跑的是還沒打版的程式，掛在正式版號底下會把兩邊的錯誤與 crash-free 混在一起。
 // 跟公司專案的 staging 同一個做法（Releases 頁顯示 961c2de3 | staging）。
 const onCi = !!process.env.GITHUB_ACTIONS;

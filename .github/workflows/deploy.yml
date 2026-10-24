@@ -2,8 +2,15 @@ name: 部署到 Amazon S3
 
 on:
   push:
-    branches: ["main", "dev"] # 當推送到 main 或 dev 分支時觸發
+    branches: ["main", "beta"] # main → 正式站；beta → beta.quoridorgame.com（試做中的遊戲全部合在一起測）
   workflow_dispatch: # 允許手動觸發
+
+# beta 站（2026-10-24 建）：bucket 與 distribution 都不是機密，直接寫在這裡，不用另外設 GitHub secret。
+# distribution 是照正式站複製的，只差網域、來源 bucket、憑證，外加一個 X-Robots-Tag: noindex 的回應標頭
+# （beta-noindex），搜尋引擎不會收錄。
+env:
+  BETA_S3_BUCKET: quoridorgame-beta
+  BETA_CLOUDFRONT_DISTRIBUTION_ID: E3QE1R78LMII02
 
 jobs:
   # 構建和部署工作
@@ -53,9 +60,10 @@ jobs:
         run: npm run build
         env:
           # 根據分支設置不同的環境變數
-          NEXT_PUBLIC_APP_ENV: production
+          # 只有正式站載 GA（app/shell.tsx 看的是 production）—— beta 的瀏覽不能混進數據
+          NEXT_PUBLIC_APP_ENV: ${{ github.ref == 'refs/heads/main' && 'production' || 'beta' }}
           NEXT_PUBLIC_ENV: ${{ github.ref == 'refs/heads/main' && 'production' || 'development' }}
-          SITE_URL: ${{ secrets.SITE_URL }}
+          SITE_URL: ${{ github.ref == 'refs/heads/main' && secrets.SITE_URL || 'https://beta.quoridorgame.com' }}
           NEXT_PUBLIC_FIREBASE_API_KEY: ${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }}
           NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ${{ secrets.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN }}
           NEXT_PUBLIC_FIREBASE_DATABASE_URL: ${{ secrets.NEXT_PUBLIC_FIREBASE_DATABASE_URL }}
@@ -96,10 +104,10 @@ jobs:
         run: |
           aws s3 sync ./out s3://${{ secrets.PROD_S3_BUCKET_NAME }} --delete
 
-      - name: 部署到 S3 - 開發環境
-        if: github.ref == 'refs/heads/dev'
+      - name: 部署到 S3 - beta
+        if: github.ref == 'refs/heads/beta'
         run: |
-          aws s3 sync ./out s3://${{ secrets.DEV_S3_BUCKET_NAME }} --delete
+          aws s3 sync ./out s3://${{ env.BETA_S3_BUCKET }} --delete
 
       - name: 清除 CloudFront 快取 - 正式環境
         env:
@@ -109,7 +117,7 @@ jobs:
           aws cloudfront create-invalidation --distribution-id ${{ env.PROD_CLOUDFRONT_DISTRIBUTION_ID }} --paths "/*"
 
       # 301 轉址＋目錄網址補 index.html（infra/cloudfront-redirects.js）。
-      # 只在 main 跑：function 是整個帳號共用的，dev 部署時更新會直接影響正式站。
+      # 只在 main 跑：function 是整個帳號共用的（beta 的 distribution 也掛同一支），beta 部署時更新會直接影響正式站。
       # continue-on-error：這一步出問題（還沒建立、缺權限、測試沒過）不該擋住網站部署；
       # 測試沒過時腳本不會發布，線上維持舊版，GitHub 上會出現黃色警告。
       - name: 更新 CloudFront Function（轉址）
@@ -117,9 +125,7 @@ jobs:
         continue-on-error: true
         run: bash scripts/deploy-cloudfront-function.sh
 
-      - name: 清除 CloudFront 快取 - 開發環境
-        env:
-          DEV_CLOUDFRONT_DISTRIBUTION_ID: ${{ secrets.DEV_CLOUDFRONT_DISTRIBUTION_ID }}
-        if: github.ref == 'refs/heads/dev' && env.DEV_CLOUDFRONT_DISTRIBUTION_ID != ''
+      - name: 清除 CloudFront 快取 - beta
+        if: github.ref == 'refs/heads/beta'
         run: |
-          aws cloudfront create-invalidation --distribution-id ${{ env.DEV_CLOUDFRONT_DISTRIBUTION_ID }} --paths "/*"
+          aws cloudfront create-invalidation --distribution-id ${{ env.BETA_CLOUDFRONT_DISTRIBUTION_ID }} --paths "/*"

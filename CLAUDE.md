@@ -379,8 +379,8 @@ GA 由 `app/shell.tsx` 的 `<GoogleAnalytics>` 載入（只有 `NEXT_PUBLIC_APP_
 
 - `instrumentation-client.ts` — 唯一會執行的 Sentry 設定。靜態匯出沒有 server / edge runtime，故 `sentry.server.config.ts`、`sentry.edge.config.ts`、`instrumentation.ts` 皆已移除
 - SDK 以動態 import 延後到瀏覽器閒置後才載入；載入前由原生 error / unhandledrejection 監聽器暫存錯誤，就緒後補送
-- **release ＝ `quoridor@` ＋ `package.json` 的版號**（例如 `quoridor@v26.9.13`；版號由 `npm run release` 維護）。**前綴不能拿掉**：Sentry 的 release 是整個組織共用的，同組織的 corn-stock 也用 `vYY.M.N`，沒前綴時 v26.9.5～v26.9.13 兩邊撞成同一個 release、commit 互相覆蓋。規則頁顯示的版號另走 `NEXT_PUBLIC_APP_VERSION`（`v26.9.13`）。dev 分支的部署不用版號、改用 commit SHA（`quoridor@961c2de3`），還沒打版的程式不該算進正式版號。
-- **部署紀錄**（`release.deploy`）：CI 建置時記一筆，環境名跟事件的 `NEXT_PUBLIC_SENTRY_ENVIRONMENT` 同一個字（main → `production`、dev → `development`），Releases 頁的卡片才會寫「| production」。本機 build 不記
+- **release ＝ `quoridor@` ＋ `package.json` 的版號**（例如 `quoridor@v26.9.13`；版號由 `npm run release` 維護）。**前綴不能拿掉**：Sentry 的 release 是整個組織共用的，同組織的 corn-stock 也用 `vYY.M.N`，沒前綴時 v26.9.5～v26.9.13 兩邊撞成同一個 release、commit 互相覆蓋。規則頁顯示的版號另走 `NEXT_PUBLIC_APP_VERSION`（`v26.9.13`）。beta 分支的部署不用版號、改用 commit SHA（`quoridor@961c2de3`），還沒打版的程式不該算進正式版號。
+- **部署紀錄**（`release.deploy`）：CI 建置時記一筆，環境名跟事件的 `NEXT_PUBLIC_SENTRY_ENVIRONMENT` 同一個字（main → `production`、beta → `development`），Releases 頁的卡片才會寫「| production」。本機 build 不記
 - release 由 `next.config.ts` 讀出來後透過 `env.NEXT_PUBLIC_SENTRY_RELEASE` **同時**餵給建置期（上傳 source map）與 runtime（事件帶上同一個值）—— 只有一個來源，就不會有「兩邊對不上」這種問題。CI 因此不需要也不應該再設 `SENTRY_RELEASE`（設了會覆蓋，僅供臨時除錯）
 - **source map 的比對不靠 release 名稱**：上傳時每個檔案都帶 debug id，Sentry 用 debug id 配對，所以同一個版號部署好幾次也不會對錯堆疊。release 真正影響的是 **crash-free** —— Release Health 是「按 release 統計 session」，沒有 release 就算不出來
 - `finalize: true` 補上 `dateReleased`（Releases 頁才不會一直顯示「(unreleased)」）；`setCommits: { auto: true, ignoreMissing: true, ignoreEmpty: true }` 關聯 git commit，Sentry 才指得出 suspect commits。**兩個 ignore 旗標是必要的** —— 第一次打版（找不到上一個 release 的 commit）與同一個 commit 重複 build（沒有新 commit）都會讓 setCommits 失敗，進而讓 build 失敗。CI 的 checkout 也必須 `fetch-depth: 0`，淺層 clone 沒有歷史可關聯
@@ -395,6 +395,12 @@ GA 由 `app/shell.tsx` 的 `<GoogleAnalytics>` 載入（只有 `NEXT_PUBLIC_APP_
 
 GitHub Actions（`.github/workflows/`）負責建置並將 `/out` 同步至 AWS S3。
 `aws s3 sync` 依副檔名猜 Content-Type：虎羊棋的背景是 `.avif`、各遊戲圖是 `.webp`，**第一次上線後要用 `curl -I` 確認 S3 回的是 `image/avif`／`image/webp`**（猜錯成 `binary/octet-stream` 時，帶 `nosniff` 的情況下瀏覽器不會畫；本機預覽的 `serve` 也不認得 `.avif`，要用 `--config` 加標頭）。設定 `SITE_URL` 環境變數可覆蓋預設的 `https://quoridorgame.com` 以產生 sitemap。
+
+**beta 站**（2026-10-24）：`beta` 分支推上去就部署到 https://beta.quoridorgame.com —— S3 `quoridorgame-beta`（跟正式站一樣是靜態網站代管）＋CloudFront `E3QE1R78LMII02`（照正式站的設定複製，只差網域、來源 bucket、憑證，外加回應標頭政策 `beta-noindex`：`X-Robots-Tag: noindex, nofollow`）。DNS 在 Route 53。
+- 不載 GA（`NEXT_PUBLIC_APP_ENV=beta`），Sentry 環境是 `development`、release 用 commit SHA，`SITE_URL` 是 beta 的網址
+- **連的是正式的 Firebase**（同一組 secrets）：在 beta 開的房間會寫進正式資料庫
+- `beta` 分支＝平台＋各款自己的分支合在一起（一款一款上線前先在這裡一起測）；各分支有更新就再合進 `beta` 推上去。**不要從 `beta` 打版**，打版照舊從平台或各款的分支
+- 轉址 function `wallgo-redirects` 正式站與 beta 共用，所以只有 main 的部署會更新它
 
 ## 數據中心
 
