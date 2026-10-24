@@ -126,6 +126,9 @@ for (const f of walk(SRC_DIR)) {
     }
   }
 }
+// 泰文的 ำ（U+0E33 SARA AM）：WebKit 排版時會拆成 ํ（U+0E4D NIKHAHIT）＋ า（U+0E32）再畫，
+// 子集裡只有 ำ 本身的話，iPhone 上那個小圈會不見（「จำนวน」變成「จ านวน」；Chrome 正常，2026-10-24 測到）。
+if (sets.thai.has('\u0e33')) { sets.thai.add('\u0e4d'); sets.thai.add('\u0e32'); }
 // 完整可見 ASCII 一律帶上：Latin、數字、標點的體積微不足道，
 // 卻能讓「加一個英文標點就掉字」這種事不會發生。泰文頁的英文也靠這份。
 for (const set of Object.values(sets)) for (let c = 0x20; c < 0x7f; c++) set.add(String.fromCharCode(c));

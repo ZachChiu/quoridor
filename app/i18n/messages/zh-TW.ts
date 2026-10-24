@@ -43,6 +43,9 @@ const zhTW = {
     heroBadge: '現在就能玩',
     heroMeta: '第 2 季《死亡密室》．2–3 人．免下載',
     heroBody: '7×7 的棋盤，每回合走一步、蓋一道牆，把地圍起來。可以跟電腦下，或開房間傳連結給朋友。',
+    // 大卡片換成尼泊爾虎棋時（最新上線、或使用者點過）的說明；Wall Go 的是上面那兩行
+    baghHeroMeta: '第 2 季決賽．2 人．免下載',
+    baghHeroBody: '4 隻老虎對 20 隻羊：老虎吃掉 5 隻羊就贏，羊把老虎全部困住就贏。可以跟電腦下、兩人同一台玩，或傳連結給朋友。',
     play: '開始玩',
     rules: '規則與玩法',
     s3: '第 3 季《Dead Again》',
@@ -93,6 +96,8 @@ const zhTW = {
     winGoatBody: '羊把老虎全部困住了。',
     drawBody: '走了太多步還分不出勝負。',
     again: '再來一局',
+    /** 結算後「給點意見」的範例句（Wall Go 那句講的是三人局，放在這裡不通） */
+    feedbackPlaceholder: '例如：老虎明明能跳卻點不下去、電腦太強或太弱',
     invite: '邀請朋友',
     inviteHeading: '把連結傳給朋友',
     inviteBody: '對方打開連結就會加入。你當{me}，對方當{them}。',
