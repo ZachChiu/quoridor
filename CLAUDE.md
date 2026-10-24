@@ -59,6 +59,9 @@ zh-TW 不加前綴（`app/(default)/`），en / ja / ko / zh-Hans / th 加前綴
 在 Firebase Console 讀到回饋時，把棋譜貼到 `/wall-go/replay#wgf=…` 就能一手一手重看玩家遇到的狀況。
 首頁右上角的「聯絡我們」也寫進同一個 `feedback/`，但 `mode: 'contact'`、**沒有 WGF**（不在對局裡）；
 它必填的是 `message`，評分選填。規則在 `database.rules.json` 依 `mode` 分流驗證，改表單欄位時兩邊要一起動。
+**每一則（回饋與聯絡我們）都帶 `page`**＝從哪一頁送的網址路徑（`gameService` 自動加，10/25 Zach 問「聯絡我們分得出是哪個來源嗎」）；
+其他遊戲的對局回饋沒有 WGF，走法放 `record`（尼泊爾虎棋是 `encodeMoves`，結算圖下面的「給點意見」，`ShareResultModal` 的 `onFeedback`）。
+這兩個欄位的規則**要先在正式資料庫發布、程式後上線**：多的欄位一律拒絕，順序反過來新程式的回饋會整筆送不出去。
 刻意**沒有任何 UI 入口**、不進 sitemap、noindex —— 這個站不做「個人棋譜」。
 不要替它補分享按鈕或入口；它沒被連到不是漏做，是設計。
 

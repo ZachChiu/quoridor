@@ -96,6 +96,8 @@ const zhTW = {
     winGoatBody: '羊把老虎全部困住了。',
     drawBody: '走了太多步還分不出勝負。',
     again: '再來一局',
+    /** 結算後「給點意見」的範例句（Wall Go 那句講的是三人局，放在這裡不通） */
+    feedbackPlaceholder: '例如：老虎明明能跳卻點不下去、電腦太強或太弱',
     invite: '邀請朋友',
     inviteHeading: '把連結傳給朋友',
     inviteBody: '對方打開連結就會加入。你當{me}，對方當{them}。',

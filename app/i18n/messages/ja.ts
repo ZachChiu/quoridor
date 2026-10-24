@@ -85,6 +85,7 @@ const ja: Messages = {
     winGoatBody: 'ヤギがトラを全部動けなくしました。',
     drawBody: '手数が多すぎて決着がつきませんでした。',
     again: 'もう一局',
+    feedbackPlaceholder: '例：トラが跳べるはずなのに押せない、コンピューターが強すぎる・弱すぎる',
     invite: '友だちを招待',
     inviteHeading: 'リンクを友だちに送る',
     inviteBody: '相手がリンクを開くと参加します。あなたが{me}、相手が{them}です。',

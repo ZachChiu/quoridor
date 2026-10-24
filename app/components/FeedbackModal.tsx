@@ -28,6 +28,8 @@ type Props = {
   variant?: 'game' | 'contact';
   /** 那款遊戲的樣子（見 cornerTheme.ts）。對局後的回饋是 Wall Go 的，不傳 */
   theme?: CornerTheme;
+  /** 留言框的範例句。預設是 Wall Go 的（講三人局），其他遊戲的對局回饋要換成自己的 */
+  placeholder?: string;
 };
 
 /*
@@ -40,7 +42,7 @@ const FACES: { value: 1 | 2 | 3; emoji: string }[] = [
   { value: 3, emoji: '🤩' },
 ];
 
-const FeedbackModal: React.FC<Props> = ({ isOpen, onClose, onSubmit, variant = 'game', theme }) => {
+const FeedbackModal: React.FC<Props> = ({ isOpen, onClose, onSubmit, variant = 'game', theme, placeholder }) => {
   const g = useGameText();
   const t = useMessages();
   const closeLabel = t.ui.close;
@@ -68,7 +70,7 @@ const FeedbackModal: React.FC<Props> = ({ isOpen, onClose, onSubmit, variant = '
     ? { heading: g.contact.heading, kicker: g.contact.kicker, ratingLabel: g.contact.ratingLabel,
         placeholder: g.contact.placeholder, note: g.contact.note, sentBody: g.contact.sentBody }
     : { heading: g.feedback.heading, kicker: g.feedback.kicker, ratingLabel: g.feedback.ratingLabel,
-        placeholder: g.feedback.placeholder, note: g.feedback.note, sentBody: g.feedback.sentBody };
+        placeholder: placeholder ?? g.feedback.placeholder, note: g.feedback.note, sentBody: g.feedback.sentBody };
 
   const submit = async () => {
     if (!canSend || state === 'sending') return;

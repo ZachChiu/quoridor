@@ -92,6 +92,7 @@ const zhHans: Messages = {
     winGoatBody: '羊把老虎全部困住了。',
     drawBody: '走了太多步还分不出胜负。',
     again: '再来一局',
+    feedbackPlaceholder: '例如：老虎明明能跳却点不下去、电脑太强或太弱',
     invite: '邀请朋友',
     inviteHeading: '把链接发给朋友',
     inviteBody: '对方打开链接就会加入。你当{me}，对方当{them}。',

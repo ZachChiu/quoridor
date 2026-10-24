@@ -88,6 +88,7 @@ const ko: Messages = {
     winGoatBody: '염소가 호랑이를 모두 가뒀습니다.',
     drawBody: '수가 너무 길어져 승부가 나지 않았습니다.',
     again: '한 판 더',
+    feedbackPlaceholder: '예: 호랑이가 뛸 수 있는데 눌리지 않아요, 컴퓨터가 너무 강하거나 약해요',
     invite: '친구 초대',
     inviteHeading: '친구에게 링크 보내기',
     inviteBody: '친구가 링크를 열면 바로 참가합니다. 나는 {me}, 친구는 {them}.',
