@@ -36,15 +36,12 @@ export const KT_CORNER: CornerTheme = {
 };
 
 /**
- * 結算分享圖底下的按鈕與比例切換（暗遮罩上）：同一套銅版零件 —— 再挑戰一次是紅粉筆、分享是紙色壓痕框，
- * 比例切換是方的（不用全站的膠囊形），選中的那格是紙色壓痕框。
+ * 結算分享圖底下的按鈕（暗遮罩上）：同一套銅版零件 —— 再挑戰一次是紅粉筆、分享是紙色壓痕框。
+ * 分享圖只有 9:16，沒有比例切換，所以不給切換的樣式。
  */
 export const KT_SHARE: Partial<ShareClasses> = {
   primary: 'kt-chalk',
   secondary: 'kt-plate',
-  toggle: '!rounded-[2px] bg-[#edddc7]/15',
-  toggleOn: 'kt-plate',
-  toggleOff: '!rounded-[1.5px] text-[#edddc7]/75 fine:hover:text-[#edddc7]',
   button: 'font-black',
   placeholder: 'bg-[#edddc7]/20',
 };

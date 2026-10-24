@@ -14,6 +14,7 @@ export type Place = 'bar' | 'aside';
  *   8×8 在 390 寬的手機上每格約 44px；寬度同時受畫面高度限制，矮的手機不會把按鈕擠出畫面
  * - 桌機（lg）與橫放的手機（short）：棋盤在左，右邊一欄放標題、狀態與有字的按鈕
  * status／controls 會在兩個位置各畫一次（另一個用 CSS 藏起來），所以收的是函式。
+ * 畫面高度用 svh（工具列展開時的高度）而不是 dvh：往下捲、瀏覽器工具列收起時棋盤不會跟著變大。
  *
  * 聲音開關（大鍵琴、鵝毛筆那一套，見 sounds.ts）跟全站共用同一個設定（useSound）：手機在右上、規則旁邊，
  * 桌機在標題右邊。掛著 useSound 才會在第一次點擊時把聲音解鎖。
@@ -49,7 +50,7 @@ export default function GameFrame({ title, subtitle, menuLabel, helpLabel, onMen
       </div>
       <div className="mt-3 w-full max-w-[520px] lg:hidden short:hidden">{status('bar')}</div>
 
-      <div className="flex w-full max-w-[min(520px,calc(100dvh-17.5rem))] flex-1 items-center py-2.5 lg:w-[min(620px,calc(100dvh-5rem))] lg:max-w-none lg:flex-none lg:py-0 short:w-[calc(100dvh-1.5rem)] short:max-w-none short:flex-none short:py-0">
+      <div className="flex w-full max-w-[min(520px,calc(100svh-17.5rem))] flex-1 items-center py-2.5 lg:w-[min(620px,calc(100svh-5rem))] lg:max-w-none lg:flex-none lg:py-0 short:w-[calc(100svh-1.5rem)] short:max-w-none short:flex-none short:py-0">
         {board}
       </div>
 

@@ -9,6 +9,7 @@ import { drawKtCard, KT_SERIF, type KtCardData, type KtPlate } from './shareCard
 
 /**
  * 結算分享圖的資料與畫法（節目挑戰、練習模式共用）。QR 掃了回到這款的首頁（帶語系），utm_campaign 是 knights-tour。
+ * 只給 9:16 一種（Zach 10/24：「感覺可以留 9:16 就好」），結算上就不會出現比例切換。
  * 字：中日韓用頁面的 --font-app（繁中、簡中、泰文是子集網路字型，要先載好），拉丁字與數字是系統襯線（同 .kt-serif）。
  */
 export function useKtShare({ isOpen, plates, time, isNew, kicker, title }: {
@@ -48,6 +49,7 @@ export function useKtShare({ isOpen, plates, time, isNew, kicker, title }: {
     fileName: 'knights-tour',
     homePath: localePath(locale, KNIGHTS_TOUR),
     campaign: 'knights-tour',
+    layouts: ['story'],
     fonts: [
       { font: `900 40px ${font}`, text: words },
       { font: `700 40px ${font}`, text: words },

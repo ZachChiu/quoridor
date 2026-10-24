@@ -24,6 +24,7 @@ import { formatTime, sizeLabel } from './ui';
  *
  * 模式是兩張沒有框線的卡片：節目挑戰墨色（主要）、練習淡墨（次要），照 Wall Go 的兩種按鈕；規則放成文字連結。
  * 節目挑戰是真的 `<a href="#show">`（新分頁開也對），點擊在當下交給上層 pushState（WebKit 的返回鍵規則）。
+ * 字級、間距、插圖跟著畫面高度縮放時用 svh 不用 dvh：往下捲、工具列收起時 dvh 變大，字和圖會跟著放大。
  */
 export default function KnightsTourMenu({ locale, onShow, onPractice }: {
   locale: Locale;
@@ -39,26 +40,26 @@ export default function KnightsTourMenu({ locale, onShow, onPractice }: {
   const card = 'flex w-full items-center gap-3 px-4 py-3.5 text-left active:scale-[0.99]';
 
   return (
-    <KtFrame className="items-center justify-center px-5 py-[max(1rem,3dvh)]">
+    <KtFrame className="items-center justify-center px-5 py-[max(1rem,3svh)]">
       {/* 右上角的聯絡、語言：圓鈕與打開的彈窗都是這款的圖版（KT_CORNER），不是 Wall Go 的奶油底 */}
       <PlatformCorner locale={locale} theme={KT_CORNER} offset="calc(clamp(6px, 1.6vw, 14px) + var(--kt-frame, 8px) + 6px)" />
       <main className="flex w-full max-w-[420px] flex-col items-center pt-10 lg:max-w-[900px] lg:flex-row lg:items-center lg:gap-14 lg:pt-0">
         <header className="flex w-full flex-col items-center text-center lg:flex-1">
           <h1 className="flex flex-col items-center">
-            <span className="text-[clamp(2.1rem,6.5dvh,3.5rem)] font-black leading-none tracking-[0.04em]">{t.title}</span>
-            {t.subtitle && <span className="kt-serif mt-1 text-[clamp(1.1rem,3dvh,1.6rem)] italic">{t.subtitle}</span>}
+            <span className="text-[clamp(2.1rem,6.5svh,3.5rem)] font-black leading-none tracking-[0.04em]">{t.title}</span>
+            {t.subtitle && <span className="kt-serif mt-1 text-[clamp(1.1rem,3svh,1.6rem)] italic">{t.subtitle}</span>}
           </h1>
-          <p className="mt-[max(0.4rem,1.2dvh)] text-sm font-bold opacity-80 md:text-base">{t.tagline}</p>
+          <p className="mt-[max(0.4rem,1.2svh)] text-sm font-bold opacity-80 md:text-base">{t.tagline}</p>
           {/* Fig. 1：歐拉的走法 */}
           {/* 出處：歐拉 1759 年論文裡的走法（自己畫的）。畫面上不寫出處（Zach 10/24：插圖不要說明） */}
-          <div className="mt-[max(0.75rem,2.2dvh)] flex w-full flex-col items-center gap-1.5">
-            <div className="w-[min(100%,17rem,30dvh)] lg:w-[min(100%,24rem)]">
+          <div className="mt-[max(0.75rem,2.2svh)] flex w-full flex-col items-center gap-1.5">
+            <div className="w-[min(100%,17rem,30svh)] lg:w-[min(100%,24rem)]">
               <TourBoard n={8} path={EULER_TOUR} showKnight={false} />
             </div>
           </div>
         </header>
 
-        <div className="mt-[max(1rem,3dvh)] flex w-full flex-col gap-2.5 lg:mt-0 lg:w-[380px]">
+        <div className="mt-[max(1rem,3svh)] flex w-full flex-col gap-2.5 lg:mt-0 lg:w-[380px]">
           <a href={`${localePath(locale, KNIGHTS_TOUR)}#show`} onClick={(e) => { e.preventDefault(); onShow(); }}
             className={`${card} kt-chalk`}>
             <GiStopwatch aria-hidden="true" className="shrink-0 text-3xl" />
