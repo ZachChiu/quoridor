@@ -176,9 +176,10 @@ export default function MorrisPlay({ locale, mode, showRules, moves = '', onMenu
   const millNoRemoval = !game.removing && last !== undefined && last.kind !== 'remove' && mills.length > 0;
 
   const name = (s: Side) => (s === 'black' ? t.black : t.white);
-  // 狀態卡上的名字：跟電腦下時寫「你／電腦」、連線寫「你／對方」（是哪一色看旁邊的棋子），兩人同一台寫黑方／白方。
-  // 兩個都寫會太長（日文「白 · コンピューター」在手機上被截掉）
-  const label = (s: Side) => (human ? (s === human ? t.you : online ? t.opponent : t.computer) : name(s));
+  // 狀態卡上的名字：跟電腦下時寫「你／電腦」（是哪一色看旁邊的棋子），兩人同一台與連線寫黑方／白方。
+  // 兩個都寫會太長（日文「白 · コンピューター」在手機上被截掉）。
+  // 連線不寫「你／對方」：自己那張卡多一圈拱框（.is-mine），用記號不用字 —— Zach 在 Wall Go 選過「寫『你』太直白」
+  const label = (s: Side) => (mode.kind === 'ai' ? (s === mode.human ? t.you : t.computer) : name(s));
   const phase = game.removing ? 'remove' : phaseOf(game);
 
   const undoSide = human ?? undefined;
@@ -196,7 +197,7 @@ export default function MorrisPlay({ locale, mode, showRules, moves = '', onMenu
   ].join(' · ');
 
   const resultTitle = !game.winner ? '' : game.winner === 'draw' ? t.draw
-    : human ? (game.winner === human ? t.youWin : online ? t.opponentWins : t.aiWins) : fill(t.win, { side: name(game.winner) });
+    : mode.kind === 'ai' ? (game.winner === mode.human ? t.youWin : t.aiWins) : fill(t.win, { side: name(game.winner) });
   const loser = game.winner && game.winner !== 'draw' ? other(game.winner) : null;
   const resultBody = game.reason === 'pieces' && loser ? fill(t.reason.pieces, { side: name(loser) })
     : game.reason === 'blocked' && loser ? fill(t.reason.blocked, { side: name(loser) })
@@ -204,10 +205,11 @@ export default function MorrisPlay({ locale, mode, showRules, moves = '', onMenu
     : game.reason === 'quiet' ? t.reason.quiet
     : game.reason === 'standoff' ? (loser ? fill(t.reason.standoff, { side: name(loser) }) : t.reason.standoffDraw) : '';
 
-  const status = game.winner ? resultTitle : aiTurn ? t.thinking : theirTurn ? t.opponentTurn : human ? t.yourTurn : fill(t.turnOf, { side: name(game.turn) });
+  // 連線也寫「輪到黑方／白方」，是不是自己看亮起來的那張卡有沒有那圈拱框
+  const status = game.winner ? resultTitle : aiTurn ? t.thinking : mode.kind === 'ai' ? t.yourTurn : fill(t.turnOf, { side: name(game.turn) });
   const hint = game.winner ? resultBody
     : aiTurn ? (game.removing ? t.hint.aiRemoving : '')
-    : theirTurn ? (game.removing ? t.hint.opponentRemoving : '')
+    : theirTurn ? (game.removing ? fill(t.hint.sideRemoving, { side: name(game.turn) }) : '')
     : game.removing ? (allInMills(game.board, other(game.turn)) ? t.hint.removeAny : t.hint.remove)
     : millNoRemoval ? t.hint.noRemoval
     : phase === 'place' ? t.hint.place
@@ -252,7 +254,8 @@ export default function MorrisPlay({ locale, mode, showRules, moves = '', onMenu
   const wide = 'nmm-arch is-small flex h-12 items-center justify-center gap-2 px-2 pt-1 text-sm font-black disabled:opacity-40';
   const stacked = 'nmm-arch is-small flex h-14 flex-col items-center justify-center gap-0.5 px-1 pt-1.5 text-xs font-black disabled:opacity-40 [&_svg]:text-lg';
 
-  // 兩方的狀態：輪到的那方亮成羊皮紙（墨字），另一方淡淡的半透明。棋子放在羊皮紙小圓上，亮暗都看得清楚
+  // 兩方的狀態：輪到的那方亮成羊皮紙（墨字），另一方淡淡的半透明。棋子放在羊皮紙小圓上，亮暗都看得清楚。
+  // 連線時自己那張多一圈拱框（.is-mine：隔一道縫、一條羊皮紙細線加朱紅的邊，跟整頁最外緣的畫框同一個做法），讀屏另外念「你」
   const statusCards = (
     <div className="grid w-full grid-cols-2 gap-3">
       {(['black', 'white'] as const).map((s) => {
@@ -260,10 +263,11 @@ export default function MorrisPlay({ locale, mode, showRules, moves = '', onMenu
         const onBoard = countOnBoard(game.board, s);
         const hand = game.inHand[s];
         return (
-          <div key={s} className={`nmm-arch is-small flex min-w-0 flex-col gap-1 px-3.5 pb-2.5 pt-3.5 ${active ? 'is-on' : 'is-dim'}`}>
+          <div key={s} className={`nmm-arch is-small flex min-w-0 flex-col gap-1 px-3.5 pb-2.5 pt-3.5 ${active ? 'is-on' : 'is-dim'} ${online && s === human ? 'is-mine' : ''}`}>
             <p className="flex min-w-0 items-center gap-2 text-sm font-bold">
               <span className="grid size-7 shrink-0 place-items-center rounded-full bg-[#eee0c4]"><PieceGlyph side={s} className="size-5" /></span>
               <span className="truncate">{label(s)}</span>
+              {online && s === human && <span className="sr-only">（{t.you}）</span>}
             </p>
             <p className="flex flex-wrap gap-x-2 text-sm font-black tabular-nums leading-tight">
               {hand > 0 && <span>{fill(t.inHand, { n: hand })}</span>}

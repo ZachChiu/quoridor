@@ -570,6 +570,10 @@ html:has(.nmm-root), body:has(.nmm-root) { background: #c54915; }
 .nmm-arch.is-on { box-shadow: inset 0 0 0 3px #c54915, inset 0 0 0 5px #eee0c4, inset 0 0 0 6px #c54915; }
 /* 沒輪到的那方：群青底上半透明的拱 */
 .nmm-arch.is-dim { background: rgb(238 224 196 / 0.14); color: rgb(238 224 196 / 0.85); box-shadow: inset 0 0 0 1.5px rgb(238 224 196 / 0.3); }
+/* 連線時自己那張狀態卡：拱外隔一道群青的縫，再一條羊皮紙細線、一圈朱紅（跟整頁最外緣的畫框同一套）。
+   用記號不用字：畫面上不寫「你」（Zach 在 Wall Go 選過，寫字太直白）。亮、暗兩種狀態都要接在原本的內線後面 */
+.nmm-arch.is-mine.is-on { box-shadow: inset 0 0 0 3px #c54915, inset 0 0 0 5px #eee0c4, inset 0 0 0 6px #c54915, 0 0 0 3px #4b4577, 0 0 0 4.5px #eee0c4, 0 0 0 7.5px #c54915; }
+.nmm-arch.is-mine.is-dim { box-shadow: inset 0 0 0 1.5px rgb(238 224 196 / 0.3), 0 0 0 3px #4b4577, 0 0 0 4.5px #eee0c4, 0 0 0 7.5px #c54915; }
 /* 上色首字：一格方塊，朱紅與群青交替，放圖示（手抄本段落開頭那個上了色的大字） */
 .nmm-initial { display: grid; place-items: center; width: 2.75rem; height: 2.75rem; flex: none; border-radius: 3px; background: #c54915; color: #eee0c4; font-size: 1.6rem; }
 .nmm-initial.is-blue { background: #4b4577; }

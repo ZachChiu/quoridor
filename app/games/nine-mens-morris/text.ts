@@ -44,11 +44,8 @@ export type MorrisText = {
   turnOf: string;
   yourTurn: string;
   thinking: string;
-  /** 連線：對局標題下面那一行、狀態卡上的對手、輪到對手、對手贏了 */
+  /** 連線：對局標題下面那一行。畫面上不寫「你／對方」（狀態卡、提示、結算都寫黑方／白方，自己那張卡多一圈拱框） */
   online: string;
-  opponent: string;
-  opponentTurn: string;
-  opponentWins: string;
   hint: {
     place: string;
     move: string;
@@ -60,8 +57,8 @@ export type MorrisText = {
     /** 成三了但沒得拿（節目規則：對方的子全在線上） */
     noRemoval: string;
     aiRemoving: string;
-    /** 連線：對手連成一線、正在挑 */
-    opponentRemoving: string;
+    /** 連線：對方連成一線、正在挑（{side} 代入黑方／白方） */
+    sideRemoving: string;
   };
   undo: string;
   restart: string;
@@ -125,9 +122,6 @@ export const TEXT = {
     yourTurn: '輪到你',
     thinking: 'AI 思考中…',
     online: '連線對戰',
-    opponent: '對方',
-    opponentTurn: '輪到對方',
-    opponentWins: '對方贏了',
     hint: {
       place: '點一個空點，把子放上去',
       move: '選一顆子，沿線走到相鄰的空點',
@@ -137,7 +131,7 @@ export const TEXT = {
       removeAny: '對方的子都在線上，這次可以拿線上的子',
       noRemoval: '連成一線，但對方的子都在線上，這次不能拿',
       aiRemoving: 'AI 連成一線，正在挑要拿哪一顆',
-      opponentRemoving: '對方連成一線，正在挑要拿哪一顆',
+      sideRemoving: '{side}連成一線，正在挑要拿哪一顆',
     },
     undo: '悔棋',
     restart: '重來',
@@ -207,9 +201,6 @@ export const TEXT = {
     yourTurn: 'Your turn',
     thinking: 'AI is thinking…',
     online: 'Online',
-    opponent: 'Friend',
-    opponentTurn: "Your friend's turn",
-    opponentWins: 'Your friend wins',
     hint: {
       place: 'Tap an empty point to place a piece',
       move: 'Pick a piece and slide it along a line to an empty neighbor',
@@ -219,7 +210,7 @@ export const TEXT = {
       removeAny: 'All their pieces are in mills, so you may take one from a mill',
       noRemoval: 'A mill, but all their pieces are in mills, so nothing can be taken',
       aiRemoving: 'The AI made a mill and is choosing a piece to take',
-      opponentRemoving: 'Your friend made a mill and is choosing a piece to take',
+      sideRemoving: '{side} made a mill and is choosing a piece to take',
     },
     undo: 'Undo',
     restart: 'Restart',
@@ -289,9 +280,6 @@ export const TEXT = {
     yourTurn: 'あなたの番',
     thinking: 'AIが考え中…',
     online: 'オンライン対戦',
-    opponent: '相手',
-    opponentTurn: '相手の番',
-    opponentWins: '相手の勝ち',
     hint: {
       place: '空いている点をタップして駒を置く',
       move: '駒を選んで、線に沿って隣の空いている点へ動かす',
@@ -301,7 +289,7 @@ export const TEXT = {
       removeAny: '相手の駒がすべて並んでいるので、並んでいる駒も取れる',
       noRemoval: '3つ並んだが、相手の駒がすべて並んでいるので取れない',
       aiRemoving: 'AIが3つ並べて、取る駒を選んでいます',
-      opponentRemoving: '相手が3つ並べて、取る駒を選んでいます',
+      sideRemoving: '{side}が3つ並べて、取る駒を選んでいます',
     },
     undo: '待った',
     restart: 'やり直す',
@@ -371,9 +359,6 @@ export const TEXT = {
     yourTurn: '내 차례',
     thinking: 'AI가 생각 중…',
     online: '온라인 대전',
-    opponent: '친구',
-    opponentTurn: '친구 차례',
-    opponentWins: '친구 승리',
     hint: {
       place: '빈 점을 눌러 말을 놓으세요',
       move: '말을 골라 선을 따라 옆의 빈 점으로 옮기세요',
@@ -383,7 +368,7 @@ export const TEXT = {
       removeAny: '상대 말이 모두 줄에 있어서 줄에 있는 말도 가져올 수 있어요',
       noRemoval: '한 줄을 만들었지만 상대 말이 모두 줄에 있어서 가져올 수 없어요',
       aiRemoving: 'AI가 한 줄을 만들어 가져올 말을 고르는 중이에요',
-      opponentRemoving: '친구가 한 줄을 만들어 가져올 말을 고르는 중이에요',
+      sideRemoving: '{side}이 한 줄을 만들어 가져올 말을 고르는 중이에요',
     },
     undo: '무르기',
     restart: '다시 하기',
@@ -453,9 +438,6 @@ export const TEXT = {
     yourTurn: '轮到你',
     thinking: 'AI 思考中…',
     online: '联机对战',
-    opponent: '对方',
-    opponentTurn: '轮到对方',
-    opponentWins: '对方赢了',
     hint: {
       place: '点一个空点，把棋子放上去',
       move: '选一枚棋子，沿线走到相邻的空点',
@@ -465,7 +447,7 @@ export const TEXT = {
       removeAny: '对方的棋子都在线上，这次可以拿线上的棋子',
       noRemoval: '连成一线，但对方的棋子都在线上，这次不能拿',
       aiRemoving: 'AI 连成一线，正在挑要拿哪一枚',
-      opponentRemoving: '对方连成一线，正在挑要拿哪一枚',
+      sideRemoving: '{side}连成一线，正在挑要拿哪一枚',
     },
     undo: '悔棋',
     restart: '重来',
@@ -535,9 +517,6 @@ export const TEXT = {
     yourTurn: 'ตาของคุณ',
     thinking: 'AI กำลังคิด…',
     online: 'เล่นออนไลน์',
-    opponent: 'เพื่อน',
-    opponentTurn: 'ตาของเพื่อน',
-    opponentWins: 'เพื่อนชนะ',
     hint: {
       place: 'แตะจุดว่างเพื่อวางหมาก',
       move: 'เลือกหมาก แล้วเดินตามเส้นไปยังจุดว่างที่อยู่ติดกัน',
@@ -547,7 +526,7 @@ export const TEXT = {
       removeAny: 'หมากของอีกฝ่ายเรียงอยู่ทุกตัว ครั้งนี้หยิบตัวที่เรียงอยู่ได้',
       noRemoval: 'เรียงครบ 3 ตัว แต่หมากของอีกฝ่ายเรียงอยู่ทุกตัว จึงหยิบไม่ได้',
       aiRemoving: 'AI เรียงครบ 3 ตัว กำลังเลือกหมากที่จะหยิบ',
-      opponentRemoving: 'เพื่อนเรียงครบ 3 ตัว กำลังเลือกหมากที่จะหยิบ',
+      sideRemoving: '{side}เรียงครบ 3 ตัว กำลังเลือกหมากที่จะหยิบ',
     },
     undo: 'ย้อนตา',
     restart: 'เริ่มใหม่',
