@@ -16,8 +16,8 @@ import {
 } from '@/games/blind-gomoku/engine';
 import { GomokuBoard, Ghost, revealMs } from './GomokuBoard';
 import { ColorPicker } from './ColorPicker';
-import { HowToPlay, colorName } from './HowToPlay';
-import { SideFace } from './Stone';
+import { RulesStepsPaged } from './RulesSteps';
+import { SideFace, colorName } from './Stone';
 import { GMK_BAND, GMK_PANEL } from './palette';
 import GomokuFrame from './GomokuFrame';
 import { useGomokuAi } from './useGomokuAi';
@@ -348,7 +348,8 @@ export default function GomokuPlay({ mode, onMenu }: { mode: GomokuMode | Online
 
       <Modal isOpen={helpOpen} onClose={() => setHelpOpen(false)} title={t.rules} kicker={t.title}
         icon={GiRuleBook} band={GMK_BAND} panelClassName={GMK_PANEL}>
-        <HowToPlay t={t} prev={ui.prev} next={ui.next} done={ui.close} onDone={() => setHelpOpen(false)} />
+        {/* 同規則頁的步驟，一次一步、可以左右滑（RulesSteps.tsx）；不放規則頁的連結 —— 對局中不放會離開對局的東西 */}
+        <RulesStepsPaged open={helpOpen} steps={t.steps} prev={ui.prev} next={ui.next} done={ui.close} onDone={() => setHelpOpen(false)} />
       </Modal>
 
       {/* 結算就是分享圖。關掉還留在棋盤上，可以看翻開後的盤面；下面換成換模式／再來一局（連線是再開一間房）。

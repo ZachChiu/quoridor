@@ -1,20 +1,19 @@
 'use client';
 import { useState, type ReactNode } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { IconType } from 'react-icons';
-import { GiBlindfold, GiPaperPlane, GiRobotGolem, GiRuleBook, GiTabletopPlayers } from 'react-icons/gi';
+import { GiBlindfold, GiPaperPlane, GiRobotGolem, GiTabletopPlayers } from 'react-icons/gi';
 import { LuChevronRight } from 'react-icons/lu';
 import Modal from '@/components/Modal';
 import PlatformCorner from '@/components/PlatformCorner';
-import { useMessages } from '@/i18n/LocaleProvider';
 import { useTextTable } from '@/i18n/gameText';
 import { localePath, type Locale } from '@/i18n/locales';
-import { BLIND_GOMOKU, trialOnline } from '@/i18n/routes';
+import { BLIND_GOMOKU, trialOnline, trialRules } from '@/i18n/routes';
 import { LEVELS } from '@/games/blind-gomoku/ai';
 import type { Side } from '@/games/blind-gomoku/engine';
 import { newRoomHash } from '@/games/blind-gomoku/online';
 import { TEXT } from '@/games/blind-gomoku/text';
-import { HowToPlay } from './HowToPlay';
 import { ColorFace, KEY_HEX, SideFace } from './Stone';
 import GomokuFrame from './GomokuFrame';
 import { MENU_CLASS, type GomokuMode } from './modeHash';
@@ -25,7 +24,7 @@ import { GMK_BAND, GMK_CORNER, GMK_PANEL } from './palette';
  * 上面是標題與主視覺 —— 主視覺就是那塊 19 世紀的朝鮮包袱巾本身（公有領域，附出處）；
  * 下面的清單照包袱巾的做法（globals.css 的 .gmk-*，Zach 10/22：每款的按鈕要有自己的樣子）：
  * 推薦的盲棋是一塊拼起來的青綠布（左上角桃紅三角、白絲縫線），其他是一塊塊白絲或半透明的苧麻布，邊上一圈平針縫；
- * 難度是縫在一起的小布塊（幾塊青綠就是幾級）；「怎麼玩」底下一道縫線。桌機改成左右兩欄。
+ * 難度是縫在一起的小布塊（幾塊青綠就是幾級）；「怎麼玩」底下一道縫線，連到規則頁（/blind-gomoku/rules，原本開說明彈窗）。桌機改成左右兩欄。
  * 邀請朋友：彈窗裡選盲棋或一般、自己執黑或執白，按下去直接換到 /blind-gomoku/online 開房（不播轉場，這款裡面換頁都是直接換）。
  */
 function ModeRow({ icon: Icon, title, desc, primary, onClick }: { icon: IconType; title: string; desc: string; primary?: boolean; onClick: () => void }) {
@@ -56,11 +55,9 @@ function Choice({ on, onClick, children }: { on: boolean; onClick: () => void; c
 
 export default function GomokuMenu({ locale, onStart }: { locale: Locale; onStart: (m: GomokuMode) => void }) {
   const t = useTextTable(TEXT);
-  const ui = useMessages().ui;
   const router = useRouter();
   /** 選難度的對象：true 盲棋、false 一般五子棋、null 沒開 */
   const [levelFor, setLevelFor] = useState<boolean | null>(null);
-  const [helpOpen, setHelpOpen] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteBlind, setInviteBlind] = useState(true);
   const [inviteSide, setInviteSide] = useState<Side>('black');
@@ -104,9 +101,10 @@ export default function GomokuMenu({ locale, onStart }: { locale: Locale; onStar
           </span>
         </div>
         <ModeRow icon={GiPaperPlane} title={t.online} desc={t.onlineDesc} onClick={() => setInviteOpen(true)} />
-        <button type="button" onClick={() => setHelpOpen(true)} className="gmk-thread self-center px-3 py-2 text-sm text-ink-soft">
+        {/* 怎麼玩：規則頁（一步一張圖配字，10/25 Zach：怎麼玩要換成新頁）；這款裡面換頁不播轉場，用一般的 Link */}
+        <Link href={localePath(locale, trialRules(BLIND_GOMOKU))} className="gmk-thread self-center px-3 py-2 text-sm text-ink-soft">
           {t.howTo}
-        </button>
+        </Link>
       </nav>
 
       <Modal isOpen={levelFor !== null} onClose={() => setLevelFor(null)} title={t.pickLevel}
@@ -166,11 +164,6 @@ export default function GomokuMenu({ locale, onStart }: { locale: Locale; onStar
             {t.createRoom}
           </button>
         </div>
-      </Modal>
-
-      <Modal isOpen={helpOpen} onClose={() => setHelpOpen(false)} title={t.rules} kicker={t.title}
-        icon={GiRuleBook} band={GMK_BAND} panelClassName={GMK_PANEL}>
-        <HowToPlay t={t} prev={ui.prev} next={ui.next} done={ui.close} onDone={() => setHelpOpen(false)} />
       </Modal>
     </GomokuFrame>
   );
