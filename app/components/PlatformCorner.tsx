@@ -2,7 +2,7 @@ import Link from 'next/link';
 import LanguageSwitcher from './LanguageSwitcher';
 import ContactButton from './ContactButton';
 import PlatformMark from './PlatformMark';
-import { BRAND } from '@/brand';
+import { brandName } from '@/brand';
 import { localePath, type Locale } from '@/i18n/locales';
 import type { CornerTheme } from './cornerTheme';
 
@@ -28,8 +28,8 @@ export default function PlatformCorner({ locale, theme, buttonClassName, offset 
     <>
       <Link
         href={localePath(locale, '/')}
-        aria-label={BRAND}
-        title={BRAND}
+        aria-label={brandName(locale)}
+        title={brandName(locale)}
         className="fixed left-2.5 top-2.5 z-40 transition hover:brightness-110 active:scale-95"
         style={offset ? { left: offset, top: offset } : undefined}
       >
