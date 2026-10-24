@@ -10,7 +10,7 @@ import { GRACE_MS, deriveAuction } from '@/games/time-auction/online';
 import { TEXT } from '@/games/time-auction/text';
 import { auctionRoundKey, auctionSeatKey, type AuctionRoom } from '@/types/auctionRoom';
 import { auctionServerNow, passRound, pressDown, pressUp } from '@/utils/auctionRoomService';
-import AuctionRules from './AuctionRules';
+import { RulesStepsPaged } from './AuctionRulesSteps';
 import { AuctionResult, BidderCards, BigTime, LotHistory, PlayHeader, celebrateRound, pressClass, useHold } from './AuctionParts';
 import { buzzShake, idleBidders, reducedMotion, springUp } from './motion';
 import { playTau } from './sounds';
@@ -342,7 +342,8 @@ export default function AuctionOnlinePlay({ locale, room, me, home, onAgain }: {
 
       <Modal isOpen={helpOpen} onClose={() => setHelpOpen(false)} title={t.howTo} kicker={t.title}
         icon={GiRuleBook} band={TAU_BAND} panelClassName={TAU_PANEL}>
-        <AuctionRules mode={room.mode} online />
+        {/* 跟規則頁同一份步驟，一次一步、可以左右滑；時間照這一局的模式。不放會離開對局的連結 */}
+        <RulesStepsPaged open={helpOpen} mode={room.mode} online onDone={() => setHelpOpen(false)} />
       </Modal>
 
       <Modal isOpen={leave} onClose={() => setLeave(false)} title={t.leaveTitle} kicker={t.title}

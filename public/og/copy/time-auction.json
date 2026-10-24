@@ -1,0 +1,49 @@
+{
+  "zh-TW": {
+    "kicker": "骰子惡魔",
+    "title": [
+      "時間拍賣",
+      "Time Auction"
+    ],
+    "titleSize": 71
+  },
+  "en": {
+    "kicker": "Dice Devil",
+    "title": [
+      "Time Auction"
+    ],
+    "titleSize": 71
+  },
+  "ja": {
+    "kicker": "Dice Devil",
+    "title": [
+      "タイムオークション",
+      "Time Auction"
+    ],
+    "titleSize": 56
+  },
+  "ko": {
+    "kicker": "Dice Devil",
+    "title": [
+      "시간 경매",
+      "Time Auction"
+    ],
+    "titleSize": 71
+  },
+  "zh-Hans": {
+    "kicker": "骰子恶魔",
+    "title": [
+      "时间拍卖",
+      "Time Auction"
+    ],
+    "titleSize": 71
+  },
+  "th": {
+    "kicker": "Dice Devil",
+    "title": [
+      "ประมูลเวลา",
+      "Time Auction"
+    ],
+    "titleSize": 71
+  }
+}
