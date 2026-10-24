@@ -46,6 +46,19 @@
     - 沒有 status、winner：勝負由 moves 推導
     這段先發布、程式後上線沒關係：舊程式不會碰 turnRooms
 
+    ── 時間拍賣的房間（auctionRooms，2026-10-24 加）──────────────────────
+    時間拍賣不是輪流下，是所有人同時按住出價，所以不用 turnRooms（結構見 app/types/auctionRoom.ts）。
+    房間裡只存每個人每回合按下、放開的時間，出價與得標由每台裝置從這些時間推出來（app/games/time-auction/online.ts）。
+    - 座位鍵 s0..s5，而且不能超過這間房的 seats（2..6，建房時決定）；開房的人坐 s0
+    - 座位只能坐自己、**只能寫一次**（不能改、不能刪）：入座時間 joinedAt 決定第 1 回合何時開放，改了會讓大家算出不一樣的結果
+    - mode、seats、createdAt 建房後不能改
+    - rounds/{r1..r19}/{座位}/down、up：**只有坐在那個座位的人**能寫，**各只能寫一次**，
+      而且值必須是伺服器的現在（ServerValue.TIMESTAMP，`=== now`）—— 不能替別人按、不能自己填時間、不能改已經寫的時間。
+      up 要先有 down（可以同一次一起寫：「這回合不參加」）。斷線時伺服器替他寫 up（onDisconnect），一樣照這幾條檢查
+    - 多的欄位一律拒絕。沒有 status、winner：勝負由 rounds 推導
+    - 讀得到房間就讀得到每個人放手的時間（回合進行中也是）—— 跟朋友玩的信任程度，見 auctionRoom.ts
+    這段先發布、程式後上線沒關係：舊程式不會碰 auctionRooms
+
     ── 回饋 ─────────────────────────────────────────────────────────
     只能新增、沒有人讀得到（裡面可能有選填的聯絡方式）；我從 Console 讀，
     Console 不受規則限制。uid 必須是本人、每個欄位有上限、多的欄位拒絕 ——
@@ -202,6 +215,43 @@
         "turn": {
           ".write": "auth != null && data.parent().child('players/' + data.parent().child('turn').val() + '/uid').val() === auth.uid",
           ".validate": "newData.isString() && newData.val().matches(/^s[0-7]$/) && newData.parent().child('players/' + newData.val()).exists() || (!data.exists() && newData.isString() && newData.val().matches(/^s[0-7]$/))"
+        },
+        "$other": { ".validate": false }
+      }
+    },
+    "auctionRooms": {
+      "$roomId": {
+        ".read": "auth != null",
+        ".write": "auth != null && !data.exists() && newData.child('players/s0/uid').val() === auth.uid",
+        ".validate": "newData.hasChildren(['id', 'mode', 'seats', 'createdAt'])",
+        "id": { ".validate": "newData.isString() && newData.val() === $roomId" },
+        "mode": { ".validate": "!data.exists() && (newData.val() === 'quick' || newData.val() === 'show')" },
+        "seats": { ".validate": "!data.exists() && newData.isNumber() && newData.val() >= 2 && newData.val() <= 6" },
+        "createdAt": { ".validate": "!data.exists() && newData.val() === now" },
+        "players": {
+          "$seat": {
+            ".write": "auth != null && !data.exists() && newData.child('uid').val() === auth.uid",
+            ".validate": "newData.hasChildren(['uid', 'displayName', 'joinedAt']) && ($seat === 's0' || $seat === 's1' || ($seat === 's2' && newData.parent().parent().child('seats').val() >= 3) || ($seat === 's3' && newData.parent().parent().child('seats').val() >= 4) || ($seat === 's4' && newData.parent().parent().child('seats').val() >= 5) || ($seat === 's5' && newData.parent().parent().child('seats').val() >= 6))",
+            "uid": { ".validate": "newData.isString() && newData.val().length > 0" },
+            "displayName": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 40" },
+            "joinedAt": { ".validate": "newData.val() === now" },
+            "$other": { ".validate": false }
+          }
+        },
+        "rounds": {
+          "$round": {
+            "$seat": {
+              "down": {
+                ".write": "auth != null && !data.exists() && $round.matches(/^r([1-9]|1[0-9])$/) && root.child('auctionRooms').child($roomId).child('players').child($seat).child('uid').val() === auth.uid",
+                ".validate": "newData.val() === now"
+              },
+              "up": {
+                ".write": "auth != null && !data.exists() && $round.matches(/^r([1-9]|1[0-9])$/) && root.child('auctionRooms').child($roomId).child('players').child($seat).child('uid').val() === auth.uid",
+                ".validate": "newData.val() === now && newData.parent().child('down').exists()"
+              },
+              "$other": { ".validate": false }
+            }
+          }
         },
         "$other": { ".validate": false }
       }

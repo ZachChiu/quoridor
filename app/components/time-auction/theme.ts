@@ -15,6 +15,9 @@ export const PAPER = '#ebe1b8';
 export const INK = '#35331c';
 export const GOLD = '#c4af4c';
 
+/** 角落的小鈕（回首頁、聲音、說明）：方角、一道墨線，像傳單角落的小框 */
+export const roundBtn = 'grid size-11 shrink-0 place-items-center rounded-[2px] text-xl text-[#35331c] shadow-[inset_0_0_0_1.5px_#35331c] transition fine:hover:bg-[#35331c]/[0.07] disabled:opacity-35';
+
 /** 首頁主視覺：Cruikshank〈Sales by Auction〉（1819）的拍賣場，裁掉了下面那行說明文字 */
 export const KEY_ART = '/games/time-auction/auction.webp';
 
@@ -30,7 +33,7 @@ export const RED = '#92383a';
 
 /**
  * 首頁右上角的「聯絡我們」與「語言」（見 components/cornerTheme.ts）：跟對局裡的彈窗同一張拍賣目錄的紙 ——
- * 方角紙色面板、標題下雙線（TAU_PANEL／TAU_BAND）。圓鈕是傳單角落那種方角墨線小框（同 AuctionSetup 的 roundBtn）。
+ * 方角紙色面板、標題下雙線（TAU_PANEL／TAU_BAND）。圓鈕是傳單角落那種方角墨線小框（同上面的 roundBtn）。
  * 主要鈕（送出、目前的語言、選中的評分）是紅色鉛字版塊 .tau-press，次要鈕是墨色雙線的票 .tau-lot，欄位是名片那種細框、
  * 對焦時換成紅框（自己那張名片的紅框）。
  *

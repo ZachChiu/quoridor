@@ -21,6 +21,7 @@
  * - 只有一人參加：照規則得標，付他自己按的秒數（他不知道只有自己）
  * - 網頁版不淘汰人，只排名；標記與剩餘時間都相同就並列
  * - 網頁另有「快速局」：每人 2 分鐘、倒數 3 秒，比例跟節目一樣，一局約 10 分鐘
+ * - 連線版（online.ts）用同一套：按鍵時間換成出價之後一樣交給 playRound
  */
 
 export type Mode = 'quick' | 'show';
@@ -40,9 +41,11 @@ export const MODES: Record<Mode, ModeConfig> = {
   show: { budget: 6000, countdownMs: 5000, rounds: 19, showRemaining: false },
 };
 
-/** 網頁版 4–6 席（研究建議：2 人太單純），你以外由電腦補 */
+/** 跟電腦拍賣 4–6 席（研究建議：2 人太單純），你以外由電腦補 */
 export const MIN_SEATS = 4;
 export const MAX_SEATS = 6;
+/** 連線（全是真人）2–6 席：湊齊四個朋友不容易，兩個人也能比（online.ts） */
+export const ONLINE_MIN_SEATS = 2;
 
 /** 0.1 秒有幾毫秒 */
 export const TENTH_MS = 100;
@@ -73,9 +76,10 @@ export type AuctionState = {
   history: RoundRecord[];
 };
 
+/** 開一場拍賣。座位數 2–6：跟電腦是 4–6（設定頁只給這幾個），連線最少 2 個人 */
 export function createAuction(mode: Mode = 'quick', seats = MAX_SEATS): AuctionState {
-  if (!Number.isInteger(seats) || seats < MIN_SEATS || seats > MAX_SEATS) {
-    throw new Error(`座位數要在 ${MIN_SEATS}–${MAX_SEATS} 之間：${seats}`);
+  if (!Number.isInteger(seats) || seats < ONLINE_MIN_SEATS || seats > MAX_SEATS) {
+    throw new Error(`座位數要在 ${ONLINE_MIN_SEATS}–${MAX_SEATS} 之間：${seats}`);
   }
   const { budget, rounds } = MODES[mode];
   return { mode, seats, budget, rounds, spent: Array(seats).fill(0), tokens: Array(seats).fill(0), history: [] };

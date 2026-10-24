@@ -28,8 +28,10 @@ export type TauCardRow = {
 
 export type TauCardData = {
   rows: TauCardRow[];
-  /** 每一回合由第幾席得標（座位，0 是你）；流標是 null */
+  /** 每一回合由第幾席得標（座位）；流標是 null */
   lots: (number | null)[];
+  /** 你坐第幾席（跟電腦拍賣一定是 0；連線是自己的座位） */
+  me?: number;
   /** 你第一名（並列也算）：大標旁邊蓋成交章 */
   won: boolean;
   text: {
@@ -234,7 +236,7 @@ function lots(ctx: CanvasRenderingContext2D, d: TauCardData, cx: number, y: numb
     const col = i % perRow;
     const x = cx - (inRow * c + (inRow - 1) * gap) / 2 + col * (c + gap);
     const top = y + row * (c + gap);
-    const mine = winner === 0;
+    const mine = winner === (d.me ?? 0);
     if (mine) {
       ctx.fillStyle = RED;
       ctx.fillRect(x, top, c, c);

@@ -1,8 +1,9 @@
 'use client';
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { GiRuleBook } from 'react-icons/gi';
-import { LuCircleHelp } from 'react-icons/lu';
+import { LuCircleHelp, LuUsers } from 'react-icons/lu';
 import Modal from '@/components/Modal';
 import PlatformMark from '@/components/PlatformMark';
 import ContactButton from '@/components/ContactButton';
@@ -11,11 +12,12 @@ import { BRAND } from '@/brand';
 import { useMessages } from '@/i18n/LocaleProvider';
 import { fill, useTextTable } from '@/i18n/gameText';
 import { localePath, type Locale } from '@/i18n/locales';
-import type { Mode } from '@/games/time-auction/engine';
+import { TIME_AUCTION, trialOnline } from '@/i18n/routes';
+import { MAX_SEATS, ONLINE_MIN_SEATS, type Mode } from '@/games/time-auction/engine';
 import type { Difficulty } from '@/games/time-auction/ai';
 import { TEXT } from '@/games/time-auction/text';
 import AuctionRules from './AuctionRules';
-import { KEY_ART, TAU_BAND, TAU_CORNER, TAU_PANEL } from './theme';
+import { KEY_ART, TAU_BAND, TAU_CORNER, TAU_PANEL, roundBtn } from './theme';
 import TauFrame from './TauFrame';
 import TauWordmark from './TauWordmark';
 
@@ -24,9 +26,9 @@ export type Setup = { mode: Mode; opponents: 3 | 4 | 5; difficulty: Difficulty }
 const MODE_KEYS: Mode[] = ['quick', 'show'];
 const OPPONENTS: Setup['opponents'][] = [3, 4, 5];
 const LEVELS: Difficulty[] = ['easy', 'normal', 'hard'];
+/** 連線房的人數：2–6（全是真人） */
+const PLAYERS = Array.from({ length: MAX_SEATS - ONLINE_MIN_SEATS + 1 }, (_, i) => i + ONLINE_MIN_SEATS);
 
-/** 角落的小鈕（回平台、說明、換設定）：方角、一道墨線，像傳單角落的小框 */
-export const roundBtn = 'grid size-11 shrink-0 place-items-center rounded-[2px] text-xl text-[#35331c] shadow-[inset_0_0_0_1.5px_#35331c] transition fine:hover:bg-[#35331c]/[0.07] disabled:opacity-35';
 
 /**
  * 開局設定：整頁是一張維多利亞時代的拍賣傳單（TauFrame：報紙色的紙、紅色牛津角框）。
@@ -40,6 +42,9 @@ export const roundBtn = 'grid size-11 shrink-0 place-items-center rounded-[2px] 
  * 最上面一列跟其他遊戲首頁一樣：左邊平台 logo（回平台首頁）、右邊說明、聯絡我們與語言。
  * 不用 PlatformCorner 釘在畫面角落 —— 那樣會疊在紅色牛津角框上（虎羊棋的教訓），所以放在框裡、跟內容走同一個流。
  * 聯絡與語言的圓鈕和彈窗換成這款的拍賣目錄（TAU_CORNER），不是 Wall Go 的奶油底黑鈕（Zach 10/24）。
+ *
+ * 「開拍」是跟電腦拍賣；下面一張票「邀請朋友」開連線房：彈窗裡選模式與人數（2–6，坐滿才開拍），
+ * 按「開房」就到 /time-auction/online#new=quick-4，在那一頁開房、放邀請連結（AuctionOnline.tsx）。換頁不播轉場。
  */
 export default function AuctionSetup({ locale, value, onChange, onStart }: {
   locale: Locale;
@@ -50,13 +55,37 @@ export default function AuctionSetup({ locale, value, onChange, onStart }: {
 }) {
   const t = useTextTable(TEXT);
   const m = useMessages();
+  const router = useRouter();
   const [helpOpen, setHelpOpen] = useState(false);
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const [players, setPlayers] = useState(2);
+  const openRoom = () => router.push(`${localePath(locale, trialOnline(TIME_AUCTION))}#new=${value.mode}-${players}`);
   const levelNames = [m.solo.level1, m.solo.level2, m.solo.level3];
 
   const legend = 'tau-head mb-2 w-full text-ink-soft';
   const ROMAN = ['I', 'II', 'III'];
   // 名字本來就是英文（英文版）就讓字標當標題，不重複寫兩次
   const latinTitle = t.nameEn === t.title;
+
+  const modeField = (
+    <fieldset>
+      <legend className={legend}>{t.modeLabel}</legend>
+      <div role="radiogroup" aria-label={t.modeLabel} className="grid grid-cols-2 gap-2.5">
+        {MODE_KEYS.map((key) => {
+          const on = value.mode === key;
+          return (
+            <button key={key} type="button" role="radio" aria-checked={on} onClick={() => onChange({ mode: key })}
+              className="tau-lot flex flex-col items-start gap-1 px-4 py-3 text-left">
+              <span className="text-base font-black">{key === 'quick' ? t.modeQuick : t.modeShow}</span>
+              <span className={`text-xs font-bold leading-snug ${on ? 'text-[#92383a]/80' : 'text-ink-soft'}`}>
+                {key === 'quick' ? t.modeQuickNote : t.modeShowNote}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </fieldset>
+  );
 
   return (
     <TauFrame className="items-center px-4 pb-6 pt-3 lg:px-8">
@@ -78,7 +107,7 @@ export default function AuctionSetup({ locale, value, onChange, onStart }: {
           <div className="flex flex-col gap-1">
             {/* eslint-disable-next-line @next/next/no-img-element -- 靜態匯出，不需要 next/image */}
             <img src={KEY_ART} alt="" aria-hidden="true" width={818} height={462}
-              className="h-[clamp(7rem,21dvh,14rem)] w-full rounded-sm object-cover lg:h-auto" />
+              className="h-[clamp(7rem,21svh,14rem)] w-full rounded-sm object-cover lg:h-auto" />
           </div>
           <div className="mt-3 text-center lg:text-left">
             <p className="text-xs font-bold tracking-wide text-ink-soft">{t.tag}</p>
@@ -86,9 +115,9 @@ export default function AuctionSetup({ locale, value, onChange, onStart }: {
               <h1 className="mt-1.5"><span className="sr-only">{t.title}</span><TauWordmark className="mx-auto h-auto w-[min(100%,22rem)] lg:mx-0" /></h1>
             ) : (
               <h1 className="mt-1 flex flex-col items-center lg:items-start">
-                <span className="text-[clamp(2.25rem,5.5dvh,3.25rem)] font-black leading-none tracking-[0.04em]">{t.title}</span>
+                <span className="text-[clamp(2.25rem,5.5svh,3.25rem)] font-black leading-none tracking-[0.04em]">{t.title}</span>
                 <span className="sr-only">{t.nameEn}</span>
-                <TauWordmark className="mt-2 h-[clamp(1.1rem,2.8dvh,1.6rem)] w-auto" />
+                <TauWordmark className="mt-2 h-[clamp(1.1rem,2.8svh,1.6rem)] w-auto" />
               </h1>
             )}
             <p className="mt-2 text-sm font-bold">{t.tagline}</p>
@@ -96,23 +125,7 @@ export default function AuctionSetup({ locale, value, onChange, onStart }: {
         </header>
 
         <section className="flex flex-col gap-4 lg:w-[400px] lg:shrink-0">
-          <fieldset>
-            <legend className={legend}>{t.modeLabel}</legend>
-            <div role="radiogroup" aria-label={t.modeLabel} className="grid grid-cols-2 gap-2.5">
-              {MODE_KEYS.map((key) => {
-                const on = value.mode === key;
-                return (
-                  <button key={key} type="button" role="radio" aria-checked={on} onClick={() => onChange({ mode: key })}
-                    className="tau-lot flex flex-col items-start gap-1 px-4 py-3 text-left">
-                    <span className="text-base font-black">{key === 'quick' ? t.modeQuick : t.modeShow}</span>
-                    <span className={`text-xs font-bold leading-snug ${on ? 'text-[#92383a]/80' : 'text-ink-soft'}`}>
-                      {key === 'quick' ? t.modeQuickNote : t.modeShowNote}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </fieldset>
+          {modeField}
 
           <fieldset>
             <legend className={legend}>{t.opponentsLabel}</legend>
@@ -149,6 +162,10 @@ export default function AuctionSetup({ locale, value, onChange, onStart }: {
           <button type="button" onClick={onStart} className="tau-press mt-1 h-14 w-full text-lg font-black">
             {t.start}
           </button>
+          {/* 跟朋友連線：次要的票（墨色雙線），不跟「開拍」搶紅色版塊 */}
+          <button type="button" onClick={() => setInviteOpen(true)} className="tau-lot flex h-12 w-full items-center justify-center gap-2 text-base font-black">
+            <LuUsers aria-hidden="true" className="text-lg" />{t.onlineTitle}
+          </button>
           <button type="button" onClick={() => setHelpOpen(true)} className="tau-hand mx-auto text-sm">
             {t.howTo}
           </button>
@@ -158,6 +175,26 @@ export default function AuctionSetup({ locale, value, onChange, onStart }: {
       <Modal isOpen={helpOpen} onClose={() => setHelpOpen(false)} title={t.howTo} kicker={t.title}
         icon={GiRuleBook} band={TAU_BAND} panelClassName={TAU_PANEL}>
         <AuctionRules mode={value.mode} />
+      </Modal>
+
+      <Modal isOpen={inviteOpen} onClose={() => setInviteOpen(false)} title={t.onlineTitle} kicker={t.title}
+        icon={LuUsers} band={TAU_BAND} panelClassName={TAU_PANEL}
+        footer={<button type="button" onClick={openRoom} className="tau-press h-12 flex-1 text-base font-black">{t.openRoom}</button>}>
+        <div className="flex flex-col gap-4">
+          <p className="text-sm font-bold leading-relaxed">{t.onlineSub}</p>
+          {modeField}
+          <fieldset>
+            <legend className={legend}>{t.playersLabel}</legend>
+            <div role="radiogroup" aria-label={t.playersLabel} className="grid grid-cols-5 gap-2">
+              {PLAYERS.map((n) => (
+                <button key={n} type="button" role="radio" aria-checked={players === n} onClick={() => setPlayers(n)}
+                  className="tau-lot h-12 text-base font-black">
+                  {fill(t.playersUnit, { n })}
+                </button>
+              ))}
+            </div>
+          </fieldset>
+        </div>
       </Modal>
     </TauFrame>
   );

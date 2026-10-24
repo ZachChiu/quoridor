@@ -18,9 +18,9 @@ type Text = {
   /** 海報頭上的小標籤：出處、人數、時間 */
   tag: string;
   tagline: string;
-  /** 首頁主視覺（Cruikshank 的拍賣畫）下面的出處 */
   metaTitle: string;
   metaDescription: string;
+  /** 對局、等人畫面左上的房子：回這款的首頁（選模式那頁），不是平台 */
   home: string;
   howTo: string;
   modeLabel: string;
@@ -71,7 +71,6 @@ type Text = {
   standingsTitle: string;
   personas: Record<Persona, { name: string; hint: string }>;
   again: string;
-  settings: string;
   leaveTitle: string;
   leaveBody: string;
   leave: string;
@@ -83,6 +82,43 @@ type Text = {
   controls: string;
   /** 說明最上面的名字由來：節目第 2 季的遊戲、名字指的是什麼（Zach 10/24：名字照 Netflix 版，在規則裡介紹） */
   nameNote: string;
+  /** 連線（AuctionOnline.tsx）：設定頁的「邀請朋友」鈕與小字、對局中標題旁的「連線」 */
+  onlineTitle: string;
+  onlineSub: string;
+  online: string;
+  playersLabel: string;
+  playersUnit: string;
+  openRoom: string;
+  /**
+   * 連線時每個人的稱呼（{n} 是座位號碼 No.），自己也一樣 —— 畫面上不寫「你」（Wall Go 的做法：用記號不用字，
+   * 自己那張名片是紅框、排名表上自己那行一顆紅點）。名片與排名表上寫 bidder，號碼已經在 No. 那裡
+   */
+  player: string;
+  bidder: string;
+  waitHeading: string;
+  waitBody: string;
+  seatEmpty: string;
+  seatTaken: string;
+  shareText: string;
+  /** 連線的大按鈕：按下去不一定馬上開始（要等大家都按住） */
+  pressJoin: string;
+  gathering: string;
+  gatherHint: string;
+  gatherWait: string;
+  pressedMark: string;
+  missed: string;
+  missedBtn: string;
+  autoPass: string;
+  /** 說明裡連線版多的一段（{wait} 是等人按住的秒數，online.ts 的 PRESS_WAIT_MS） */
+  rulesOnline: string;
+  leaveOnlineBody: string;
+  /** 連線的提示不寫「你」：已放手、出價多少、不參加、時間用完、計時中、結算標題（{name} 是 player） */
+  letGo: string;
+  bidLocked: string;
+  satOut: string;
+  timeUp: string;
+  holdingOnline: string;
+  endSeat: string;
 };
 
 export const TEXT: TextTable<Text> = {
@@ -93,7 +129,7 @@ export const TEXT: TextTable<Text> = {
     tagline: '按住出價，最後放手的人得標',
     metaTitle: '時間拍賣 Time Auction 線上玩',
     metaDescription: 'Netflix《魔鬼的計謀》第 2 季的時間拍賣：每人一筆時間，按住按鈕出價，最後放手的人得標，但每個人都要付掉自己按住的時間。跟 3–5 個 AI 對手拍賣 19 回合，免下載、免註冊。',
-    home: '回平台首頁',
+    home: '回時間拍賣首頁',
     howTo: '怎麼玩',
     modeLabel: '模式',
     modeQuick: '快速局',
@@ -147,7 +183,6 @@ export const TEXT: TextTable<Text> = {
       accountant: { name: '算帳型', hint: '算出對手最多還剩多少' },
     },
     again: '再來一局',
-    settings: '換設定',
     leaveTitle: '要離開這一局嗎？',
     leaveBody: '離開之後，這一局的進度不會保留。',
     leave: '離開',
@@ -166,6 +201,35 @@ export const TEXT: TextTable<Text> = {
     rulesShow: '節目局跟節目一樣，連自己剩多少都不顯示，要自己記。',
     controls: '手機按住大按鈕；電腦可以按住空白鍵。',
     nameNote: '名字：時間拍賣是第 2 季《魔鬼的計謀：死亡密室》裡的遊戲。拍賣出價用的不是錢，是自己的時間 —— 按住多久，就付多久。',
+    onlineTitle: '邀請朋友',
+    onlineSub: '傳連結給朋友，2–6 人坐滿就開拍',
+    online: '連線',
+    playersLabel: '人數',
+    playersUnit: '{n} 人',
+    openRoom: '開房',
+    player: '競買人 {n}',
+    bidder: '競買人',
+    waitHeading: '等朋友入座',
+    waitBody: '{n} 個位子坐滿就開拍。把連結傳給朋友，點開就會坐進來。',
+    seatEmpty: '空位',
+    seatTaken: '已入座',
+    shareText: '來跟我玩時間拍賣！按住出價，最後放手的人得標。',
+    pressJoin: '按住參加第 {n} 回合',
+    gathering: '等大家按住（{n}/{total}）',
+    gatherHint: '大家都按住了才開始倒數',
+    gatherWait: '再 {s} 秒就不等還沒按的人',
+    pressedMark: '已按住',
+    missed: '這回合已經開始，沒趕上',
+    missedBtn: '下一回合再按',
+    autoPass: '時間用完了，之後每回合自動不參加',
+    rulesOnline: '連線：大家都按住了才開始倒數；有人 {wait} 秒都沒按，這回合就不等他。時間以伺服器收到的那一刻為準，差 0.1 秒左右的勝負會受網路快慢影響。',
+    leaveOnlineBody: '位子會留著，用同一個連結可以回來；不在的回合都算不參加。',
+    letGo: '已放手',
+    bidLocked: '出價 {t}',
+    satOut: '這回合不參加',
+    timeUp: '時間用完了',
+    holdingOnline: '計時中：放手的那一刻就是出價',
+    endSeat: '{name}・第 {n} 名',
   },
   en: {
     title: 'Time Auction',
@@ -174,7 +238,7 @@ export const TEXT: TextTable<Text> = {
     tagline: 'Hold to bid. The last to let go wins.',
     metaTitle: 'Time Auction – Play Online',
     metaDescription: "Time Auction from Netflix's The Devil's Plan season 2: everyone has a bank of time, you bid by holding a button, and the last player to let go wins the round — but everyone pays for the time they held. 19 rounds against 3–5 AI bidders. Free, no download, no sign-up.",
-    home: 'Back to all games',
+    home: 'Back to Time Auction home',
     howTo: 'How to play',
     modeLabel: 'Mode',
     modeQuick: 'Quick',
@@ -203,7 +267,7 @@ export const TEXT: TextTable<Text> = {
     released: 'You let go',
     youBid: 'You bid {t}',
     waiting: 'Waiting for the others to let go…',
-    popped: 'Out of time — your button popped up',
+    popped: 'Out of time — the button popped up',
     outOfTime: "You're out of time. Watch the rest.",
     winOther: '{name} wins the round',
     winYou: 'You won the round!',
@@ -228,7 +292,6 @@ export const TEXT: TextTable<Text> = {
       accountant: { name: 'Accountant', hint: 'Works out what everyone can still afford' },
     },
     again: 'Play again',
-    settings: 'Change settings',
     leaveTitle: 'Leave this game?',
     leaveBody: "Your progress in this game won't be saved.",
     leave: 'Leave',
@@ -247,6 +310,35 @@ export const TEXT: TextTable<Text> = {
     rulesShow: 'Show rules hide even your own time, just like on the show — you have to remember it.',
     controls: 'On a phone, hold the big button. On a computer, you can hold the space bar.',
     nameNote: "The name: Time Auction is a game from season 2, The Devil's Plan: Death Room. You bid with time instead of money — however long you hold, that's what you pay.",
+    onlineTitle: 'Invite friends',
+    onlineSub: 'Send a link — the sale starts when 2–6 seats fill',
+    online: 'Online',
+    playersLabel: 'Players',
+    playersUnit: '{n}',
+    openRoom: 'Open a room',
+    player: 'Bidder {n}',
+    bidder: 'Bidder',
+    waitHeading: 'Waiting for friends',
+    waitBody: 'The sale starts when all {n} seats are taken. Send this link — opening it takes a seat.',
+    seatEmpty: 'Empty',
+    seatTaken: 'Seated',
+    shareText: 'Play Time Auction with me! Hold to bid — the last to let go wins.',
+    pressJoin: 'Hold to join round {n}',
+    gathering: 'Waiting for everyone to hold ({n}/{total})',
+    gatherHint: 'The countdown starts once everyone is holding',
+    gatherWait: 'Starting without the rest in {s} s',
+    pressedMark: 'Holding',
+    missed: 'This round already started — missed it',
+    missedBtn: 'Hold again next round',
+    autoPass: 'Out of time — sitting out the rest automatically',
+    rulesOnline: "Online: the countdown starts once everyone is holding; anyone who still hasn't pressed after {wait} seconds sits that round out. Times are taken when the server receives them, so results within about 0.1 s can come down to network speed.",
+    leaveOnlineBody: 'The seat stays reserved — open the same link to come back. Missed rounds count as sitting out.',
+    letGo: 'Released',
+    bidLocked: 'Bid {t}',
+    satOut: 'Sitting this round out',
+    timeUp: 'Out of time',
+    holdingOnline: 'Clock running — let go to lock in the bid',
+    endSeat: '{name} · #{n}',
   },
   ja: {
     title: 'タイムオークション',
@@ -255,7 +347,7 @@ export const TEXT: TextTable<Text> = {
     tagline: '押し続けて入札、最後に離した人が落札',
     metaTitle: 'タイムオークション（Time Auction）をオンラインで遊ぶ',
     metaDescription: 'Netflix『悪魔の計略 ～デビルズ・プラン～』シーズン2のタイムオークション。全員が同じ持ち時間でスタートし、ボタンを押し続けて入札します。最後に手を離した人が落札しますが、全員が自分の押した時間を支払います。AI3〜5人と19ラウンド。インストール不要・登録不要。',
-    home: 'ゲーム一覧へ',
+    home: 'タイムオークションのトップへ',
     howTo: '遊び方',
     modeLabel: 'モード',
     modeQuick: 'クイック',
@@ -309,7 +401,6 @@ export const TEXT: TextTable<Text> = {
       accountant: { name: '計算型', hint: '相手の残り時間の上限を計算する' },
     },
     again: 'もう一回',
-    settings: '設定を変える',
     leaveTitle: 'このゲームをやめますか？',
     leaveBody: 'このゲームの進行状況は保存されません。',
     leave: 'やめる',
@@ -328,6 +419,35 @@ export const TEXT: TextTable<Text> = {
     rulesShow: '番組ルールでは番組と同じく、自分の残り時間も表示されません。自分で覚えておきましょう。',
     controls: 'スマホは大きなボタンを長押し。パソコンはスペースキーの長押しでも遊べます。',
     nameNote: '名前：タイムオークションは『悪魔の計略 ～デビルズ・プラン～』シーズン2のゲームです。お金ではなく自分の持ち時間で入札し、押していた時間をそのまま支払います。',
+    onlineTitle: '友だちを招待',
+    onlineSub: 'リンクを送って、2〜6人そろったら競り開始',
+    online: 'オンライン',
+    playersLabel: '人数',
+    playersUnit: '{n}人',
+    openRoom: 'ルームを作る',
+    player: '入札者{n}',
+    bidder: '入札者',
+    waitHeading: '友だちの参加を待っています',
+    waitBody: '{n}席がそろったら競り開始。リンクを開くと、そのまま席に着きます。',
+    seatEmpty: '空席',
+    seatTaken: '着席',
+    shareText: 'タイムオークションで遊ぼう！押し続けて入札、最後に離した人が落札。',
+    pressJoin: '押し続けてラウンド {n} に参加',
+    gathering: '全員が押すのを待っています（{n}/{total}）',
+    gatherHint: '全員が押したらカウントダウン開始',
+    gatherWait: 'あと{s}秒で、押していない人を待たずに始めます',
+    pressedMark: '押しています',
+    missed: 'このラウンドはもう始まっています',
+    missedBtn: '次のラウンドで押す',
+    autoPass: '持ち時間がなくなりました。以降は自動で見送ります',
+    rulesOnline: 'オンライン：全員が押したらカウントダウン開始。{wait}秒たっても押さない人がいたら、そのラウンドは待たずに始めます。時間はサーバーに届いた瞬間で計るので、0.1秒前後の差は通信速度で決まることがあります。',
+    leaveOnlineBody: '席はそのまま残ります。同じリンクで戻れます。いないあいだのラウンドは見送り扱いです。',
+    letGo: '手を離しました',
+    bidLocked: '入札 {t}',
+    satOut: 'このラウンドは見送り',
+    timeUp: '持ち時間切れ',
+    holdingOnline: '計測中：離した瞬間が入札額',
+    endSeat: '{name}・{n}位',
   },
   ko: {
     title: '시간 경매',
@@ -336,7 +456,7 @@ export const TEXT: TextTable<Text> = {
     tagline: '누르고 있으면 입찰, 마지막에 손을 뗀 사람이 낙찰',
     metaTitle: '시간 경매 (Time Auction) 온라인 게임',
     metaDescription: '넷플릭스 『데블스 플랜: 데스룸』의 시간 경매. 모두 같은 시간을 갖고 시작해, 버튼을 누르고 있는 동안 입찰합니다. 마지막까지 버틴 사람이 낙찰받지만, 모두가 자신이 누른 시간만큼 냅니다. AI 3~5명과 19라운드. 설치·가입 없이 무료.',
-    home: '게임 목록으로',
+    home: '시간 경매 처음으로',
     howTo: '하는 법',
     modeLabel: '모드',
     modeQuick: '빠른 게임',
@@ -390,7 +510,6 @@ export const TEXT: TextTable<Text> = {
       accountant: { name: '계산형', hint: '상대가 최대 얼마 남았는지 계산한다' },
     },
     again: '한 판 더',
-    settings: '설정 바꾸기',
     leaveTitle: '이 게임을 그만둘까요?',
     leaveBody: '그만두면 이 게임의 진행 상황은 남지 않습니다.',
     leave: '그만두기',
@@ -409,6 +528,35 @@ export const TEXT: TextTable<Text> = {
     rulesShow: '방송 룰에서는 방송처럼 내 남은 시간도 보이지 않습니다. 직접 기억해야 합니다.',
     controls: '휴대폰에서는 큰 버튼을 길게 누르고, 컴퓨터에서는 스페이스바를 눌러도 됩니다.',
     nameNote: '이름: 시간 경매는 『데블스 플랜: 데스룸』(시즌 2)에 나온 게임입니다. 돈이 아니라 자기 시간으로 입찰하고, 누르고 있던 만큼 그대로 냅니다.',
+    onlineTitle: '친구 초대',
+    onlineSub: '링크를 보내고, 2~6명이 모이면 경매 시작',
+    online: '온라인',
+    playersLabel: '인원',
+    playersUnit: '{n}명',
+    openRoom: '방 만들기',
+    player: '입찰자 {n}',
+    bidder: '입찰자',
+    waitHeading: '친구를 기다리는 중',
+    waitBody: '{n}자리가 다 차면 경매가 시작됩니다. 링크를 열면 바로 자리에 앉습니다.',
+    seatEmpty: '빈자리',
+    seatTaken: '입장',
+    shareText: '시간 경매 같이 해요! 누르고 있으면 입찰, 마지막에 손을 뗀 사람이 낙찰.',
+    pressJoin: '눌러서 {n}라운드 참가',
+    gathering: '모두 누르기를 기다리는 중 ({n}/{total})',
+    gatherHint: '모두 누르고 있어야 카운트다운이 시작됩니다',
+    gatherWait: '{s}초 뒤에는 누르지 않은 사람을 기다리지 않습니다',
+    pressedMark: '누르는 중',
+    missed: '이번 라운드는 이미 시작됐습니다',
+    missedBtn: '다음 라운드에 누르기',
+    autoPass: '시간을 모두 썼습니다. 남은 라운드는 자동으로 불참합니다',
+    rulesOnline: '온라인: 모두 누르고 있어야 카운트다운이 시작됩니다. {wait}초가 지나도 누르지 않은 사람은 그 라운드에 불참합니다. 시간은 서버가 받은 순간으로 재기 때문에, 0.1초 안팎의 차이는 네트워크 속도에 따라 갈릴 수 있습니다.',
+    leaveOnlineBody: '자리는 그대로 남고, 같은 링크로 돌아올 수 있습니다. 없는 동안의 라운드는 불참으로 처리됩니다.',
+    letGo: '손을 뗐습니다',
+    bidLocked: '입찰 {t}',
+    satOut: '이번 라운드 불참',
+    timeUp: '시간 소진',
+    holdingOnline: '시간이 가는 중: 손을 떼는 순간이 입찰가',
+    endSeat: '{name} · {n}위',
   },
   'zh-Hans': {
     title: '时间拍卖',
@@ -417,7 +565,7 @@ export const TEXT: TextTable<Text> = {
     tagline: '按住出价，最后松手的人得标',
     metaTitle: '时间拍卖 Time Auction 在线玩',
     metaDescription: 'Netflix《魔鬼的计谋》第 2 季的时间拍卖：每人一笔时间，按住按钮出价，最后松手的人得标，但每个人都要付掉自己按住的时间。和 3–5 个 AI 对手拍卖 19 回合，免下载、免注册。',
-    home: '回平台首页',
+    home: '回时间拍卖首页',
     howTo: '怎么玩',
     modeLabel: '模式',
     modeQuick: '快速局',
@@ -471,7 +619,6 @@ export const TEXT: TextTable<Text> = {
       accountant: { name: '算账型', hint: '算出对手最多还剩多少' },
     },
     again: '再来一局',
-    settings: '换设置',
     leaveTitle: '要离开这一局吗？',
     leaveBody: '离开之后，这一局的进度不会保留。',
     leave: '离开',
@@ -490,6 +637,35 @@ export const TEXT: TextTable<Text> = {
     rulesShow: '节目局和节目一样，连自己剩多少都不显示，要自己记。',
     controls: '手机按住大按钮；电脑可以按住空格键。',
     nameNote: '名字：时间拍卖是第 2 季《魔鬼的计谋：死亡密室》里的游戏。拍卖出价用的不是钱，是自己的时间 —— 按住多久，就付多久。',
+    onlineTitle: '邀请朋友',
+    onlineSub: '把链接发给朋友，2–6 人坐满就开拍',
+    online: '联机',
+    playersLabel: '人数',
+    playersUnit: '{n} 人',
+    openRoom: '开房',
+    player: '竞买人 {n}',
+    bidder: '竞买人',
+    waitHeading: '等朋友入座',
+    waitBody: '{n} 个位子坐满就开拍。把链接发给朋友，点开就会坐进来。',
+    seatEmpty: '空位',
+    seatTaken: '已入座',
+    shareText: '来和我玩时间拍卖！按住出价，最后松手的人得标。',
+    pressJoin: '按住参加第 {n} 回合',
+    gathering: '等大家按住（{n}/{total}）',
+    gatherHint: '大家都按住了才开始倒数',
+    gatherWait: '再 {s} 秒就不等还没按的人',
+    pressedMark: '已按住',
+    missed: '这回合已经开始，没赶上',
+    missedBtn: '下一回合再按',
+    autoPass: '时间用完了，之后每回合自动不参加',
+    rulesOnline: '联机：大家都按住了才开始倒数；有人 {wait} 秒都没按，这回合就不等他。时间以服务器收到的那一刻为准，差 0.1 秒左右的胜负会受网速影响。',
+    leaveOnlineBody: '位子会留着，用同一个链接可以回来；不在的回合都算不参加。',
+    letGo: '已松手',
+    bidLocked: '出价 {t}',
+    satOut: '这回合不参加',
+    timeUp: '时间用完了',
+    holdingOnline: '计时中：松手的那一刻就是出价',
+    endSeat: '{name}・第 {n} 名',
   },
   th: {
     title: 'ประมูลเวลา',
@@ -498,7 +674,7 @@ export const TEXT: TextTable<Text> = {
     tagline: 'กดค้างเพื่อประมูล ใครปล่อยมือคนสุดท้ายชนะ',
     metaTitle: 'ประมูลเวลา (Time Auction) เล่นออนไลน์',
     metaDescription: "ประมูลเวลา (Time Auction) จาก The Devil's Plan ซีซัน 2 ทาง Netflix ทุกคนเริ่มด้วยเวลาเท่ากัน กดปุ่มค้างไว้เพื่อประมูล คนที่ปล่อยมือคนสุดท้ายชนะรอบนั้น แต่ทุกคนต้องจ่ายเวลาที่ตัวเองกดค้างไว้ เล่น 19 รอบกับ AI 3–5 ตัว ฟรี ไม่ต้องดาวน์โหลด ไม่ต้องสมัคร",
-    home: 'กลับไปหน้ารวมเกม',
+    home: 'กลับหน้าแรกประมูลเวลา',
     howTo: 'วิธีเล่น',
     modeLabel: 'โหมด',
     modeQuick: 'เกมเร็ว',
@@ -552,7 +728,6 @@ export const TEXT: TextTable<Text> = {
       accountant: { name: 'สายคำนวณ', hint: 'คำนวณว่าคู่แข่งเหลือเวลาได้มากสุดเท่าไร' },
     },
     again: 'เล่นอีกรอบ',
-    settings: 'เปลี่ยนการตั้งค่า',
     leaveTitle: 'จะออกจากเกมนี้ไหม',
     leaveBody: 'ถ้าออก ความคืบหน้าของเกมนี้จะไม่ถูกเก็บไว้',
     leave: 'ออก',
@@ -571,5 +746,34 @@ export const TEXT: TextTable<Text> = {
     rulesShow: 'กติกาแบบในรายการจะไม่แสดงแม้แต่เวลาของคุณเอง เหมือนในรายการ ต้องจำเอาเอง',
     controls: 'บนมือถือให้กดปุ่มใหญ่ค้างไว้ บนคอมพิวเตอร์กดแป้นเว้นวรรคค้างไว้ก็ได้',
     nameNote: "ชื่อ: ประมูลเวลาเป็นเกมจาก The Devil's Plan ซีซัน 2 (Death Room) ประมูลด้วยเวลาของตัวเองแทนเงิน กดค้างไว้นานเท่าไรก็จ่ายเท่านั้น",
+    onlineTitle: 'ชวนเพื่อน',
+    onlineSub: 'ส่งลิงก์ให้เพื่อน ครบ 2–6 คนก็เริ่มประมูล',
+    online: 'ออนไลน์',
+    playersLabel: 'จำนวนผู้เล่น',
+    playersUnit: '{n} คน',
+    openRoom: 'เปิดห้อง',
+    player: 'ผู้ประมูล {n}',
+    bidder: 'ผู้ประมูล',
+    waitHeading: 'รอเพื่อนเข้าห้อง',
+    waitBody: 'ครบ {n} ที่นั่งแล้วจะเริ่มประมูล ส่งลิงก์นี้ให้เพื่อน เปิดแล้วจะได้ที่นั่งทันที',
+    seatEmpty: 'ว่าง',
+    seatTaken: 'เข้าแล้ว',
+    shareText: 'มาเล่นประมูลเวลากัน! กดค้างเพื่อประมูล ใครปล่อยมือคนสุดท้ายชนะ',
+    pressJoin: 'กดค้างเพื่อร่วมรอบ {n}',
+    gathering: 'รอทุกคนกดค้าง ({n}/{total})',
+    gatherHint: 'ทุกคนต้องกดค้างก่อน ถึงจะเริ่มนับถอยหลัง',
+    gatherWait: 'อีก {s} วินาทีจะเริ่มโดยไม่รอคนที่ยังไม่กด',
+    pressedMark: 'กดค้างอยู่',
+    missed: 'รอบนี้เริ่มไปแล้ว ไม่ทัน',
+    missedBtn: 'รอกดรอบหน้า',
+    autoPass: 'เวลาหมดแล้ว รอบที่เหลือจะไม่ร่วมโดยอัตโนมัติ',
+    rulesOnline: 'ออนไลน์: ทุกคนต้องกดค้างก่อนถึงจะเริ่มนับถอยหลัง ถ้าผ่านไป {wait} วินาทียังมีคนไม่กด รอบนั้นจะไม่รอเขา เวลานับตอนที่เซิร์ฟเวอร์ได้รับ ผลที่ต่างกันราว 0.1 วินาทีจึงอาจขึ้นกับความเร็วเน็ต',
+    leaveOnlineBody: 'ที่นั่งยังอยู่ เปิดลิงก์เดิมเพื่อกลับมาได้ รอบที่ไม่อยู่จะนับว่าไม่ร่วม',
+    letGo: 'ปล่อยมือแล้ว',
+    bidLocked: 'ประมูล {t}',
+    satOut: 'ไม่ร่วมรอบนี้',
+    timeUp: 'เวลาหมดแล้ว',
+    holdingOnline: 'กำลังจับเวลา: ปล่อยมือตอนไหน นั่นคือราคาที่ประมูล',
+    endSeat: '{name} · อันดับ {n}',
   },
 };
