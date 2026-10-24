@@ -5,6 +5,7 @@ import WipeLink from '@/components/WipeLink';
 import PlatformLanguageMenu from '@/components/platform/PlatformLanguageMenu';
 import PlatformContact from '@/components/platform/PlatformContact';
 import HeroPicker from '@/components/platform/HeroPicker';
+import CardRow from '@/components/platform/CardRow';
 import { BRAND } from '@/brand';
 import PlatformMark from '@/components/PlatformMark';
 import { NEWEST, PLAYABLE, SEASONS, gameName, playableFirst, type CatalogGame } from '@/games/catalog';
@@ -59,13 +60,13 @@ export default function PlatformView({ locale }: { locale: Locale }) {
         {/* 現在就能玩：已經做成線上版的遊戲集中一排（各季那幾排裡也有，Netflix 的排與排本來就會重複） */}
         <section id="play-now" className="flex flex-col gap-3">
           <h2 className="text-[21px] font-black">{p.heroBadge}</h2>
-          <ul className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-2">
+          <CardRow>
             {PLAYABLE.map((game) => (
               <li key={game.name} className="shrink-0">
                 <GameCard game={game} locale={locale} playable={p.playable} guide={p.guide} />
               </li>
             ))}
-          </ul>
+          </CardRow>
         </section>
 
         {SEASONS.map((season) => (
@@ -82,13 +83,13 @@ export default function PlatformView({ locale }: { locale: Locale }) {
                 {p.s3Empty}
               </div>
             ) : (
-              <ul className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-2">
+              <CardRow>
                 {playableFirst(season.games).map((game) => (
                   <li key={game.name} className="shrink-0">
                     <GameCard game={game} locale={locale} playable={p.playable} guide={p.guide} />
                   </li>
                 ))}
-              </ul>
+              </CardRow>
             )}
           </section>
         ))}

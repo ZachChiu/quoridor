@@ -40,7 +40,7 @@ zh-TW 不加前綴（`app/(default)/`），en / ja / ko / zh-Hans / th 加前綴
 
 | 路由 | 說明 |
 |---|---|
-| `/` | 平台首頁（`PlatformView`）— Netflix 式深色外殼＋紅（`--brand-red`），推薦作品大區塊（預設放最新上線的那款＝catalog 的 `since`、使用者真的點過哪款就換成那款，見 `components/platform/HeroPicker.tsx`；10/24）＋依季橫向捲動的遊戲卡（還沒做的卡角落是骰子惡魔的淡剪影）；遊戲清單在 `app/games/catalog.ts`（英文官方名，譯名查證後才補） |
+| `/` | 平台首頁（`PlatformView`）— Netflix 式深色外殼＋紅（`--brand-red`），推薦作品大區塊（預設放最新上線的那款＝catalog 的 `since`、使用者真的點過哪款就換成那款，見 `components/platform/HeroPicker.tsx`；10/24）＋依季橫向捲動的遊戲卡（還沒做的卡角落是骰子惡魔的淡剪影；不畫捲軸，電腦版兩端是翻頁箭頭、滾輪照舊捲整頁，`components/platform/CardRow.tsx`）；遊戲清單在 `app/games/catalog.ts`（英文官方名，譯名查證後才補） |
 | `/wall-go` | Wall Go 首頁（`HomeView` → `HomeClient`）— 選模式、建立連線房間 |
 | `/wall-go/rules` | 規則頁，SEO 主力落地頁 |
 | `/wall-go/solo#easy\|normal\|hard` | 單人對戰。難度放 hash，由 `SoloClient` 以 prop 交給 `PlayClient` |

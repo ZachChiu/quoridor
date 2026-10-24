@@ -180,6 +180,9 @@
 }
 
 /* 平台首頁「規則整理中」卡片角落的骰子惡魔剪影（顏色由 bg-* 給；點數在圖裡是挖空的） */
+/* 平台首頁一排排橫向捲動的卡片：不畫捲軸（Chrome 桌機、Windows 的白色粗捲軸在深色底上很突兀；電腦版改用兩端的箭頭，見 CardRow） */
+.plat-row { scrollbar-width: none; }
+.plat-row::-webkit-scrollbar { display: none; }
 .plat-soon-mark {
   -webkit-mask: url(/brand/die-mark-mono.svg) center / contain no-repeat;
   mask: url(/brand/die-mark-mono.svg) center / contain no-repeat;
