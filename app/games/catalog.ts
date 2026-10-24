@@ -74,7 +74,7 @@ export const SEASONS: Season[] = [
         look: { card: 'bg-tile-blue text-tile-cream', wipe: 'rgb(var(--tile-blue))', art: '/games/wall-go/card.svg', cover: true, rules: routes.wallGo('/rules') } },
       // 中文用節目的「尼泊爾虎棋」（Zach 10/24：命名用 Netflix 版本）、韓文「바그찰」是節目 RULE 卡上的寫法（見 glossary）
       { name: 'Bagh Chal', names: { 'zh-TW': '尼泊爾虎棋', 'zh-Hans': '尼泊尔虎棋', ko: '바그찰' }, playable: routes.BAGH_CHAL,
-        look: { card: 'bg-[#e3a43c] text-tile-ink', wipe: '#f1e6cd', art: '/games/bagh-chal/key-art.webp', hero: '/games/bagh-chal/hero.webp', heroSquare: '/games/bagh-chal/chase.webp', cover: true, doors: true, rules: routes.baghChal('/rules') } },
+        look: { card: 'bg-[#e3a43c] text-tile-ink', wipe: '#f1e6cd', art: '/games/bagh-chal/key-art.webp', hero: '/games/bagh-chal/hero.webp', heroSquare: '/games/bagh-chal/hero-square.webp', cover: true, doors: true, rules: routes.baghChal('/rules') } },
       { name: 'Crooked Cops', names: { 'zh-TW': '腐敗警察', 'zh-Hans': '腐败警察' } },
       { name: 'Remove One', names: { 'zh-TW': '移除一個', 'zh-Hans': '移除一个' } },
       { name: 'Unknown', names: { 'zh-TW': '未知', 'zh-Hans': '未知' } },
