@@ -1,12 +1,12 @@
 'use client';
 import { GiRuleBook } from 'react-icons/gi';
 import Modal from '@/components/Modal';
-import Button from '@/components/Button';
 import { useMessages } from '@/i18n/LocaleProvider';
 import { useTextTable } from '@/i18n/gameText';
 import { knightMoves } from '@/games/knights-tour/engine';
 import { TEXT, type KnightsText } from '@/games/knights-tour/text';
 import TourBoard from './TourBoard';
+import { BAND_CHALK, MODAL_PANEL } from './styles';
 
 /** 示意圖：5×5 正中央的騎士與它跳得到的八格 */
 const DEMO_PATH = [12];
@@ -18,8 +18,8 @@ export default function HowToPlay({ open, onClose }: { open: boolean; onClose: (
   const m = useMessages();
   return (
     <Modal isOpen={open} onClose={onClose} title={t.rules} kicker={t.title} icon={GiRuleBook}
-      band={{ className: 'bg-tile-forest', fg: 'text-tile-cream' }}
-      footer={<Button color="bg-tile-ink text-tile-cream" handleClickEvent={onClose}>{t.gotIt}</Button>}>
+      band={BAND_CHALK} panelClassName={MODAL_PANEL}
+      footer={<button type="button" className="kt-chalk flex-1 py-3.5 font-black" onClick={onClose}>{t.gotIt}</button>}>
       <div className="flex flex-col gap-4">
         <div className="mx-auto w-full max-w-[180px]"><TourBoard n={5} path={DEMO_PATH} targets={DEMO_TARGETS} /></div>
         <ol className="flex flex-col gap-2.5 text-sm font-bold leading-relaxed">
@@ -28,6 +28,7 @@ export default function HowToPlay({ open, onClose }: { open: boolean; onClose: (
           ))}
         </ol>
         <p className="text-xs font-bold leading-relaxed text-ink-soft">{t.source}</p>
+        <p className="-mt-2 text-xs font-bold leading-relaxed text-ink-soft">{t.nameNote}</p>
         <p className="text-[11px] leading-relaxed text-ink-soft">
           {m.credits.prefix}{' '}
           <a className="underline" href="https://game-icons.net" target="_blank" rel="noopener noreferrer">game-icons.net</a>

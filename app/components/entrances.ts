@@ -32,7 +32,7 @@ const LOADERS: Record<string, () => Promise<{ default: EntranceScene }>> = {
 
   'blind-gomoku': () => import('./blind-gomoku/Entrance'),
 
-  // 騎士巡邏（feat/game-knights-tour 打開這一行）
+  'knights-tour': () => import('./knights-tour/Entrance'),
 
   'balance-mancala': () => import('./balance-mancala/Entrance'),
 };

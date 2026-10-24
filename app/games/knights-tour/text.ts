@@ -18,6 +18,7 @@ export type KnightsText = {
   metaTitle: string;
   metaDescription: string;
   tagline: string;
+  /** 首頁「Fig. 1」（歐拉的走法）的圖說 */
   showMode: string;
   showKicker: string;
   practiceMode: string;
@@ -68,6 +69,10 @@ export type KnightsText = {
   doneBody: string;
   howSteps: readonly string[];
   source: string;
+  /** 規則最後一段：名字的由來（節目相關的中文名、數學上的叫法）。Zach 10/24：遊戲名照 Netflix 版本，在規則裡介紹 */
+  nameNote: string;
+  /** 分享圖上的小章：走完而且最後一步跳得回起點（封閉巡遊） */
+  closedTour: string;
   gotIt: string;
   squareVisited: string;
   squareKnight: string;
@@ -140,6 +145,8 @@ export const TEXT = {
       '訣竅：先走「下一步出路最少」的格子，角落和邊緣先清掉，中間留到最後。',
     ],
     source: '出自 Netflix《魔鬼的計謀：死亡密室》第 2 天的隱藏關卡。',
+    nameNote: "名字：節目裡的中文是「騎士巡遊」（第 2 季《魔鬼的計謀：死亡密室》）。這道題在數學上也叫「騎士巡邏」（knight's tour problem），歐拉在 1759 年寫過一篇論文研究它。",
+    closedTour: '首尾相接',
     gotIt: '知道了',
     squareVisited: '{sq}：第 {k} 步',
     squareKnight: '{sq}：騎士在這裡',
@@ -209,6 +216,8 @@ export const TEXT = {
       'Tip: go where the knight will have the fewest onward moves — clear the corners and edges early and leave the middle for last.',
     ],
     source: "From a hidden game on day 2 of Netflix's The Devil's Plan: Death Room.",
+    nameNote: "The name: the show (season 2, The Devil's Plan: Death Room) calls it Knight's Tour. Mathematicians know it as the knight's tour problem, which Euler studied in a 1759 paper.",
+    closedTour: 'Closed tour',
     gotIt: 'Got it',
     squareVisited: '{sq}: move {k}',
     squareKnight: '{sq}: knight',
@@ -279,6 +288,8 @@ export const TEXT = {
       'コツ：次に進めるマスが一番少ないマスを優先。角と端を先に埋めて、真ん中は最後に残しましょう。',
     ],
     source: 'Netflix『悪魔の計略 ～デビルズ・プラン～』シーズン2の2日目に登場した隠しゲームです。',
+    nameNote: "名前：ナイトツアー（Knight's Tour）は数学の古典的な問題で、オイラーが1759年の論文で研究しました。",
+    closedTour: 'スタートに戻れる',
     gotIt: 'わかった',
     squareVisited: '{sq}：{k}手目',
     squareKnight: '{sq}：ナイト',
@@ -349,6 +360,8 @@ export const TEXT = {
       '요령: 다음에 갈 곳이 가장 적은 칸부터 가세요. 모서리와 가장자리를 먼저 채우고 가운데는 마지막에 남기세요.',
     ],
     source: '넷플릭스 「데블스 플랜: 데스룸」 2일차에 나온 숨겨진 게임이에요.',
+    nameNote: "이름: 기사의 여행(Knight's Tour)은 수학의 오래된 문제로, 오일러가 1759년 논문에서 연구했어요.",
+    closedTour: '처음 칸으로 이어짐',
     gotIt: '알겠어요',
     squareVisited: '{sq}: {k}수째',
     squareKnight: '{sq}: 나이트',
@@ -419,6 +432,8 @@ export const TEXT = {
       '诀窍：先走“下一步出路最少”的格子，角落和边缘先清掉，中间留到最后。',
     ],
     source: '出自 Netflix《魔鬼的计谋：死亡密室》第 2 天的隐藏关卡。',
+    nameNote: "名字：节目里的中文是“骑士巡游”（第 2 季《魔鬼的计谋：死亡密室》）。这道题在数学上也叫“骑士巡逻”（knight's tour problem），欧拉在 1759 年写过一篇论文研究它。",
+    closedTour: '首尾相接',
     gotIt: '知道了',
     squareVisited: '{sq}：第 {k} 步',
     squareKnight: '{sq}：骑士在这里',
@@ -489,6 +504,8 @@ export const TEXT = {
       'เคล็ดลับ: ไปช่องที่มีทางไปต่อน้อยที่สุดก่อน เก็บมุมและขอบกระดานให้หมดก่อน แล้วค่อยเก็บตรงกลางทีหลัง',
     ],
     source: "มาจากเกมลับในวันที่ 2 ของ The Devil's Plan: Death Room ทาง Netflix",
+    nameNote: "ชื่อ: ทางเดินม้า (Knight's Tour) เป็นโจทย์คณิตศาสตร์เก่าแก่ ออยเลอร์เคยศึกษาไว้ในบทความปี 1759",
+    closedTour: 'วนกลับถึงช่องแรก',
     gotIt: 'เข้าใจแล้ว',
     squareVisited: '{sq}: ตาที่ {k}',
     squareKnight: '{sq}: ม้าอยู่ที่นี่',

@@ -90,7 +90,8 @@ export const SEASONS: Season[] = [
       { name: 'Equation Pyramid', names: { 'zh-TW': '方程式金字塔', 'zh-Hans': '方程式金字塔' } },
       { name: 'Big Small', names: { 'zh-TW': '大或小', 'zh-Hans': '大或小' } },
       { name: 'Question and Truth', names: { 'zh-TW': '提問與真相', 'zh-Hans': '提问与真相' } },
-      { name: "Knight's Tour", names: { 'zh-TW': '騎士巡遊', 'zh-Hans': '骑士巡游' } },
+      { name: "Knight's Tour", names: { 'zh-TW': '騎士巡遊', 'zh-Hans': '骑士巡游' }, playable: routes.KNIGHTS_TOUR,
+        look: { card: 'bg-[#edddc7] text-[#322e2a]', wipe: '#edddc7', art: '/games/knights-tour/plate.webp', cover: true, entrance: 'knights-tour' } },
     ],
   },
   {

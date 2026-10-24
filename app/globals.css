@@ -640,6 +640,34 @@ html:has(.gmk-root), body:has(.gmk-root) { background: #e4d6bb; }
 @keyframes gmk-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
 
 /* ▸ 騎士巡邏（feat/game-knights-tour） */
+/* 騎士巡邏（KtFrame）：一張印了銅版插圖的紙。.kt-frame 是銅版的雙線框（外粗內細、中間透明露出紙色），
+   唯一的裝飾，只有這一層。顏色取自 18 世紀的原件，見 components/knights-tour/palette.ts。
+   .kt-serif：拉丁字與數字用舊式襯線（系統字型：蘋果裝置有 Iowan Old Style，Windows 有 Palatino Linotype）。 */
+html:has(.kt-root), body:has(.kt-root) { background: #edddc7; }
+.kt-frame {
+  border: var(--kt-frame, 8px) solid #322e2a;
+  border-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath fill='%23322e2a' fill-rule='evenodd' d='M0 0H24V24H0Z M2.6 2.6V21.4H21.4V2.6Z'/%3E%3Cpath fill='%23322e2a' fill-rule='evenodd' d='M5 5H19V19H5Z M5.9 5.9V18.1H18.1V5.9Z'/%3E%3C/svg%3E") 8 / var(--kt-frame, 8px) stretch;
+}
+@media (max-width: 640px) { .kt-frame { --kt-frame: 6px; } }
+.kt-serif { font-family: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif; }
+
+/* 騎士巡邏的介面零件：照 18 世紀數學版畫（歐拉 1759）—— 次要按鈕是銅版的雙線壓痕框，選中填上版畫的斜線排線
+   （跟棋盤的深格同一種線，不用實色），主要動作是紅粉筆色、內縮一道紙色壓痕線。不疊花紋：裝飾仍只有最外緣的銅版雙線框。
+   顏色同 components/knights-tour/palette.ts。 */
+.kt-plate {
+  border-radius: 1.5px; background-color: #edddc7; color: #322e2a;
+  box-shadow: inset 0 0 0 1.2px #322e2a, inset 0 0 0 3.5px #edddc7, inset 0 0 0 4.1px rgb(50 46 42 / 0.6);
+  transition: background-color 0.15s, color 0.15s;
+}
+@media (pointer: fine) { .kt-plate:hover:not(:disabled) { background-image: repeating-linear-gradient(45deg, rgb(50 46 42 / 0.08) 0 1px, transparent 1px 5px); } }
+.kt-plate.is-hatched { background-image: repeating-linear-gradient(45deg, rgb(50 46 42 / 0.28) 0 1px, transparent 1px 4.5px); }
+.kt-plate.is-wash { background-color: #e2c9b1; }
+.kt-chalk {
+  border-radius: 1.5px; background: #834d36; color: #edddc7;
+  box-shadow: inset 0 0 0 3px #834d36, inset 0 0 0 4px rgb(237 221 199 / 0.65);
+  transition: filter 0.15s;
+}
+@media (pointer: fine) { .kt-chalk:hover:not(:disabled) { filter: brightness(1.1); } }
 
 /* ▸ 時間拍賣（feat/game-time-auction） */
 /* 時間拍賣（TauFrame）：一張維多利亞時代的拍賣傳單。.tau-frame 是紅色的「牛津角」框：一粗一細兩條線在四角交叉、
