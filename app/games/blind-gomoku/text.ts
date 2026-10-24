@@ -18,7 +18,6 @@ export type BlindGomokuText = {
   tagline: string;
   tags: string;
   /** 首頁主視覺（朝鮮包袱巾）下面的出處 */
-  artCredit: string;
   blindAi: string;
   blindAiDesc: string;
   classicAi: string;
@@ -81,7 +80,6 @@ export const TEXT: TextTable<BlindGomokuText> = {
     subtitle: 'Blind Gomoku',
     tagline: '黑白藏在底面，你只看得到顏色',
     tags: '第 1 季 · 1–2 人 · 約 5 分鐘',
-    artCredit: '圖：19 世紀朝鮮拼布包袱巾（조각보），芝加哥藝術博物館，公有領域',
     blindAi: '盲棋 · 對 AI',
     blindAiDesc: '節目原樣：AI 用你上一手的顏色回應',
     classicAi: '一般五子棋 · 對 AI',
@@ -150,7 +148,6 @@ export const TEXT: TextTable<BlindGomokuText> = {
     subtitle: 'Five in a row, blindfolded',
     tagline: 'Black and white hide underneath — you only see colours',
     tags: 'Season 1 · 1–2 players · ~5 min',
-    artCredit: 'Image: Korean patchwork wrapping cloth (jogakbo), 19th century, Art Institute of Chicago, public domain',
     blindAi: 'Blind · vs AI',
     blindAiDesc: 'As in the show: the AI answers in your last colour',
     classicAi: 'Classic · vs AI',
@@ -219,7 +216,6 @@ export const TEXT: TextTable<BlindGomokuText> = {
     subtitle: 'Blind Gomoku',
     tagline: '黒と白は石の底に。見えるのは色だけ',
     tags: 'シーズン1 · 1–2人 · 約5分',
-    artCredit: '画像：19世紀朝鮮のパッチワークの風呂敷（チョガッポ）、シカゴ美術館、パブリックドメイン',
     blindAi: 'ブラインド · 対AI',
     blindAiDesc: '番組どおり：AIがあなたの直前の色で打ち返す',
     classicAi: '通常の五目並べ · 対AI',
@@ -288,7 +284,6 @@ export const TEXT: TextTable<BlindGomokuText> = {
     subtitle: 'Blind Gomoku',
     tagline: '흑백은 돌 밑면에 숨어 있고, 보이는 건 색깔뿐',
     tags: '시즌 1 · 1–2인 · 약 5분',
-    artCredit: '이미지: 19세기 조각보, 시카고 미술관, 퍼블릭 도메인',
     blindAi: '블라인드 · AI 대전',
     blindAiDesc: '방송 그대로: AI가 당신의 직전 색으로 응수',
     classicAi: '일반 오목 · AI 대전',
@@ -357,7 +352,6 @@ export const TEXT: TextTable<BlindGomokuText> = {
     subtitle: 'Blind Gomoku',
     tagline: '黑白藏在底面，你只看得到颜色',
     tags: '第 1 季 · 1–2 人 · 约 5 分钟',
-    artCredit: '图：19 世纪朝鲜拼布包袱布（조각보），芝加哥艺术博物馆，公有领域',
     blindAi: '盲棋 · 人机对战',
     blindAiDesc: '节目原样：AI 用你上一手的颜色回应',
     classicAi: '普通五子棋 · 人机对战',
@@ -426,7 +420,6 @@ export const TEXT: TextTable<BlindGomokuText> = {
     subtitle: 'Blind Gomoku',
     tagline: 'ดำขาวซ่อนอยู่ใต้หมาก คุณเห็นแค่สี',
     tags: 'ซีซั่น 1 · 1–2 คน · ประมาณ 5 นาที',
-    artCredit: 'ภาพ: ผ้าห่อของปะต่อเกาหลี (โจกักโบ) ศตวรรษที่ 19 สถาบันศิลปะชิคาโก สาธารณสมบัติ',
     blindAi: 'ปิดตา · เล่นกับ AI',
     blindAiDesc: 'แบบในรายการ: AI ตอบด้วยสีล่าสุดของคุณ',
     classicAi: 'โกโมกุปกติ · เล่นกับ AI',

@@ -56,12 +56,12 @@ export default function GomokuMenu({ locale, onStart }: { locale: Locale; onStar
         <p className="mt-1 text-base font-black text-ink-soft lg:text-lg">{t.subtitle}</p>
         <p className="mt-2 text-sm font-bold lg:text-base">{t.tagline}</p>
         {/* 主視覺：那塊包袱巾本身；只有它跟著畫面高度縮 */}
-        <figure className="mt-3 flex flex-col items-center gap-1 lg:items-start">
+        {/* 出處：19 世紀朝鮮拼布包袱巾（조각보），芝加哥藝術博物館，公有領域。畫面上不寫出處（Zach 10/24：插圖不要說明） */}
+        <div className="mt-3 flex flex-col items-center gap-1 lg:items-start">
           {/* eslint-disable-next-line @next/next/no-img-element -- 靜態匯出，不需要 next/image */}
           <img src="/games/blind-gomoku/pojagi.webp" alt="" aria-hidden="true" width={750} height={746}
             className="h-[min(14rem,24dvh)] w-auto rounded-sm lg:h-auto lg:w-[min(100%,26rem)]" />
-          <figcaption className="text-[11px] font-bold text-ink-soft">{t.artCredit}</figcaption>
-        </figure>
+        </div>
       </header>
 
       <nav aria-label={t.title} className="mt-4 flex w-full max-w-[440px] shrink-0 flex-col gap-2.5 lg:mt-0 lg:w-[400px]">
