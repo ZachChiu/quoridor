@@ -42,9 +42,11 @@ export type ShareCardOptions = {
   images?: string[];
   /** 這款給哪幾種比例，第一個是預設；只給一種就拿掉比例切換（尼泊爾虎棋只留 9:16，Zach 10/24） */
   layouts?: CardLayout[];
+  /** 站名前面那顆圖示，用那款自己的 favicon（沒有就是平台的骰子惡魔） */
+  icon?: string;
 };
 
-export function useShareCard({ isOpen, draw, contentKey, fileName, homePath, campaign, fonts = [], images = [], layouts = ALL_LAYOUTS }: ShareCardOptions) {
+export function useShareCard({ isOpen, draw, contentKey, fileName, homePath, campaign, fonts = [], images = [], layouts = ALL_LAYOUTS, icon: iconSrc = '/icon-192.png' }: ShareCardOptions) {
   const [layout, setLayout] = useState<CardLayout>(layouts[0]);
   // file：存檔、分享用的原尺寸；url：畫面上的預覽（照預覽框的大小另外畫一張）
   const [img, setImg] = useState<{ url: string; file: File; key: string } | null>(null);
@@ -66,7 +68,7 @@ export function useShareCard({ isOpen, draw, contentKey, fileName, homePath, cam
       };
       const [{ encode }, icon, loaded] = await Promise.all([
         import('uqr'),
-        load('/icon-192.png'),
+        load(iconSrc),
         Promise.all(images.map(load)),
         // canvas 不會自己等字型下載完
         Promise.all(fonts.map((f) => document.fonts.load(f.font, f.text))).catch(() => {}),

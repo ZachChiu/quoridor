@@ -113,6 +113,46 @@ function openGraph(locale: Locale, path: PagePath) {
   };
 }
 
+/** 一款遊戲的 favicon 一組：public/icons/<id>.svg（或 <id>-32.png）、<id>.ico、<id>-192.png、<id>-apple.png */
+function iconSet(id: string, svg = false): Metadata['icons'] {
+  return {
+    icon: [
+      svg ? { url: `/icons/${id}.svg`, type: 'image/svg+xml' } : { url: `/icons/${id}-32.png`, type: 'image/png', sizes: '32x32' },
+      { url: `/icons/${id}.ico`, sizes: '16x16 32x32' },
+      { url: `/icons/${id}-192.png`, type: 'image/png', sizes: '192x192' },
+    ],
+    shortcut: `/icons/${id}.ico`,
+    apple: `/icons/${id}-apple.png`,
+  };
+}
+
+/**
+ * 各遊戲自己的 favicon（2026-10-24 Zach：平台版包含虎羊棋，各頁 favicon 要放好）。
+ * 全站預設（shell.tsx 的 baseMetadata、/favicon.*）是平台的骰子惡魔（平面那版，16px 下立體那版糊成一團）；
+ * Wall Go 沿用原本那兩個人、尼泊爾虎棋是老虎圓牌。頁面的 icons 會整組蓋掉 layout 的，所以每款給完整一組。
+ * 第二批五款還沒有自己的，沿用平台的；各自的分支要換時把自己那行打開。一行一款、中間空一行：
+ * 各分支只改自己那行，依序合併才不會衝突（同 catalog.ts）。
+ */
+const GAME_ICONS: Record<string, Metadata['icons'] | undefined> = {
+  'wall-go': iconSet('wall-go', true),
+
+  'bagh-chal': iconSet('bagh-chal'),
+
+  'nine-mens-morris': undefined,
+
+  'time-auction': undefined,
+
+  'blind-gomoku': undefined,
+
+  'knights-tour': undefined,
+
+  'balance-mancala': undefined,
+};
+function gameIcons(path: string): Pick<Metadata, 'icons'> {
+  const icons = GAME_ICONS[path.split('/')[1]];
+  return icons ? { icons } : {};
+}
+
 /** Wall Go 以外的遊戲：根 layout 的標題格式是「… | 牆壁圍棋 Wall Go」，改接平台名 */
 function otherGameTitle(path: PagePath, title: string | undefined): Metadata {
   return path.startsWith('/bagh-chal') && title ? { title: { absolute: `${title} | ${BRAND}` } } : {};
@@ -147,6 +187,7 @@ export function localeMetadata(locale: Locale, path: PagePath): Metadata {
     ...(path === '/wall-go' ? { title: { absolute: t.meta.titleDefault } } : {}),
     // 其他遊戲不套 Wall Go 的標題格式（「… | 牆壁圍棋 Wall Go」），接平台名
     ...otherGameTitle(path, c.title),
+    ...gameIcons(path),
     ...(locale === DEFAULT_LOCALE ? {} : {}),
   };
 }
@@ -174,6 +215,7 @@ export function playMetadata(locale: Locale, path: PagePath): Metadata {
   return {
     title,
     ...otherGameTitle(path, title),
+    ...gameIcons(path),
     robots: { index: false, follow: true },
     ...openGraph(locale, path),
   };
@@ -188,6 +230,7 @@ export function trialGameMetadata(locale: Locale, path: string, title: string, d
   return {
     title: { absolute: `${title} | ${BRAND}` },
     description,
+    ...gameIcons(path),
     robots: { index: false, follow: true },
     openGraph: {
       type: 'website',

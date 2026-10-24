@@ -166,6 +166,7 @@ export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghM
     fonts: [{ font: `900 40px ${font}`, text: card.text.title + card.text.name }, { font: `700 40px ${font}`, text: card.text.kicker + card.text.from }],
     images: BAGH_CARD_IMAGES,
     layouts: ['story'],
+    icon: '/icons/bagh-chal-192.png',
   });
 
   // 虎羊棋自己的按鈕（BaghUi）：紙色底、橄欖綠外圈的圓鈕，深墨框的寬鈕 —— 不沿用 Wall Go 的灰色無框鈕
