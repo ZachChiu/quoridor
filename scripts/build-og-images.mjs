@@ -31,7 +31,7 @@ const FAMILY = { 'zh-TW': 'Noto+Sans+TC', en: 'Noto+Sans+TC', ja: 'Noto+Sans+JP'
 const LOCALES = ['zh-TW', 'en', 'ja', 'ko', 'zh-Hans', 'th'];
 const PAGES = ['platform', 'home', 'rules', 'local', 'online', 'solo', 'replay', 'bagh-chal'];
 
-const { BRAND } = await import('../app/brand.ts');
+const { brandName } = await import('../app/brand.ts');
 /** 右邊放各遊戲自己的主視覺（沒有的頁面畫 Wall Go 的棋盤） */
 const ART = {
   'bagh-chal': 'data:image/svg+xml;base64,' + readFileSync('public/games/bagh-chal/key-art.svg').toString('base64'),
@@ -46,7 +46,7 @@ function copyFor(locale, page) {
   // 英文的 titleLine2 整個不給 —— 用模板拼會變成字面上的 "undefined"（見 app/i18n/index.ts 的 siteName）
   const site = [t.home.titleLine1, t.home.titleLine2].filter(Boolean).join(' ');
   // 平台首頁：膠囊放平台名，標題逐行指定（metaTitle 太長；自動斷行會把節目名拆開）
-  if (page === 'platform') return { kicker: BRAND, title: t.platform.ogLines, titleSize: fitTitleSize(t.platform.ogLines) };
+  if (page === 'platform') return { kicker: brandName(locale), title: t.platform.ogLines, titleSize: fitTitleSize(t.platform.ogLines) };
   // Bagh Chal：膠囊放出自哪一季的節目名，標題是遊戲名＋副名
   if (page === 'bagh-chal') { const lines = [t.baghChal.title, t.baghChal.subtitle]; return { kicker: t.meta.showName, title: lines, titleSize: fitTitleSize(lines) }; }
   const title = page === 'home'
