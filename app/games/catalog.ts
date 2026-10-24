@@ -114,7 +114,7 @@ export const SEASONS: Season[] = [
         look: { card: 'bg-[#046161] text-[#f2e4c9]', wipe: '#046161', art: '/games/blind-gomoku/pojagi.webp', cover: true, entrance: 'blind-gomoku', rules: routes.trialRules(routes.BLIND_GOMOKU) } },
       // （盲眼五子棋與九子棋各自的分支會改上下這兩行，中間隔這一行，依序合併才不會衝突）
       { name: "Nine Men's Morris", names: { 'zh-TW': '九子棋', 'zh-Hans': '九子棋' }, playable: routes.NINE_MENS_MORRIS,
-        look: { card: 'bg-[#4b4577] text-[#eee0c4]', wipe: '#4b4577', art: '/games/nine-mens-morris/libro.webp', cover: true, entrance: 'nine-mens-morris' } },
+        look: { card: 'bg-[#4b4577] text-[#eee0c4]', wipe: '#4b4577', art: '/games/nine-mens-morris/libro.webp', cover: true, entrance: 'nine-mens-morris', rules: routes.trialRules(routes.NINE_MENS_MORRIS) } },
       { name: 'Hexagon', names: { 'zh-TW': '六角數字盤', 'zh-Hans': '六角数字盘' } },
     ],
   },

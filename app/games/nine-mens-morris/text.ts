@@ -71,12 +71,22 @@ export type MorrisText = {
   draw: string;
   reason: { pieces: string; blocked: string; repetition: string; quiet: string; standoff: string; standoffDraw: string };
   again: string;
+  /** 說明彈窗的標題 */
   rulesHeading: string;
-  rules: string[];
-  showRulesDetail: string;
+  /**
+   * 規則的每一步：一步一張小圖（圖在 components/nine-mens-morris/MorrisRules.tsx 的 STEPS，順序要跟這裡一樣）。
+   * 規則頁全部攤開、對局中的說明彈窗一次一步。最後一步是節目規則的差別。
+   * 說明對著圖講，寫黑方／白方，不寫「你／對方」。
+   */
+  steps: { title: string; body: string }[];
+  /** 規則頁（/nine-mens-morris/rules）：大標、分享與搜尋的標題與描述、最後那顆回首頁的按鈕 */
+  rulesTitle: string;
+  rulesMetaTitle: string;
+  rulesMetaDescription: string;
+  rulesCta: string;
   /** 讀屏念的空點 */
   empty: string;
-  /** 規則最後一段：名字的由來（Zach 10/24：遊戲命名用 Netflix 版本，在規則裡介紹） */
+  /** 規則頁最後一段：名字的由來（Zach 10/24：遊戲命名用 Netflix 版本，在規則裡介紹） */
   nameNote: string;
   /** 結算分享圖：這款出自第 1 季，「靈感來自《…》」寫第 1 季的節目名（共用的 showName 是第 2 季的） */
   show: string;
@@ -151,16 +161,19 @@ export const TEXT = {
     },
     again: '再來一局',
     rulesHeading: '怎麼玩',
-    rules: [
-      '棋盤有 24 個點。雙方各 9 顆子，黑先。',
-      '放子：輪流把手上的子放到空點。雙方 9 顆都放完之前，盤上的子不能動。',
-      '走子：放完之後，每回合沿線把一顆子移到相鄰的空點。',
-      '同一條線上 3 顆都是自己的子（連成一線），就拿掉對方 1 顆子。對方連成一線的子不能拿，除非他的子全都在線上。',
-      '只剩 3 顆子時可以飛：移到任何空點，不必沿線。',
-      '對方只剩 2 顆，或輪到他時沒有子可以動，你就贏了。',
-      '同一局面出現 3 次，或連續 50 手沒有人被拿子，就是和局。',
+    steps: [
+      { title: '棋盤', body: '棋盤有 24 個點。雙方各 9 顆子，黑先。' },
+      { title: '放子', body: '輪流把手上的子放到空點。雙方 9 顆都放完之前，盤上的子不能動。' },
+      { title: '連成一線', body: '黑方 3 顆子連在同一條線上（連成一線），就拿掉白方 1 顆子。白方連成一線的子不能拿，除非白方的子全都在線上。' },
+      { title: '走子', body: '放完之後，每回合沿線把一顆子移到相鄰的空點。' },
+      { title: '飛子', body: '只剩 3 顆子時可以飛：移到任何空點，不必沿線。' },
+      { title: '輸贏', body: '白方只剩 2 顆，或輪到白方時沒有子可以動，黑方就贏了。同一局面出現 3 次，或連續 50 手沒有人被拿子，就是和局。' },
+      { title: '節目規則', body: '在首頁打開「節目規則」，就照節目的 RULE 卡下：連成一線的子一律不能拿（白方的子全都在線上時，黑方這次就沒得拿）；有人剩 3 顆之後，雙方各走 10 手都沒有人被拿子，子少的一方輸（一樣多就和局）。' },
     ],
-    showRulesDetail: '節目規則：對方連成一線的子一律不能拿；有人剩 3 顆之後，雙方各走 10 手都沒有人被拿子，子少的一方輸（一樣多就和局）。',
+    rulesTitle: '九子棋怎麼玩',
+    rulesMetaTitle: "九子棋規則圖解：Nine Men's Morris 怎麼玩",
+    rulesMetaDescription: "九子棋（Nine Men's Morris）的規則，一步一張圖：放子、連成一線拿子、走子、飛子、輸贏，還有《魔鬼的計謀》節目規則的差別。看完就能跟 AI 或朋友下一局。",
+    rulesCta: '回首頁開一局',
     empty: '空點',
     nameNote: '名字：節目裡的中文就叫「九子棋」（中文維基寫「直棋」）。英文 Nine Men\'s Morris 的 morris，一般認為是從拉丁文 merellus（棋子）訛變來的。首頁那幅插圖出自 1283 年西班牙阿方索十世的《遊戲之書》。',
     show: '魔鬼的計謀',
@@ -230,16 +243,19 @@ export const TEXT = {
     },
     again: 'Play again',
     rulesHeading: 'How to play',
-    rules: [
-      'The board has 24 points. Each player has 9 pieces, and Black goes first.',
-      "Placing: take turns putting a piece from your hand on an empty point. Pieces on the board can't move until both players have placed all nine.",
-      'Moving: after that, each turn slide one piece along a line to an adjacent empty point.',
-      "Three of your pieces on one line is a mill: remove one of your opponent's pieces. Pieces in a mill are safe, unless all of their pieces are in mills.",
-      'With only 3 pieces left, you can fly: move to any empty point.',
-      'You win when your opponent is down to 2 pieces, or has no move on their turn.',
-      "It's a draw if the same position comes up 3 times, or 50 moves pass without a capture.",
+    steps: [
+      { title: 'The board', body: 'The board has 24 points. Each player has 9 pieces, and Black goes first.' },
+      { title: 'Placing', body: "Players take turns putting a piece from their hand on an empty point. Pieces on the board can't move until both players have placed all nine." },
+      { title: 'Mills', body: "Three Black pieces on one line make a mill: Black removes one of White's pieces. White's pieces in a mill are safe, unless all of White's pieces are in mills." },
+      { title: 'Moving', body: 'Once all pieces are placed, each turn slide one piece along a line to an adjacent empty point.' },
+      { title: 'Flying', body: 'With only 3 pieces left, a player can fly: move to any empty point.' },
+      { title: 'Winning', body: "Black wins when White is down to 2 pieces, or has no move on White's turn. It's a draw if the same position comes up 3 times, or 50 moves pass without a capture." },
+      { title: 'Show rules', body: "Turn on “Show rules” on the home page to play by the show's rule card: pieces in a mill can never be taken (when all of White's pieces are in mills, Black takes nothing this time). Once someone is down to 3 pieces, if 10 rounds pass without a capture, the side with fewer pieces loses (equal pieces is a draw)." },
     ],
-    showRulesDetail: 'Show rules: pieces in a mill can never be taken. Once someone is down to 3 pieces, if 10 rounds pass without a capture, the side with fewer pieces loses (equal pieces is a draw).',
+    rulesTitle: "How to Play Nine Men's Morris",
+    rulesMetaTitle: "Nine Men's Morris Rules, Step by Step",
+    rulesMetaDescription: "The rules of Nine Men's Morris with a picture for each step: placing, making mills to take pieces, moving, flying and winning, plus how the rules differ on The Devil's Plan. Then play the AI or a friend.",
+    rulesCta: 'Start a game',
     empty: 'empty point',
     nameNote: 'The name: the Chinese subtitles call it 九子棋, “nine-piece chess”. The “morris” in Nine Men\'s Morris is usually traced to the Latin merellus, a gaming piece. The picture on the home page comes from Alfonso X\'s Book of Games (1283).',
     show: 'The Devil\'s Plan',
@@ -309,16 +325,19 @@ export const TEXT = {
     },
     again: 'もう一局',
     rulesHeading: '遊び方',
-    rules: [
-      '盤には24の点があります。お互いに駒は9個、黒が先手です。',
-      '配置：交互に手持ちの駒を空いている点に置きます。両者が9個とも置き終わるまで、盤上の駒は動かせません。',
-      '移動：置き終わったら、毎ターン駒を1つ、線に沿って隣の空いている点へ動かします。',
-      '1本の線に自分の駒が3つ並んだら、相手の駒を1つ取ります。並んでいる相手の駒は取れません（相手の駒がすべて並んでいるときを除く）。',
-      '残り3個になったら飛べます：どの空いている点へも動かせます。',
-      '相手の駒を残り2個にするか、相手の番に動かせる駒がなくなれば勝ちです。',
-      '同じ局面が3回現れるか、50手続けて駒が取られなければ引き分けです。',
+    steps: [
+      { title: '盤', body: '盤には24の点があります。お互いに駒は9個、黒が先手です。' },
+      { title: '配置', body: '交互に手持ちの駒を空いている点に置きます。両者が9個とも置き終わるまで、盤上の駒は動かせません。' },
+      { title: '3つ並べる', body: '1本の線に黒の駒が3つ並んだら、白の駒を1つ取ります。並んでいる白の駒は取れません（白の駒がすべて並んでいるときを除く）。' },
+      { title: '移動', body: '置き終わったら、毎ターン駒を1つ、線に沿って隣の空いている点へ動かします。' },
+      { title: '飛び', body: '残り3個になったら飛べます：どの空いている点へも動かせます。' },
+      { title: '勝ち負け', body: '白の駒が残り2個になるか、白の番に動かせる駒がなくなれば黒の勝ちです。同じ局面が3回現れるか、50手続けて駒が取られなければ引き分けです。' },
+      { title: '番組ルール', body: 'トップで「番組ルール」をオンにすると、番組のルールカードどおりに遊べます：並んでいる駒は決して取れません（白の駒がすべて並んでいれば、黒は今回何も取れません）。誰かが残り3個になってから、10ラウンド（お互い10手）駒が取られなければ、駒の少ない方の負けです（同数なら引き分け）。' },
     ],
-    showRulesDetail: '番組ルール：並んでいる駒は決して取れません。誰かが残り3個になってから、10ラウンド（お互い10手）駒が取られなければ、駒の少ない方の負けです（同数なら引き分け）。',
+    rulesTitle: 'ナイン・メンズ・モリスの遊び方',
+    rulesMetaTitle: 'ナイン・メンズ・モリスのルール（図解）',
+    rulesMetaDescription: "ナイン・メンズ・モリス（Nine Men's Morris）のルールを1ステップ1枚の図で：配置、3つ並べて駒を取る、移動、飛び、勝ち負け、そして『悪魔の計略 ～デビルズ・プラン～』の番組ルールとの違い。読んだらAIや友だちと一局どうぞ。",
+    rulesCta: 'トップで対局を始める',
     empty: '空き',
     nameNote: '名前：英語名 Nine Men\'s Morris の「モリス」は、ラテン語の merellus（駒）がなまったものとされています。トップページの絵はアルフォンソ10世の『遊戯の書』（1283年）から。',
     show: '悪魔の計略 ～デビルズ・プラン～',
@@ -388,16 +407,19 @@ export const TEXT = {
     },
     again: '한 판 더',
     rulesHeading: '게임 방법',
-    rules: [
-      '판에는 24개의 점이 있습니다. 각자 말 9개를 가지고, 흑이 먼저 둡니다.',
-      '놓기: 번갈아 가며 손에 든 말을 빈 점에 놓습니다. 둘 다 9개를 모두 놓기 전에는 판 위의 말을 움직일 수 없습니다.',
-      '이동: 다 놓은 뒤에는 차례마다 말 하나를 선을 따라 옆의 빈 점으로 옮깁니다.',
-      '한 줄에 자기 말 3개가 놓이면 상대 말 1개를 가져옵니다. 한 줄로 이어진 상대 말은 가져올 수 없습니다(상대 말이 모두 줄에 있을 때는 예외).',
-      '말이 3개만 남으면 날 수 있습니다: 아무 빈 점으로나 옮길 수 있어요.',
-      '상대 말을 2개로 줄이거나, 상대 차례에 움직일 말이 없으면 이깁니다.',
-      '같은 국면이 3번 나오거나 50수 연속으로 아무도 말을 잃지 않으면 무승부입니다.',
+    steps: [
+      { title: '판', body: '판에는 24개의 점이 있습니다. 각자 말 9개를 가지고, 흑이 먼저 둡니다.' },
+      { title: '놓기', body: '번갈아 가며 손에 든 말을 빈 점에 놓습니다. 둘 다 9개를 모두 놓기 전에는 판 위의 말을 움직일 수 없습니다.' },
+      { title: '한 줄 만들기', body: '한 줄에 흑의 말 3개가 놓이면 백의 말 1개를 가져옵니다. 한 줄로 이어진 백의 말은 가져올 수 없습니다(백의 말이 모두 줄에 있을 때는 예외).' },
+      { title: '이동', body: '다 놓은 뒤에는 차례마다 말 하나를 선을 따라 옆의 빈 점으로 옮깁니다.' },
+      { title: '날기', body: '말이 3개만 남으면 날 수 있습니다: 아무 빈 점으로나 옮길 수 있어요.' },
+      { title: '승패', body: '백의 말이 2개만 남거나, 백의 차례에 움직일 말이 없으면 흑이 이깁니다. 같은 국면이 3번 나오거나 50수 연속으로 아무도 말을 잃지 않으면 무승부입니다.' },
+      { title: '방송 규칙', body: '첫 화면에서 ‘방송 규칙’을 켜면 방송의 RULE 카드대로 둡니다: 한 줄로 이어진 말은 절대 가져올 수 없습니다(백의 말이 모두 줄에 있으면 흑은 이번에 가져올 말이 없습니다). 누군가 3개가 된 뒤 양쪽이 10수씩 두는 동안 아무도 말을 잃지 않으면 말이 적은 쪽이 집니다(같으면 무승부).' },
     ],
-    showRulesDetail: '방송 규칙: 한 줄로 이어진 말은 절대 가져올 수 없습니다. 누군가 3개가 된 뒤 양쪽이 10수씩 두는 동안 아무도 말을 잃지 않으면 말이 적은 쪽이 집니다(같으면 무승부).',
+    rulesTitle: '나인 멘스 모리스 게임 방법',
+    rulesMetaTitle: '나인 멘스 모리스 규칙 그림 설명',
+    rulesMetaDescription: "나인 멘스 모리스(Nine Men's Morris) 규칙을 단계마다 그림 한 장으로: 놓기, 한 줄을 만들어 말 가져오기, 이동, 날기, 승패, 그리고 『데블스 플랜』 방송 규칙과의 차이. 다 읽으면 AI나 친구와 한 판 두어 보세요.",
+    rulesCta: '첫 화면에서 한 판 시작',
     empty: '빈 점',
     nameNote: '이름: 영어 이름 Nine Men\'s Morris의 ‘모리스’는 라틴어 merellus(말)가 변한 것으로 알려져 있습니다. 첫 화면의 그림은 알폰소 10세의 『놀이의 책』(1283)에서 가져왔습니다.',
     show: '데블스 플랜',
@@ -467,16 +489,19 @@ export const TEXT = {
     },
     again: '再来一局',
     rulesHeading: '怎么玩',
-    rules: [
-      '棋盘有 24 个点。双方各 9 枚棋子，黑先。',
-      '落子：轮流把手上的棋子放到空点。双方 9 枚都放完之前，盘上的棋子不能动。',
-      '走子：放完之后，每回合沿线把一枚棋子移到相邻的空点。',
-      '同一条线上 3 枚都是自己的棋子（连成一线），就拿掉对方 1 枚棋子。对方连成一线的棋子不能拿，除非他的棋子全都在线上。',
-      '只剩 3 枚棋子时可以飞：移到任何空点，不必沿线。',
-      '对方只剩 2 枚，或轮到他时没有棋子可以动，你就赢了。',
-      '同一局面出现 3 次，或连续 50 步没有人被拿子，就是和局。',
+    steps: [
+      { title: '棋盘', body: '棋盘有 24 个点。双方各 9 枚棋子，黑先。' },
+      { title: '落子', body: '轮流把手上的棋子放到空点。双方 9 枚都放完之前，盘上的棋子不能动。' },
+      { title: '连成一线', body: '黑方 3 枚棋子连在同一条线上（连成一线），就拿掉白方 1 枚棋子。白方连成一线的棋子不能拿，除非白方的棋子全都在线上。' },
+      { title: '走子', body: '放完之后，每回合沿线把一枚棋子移到相邻的空点。' },
+      { title: '飞子', body: '只剩 3 枚棋子时可以飞：移到任何空点，不必沿线。' },
+      { title: '输赢', body: '白方只剩 2 枚，或轮到白方时没有棋子可以动，黑方就赢了。同一局面出现 3 次，或连续 50 步没有人被拿子，就是和局。' },
+      { title: '节目规则', body: '在首页打开“节目规则”，就按节目的 RULE 卡下：连成一线的棋子一律不能拿（白方的棋子全都在线上时，黑方这次就没得拿）；有人剩 3 枚之后，双方各走 10 步都没有人被拿子，棋子少的一方输（一样多就和局）。' },
     ],
-    showRulesDetail: '节目规则：对方连成一线的棋子一律不能拿；有人剩 3 枚之后，双方各走 10 步都没有人被拿子，棋子少的一方输（一样多就和局）。',
+    rulesTitle: '九子棋怎么玩',
+    rulesMetaTitle: "九子棋规则图解：Nine Men's Morris 怎么玩",
+    rulesMetaDescription: "九子棋（Nine Men's Morris）的规则，一步一张图：落子、连成一线拿子、走子、飞子、输赢，还有《魔鬼的计谋》节目规则的差别。看完就能跟 AI 或朋友下一局。",
+    rulesCta: '回首页开一局',
     empty: '空点',
     nameNote: '名字：节目里的中文就叫“九子棋”（中文维基写“直棋”）。英文 Nine Men\'s Morris 的 morris，一般认为是从拉丁文 merellus（棋子）讹变来的。首页那幅插图出自 1283 年西班牙阿方索十世的《游戏之书》。',
     show: '魔鬼的计谋',
@@ -546,16 +571,19 @@ export const TEXT = {
     },
     again: 'เล่นอีกรอบ',
     rulesHeading: 'วิธีเล่น',
-    rules: [
-      'กระดานมี 24 จุด แต่ละฝ่ายมีหมาก 9 ตัว ฝ่ายดำเดินก่อน',
-      'วางหมาก: ผลัดกันวางหมากจากในมือลงบนจุดว่าง ระหว่างที่ทั้งสองฝ่ายยังวางไม่ครบ 9 ตัว หมากบนกระดานยังเดินไม่ได้',
-      'เดินหมาก: เมื่อวางครบแล้ว ในแต่ละตาให้เดินหมาก 1 ตัวตามเส้นไปยังจุดว่างที่อยู่ติดกัน',
-      'ถ้าหมากของคุณ 3 ตัวเรียงอยู่บนเส้นเดียวกัน ให้หยิบหมากของอีกฝ่ายออก 1 ตัว หมากของอีกฝ่ายที่เรียงครบ 3 ตัวอยู่หยิบไม่ได้ ยกเว้นเมื่อหมากของเขาเรียงอยู่ทุกตัว',
-      'เมื่อเหลือหมาก 3 ตัว จะบินได้: เดินไปจุดว่างไหนก็ได้',
-      'ชนะเมื่ออีกฝ่ายเหลือหมาก 2 ตัว หรือถึงตาของเขาแล้วไม่มีหมากที่เดินได้',
-      'เสมอเมื่อตำแหน่งเดิมเกิดซ้ำ 3 ครั้ง หรือเดินติดกัน 50 ตาโดยไม่มีใครเสียหมาก',
+    steps: [
+      { title: 'กระดาน', body: 'กระดานมี 24 จุด แต่ละฝ่ายมีหมาก 9 ตัว ฝ่ายดำเดินก่อน' },
+      { title: 'วางหมาก', body: 'ผลัดกันวางหมากจากในมือลงบนจุดว่าง ระหว่างที่ทั้งสองฝ่ายยังวางไม่ครบ 9 ตัว หมากบนกระดานยังเดินไม่ได้' },
+      { title: 'เรียงครบ 3 ตัว', body: 'ถ้าหมากของฝ่ายดำ 3 ตัวเรียงอยู่บนเส้นเดียวกัน ฝ่ายดำหยิบหมากของฝ่ายขาวออก 1 ตัว หมากของฝ่ายขาวที่เรียงครบ 3 ตัวอยู่หยิบไม่ได้ ยกเว้นเมื่อหมากของฝ่ายขาวเรียงอยู่ทุกตัว' },
+      { title: 'เดินหมาก', body: 'เมื่อวางครบแล้ว ในแต่ละตาให้เดินหมาก 1 ตัวตามเส้นไปยังจุดว่างที่อยู่ติดกัน' },
+      { title: 'บิน', body: 'เมื่อเหลือหมาก 3 ตัว จะบินได้: เดินไปจุดว่างไหนก็ได้' },
+      { title: 'แพ้ชนะ', body: 'ฝ่ายดำชนะเมื่อฝ่ายขาวเหลือหมาก 2 ตัว หรือถึงตาของฝ่ายขาวแล้วไม่มีหมากที่เดินได้ เสมอเมื่อตำแหน่งเดิมเกิดซ้ำ 3 ครั้ง หรือเดินติดกัน 50 ตาโดยไม่มีใครเสียหมาก' },
+      { title: 'กติกาในรายการ', body: 'เปิด “กติกาในรายการ” ที่หน้าแรกเพื่อเล่นตามการ์ดกติกาในรายการ: หมากที่เรียงครบ 3 ตัวหยิบไม่ได้เลย (ถ้าหมากของฝ่ายขาวเรียงอยู่ทุกตัว ครั้งนี้ฝ่ายดำก็หยิบอะไรไม่ได้) เมื่อมีฝ่ายใดเหลือ 3 ตัว ถ้าทั้งสองฝ่ายเดินคนละ 10 ตาโดยไม่มีใครเสียหมาก ฝ่ายที่มีหมากน้อยกว่าจะแพ้ (ถ้าเท่ากันถือว่าเสมอ)' },
     ],
-    showRulesDetail: 'กติกาในรายการ: หมากที่เรียงครบ 3 ตัวหยิบไม่ได้เลย เมื่อมีฝ่ายใดเหลือ 3 ตัว ถ้าทั้งสองฝ่ายเดินคนละ 10 ตาโดยไม่มีใครเสียหมาก ฝ่ายที่มีหมากน้อยกว่าจะแพ้ (ถ้าเท่ากันถือว่าเสมอ)',
+    rulesTitle: "วิธีเล่น Nine Men's Morris",
+    rulesMetaTitle: "กติกา Nine Men's Morris แบบมีภาพประกอบ",
+    rulesMetaDescription: "กติกาของ Nine Men's Morris ทีละขั้นพร้อมภาพ: วางหมาก เรียงครบ 3 ตัวเพื่อหยิบหมาก เดินหมาก บิน แพ้ชนะ และกติกาในรายการ The Devil's Plan ต่างกันอย่างไร อ่านจบแล้วเล่นกับ AI หรือเพื่อนได้เลย",
+    rulesCta: 'กลับหน้าแรกเพื่อเริ่มเล่น',
     empty: 'จุดว่าง',
     nameNote: 'ชื่อ: คำว่า morris ใน Nine Men\'s Morris เชื่อกันว่าเพี้ยนมาจากคำละติน merellus (ตัวหมาก) ภาพที่หน้าแรกมาจาก “หนังสือแห่งเกม” ของพระเจ้าอัลฟองโซที่ 10 (ค.ศ. 1283)',
     show: 'The Devil\'s Plan',

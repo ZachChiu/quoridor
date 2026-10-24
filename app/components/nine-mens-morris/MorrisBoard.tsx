@@ -106,6 +106,102 @@ function BoardArt({ uid, mills }: { uid: string; mills: Point[][] }) {
   );
 }
 
+/** 一個點的位置與大小（整塊棋盤的百分比） */
+const pointStyle = (x: number, y: number) => ({ left: left(gx(x)), top: top(gx(y)), width: `${(MAN_BOX / BOARD_W) * 100}%` });
+
+/**
+ * 一個點上畫的東西：棋子、腳下的粉筆、粉筆點、浮出來的子。對局的棋盤（每個點是按鈕）與規則的小圖（靜態）共用，
+ * 規則頁畫出來的就是對局裡看到的樣子。
+ * hover：對局才有的「滑鼠滑過才浮出」—— 小圖沒有滑鼠互動，浮出的子直接畫成半透明。
+ */
+function PointMarks({ cell, selected, removable, movable, mark, target, ghost, from, hover = false }: {
+  cell: Cell;
+  selected: boolean;
+  removable: boolean;
+  movable: boolean;
+  mark: boolean;
+  target?: 'place' | 'move';
+  ghost?: Side;
+  from: boolean;
+  hover?: boolean;
+}) {
+  // 腳下的粉筆：選起來的子原地留一塊印、可以拿的子是虛線圈、可以走的子是淡淡的實線圈
+  const foot = !cell ? '' : selected ? 'bg-[#eee0c4]/75'
+    : removable ? 'border-2 border-dashed border-[#eee0c4]'
+    : movable ? 'border-2 border-[#eee0c4]/55' : '';
+  return (
+    <>
+      {foot && <span aria-hidden="true" className={`absolute bottom-[-3%] left-1/2 h-[26%] w-[84%] -translate-x-1/2 rounded-[50%] ${foot}`} />}
+      {cell && (
+        <span data-piece="" style={{ transformOrigin: MAN_ORIGIN }}
+          className={`absolute inset-[4%] transition-transform duration-200 ${selected ? 'translate-y-[-16%] scale-105' : movable && hover ? 'fine:group-hover:translate-y-[-6%]' : ''} ${removable ? 'nmm-teeter' : ''}`}>
+          <PieceGlyph side={sideOf(cell)} mark={mark} className="size-full" />
+        </span>
+      )}
+      {!cell && target === 'move' && <span aria-hidden="true" className="size-[30%] rounded-full bg-[#eee0c4] shadow-[0_0_0_1.5px_rgb(30_18_10/0.45)]" />}
+      {!cell && target === 'place' && ghost && (
+        <span aria-hidden="true" className={`absolute inset-0 transition-opacity ${hover ? 'opacity-0 fine:group-hover:opacity-45' : 'opacity-45'}`}>
+          <PieceGlyph side={ghost} className="size-full" />
+        </span>
+      )}
+      {!cell && !target && from && <span aria-hidden="true" className="size-[34%] rounded-full border-2 border-[#eee0c4]/60" />}
+    </>
+  );
+}
+
+/** 被拿掉的子：躺在下方那段木頭上，頭朝外（黑的從左邊排、白的從右邊排） */
+function TrayPieces({ removed }: { removed: Record<Side, number> }) {
+  return <>{(['black', 'white'] as const).map((s) => Array.from({ length: removed[s] }, (_, i) => (
+    <span key={`${s}${i}`} data-tray={s} data-slot={i} aria-hidden="true"
+      className="pointer-events-none absolute aspect-square -translate-x-1/2 -translate-y-1/2"
+      style={{ left: left(trayX(s, i)), top: top(TRAY_Y), width: `${(TRAY_BOX / BOARD_W) * 100}%` }}>
+      <span className={`block size-full ${s === 'black' ? '-rotate-90' : 'rotate-90'}`}><PieceGlyph side={s} className="size-full" /></span>
+    </span>
+  )))}</>;
+}
+
+/**
+ * 規則的小圖（規則頁與對局中的說明彈窗）：同一塊棋盤、同一套記號，畫一個擺好的靜態局面。
+ * 每個點是 span 不是按鈕（不能點、不進 Tab 順序），整張圖讀屏不念 —— 旁邊那段字就是圖在講的事。
+ * 沒有落子、閒置這些動畫；可以拿的子照樣搖（對局裡就是靠這個認出能拿哪顆）。
+ */
+export function MorrisMiniBoard({ board, mills = [], removable = [], selected, targets = [], ghost, lastTo, lastFrom, removed = { black: 0, white: 0 } }: {
+  board: Cell[];
+  /** 剛連成的線（粉筆） */
+  mills?: Point[][];
+  /** 可以拿的子（搖晃） */
+  removable?: Point[];
+  /** 拿起來的子 */
+  selected?: Point;
+  /** 可以走過去的點（粉筆點） */
+  targets?: Point[];
+  /** 正要放下去的子（半透明） */
+  ghost?: { side: Side; at: Point };
+  /** 上一手的子（頭上一個點） */
+  lastTo?: Point;
+  /** 上一手從哪裡走過來（空點上一圈粉筆） */
+  lastFrom?: Point;
+  removed?: Record<Side, number>;
+}) {
+  const uid = useId().replace(/[^a-zA-Z0-9]/g, '');
+  return (
+    <div className="relative w-full" style={{ aspectRatio: `${BOARD_W} / ${BOARD_H}` }} aria-hidden="true">
+      <BoardArt uid={uid} mills={mills} />
+      <TrayPieces removed={removed} />
+      {board.map((cell, p) => {
+        const { x, y } = COORDS[p];
+        const target = targets.includes(p) ? 'move' : ghost?.at === p ? 'place' : undefined;
+        return (
+          <span key={p} className="absolute grid aspect-square -translate-x-1/2 -translate-y-1/2 place-items-center" style={pointStyle(x, y)}>
+            <PointMarks cell={cell} selected={selected === p} removable={!!cell && removable.includes(p)} movable={false} mark={p === lastTo}
+              target={target} ghost={ghost?.at === p ? ghost.side : undefined} from={p === lastFrom} />
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
 export type BoardLabels = { black: string; white: string; empty: string; remove: string };
 
 /** 對局用的棋盤：每個點都是按鈕 */
@@ -217,14 +313,7 @@ export function MorrisBoard({ board, targets, movable, removable, selected, last
     <div ref={rootRef} className="relative w-full" style={{ aspectRatio: `${BOARD_W} / ${BOARD_H}` }}>
       <BoardArt uid={uid} mills={mills} />
 
-      {/* 被拿掉的子：躺在下方，頭朝外 */}
-      {(['black', 'white'] as const).map((s) => Array.from({ length: removed[s] }, (_, i) => (
-        <span key={`${s}${i}`} data-tray={s} data-slot={i} aria-hidden="true"
-          className="pointer-events-none absolute aspect-square -translate-x-1/2 -translate-y-1/2"
-          style={{ left: left(trayX(s, i)), top: top(TRAY_Y), width: `${(TRAY_BOX / BOARD_W) * 100}%` }}>
-          <span className={`block size-full ${s === 'black' ? '-rotate-90' : 'rotate-90'}`}><PieceGlyph side={s} className="size-full" /></span>
-        </span>
-      )))}
+      <TrayPieces removed={removed} />
 
       {board.map((cell, p) => {
         const { x, y } = COORDS[p];
@@ -232,28 +321,12 @@ export function MorrisBoard({ board, targets, movable, removable, selected, last
         const canRemove = !!cell && removable.has(p);
         const isSelected = selected === p;
         const label = `${POINT_NAMES[p]} ${cell ? (cell === 'B' ? labels.black : labels.white) : labels.empty}${canRemove ? ` · ${labels.remove}` : ''}`;
-        // 腳下的粉筆：選起來的子原地留一塊印、可以拿的子是虛線圈、可以走的子是淡淡的實線圈
-        const foot = !cell ? '' : isSelected ? 'bg-[#eee0c4]/75'
-          : canRemove ? 'border-2 border-dashed border-[#eee0c4]'
-          : movable.has(p) ? 'border-2 border-[#eee0c4]/55' : '';
         return (
           <button key={p} data-point={p} type="button" onClick={() => onPick(p)} aria-label={label} aria-pressed={isSelected || undefined}
             className="group absolute grid aspect-square -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full"
-            style={{ left: left(gx(x)), top: top(gx(y)), width: `${(MAN_BOX / BOARD_W) * 100}%` }}>
-            {foot && <span aria-hidden="true" className={`absolute bottom-[-3%] left-1/2 h-[26%] w-[84%] -translate-x-1/2 rounded-[50%] ${foot}`} />}
-            {cell && (
-              <span data-piece="" style={{ transformOrigin: MAN_ORIGIN }}
-                className={`absolute inset-[4%] transition-transform duration-200 ${isSelected ? 'translate-y-[-16%] scale-105' : movable.has(p) ? 'fine:group-hover:translate-y-[-6%]' : ''} ${canRemove ? 'nmm-teeter' : ''}`}>
-                <PieceGlyph side={sideOf(cell)} mark={p === lastTo} className="size-full" />
-              </span>
-            )}
-            {!cell && target === 'move' && <span aria-hidden="true" className="size-[30%] rounded-full bg-[#eee0c4] shadow-[0_0_0_1.5px_rgb(30_18_10/0.45)]" />}
-            {!cell && target === 'place' && ghost && (
-              <span aria-hidden="true" className="absolute inset-0 opacity-0 transition-opacity fine:group-hover:opacity-45">
-                <PieceGlyph side={ghost} className="size-full" />
-              </span>
-            )}
-            {!cell && !target && p === lastFrom && <span aria-hidden="true" className="size-[34%] rounded-full border-2 border-[#eee0c4]/60" />}
+            style={pointStyle(x, y)}>
+            <PointMarks cell={cell} selected={isSelected} removable={canRemove} movable={movable.has(p)} mark={p === lastTo}
+              target={target} ghost={target === 'place' ? ghost : undefined} from={p === lastFrom} hover />
           </button>
         );
       })}
