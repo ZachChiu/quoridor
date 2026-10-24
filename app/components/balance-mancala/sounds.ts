@@ -17,6 +17,8 @@ import { playSynth, type Synth } from '@/utils/sound';
  *   盤子是 1.3–1.6 kHz；天使格（angel）高、輕（2–2.4 kHz），先一陣很淡的 highpass 氣聲；
  *   惡魔格（devil）低、重（560–700 Hz），先一聲 lowpass 的悶響。
  * - **結束**：贏（win）是砝碼依五聲音階往上疊（E5 G5 A5 C6 E6）；輸（lose）是兩塊較悶、衰減快的往下（A4 → E4）。
+ * - **輪到你**（turn，連線限定）：先一聲種子落坑，再兩塊砝碼往上（A5 → E6），像有人把秤交到你手上。
+ *   一桌四到七個人，等其他人下完要一陣子，分頁在背景也聽得到。
  *
  * 跟 Wall Go（bandpass 900 Hz 的木頭「篤」＋190 Hz）與虎羊棋（窄頻 Q12 的木魚）都不一樣：這裡的木頭是空心的坑、
  * 主角是很短的種子聲與黃銅的泛音。開關跟全站共用（useSound）。
@@ -26,7 +28,7 @@ export type MancalaSound =
   | { kind: 'seed'; index: number; crowd: number; delay?: number }
   | { kind: 'last'; crowd: number; delay?: number }
   | { kind: 'score'; points: number; cell: 'dish' | 'angel' | 'devil'; delay?: number }
-  | { kind: 'win' | 'lose'; delay?: number };
+  | { kind: 'win' | 'lose' | 'turn'; delay?: number };
 
 /** 一顆種子落進木坑 */
 function pit(s: Synth, at: number, f: number, vol: number) {
@@ -89,6 +91,11 @@ export function playMancala(sound: MancalaSound) {
       case 'lose':
         brass(s, t, s.note(69), 0.8, 0.45);
         brass(s, t + 0.22, s.note(64), 0.8, 0.6);
+        break;
+      case 'turn':
+        pit(s, t, 330, 0.6);
+        brass(s, t + 0.08, s.note(81), 0.75, 0.8);
+        brass(s, t + 0.22, s.note(88), 0.85, 1.2);
         break;
     }
   });

@@ -165,25 +165,6 @@ function dish(ctx: Ctx, font: string, color: string, value: number, cx: number, 
   centered(ctx, font, String(value), cx, cy, d * 0.44, CLOTH_LIGHT, alpha);
 }
 
-/** 不能放在行首的標點：遇到就留在上一行（「…遊戲結束」後面的「。」不會自己掉到下一行） */
-const NO_LINE_START = /^[。，、．：；！？）」』〉》,.!?:;)]$/;
-
-/** 長句子折成最多 lines 行（中日文逐字、其他語言照空白），太長的最後一行再縮字 */
-function wrapLines(ctx: Ctx, font: string, s: string, size: number, weight: number, max: number, lines: number): string[] {
-  ctx.font = `${weight} ${size}px ${font}`;
-  const spaced = /\s/.test(s) && !/[　-鿿가-힯]/.test(s);
-  const tokens = spaced ? s.split(/(\s+)/) : [...s];
-  const out: string[] = [];
-  let cur = '';
-  for (const tk of tokens) {
-    const next = cur + tk;
-    if (cur && ctx.measureText(next).width > max && out.length < lines - 1 && !NO_LINE_START.test(tk)) { out.push(cur.trim()); cur = tk.trimStart(); }
-    else cur = next;
-  }
-  if (cur) out.push(cur.trim());
-  return out;
-}
-
 type Cols = { x: number; w: number; u: number; rankLabel: boolean };
 
 /**
@@ -286,46 +267,7 @@ function story(ctx: Ctx, d: MancalaCardData, a: ShareAssets) {
   footer(ctx, d, a, 104, 1690, 872, 128, { brand: 38, small: 22, qr: 100, s: 2.4 });
 }
 
-function poster(ctx: Ctx, d: MancalaCardData, a: ShareAssets) {
-  const W = 1080, H = 1350, B = 56, cx = W / 2;
-  base(ctx, a, W, H, B);
-  weights(ctx, a, cx, 92, 420);
-  fitText(ctx, d.font, d.text.showRef, cx, 248, { size: 24, weight: 700, color: INK_SOFT, align: 'center', max: 860 });
-  fitText(ctx, d.font, d.text.name, cx, 326, { size: 70, color: INK, align: 'center', max: 860 });
-  if (d.text.altName) fitText(ctx, d.font, d.text.altName, cx, 366, { size: 26, weight: 700, color: INK_SOFT, align: 'center', max: 860 });
-  resultPlaque(ctx, d, cx, 392, 640, 96, 50);
-  fitText(ctx, d.font, d.text.reason, cx, 530, { size: 22, weight: 700, color: INK_SOFT, align: 'center', max: 860 });
-  table(ctx, d, 100, 552, 880, 560, 1, true);
-  fitText(ctx, d.font, d.text.formula, cx, 1142, { size: 22, weight: 900, color: BRASS_DEEP, align: 'center', max: 860 });
-  footer(ctx, d, a, 100, 1166, 880, 120, { brand: 34, small: 20, qr: 92, s: 2.2 });
-}
-
-function square(ctx: Ctx, d: MancalaCardData, a: ShareAssets) {
-  const W = 1080, H = 1080, B = 52;
-  base(ctx, a, W, H, B);
-  // 左欄：主視覺、遊戲名、結果；右欄：名次。兩欄都在 96–830 之間垂直置中
-  const lx = 92, lw = 300, cx = lx + lw / 2;
-  const reason = wrapLines(ctx, d.font, d.text.reason, 20, 700, lw, 3);
-  const blockH = 452 + reason.length * 30 + 44;
-  const y0 = 96 + Math.max(0, (734 - blockH) / 2);
-  weights(ctx, a, cx, y0, 300);
-  fitText(ctx, d.font, d.text.showRef, cx, y0 + 124, { size: 18, weight: 700, color: INK_SOFT, align: 'center', max: lw });
-  fitText(ctx, d.font, d.text.name, cx, y0 + 194, { size: 56, color: INK, align: 'center', max: lw });
-  if (d.text.altName) fitText(ctx, d.font, d.text.altName, cx, y0 + 230, { size: 22, weight: 700, color: INK_SOFT, align: 'center', max: lw });
-  fitText(ctx, d.font, d.text.kicker, cx, y0 + 282, { size: 19, weight: 700, color: INK_SOFT, align: 'center', max: lw });
-  resultPlaque(ctx, d, cx, y0 + 300, lw, 88, 40);
-  reason.forEach((line, i) => {
-    fitText(ctx, d.font, line, cx, y0 + 432 + i * 30, { size: 20, weight: 700, color: INK_SOFT, align: 'center', max: lw });
-  });
-  fitText(ctx, d.font, d.text.formula, cx, y0 + 432 + reason.length * 30 + 22, { size: 20, weight: 900, color: BRASS_DEEP, align: 'center', max: lw });
-  table(ctx, d, 430, 96, 566, 734, 1, false);
-  footer(ctx, d, a, 92, 860, 904, 124, { brand: 34, small: 20, qr: 96, s: 2.2 });
-}
-
+/** 只有 9:16（Zach 10/24：「感覺可以留 9:16 就好」，跟尼泊爾虎棋一樣）；4:5、1:1 的版面拿掉了 */
 export function drawMancalaCard(d: MancalaCardData) {
-  return (ctx: CanvasRenderingContext2D, layout: CardLayout, a: ShareAssets) => {
-    if (layout === 'story') story(ctx, d, a);
-    else if (layout === 'poster') poster(ctx, d, a);
-    else square(ctx, d, a);
-  };
+  return (ctx: CanvasRenderingContext2D, layout: CardLayout, a: ShareAssets) => story(ctx, d, a);
 }

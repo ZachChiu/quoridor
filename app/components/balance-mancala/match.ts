@@ -4,9 +4,10 @@ import type { Seat } from '@/games/balance-mancala/engine';
 /**
  * 開局設定。跟 AI 玩：你坐 A，其餘都是 AI（4–7 席）。
  * 本機對戰：2–7 人，少於 4 人時 AI 補到 4 席（研究的模擬：少於 4 席局太短、分數太低）。
+ * 連線對戰：4–7 人，全部是真人、坐滿才開打（房間在 /balance-mancala/online，見 online.ts）。
  */
 export type MatchSetup = {
-  mode: 'solo' | 'local';
+  mode: 'solo' | 'local' | 'online';
   /** 總席數 4–7 */
   seats: number;
   /** 真人數（跟 AI 玩是 1） */
@@ -22,6 +23,7 @@ export const DEFAULT_SETUP: MatchSetup = { mode: 'solo', seats: 4, humans: 1, di
  */
 export function humanSeatsOf(m: MatchSetup): Seat[] {
   if (m.mode === 'solo') return [0];
+  if (m.mode === 'online') return Array.from({ length: m.seats }, (_, i) => i);
   const h = Math.max(1, Math.min(m.humans, m.seats));
   return Array.from({ length: h }, (_, i) => Math.round((i * m.seats) / h));
 }

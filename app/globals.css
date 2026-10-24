@@ -604,3 +604,5 @@ html:has(.mcl-root) { --ink-soft: #5e4b3f; }
 .mcl-receive { animation: mcl-receive 260ms ease-out both; animation-delay: var(--mcl-delay, 0ms); }
 .mcl-pop { display: inline-block; animation: mcl-pop 420ms var(--mo-snap); }
 @media (prefers-reduced-motion: reduce) { .mcl-land, .mcl-receive, .mcl-pop { animation: none !important; } }
+/* 連線的等人畫面：圓木桌上還空著的座位（黃銅虛線圈）輕輕浮著、亮一點又淡回去（MancalaOnline.tsx，只在 motion-safe 時掛上） */
+@keyframes mcl-wait { 0%, 100% { translate: 0 0; opacity: 0.5; } 50% { translate: 0 -8%; opacity: 0.95; } }

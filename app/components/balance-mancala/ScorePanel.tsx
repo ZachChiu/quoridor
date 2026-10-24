@@ -1,6 +1,6 @@
 'use client';
 import { COLOURS, END_SCORE, finalScore, type Colour, type Scores, type Seat } from '@/games/balance-mancala/engine';
-import { DISH_BG } from './palette';
+import { CLOTH, DISH_BG, seatLook } from './palette';
 import PieceDisc from './PieceDisc';
 
 /** 分數條的刻度：0–33，30 的結束線畫在 91% 的位置，超過 30 的那一點點看得到 */
@@ -12,14 +12,20 @@ const pct = (v: number) => `${(Math.min(v, SCALE) / SCALE) * 100}%`;
  * 預覽一手時，得分的那一列把增加的那段畫成半透明，最終分數旁邊寫變成多少。
  * 一手套用之後，加分的那條慢慢長過去、變了的數字跳一下（.mcl-pop：key 跟著數值換，換了才重播；0 分不跳）——
  * 盤面上「+N」與黃銅聲是第一拍，這裡是記進帳的第二拍。減少動態效果時都不動。
+ *
+ * 連線時自己那一列多一圈自己座位色的框，中間留一道縫（CLAUDE.md：連線時比分上自己那塊多一圈自己顏色的框；
+ * 不在畫面上寫「你」）。列是切角的（.mcl-cut），框也要切角 —— clip-path 會把 box-shadow／outline 切掉，
+ * 所以框是外面兩層：座位色一層、布色一層（那道縫），列本身照舊。
  */
-export default function ScorePanel({ scores, names, turn, gain, colourShort, finalLabel }: {
+export default function ScorePanel({ scores, names, turn, gain, colourShort, finalLabel, mine = null }: {
   scores: Scores[];
   names: string[];
   turn: Seat | null;
   gain: { owner: Seat; colour: Colour | null; points: number } | null;
   colourShort: string[];
   finalLabel: string;
+  /** 這台裝置上的人坐哪（連線）；null＝沒有「自己」（本機對戰、跟 AI 玩時名字已經寫「你」） */
+  mine?: Seat | null;
 }) {
   return (
     <div className="flex w-full flex-col gap-1">
@@ -28,7 +34,7 @@ export default function ScorePanel({ scores, names, turn, gain, colourShort, fin
         const after = g ? (sc.map((v, k) => (k === g.colour ? v + g.points : v)) as Scores) : sc;
         const f = finalScore(sc);
         const f2 = finalScore(after);
-        return (
+        const row = (
           <div key={seat} className={`mcl-cut flex items-center gap-2 px-2 py-1 ${turn === seat ? 'bg-[#201211]/[0.08]' : ''}`}
             aria-label={`${names[seat]}: ${COLOURS.map((c) => `${colourShort[c]} ${sc[c]}`).join(', ')}; ${finalLabel} ${f}`}>
             <PieceDisc seat={seat} size="1.65rem" />
@@ -59,6 +65,12 @@ export default function ScorePanel({ scores, names, turn, gain, colourShort, fin
               <p className="text-lg font-black tabular-nums leading-none"><span key={f} className={sc.some((x) => x > 0) ? 'mcl-pop' : ''}>{f}</span></p>
               <p className="mt-0.5 text-[9px] font-black leading-none text-ink-soft">{g && f2 !== f ? `→ ${f2}` : finalLabel}</p>
             </div>
+          </div>
+        );
+        if (seat !== mine) return row;
+        return (
+          <div key={seat} className="mcl-cut p-[2px]" style={{ background: seatLook(seat).bg }}>
+            <div className="mcl-cut p-[2px]" style={{ background: CLOTH }}>{row}</div>
           </div>
         );
       })}

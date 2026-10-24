@@ -1,11 +1,11 @@
 'use client';
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { GiExitDoor, GiLaurelCrown, GiRuleBook } from 'react-icons/gi';
-import { LuCircleHelp, LuHouse, LuSlidersHorizontal, LuVolume2, LuVolumeX } from 'react-icons/lu';
+import { LuCircleHelp, LuHouse, LuVolume2, LuVolumeX } from 'react-icons/lu';
 import Modal from '@/components/Modal';
 import { ShareResultModal, useShareCard } from '@/components/ShareResultModal';
-import { useTransition } from '@/contexts/TransitionContext';
 import { useSound } from '@/hook/useSound';
+import { useTitleAlert } from '@/hook/useTitleAlert';
 import { fill, useTextTable } from '@/i18n/gameText';
 import { useGameText, useMessages } from '@/i18n/LocaleProvider';
 import { localePath, type Locale } from '@/i18n/locales';
@@ -17,6 +17,7 @@ import {
 } from '@/games/balance-mancala/engine';
 import { chooseMove, choosePlacement, personalityOf, suggestColour, suggestMove } from '@/games/balance-mancala/ai';
 import { humanSeatsOf, type MatchSetup } from './match';
+import { beforeLast, catchUp } from './online';
 import { BRASS, MCL_BAND, MCL_PANEL, WOOD, cellName } from './palette';
 import { MCL_ROUND, MCL_SHARE, MCL_WIDE } from './styles';
 import { playMancala } from './sounds';
@@ -34,6 +35,19 @@ const TIMING = { place: 260, think: 320, lift: 150, step: 190, stepHuman: 140, h
 type Anim = { move: Move; sow: Sow; step: number; by: Seat };
 type Pick = { from: number; order: Seat[]; colour?: Colour; sel: number | null };
 
+/** 連線時一次落後超過這麼多手（分頁在背景、網路卡住）：直接跳到最後一手之前，只播最後一手 */
+const CATCH_UP = 2;
+
+/** 連線局（MancalaOnline 給的）：局面跟著房間，自己只在輪到時動 */
+export type OnlineSeat = {
+  /** 這台裝置上的人坐哪 */
+  me: Seat;
+  /** 房間的局面（整串走法重走出來的） */
+  state: MancalaState;
+  /** 自己走完一手（放子或播種）：整個新局面交給房間 */
+  send: (next: MancalaState) => void;
+};
+
 const motionQuery = '(prefers-reduced-motion: reduce)';
 function subscribeMotion(cb: () => void) {
   const mq = window.matchMedia(motionQuery);
@@ -42,35 +56,48 @@ function subscribeMotion(cb: () => void) {
 }
 
 /**
- * 對局畫面（跟 AI 玩、本機對戰共用）。只持有一個不可變的 MancalaState，規則全在 engine。
+ * 對局畫面（跟 AI 玩、本機對戰、連線共用）。只持有一個不可變的 MancalaState，規則全在 engine。
  *
  * 一手的流程：點起點格 → 排序編輯器（預設是 AI 建議的排法，盤面畫出播完的樣子）→ 播下去 →
  * 一顆一顆落下的動畫 → 動畫播完才 applyMove。AI 的回合也走同一條動畫。
  * 動畫跟局面分開存（anim），套用那一刻 setGame 與 setAnim(null) 在同一個事件裡 —— 驅動 AI 的 effect
  * 依賴兩者，不會出現「局面還沒換、動畫已經清掉」的中間狀態而重複出手（CLAUDE.md〈單人對戰〉的教訓）。
  *
+ * 連線（online）：畫面上的局面一步一步追房間的局面（online.ts 的 catchUp）—— 別人的放子一顆一顆落下、
+ * 播種照樣一顆一顆飛，落後太多就只播最後一手；自己的一手先畫出來、同時寫進房間。只有輪到自己而且已經追上時能點。
+ *
+ * 房子回這款的首頁（選模式那一頁，onHome），不播轉場（Zach 10/24：這款裡面換畫面直接換）；
+ * 進行到一半先問一次（原本就有的確認視窗）。原本另有一顆「換設定」，跟回首頁是同一個畫面，拿掉了。
+ *
  * 版面：手機直式上面圓盤、下面分數（選了起點格時分數換成排序編輯器）；桌機（lg）左盤右欄。
  * 整頁是同一塊 Adinkra 印花布（MancalaFrame），盤面是一塊圓的木頭（WOOD），軌道線與勝利的桂冠是黃銅。
  */
-export default function MancalaPlay({ locale, setup, onSettings, onAgain }: {
+export default function MancalaPlay({ locale, setup, onHome, onAgain, online = null }: {
   locale: Locale;
   setup: MatchSetup;
-  onSettings: () => void;
+  /** 回這款的首頁（選模式那一頁） */
+  onHome: () => void;
+  /** 再來一局（連線是開一間新房） */
   onAgain: () => void;
+  online?: OnlineSeat | null;
 }) {
   const t = useTextTable(TEXT);
   const gt = useGameText();
   const msgs = useMessages();
-  const { navigate } = useTransition();
   const { prefs: soundPrefs, setPrefs: setSoundPrefs } = useSound();
   const humans = useMemo(() => humanSeatsOf(setup), [setup]);
   const isHuman = useCallback((seat: Seat) => humans.includes(seat), [humans]);
   const solo = setup.mode === 'solo';
-  const [game, setGame] = useState<MancalaState>(() => createGame({ seats: setup.seats, pieces: DEFAULT_PIECES }));
+  const me = online?.me ?? null;
+  // 「輪到你」的那個人：跟 AI 玩是 A、連線是這台裝置上的人；本機對戰沒有「自己」
+  const self: Seat | null = solo ? humans[0] : me;
+  // 播種動畫快一點的一方：自己剛排好的那一手（本機對戰是每個真人），別人的一手（AI、連線的其他人）放慢讓人看清楚
+  const quick = useCallback((seat: Seat) => (me !== null ? seat === me : isHuman(seat)), [me, isHuman]);
+  const [game, setGame] = useState<MancalaState>(() => online?.state ?? createGame({ seats: setup.seats, pieces: DEFAULT_PIECES }));
   const [anim, setAnim] = useState<Anim | null>(null);
   const [pick, setPick] = useState<Pick | null>(null);
   const [helpOpen, setHelpOpen] = useState(false);
-  const [leaving, setLeaving] = useState<'home' | 'settings' | null>(null);
+  const [leaving, setLeaving] = useState(false);
   const [endClosed, setEndClosed] = useState(false);
   const reduced = useSyncExternalStore(subscribeMotion, () => window.matchMedia(motionQuery).matches, () => false);
 
@@ -118,11 +145,25 @@ export default function MancalaPlay({ locale, setup, onSettings, onAgain }: {
     return () => window.clearTimeout(id);
   }, [game, anim, isHuman, setup.difficulty, startSow]);
 
+  // 連線：畫面上的局面追房間的局面。動畫播完才追下一步（自己剛播的那一手，房間已經先有了，套用之後就一樣）
+  const target = online?.state ?? null;
+  const lag = useMemo(() => (target ? catchUp(game, target) : null), [game, target]);
+  useEffect(() => {
+    if (!target || !lag || lag.kind === 'same' || anim) return;
+    const id = window.setTimeout(() => {
+      if (lag.kind === 'reset') { setPick(null); setGame(target); }
+      else if (lag.kind === 'place') setGame(place(game, lag.cell));
+      else if (lag.behind > CATCH_UP) setGame(beforeLast(target));
+      else startSow(game, lag.move);
+    }, lag.kind === 'place' ? TIMING.place : 0);
+    return () => window.clearTimeout(id);
+  }, [target, lag, anim, game, startSow]);
+
   // 播種動畫：一顆一顆落下，最後停一下讓人看清楚誰得幾分，然後才真的套用
   useEffect(() => {
     if (!anim) return;
     const total = anim.sow.order.length;
-    const human = isHuman(anim.by);
+    const human = quick(anim.by);
     if (anim.step < total) {
       const delay = reduced ? 0 : anim.step === 0 ? TIMING.lift : human ? TIMING.stepHuman : TIMING.step;
       const id = window.setTimeout(() => setAnim((a) => (a ? { ...a, step: reduced ? total : a.step + 1 } : a)), delay);
@@ -130,7 +171,7 @@ export default function MancalaPlay({ locale, setup, onSettings, onAgain }: {
     }
     const id = window.setTimeout(() => finish(anim), human ? TIMING.holdHuman : TIMING.hold);
     return () => window.clearTimeout(id);
-  }, [anim, reduced, isHuman, finish]);
+  }, [anim, reduced, quick, finish]);
 
   // 一顆一顆落地的聲音：step 每多 1 就響一聲（減少動態效果時 step 一次跳到底，只響最後那一下）
   useEffect(() => {
@@ -140,7 +181,7 @@ export default function MancalaPlay({ locale, setup, onSettings, onAgain }: {
     const cur = sounded.current;
     if (anim.step === cur.step || cur.scored) return;
     cur.step = anim.step;
-    const human = isHuman(anim.by);
+    const human = quick(anim.by);
     const delay = reduced ? 0 : ((human ? TIMING.hopHuman : TIMING.hop) * LAND) / 1000;
     const total = anim.sow.order.length;
     if (anim.step >= total) { cur.scored = true; scoreSound(anim.sow, delay); return; }
@@ -149,9 +190,10 @@ export default function MancalaPlay({ locale, setup, onSettings, onAgain }: {
     const cell = anim.sow.path[j];
     const crowd = (cell === anim.sow.from ? 0 : game.board[cell].length) + anim.sow.path.slice(0, j).filter((c) => c === cell).length;
     playMancala({ kind: 'seed', index: j, crowd, delay });
-  }, [anim, reduced, isHuman, scoreSound, game.board]);
+  }, [anim, reduced, quick, scoreSound, game.board]);
 
-  // 開局放子：每放一顆響一聲；結束：分出勝負的那一手套用之後，贏、輸各一段（本機對戰一律是慶祝的那段）
+  // 開局放子：每放一顆響一聲；結束：分出勝負的那一手套用之後，贏、輸各一段（本機對戰一律是慶祝的那段）。
+  // 剛好多一顆、多一手才響 —— 連線一次追好幾手、重整接回都不響
   const heard = useRef({ placements: game.placements.length, moves: game.moves.length });
   useEffect(() => {
     const prev = heard.current;
@@ -161,13 +203,14 @@ export default function MancalaPlay({ locale, setup, onSettings, onAgain }: {
       playMancala({ kind: 'place', crowd: game.board[cell].length - 1, delay: reduced ? 0 : 0.1 });
     }
     if (game.moves.length === prev.moves + 1 && game.phase === 'over') {
-      const won = !solo || standings(game).some((r) => r.rank === 1 && r.seat === humans[0]);
+      const won = self === null || standings(game).some((r) => r.rank === 1 && r.seat === self);
       playMancala({ kind: won ? 'win' : 'lose', delay: 0.35 });
     }
-  }, [game, reduced, solo, humans]);
+  }, [game, reduced, self]);
 
-  // 電腦版的「確定要離開嗎？」—— 只管整頁跳轉（CLAUDE.md〈離開前確認〉），手機另靠房子鈕的確認
-  const inProgress = game.phase !== 'over' && game.placements.length > 0;
+  // 電腦版的「確定要離開嗎？」—— 只管整頁跳轉（CLAUDE.md〈離開前確認〉），手機另靠房子鈕的確認。
+  // 連線局一坐滿就算開始了：離開的話其他人會停在那裡等
+  const inProgress = game.phase !== 'over' && (online !== null || game.placements.length > 0);
   useEffect(() => {
     if (!inProgress) return;
     const onBeforeUnload = (e: BeforeUnloadEvent) => { e.preventDefault(); };
@@ -176,7 +219,19 @@ export default function MancalaPlay({ locale, setup, onSettings, onAgain }: {
   }, [inProgress]);
 
   const preview = useMemo(() => (pick ? sow(game, pick.from, pick.order, pick.colour) : null), [game, pick]);
-  const myTurn = !anim && game.phase !== 'over' && isHuman(game.turn);
+  // 連線：輪到自己、而且畫面已經追上房間（別人的一手還在播就先等）
+  const myTurn = !anim && game.phase !== 'over' && (online ? game.turn === me && lag?.kind === 'same' : isHuman(game.turn));
+
+  // 連線：輪到自己的那一下響一聲（分頁在背景也聽得到）、電腦版的分頁標題跟著閃。重整接回的那一下不響
+  const myOnlineTurn = online !== null && myTurn;
+  const rang = useRef(myOnlineTurn && game.placements.length > 0);
+  useEffect(() => {
+    if (!myOnlineTurn) { rang.current = false; return; }
+    if (rang.current) return;
+    rang.current = true;
+    playMancala({ kind: 'turn', delay: 0.2 });
+  }, [myOnlineTurn]);
+  useTitleAlert(myOnlineTurn, gt.tips.yourTurn);
   const selectable = useMemo(
     () => (myTurn ? new Set(game.phase === 'setup' ? legalPlacements(game) : sourcesOf(game)) : null),
     [myTurn, game],
@@ -190,7 +245,12 @@ export default function MancalaPlay({ locale, setup, onSettings, onAgain }: {
   const onPick = (cell: number) => {
     if (anim) { finish(anim); return; } // 點盤面跳過動畫
     if (!myTurn || !selectable?.has(cell)) return;
-    if (game.phase === 'setup') { setGame(place(game, cell)); return; }
+    if (game.phase === 'setup') {
+      const next = place(game, cell);
+      setGame(next);
+      online?.send(next);
+      return;
+    }
     if (pick?.from === cell) { setPick(null); return; }
     openEditor(cell);
   };
@@ -212,6 +272,8 @@ export default function MancalaPlay({ locale, setup, onSettings, onAgain }: {
     if (!isLegalMove(game, move)) return;
     setPick(null);
     startSow(game, move);
+    // 連線：動畫還在播，房間先寫好（其他人不必等這一手播完才收到）
+    online?.send(applyMove(game, move));
   };
 
   // 盤面要畫哪一個局面：動畫中的半途、排序預覽（播完的樣子）、或現在的局面
@@ -239,7 +301,7 @@ export default function MancalaPlay({ locale, setup, onSettings, onAgain }: {
   }, [anim, pick, preview, game]);
 
   // 一顆種子跳一格的時間；0＝不飛（不在播種、或減少動態效果）
-  const hopMs = anim && !reduced ? (isHuman(anim.by) ? TIMING.hopHuman : TIMING.hop) : 0;
+  const hopMs = anim && !reduced ? (quick(anim.by) ? TIMING.hopHuman : TIMING.hop) : 0;
 
   const ariaOf = (cell: number) => {
     const owners = view.board[cell];
@@ -247,17 +309,18 @@ export default function MancalaPlay({ locale, setup, onSettings, onAgain }: {
     return owners.length ? `${base}: ${owners.map(letterOf).join(' ')}` : base;
   };
 
-  // 狀態列
+  // 狀態列：自己（跟 AI 玩、連線）寫「輪到你」；本機對戰的真人寫名字；AI 與連線的其他人是「放子中／思考中」
   const actor = anim ? anim.by : game.turn;
+  const setupPhase = game.phase === 'setup';
   const status = game.phase === 'over' && !anim ? t.over
     : anim ? fill(t.sowing, { name: names[anim.by] })
-    : game.phase === 'setup'
-      ? (isHuman(actor) ? (solo ? t.setupYou : fill(t.setupHuman, { name: names[actor] })) : fill(t.setupComputer, { name: names[actor] }))
-      : (isHuman(actor) ? (solo ? t.turnYou : fill(t.turnHuman, { name: names[actor] })) : fill(t.thinking, { name: names[actor] }));
+    : actor === self ? (setupPhase ? t.setupYou : t.turnYou)
+    : isHuman(actor) && !online ? fill(setupPhase ? t.setupHuman : t.turnHuman, { name: names[actor] })
+    : fill(setupPhase ? t.setupComputer : t.thinking, { name: names[actor] });
   const last = game.last;
   const lastMover = game.phase === 'over' ? game.turn : (game.turn - 1 + setup.seats) % setup.seats;
   // 第二行：AI 播種時提示可以跳過動畫，其他時候是上一手做了什麼
-  const lastLine = anim ? (isHuman(anim.by) || reduced ? '' : t.skipHint)
+  const lastLine = anim ? (quick(anim.by) || reduced ? '' : t.skipHint)
     : last && last.colour !== null
       ? fill(t.lastMove, { name: names[lastMover], cell: cellName(last.from, t), n: last.order.length, owner: names[last.owner], colour: t.colourShort[last.colour], points: last.points })
       : '';
@@ -265,11 +328,12 @@ export default function MancalaPlay({ locale, setup, onSettings, onAgain }: {
   // 這一手會結束遊戲：先告訴玩家結束時的名次
   const endsText = preview?.ends ? (() => {
     const st = standings({ scores: preview.scores });
-    if (solo) return fill(t.endsWarn, { rank: st.find((r) => r.seat === humans[0])!.rank });
+    if (self !== null) return fill(t.endsWarn, { rank: st.find((r) => r.seat === self)!.rank });
     return fill(t.endsWarnLocal, { name: st.filter((r) => r.rank === 1).map((r) => names[r.seat]).join(' · ') });
   })() : null;
 
   // 結算
+  const modeLabel = solo ? t.modeSolo : online ? t.modeOnline : t.modeLocal;
   const over = game.phase === 'over' && !anim;
   const table = over ? standings(game) : [];
   const winnersList = table.filter((r) => r.rank === 1).map((r) => r.seat);
@@ -295,7 +359,7 @@ export default function MancalaPlay({ locale, setup, onSettings, onAgain }: {
       showRef: t.showRef,
       name: t.title,
       altName: t.altName,
-      kicker: `${gt.champion.matchOver} · ${solo ? t.modeSolo : t.modeLocal}`,
+      kicker: `${gt.champion.matchOver} · ${modeLabel}`,
       title: endTitle,
       reason: endReason,
       formula: t.formula,
@@ -320,14 +384,13 @@ export default function MancalaPlay({ locale, setup, onSettings, onAgain }: {
       { font: `700 40px ${font}`, text: card.text.showRef + card.text.kicker + card.text.reason + card.text.from + card.text.altName },
     ],
     images: MCL_CARD_IMAGES,
+    layouts: ['story'],
   });
   const srText = [endTitle, endReason, ...table.map((r) => `${fill(t.rank, { n: r.rank })} ${names[r.seat]}: ${t.colourShort.map((c, k) => `${c} ${r.scores[k]}`).join(', ')}; ${t.final} ${r.final}`)].join(' ');
 
-  const home = () => navigate(localePath(locale, '/'));
-  const askLeave = (where: 'home' | 'settings') => {
-    if (inProgress) setLeaving(where);
-    else if (where === 'home') home();
-    else onSettings();
+  const askLeave = () => {
+    if (inProgress) setLeaving(true);
+    else onHome();
   };
 
   // 角落的小鈕是切角的淡布片（黃銅留給主要動作），寬的是一條印花布（上下兩道梳線）—— styles.ts、globals.css 的 .mcl-*
@@ -362,7 +425,7 @@ export default function MancalaPlay({ locale, setup, onSettings, onAgain }: {
   const scorePanel = (
     <ScorePanel scores={game.scores} names={names} turn={over ? null : actor}
       gain={preview ? { owner: preview.owner, colour: preview.colour, points: preview.points } : null}
-      colourShort={t.colourShort} finalLabel={t.final} />
+      colourShort={t.colourShort} finalLabel={t.final} mine={me} />
   );
 
   const statusBlock = (
@@ -373,26 +436,26 @@ export default function MancalaPlay({ locale, setup, onSettings, onAgain }: {
   );
 
   // 手機上圓盤讓出分數面板的高度（每席約 2.75rem）與上下兩條布邊（各 20px），整頁塞得進一個畫面
-  const ringMax = `max(15rem, min(100%, calc(100dvh - ${11 + setup.seats * 2.75}rem)))`;
+  // svh 不用 dvh：手機工具列收起時 dvh 變大，圓盤會跟著脹（Zach 10/24）
+  const ringMax = `max(15rem, min(100%, calc(100svh - ${11 + setup.seats * 2.75}rem)))`;
 
   return (
     <MancalaFrame className="items-center px-4 pb-5 pt-3 lg:flex-row lg:items-start lg:justify-center lg:gap-10 lg:pt-8">
-      {/* 手機的上方一排：左右各兩顆，標題用三欄置中（兩邊數量一樣，標題才在正中間） */}
+      {/* 手機的上方一排：左邊房子與聲音、右邊說明，標題用三欄置中（左右兩欄等寬，標題就在正中間） */}
       <div className="grid w-full max-w-[520px] grid-cols-[1fr_auto_1fr] items-center lg:hidden">
         <div className="flex gap-1.5 justify-self-start">
-          <button type="button" onClick={() => askLeave('home')} aria-label={t.home} className={round}><LuHouse aria-hidden="true" /></button>
+          <button type="button" onClick={askLeave} aria-label={t.home} className={round}><LuHouse aria-hidden="true" /></button>
           {soundButton}
         </div>
         <h1 className="truncate px-2 text-lg font-black">{t.title}</h1>
         <div className="flex gap-1.5 justify-self-end">
           <button type="button" onClick={() => setHelpOpen(true)} aria-label={t.howTo} className={round}><LuCircleHelp aria-hidden="true" /></button>
-          <button type="button" onClick={() => askLeave('settings')} aria-label={t.settings} className={round}><LuSlidersHorizontal aria-hidden="true" /></button>
         </div>
       </div>
       <div className="mt-1 w-full max-w-[520px] lg:hidden">{statusBlock}</div>
 
       {/* 圓盤：一塊圓的木頭（Oware 棋盤的木色），盤子嵌在上面 */}
-      <div className="mt-1 w-full lg:mt-0 lg:!max-w-[min(600px,calc(100dvh-7.5rem))] lg:flex-1" style={{ maxWidth: ringMax }}>
+      <div className="mt-1 w-full lg:mt-0 lg:!max-w-[min(600px,calc(100svh-7.5rem))] lg:flex-1" style={{ maxWidth: ringMax }}>
         <div className="rounded-full p-[3%]" style={{ background: WOOD }}>
           <MancalaRing board={view.board} colourShort={t.colourShort} highLabel={t.high} lowLabel={t.low} ariaOf={ariaOf}
             selectable={selectable} dimOthers={!pick} selected={pick?.from ?? null} incoming={view.incoming} emptied={view.emptied}
@@ -409,7 +472,7 @@ export default function MancalaPlay({ locale, setup, onSettings, onAgain }: {
           <div className="flex items-start justify-between gap-3">
             <div>
               <h1 className="text-4xl font-black leading-none">{t.title}</h1>
-              <p className="mt-1.5 text-sm font-bold text-ink-soft">{t.altName ? `${t.altName} · ` : ''}{solo ? t.modeSolo : t.modeLocal}</p>
+              <p className="mt-1.5 text-sm font-bold text-ink-soft">{t.altName ? `${t.altName} · ` : ''}{modeLabel}</p>
             </div>
             {soundButton}
           </div>
@@ -422,10 +485,9 @@ export default function MancalaPlay({ locale, setup, onSettings, onAgain }: {
             onSuggest={() => openEditor(pick.from)} onCancel={() => setPick(null)} onSow={onSow} />
         )}
         <div className={pick ? 'hidden lg:block' : ''}>{scorePanel}</div>
-        <div className="hidden grid-cols-3 gap-2 lg:grid">
+        <div className="hidden grid-cols-2 gap-2 lg:grid">
           <button type="button" onClick={() => setHelpOpen(true)} className={wide}><LuCircleHelp aria-hidden="true" />{t.howTo}</button>
-          <button type="button" onClick={() => askLeave('settings')} className={wide}><LuSlidersHorizontal aria-hidden="true" />{t.settings}</button>
-          <button type="button" onClick={() => askLeave('home')} className={wide}><LuHouse aria-hidden="true" />{t.home}</button>
+          <button type="button" onClick={askLeave} className={wide}><LuHouse aria-hidden="true" />{t.home}</button>
         </div>
       </div>
 
@@ -434,19 +496,17 @@ export default function MancalaPlay({ locale, setup, onSettings, onAgain }: {
         <MancalaRules t={t} />
       </Modal>
 
-      <Modal isOpen={leaving !== null} onClose={() => setLeaving(null)} title={t.leaveTitle} icon={GiExitDoor}
+      <Modal isOpen={leaving} onClose={() => setLeaving(false)} title={online ? t.leaveTitleOnline : t.leaveTitle} icon={GiExitDoor}
         band={MCL_BAND} panelClassName={MCL_PANEL}
         footer={
           <>
-            <button type="button" className="mcl-cloth flex-1 py-3.5 font-black" onClick={() => setLeaving(null)}>{t.stay}</button>
-            <button type="button" className="mcl-plaque flex-1 py-3.5 font-black" onClick={() => {
-              const where = leaving;
-              setLeaving(null);
-              if (where === 'home') home(); else onSettings();
-            }}>{t.leave}</button>
+            <button type="button" className="mcl-cloth flex-1 py-3.5 font-black" onClick={() => setLeaving(false)}>{t.stay}</button>
+            <button type="button" className="mcl-plaque flex-1 py-3.5 font-black" onClick={() => { setLeaving(false); onHome(); }}>
+              {online ? t.leaveOnline : t.leave}
+            </button>
           </>
         }>
-        <p className="text-sm leading-relaxed">{t.leaveBody}</p>
+        <p className="text-sm leading-relaxed">{online ? t.leaveBodyOnline : t.leaveBody}</p>
       </Modal>
 
       {/* 結算：圖本身就是對話框（ShareResultModal），再來一局是黃銅牌；關掉就留在終局的盤面上看 */}
