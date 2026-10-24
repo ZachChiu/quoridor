@@ -62,6 +62,7 @@ const th: Messages = {
     ogDescription: "เสือ 4 ตัวสู้กับแพะ 20 ตัว เกมพื้นบ้านเนปาลจากรอบชิงของ The Devil's Plan ซีซัน 2 ไม่ต้องดาวน์โหลด",
     title: 'Bagh Chal',
     subtitle: 'เสือกับแพะ',
+    name: 'Bagh Chal',
     tagline: 'เสือ 4 ตัวสู้กับแพะ 20 ตัว',
     local: 'เล่นในเครื่อง',
     vsAi: 'เล่นกับ AI',
@@ -108,6 +109,7 @@ const th: Messages = {
     rulesCta: 'กลับไปเลือกวิธีเล่น',
     onlineTitle: 'เล่นออนไลน์',
     rulesMetaTitle: 'กติกา Bagh Chal วิธีเล่นเสือกับแพะ',
+    rulesTitle: 'กติกา Bagh Chal',
     rulesMetaDescription: "กติกา Bagh Chal ฉบับเต็มพร้อมภาพ: กระดาน 5×5 เสือ 4 ตัวสู้กับแพะ 20 ตัว การวางแพะ เสือกระโดดจับแพะ และแพะล้อมเสือ เกมจากรอบชิงของ The Devil's Plan ซีซัน 2",
     rulesHeading: 'วิธีเล่น',
     rules: [

@@ -33,6 +33,12 @@ const reducedMotion = () => typeof window !== 'undefined' && window.matchMedia('
 
 const at = (p: Point): CSSProperties => ({ left: pct(colOf(p) + 0.5), top: pct(rowOf(p) + 0.5) });
 const FACE: CSSProperties = { position: 'absolute', inset: 0, backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' };
+/**
+ * 翻面不能只靠 backface-visibility：WebKit（iPhone 的 Safari 與 Chrome）在這個結構裡不理它，
+ * 底下黑白那面直接畫在顏色那面上面 —— 盲棋等於明牌（第一版就這樣，10/24 用 Playwright 的 WebKit 才看到）。
+ * 所以兩面再各自用 opacity 開關：翻開之前只有顏色那面看得到，翻到一半（側面朝人）才換面。
+ */
+const faceShown = (show: boolean, at: number): CSSProperties => ({ opacity: show ? 1 : 0, transition: `opacity 0s linear ${at}ms` });
 
 function GridLines() {
   return (
@@ -69,14 +75,14 @@ function StoneView({ p, stone, blind, revealed, delay }: { p: Point; stone: Ston
             className="relative size-full ease-out motion-reduce:transition-none"
             style={{
               transformStyle: 'preserve-3d',
-              transform: revealed ? 'rotateY(180deg)' : 'none',
+              transform: revealed ? 'rotateY(180deg)' : 'rotateY(0deg)',
               transitionProperty: 'transform',
               transitionDuration: `${FLIP_MS}ms`,
               transitionDelay: revealed ? `${delay}ms` : '0ms',
             }}
           >
-            <div style={FACE}><ColorFace color={stone.color} /></div>
-            <div style={{ ...FACE, transform: 'rotateY(180deg)' }}><SideFace side={stone.side} /></div>
+            <div style={{ ...FACE, ...faceShown(!revealed, revealed ? delay + FLIP_MS / 2 : 0) }}><ColorFace color={stone.color} /></div>
+            <div style={{ ...FACE, transform: 'rotateY(180deg)', ...faceShown(revealed, revealed ? delay + FLIP_MS / 2 : 0) }}><SideFace side={stone.side} /></div>
           </div>
         ) : (
           <SideFace side={stone.side} />

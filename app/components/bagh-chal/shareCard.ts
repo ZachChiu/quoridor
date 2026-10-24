@@ -7,7 +7,7 @@ import { WORDMARK_PATH, WORDMARK_VIEWBOX } from './BaghWordmark';
  * 尼泊爾虎棋的結算分享圖（Zach 10/24：「結尾 Modal 一樣做成可分享的圖片」）。
  *
  * 長得像這款的頁面，不像 Wall Go 的平塗撞色：番紅花底鋪米提拉圖騰（pattern.webp）、紙色面板、橄欖綠框，
- * 框內一圈鋸齒（跟按鈕同一個米提拉畫框）。面板裡由上往下：天城體字標、勝方的大圓牌與「老虎贏了」、終局盤面、
+ * 框內兩條線（跟按鈕同一個米提拉畫框；原本中間夾一圈鋸齒，10/24 跟按鈕一起拿掉）。只有 9:16 一種。面板裡由上往下：天城體字標、勝方的大圓牌與「老虎贏了」、終局盤面、
  * 老虎吃掉的羊（5 個位置，吃掉的畫羊牌、沒吃的留虛線圈）、手數，最下面一塊站名與 QR。
  * 顏色全部是 palette.ts 的；棋子是對局用的同一張圖。
  */
@@ -36,44 +36,16 @@ const P = BAGH;
 /** 字標與遊戲名用頁面上同一個深墨（tile-ink） */
 const INK = '#141010';
 
-/** 米提拉畫框：兩條線中間夾一排往內指的三角形（同 globals.css 的 .bagh-totem），四角一個小方塊 */
-function totemFrame(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, band: number) {
+/** 米提拉畫框的兩條線（跟按鈕的 .bagh-line 同一個框）。原本中間夾一排往內指的三角形、四角小方塊，Zach 10/24 要拿掉 */
+function lineFrame(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, band: number) {
   ctx.save();
   ctx.strokeStyle = P.brown;
   ctx.lineWidth = band * 0.12;
   ctx.strokeRect(x, y, w, h);
   ctx.strokeRect(x + band, y + band, w - band * 2, h - band * 2);
-  ctx.fillStyle = P.terracotta;
-  const tri = (len: number, along: (t: number) => [number, number], inward: [number, number]) => {
-    const n = Math.max(1, Math.round(len / band));
-    const step = len / n;
-    for (let i = 0; i < n; i++) {
-      const [ax, ay] = along(i * step + step * 0.08);
-      const [bx, by] = along((i + 1) * step - step * 0.08);
-      const [mx, my] = along((i + 0.5) * step);
-      ctx.beginPath();
-      ctx.moveTo(ax, ay);
-      ctx.lineTo(bx, by);
-      ctx.lineTo(mx + inward[0] * band * 0.66, my + inward[1] * band * 0.66);
-      ctx.closePath();
-      ctx.fill();
-    }
-  };
-  const e = band * 0.17; // 三角形的底邊離外線一點點
-  const inner = w - band * 2, innerH = h - band * 2;
-  tri(inner, (t) => [x + band + t, y + e], [0, 1]);
-  tri(inner, (t) => [x + band + t, y + h - e], [0, -1]);
-  tri(innerH, (t) => [x + e, y + band + t], [1, 0]);
-  tri(innerH, (t) => [x + w - e, y + band + t], [-1, 0]);
-  ctx.fillStyle = P.olive;
-  const k = band * 0.5;
-  for (const [cx, cy] of [[x, y], [x + w - band, y], [x, y + h - band], [x + w - band, y + h - band]]) {
-    ctx.fillRect(cx + (band - k) / 2, cy + (band - k) / 2, k, k);
-  }
   ctx.restore();
 }
 
-/** 一枚圓牌：棋子圖＋底下一道硬邊的影子（同對局的 TOKEN） */
 function token(ctx: CanvasRenderingContext2D, img: HTMLImageElement | undefined, cx: number, cy: number, d: number) {
   ctx.save();
   ctx.fillStyle = 'rgba(74,38,22,0.45)';
@@ -195,7 +167,7 @@ function story(ctx: CanvasRenderingContext2D, d: BaghCardData, a: ShareAssets) {
   const px = m, py = m, pw = W - m * 2, ph = H - m * 2;
   fillBox(ctx, P.paper, px, py, pw, ph, 28);
   ctx.save(); ctx.strokeStyle = P.olive; ctx.lineWidth = 8; roundRect(ctx, px + 4, py + 4, pw - 8, ph - 8, 26); ctx.stroke(); ctx.restore();
-  totemFrame(ctx, px + 30, py + 30, pw - 60, ph - 60, 26);
+  lineFrame(ctx, px + 30, py + 30, pw - 60, ph - 60, 26);
   const cx = W / 2;
   wordmark(ctx, cx, 150, 82, INK);
   fitText(ctx, d.font, d.text.name, cx, 300, { size: 46, color: INK, align: 'center', max: 800 });
@@ -208,46 +180,7 @@ function story(ctx: CanvasRenderingContext2D, d: BaghCardData, a: ShareAssets) {
   footer(ctx, d, a, px + 56, H - m - 56 - 120, pw - 112, 120, { brand: 36, small: 22, qr: 100 });
 }
 
-function poster(ctx: CanvasRenderingContext2D, d: BaghCardData, a: ShareAssets) {
-  const W = 1080, H = 1350, m = 40;
-  background(ctx, a, W, H);
-  const px = m, py = m, pw = W - m * 2, ph = H - m * 2;
-  fillBox(ctx, P.paper, px, py, pw, ph, 24);
-  ctx.save(); ctx.strokeStyle = P.olive; ctx.lineWidth = 7; roundRect(ctx, px + 3.5, py + 3.5, pw - 7, ph - 7, 22); ctx.stroke(); ctx.restore();
-  totemFrame(ctx, px + 24, py + 24, pw - 48, ph - 48, 22);
-  // 一欄由上往下，跟 9:16 同一個順序，只是盤面小一點、吃掉的羊與手數併成一行
-  const cx = W / 2;
-  wordmark(ctx, cx, 104, 54, INK);
-  fitText(ctx, d.font, `${d.text.name} · ${d.text.kicker}`, cx, 214, { size: 28, weight: 700, color: P.brown, align: 'center', max: 820, alpha: 0.85 });
-  winnerBlock(ctx, d, a, cx, 250, 120, 60, 820);
-  board(ctx, d, a, (W - 520) / 2, 478, 520);
-  captures(ctx, d, a, cx - 150, 1052, 44);
-  fitText(ctx, d.font, `${d.text.capturedLabel} · ${d.text.moves}`, cx - 150 + 165, 1062, { size: 26, weight: 900, color: P.brown, align: 'left', max: 330 });
-  footer(ctx, d, a, px + 50, H - m - 50 - 118, pw - 100, 118, { brand: 34, small: 20, qr: 96 });
-}
-
-function square(ctx: CanvasRenderingContext2D, d: BaghCardData, a: ShareAssets) {
-  const W = 1080, H = 1080, m = 36;
-  background(ctx, a, W, H);
-  const px = m, py = m, pw = W - m * 2, ph = H - m * 2;
-  fillBox(ctx, P.paper, px, py, pw, ph, 22);
-  totemFrame(ctx, px + 22, py + 22, pw - 44, ph - 44, 20);
-  const cxL = px + 230;
-  wordmark(ctx, cxL, 108, 44, INK);
-  fitText(ctx, d.font, d.text.name, cxL, 196, { size: 30, color: INK, align: 'center', max: 300 });
-  fitText(ctx, d.font, d.text.kicker, cxL, 236, { size: 20, weight: 700, color: P.brown, align: 'center', max: 300, alpha: 0.8 });
-  winnerBlock(ctx, d, a, cxL, 280, 140, 54, 300);
-  fitText(ctx, d.font, d.text.capturedLabel, cxL, 590, { size: 22, color: P.brown, align: 'center', max: 300 });
-  captures(ctx, d, a, cxL, 638, 44);
-  fitText(ctx, d.font, d.text.moves, cxL, 706, { size: 20, weight: 700, color: P.brown, align: 'center', max: 300, alpha: 0.75 });
-  board(ctx, d, a, px + 420, 100, 520);
-  footer(ctx, d, a, px + 46, H - m - 46 - 130, pw - 92, 130, { brand: 34, small: 20, qr: 104 });
-}
-
+/** 只有 9:16（Zach 10/24：「分享圖不要，留 9:16 就好」），BaghPlay 的 useShareCard 只給 story，不會要別的比例 */
 export function drawBaghCard(d: BaghCardData) {
-  return (ctx: CanvasRenderingContext2D, layout: CardLayout, a: ShareAssets) => {
-    if (layout === 'story') story(ctx, d, a);
-    else if (layout === 'poster') poster(ctx, d, a);
-    else square(ctx, d, a);
-  };
+  return (ctx: CanvasRenderingContext2D, layout: CardLayout, a: ShareAssets) => story(ctx, d, a);
 }

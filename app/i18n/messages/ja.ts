@@ -53,6 +53,7 @@ const ja: Messages = {
     ogDescription: 'トラ4頭とヤギ20頭のネパールの伝統ゲーム。『悪魔の計略』シーズン2決勝。インストール不要。',
     title: 'Bagh Chal',
     subtitle: 'トラとヤギ',
+    name: 'バグチャル',
     tagline: 'トラ4頭とヤギ20頭',
     local: 'ローカル対戦',
     vsAi: 'AIと',
@@ -99,6 +100,7 @@ const ja: Messages = {
     rulesCta: 'トップで遊び方を選ぶ',
     onlineTitle: 'オンライン対戦',
     rulesMetaTitle: 'バグチャル（Bagh Chal）のルールと遊び方',
+    rulesTitle: 'バグチャルのルール',
     rulesMetaDescription: 'バグチャルの全ルールを図で解説：5×5の盤、トラ4頭とヤギ20頭、ヤギの配置、トラの飛び越し捕獲、ヤギがトラを動けなくする勝ち方。『悪魔の計略』シーズン2決勝のゲーム。',
     rulesHeading: '遊び方',
     rules: [

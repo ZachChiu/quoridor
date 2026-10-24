@@ -37,6 +37,15 @@
       所以不能替對方走、也不能把回合搶過來。合不合規則由兩邊的程式重走一次檢查
     - 沒有 status、winners：勝負全部由 moves 推導（目前沒有投降）
 
+    ── 輪流下的遊戲共用的房間（turnRooms，2026-10-24 加）────────────────
+    九子棋、盲眼五子棋、均衡曼卡拉共用（結構見 app/types/turnRoom.ts）。做法跟 baghRooms 一樣，只是座位不寫死：
+    - 座位鍵 s0..s7，而且不能超過這間房的 seats（建房時決定、之後不能改）
+    - 建房：只能建不存在的房，host 指的那個座位必須是自己
+    - game、seats、setup、host、createdAt 建房後不能改（只有建房那一次寫得進去）
+    - moves 與 turn：**只有輪到的人**能寫（看寫入前的 turn 指到的座位是不是自己），走完一手兩個一起寫
+    - 沒有 status、winner：勝負由 moves 推導
+    這段先發布、程式後上線沒關係：舊程式不會碰 turnRooms
+
     ── 回饋 ─────────────────────────────────────────────────────────
     只能新增、沒有人讀得到（裡面可能有選填的聯絡方式）；我從 Console 讀，
     Console 不受規則限制。uid 必須是本人、每個欄位有上限、多的欄位拒絕 ——
@@ -161,6 +170,38 @@
         "turn": {
           ".write": "auth != null && ((data.parent().child('turn').val() === 'tiger' && data.parent().child('players/tiger/uid').val() === auth.uid) || (data.parent().child('turn').val() === 'goat' && data.parent().child('players/goat/uid').val() === auth.uid))",
           ".validate": "newData.val() === 'tiger' || newData.val() === 'goat'"
+        },
+        "$other": { ".validate": false }
+      }
+    },
+    "turnRooms": {
+      "$roomId": {
+        ".read": "auth != null",
+        ".write": "auth != null && !data.exists() && newData.child('players/' + newData.child('host').val() + '/uid').val() === auth.uid",
+        ".validate": "newData.hasChildren(['id', 'game', 'seats', 'setup', 'host', 'createdAt', 'turn'])",
+        "id": { ".validate": "newData.isString() && newData.val() === $roomId" },
+        "game": { ".validate": "!data.exists() && (newData.val() === 'nine-mens-morris' || newData.val() === 'blind-gomoku' || newData.val() === 'balance-mancala')" },
+        "seats": { ".validate": "!data.exists() && newData.isNumber() && newData.val() >= 2 && newData.val() <= 8" },
+        "setup": { ".validate": "!data.exists() && newData.isString() && newData.val().length <= 200" },
+        "host": { ".validate": "!data.exists() && newData.isString() && newData.val().matches(/^s[0-7]$/)" },
+        "createdAt": { ".validate": "!data.exists() && newData.isNumber()" },
+        "players": {
+          "$seat": {
+            ".write": "auth != null && (!data.exists() ? newData.child('uid').val() === auth.uid : data.child('uid').val() === auth.uid)",
+            ".validate": "newData.hasChildren(['uid', 'displayName', 'joinedAt']) && ($seat === 's0' || $seat === 's1' || ($seat === 's2' && newData.parent().parent().child('seats').val() >= 3) || ($seat === 's3' && newData.parent().parent().child('seats').val() >= 4) || ($seat === 's4' && newData.parent().parent().child('seats').val() >= 5) || ($seat === 's5' && newData.parent().parent().child('seats').val() >= 6) || ($seat === 's6' && newData.parent().parent().child('seats').val() >= 7) || ($seat === 's7' && newData.parent().parent().child('seats').val() >= 8))",
+            "uid": { ".validate": "newData.isString() && newData.val().length > 0" },
+            "displayName": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 40" },
+            "joinedAt": { ".validate": "newData.isNumber()" },
+            "$other": { ".validate": false }
+          }
+        },
+        "moves": {
+          ".write": "auth != null && data.parent().child('players/' + data.parent().child('turn').val() + '/uid').val() === auth.uid",
+          ".validate": "newData.isString() && newData.val().length <= 20000"
+        },
+        "turn": {
+          ".write": "auth != null && data.parent().child('players/' + data.parent().child('turn').val() + '/uid').val() === auth.uid",
+          ".validate": "newData.isString() && newData.val().matches(/^s[0-7]$/) && newData.parent().child('players/' + newData.val()).exists() || (!data.exists() && newData.isString() && newData.val().matches(/^s[0-7]$/))"
         },
         "$other": { ".validate": false }
       }

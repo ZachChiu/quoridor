@@ -212,7 +212,7 @@ function Waiting({ me, url, home }: { me: Side; url: string; home: string }) {
         </div>
 
         <div>
-          <p className="text-sm font-bold text-ink-soft">{b.title} · {b.onlineTitle}</p>
+          <p className="text-sm font-bold text-ink-soft">{b.name} · {b.onlineTitle}</p>
           <h1 className="mt-1 text-[clamp(1.6rem,6.5vw,2.1rem)] font-black leading-tight">{b.inviteHeading}</h1>
           <p className="mt-2 text-sm leading-relaxed">{b.inviteBody.replace('{me}', name(me)).replace('{them}', name(other(me)))}</p>
         </div>
