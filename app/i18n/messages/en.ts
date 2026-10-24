@@ -86,6 +86,7 @@ const en: Messages = {
     winGoatBody: 'The goats trapped every tiger.',
     drawBody: 'Too many moves without a result.',
     again: 'Play again',
+    feedbackPlaceholder: 'e.g. a tiger could jump but I couldn’t tap it, or the computer felt too strong or too weak',
     invite: 'Invite a friend',
     inviteHeading: 'Send your friend the link',
     inviteBody: 'They join as soon as they open it. You play {me}, they play {them}.',

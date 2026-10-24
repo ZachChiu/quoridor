@@ -9,7 +9,13 @@ export type Feedback = {
   message: string;
   /** 選填。想被回覆的人才留。 */
   contact?: string;
-  wgf: string;
+  /** Wall Go 的棋譜（可以貼到 /wall-go/replay 重看） */
+  wgf?: string;
+  /**
+   * 其他遊戲的走法紀錄（各款自己的格式，例如尼泊爾虎棋的 encodeMoves）。跟 wgf 二選一，
+   * 規則要求對局回饋至少有一個。哪一款看 page（sendFeedback 自動帶上的網址路徑）
+   */
+  record?: string;
   mode: 'local' | 'online' | 'ai';
   playersNum: number;
   result: string;
