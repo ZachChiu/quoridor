@@ -242,6 +242,29 @@ export const TransitionProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   const handleUncovered = useCallback(() => { busyRef.current = false; setState({ phase: 'idle' }); }, []);
 
+  /*
+    轉場播放中不讓頁面捲動：遮罩是 absolute、定在點下去那一刻的捲動位置（理由見 WipeOverlay），
+    手指一滑遮罩就跟著頁面走、露出底下的頁面（10/24 Zach：在平台頁進遊戲，滾動一下就會出現破綻）。
+    不用 useScrollLock 的 position: fixed：那個解鎖時會把舊頁的捲動位置還原到換好的新頁上，
+    fixed 的 body 貼著畫面上下緣，也會讓 iOS 26 Safari 的工具列染色。只擋手勢、滾輪與捲動鍵。
+  */
+  const active = state.phase !== 'idle';
+  useEffect(() => {
+    if (!active) return;
+    const stop = (e: Event) => e.preventDefault();
+    const keys = (e: KeyboardEvent) => {
+      if ([' ', 'PageDown', 'PageUp', 'ArrowDown', 'ArrowUp', 'Home', 'End'].includes(e.key)) e.preventDefault();
+    };
+    window.addEventListener('touchmove', stop, { passive: false });
+    window.addEventListener('wheel', stop, { passive: false });
+    window.addEventListener('keydown', keys);
+    return () => {
+      window.removeEventListener('touchmove', stop);
+      window.removeEventListener('wheel', stop);
+      window.removeEventListener('keydown', keys);
+    };
+  }, [active]);
+
   return (
     <TransitionContext.Provider value={{ navigate, flash, busy: state.phase !== 'idle' }}>
       {children}
