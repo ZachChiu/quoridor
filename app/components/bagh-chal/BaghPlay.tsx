@@ -147,10 +147,10 @@ export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghM
     text: {
       kicker: `${g.champion.matchOver} · ${modeLabel}`,
       title: result.title,
-      name: `${b.title} ${b.subtitle}`,
+      name: b.name,
       capturedLabel: `${b.tiger} ${fmt(b.captured, game.captured)}`,
       moves: fmt(b.cardMoves, game.history.length),
-      brand: `${b.title} ${b.subtitle}`,
+      brand: b.name,
       from: fill(g.share.cardFrom, { show: t.meta.showName }),
       host: new URL(process.env.SITE_URL || 'https://quoridorgame.com').host,
     },
@@ -270,7 +270,7 @@ export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghM
         </div>
       </aside>
 
-      <Modal skin="bagh" isOpen={helpOpen} onClose={() => setHelpOpen(false)} title={b.rulesHeading} kicker={b.title}
+      <Modal skin="bagh" isOpen={helpOpen} onClose={() => setHelpOpen(false)} title={b.rulesHeading} kicker={b.name}
         icon={RulesToken} band={{ className: 'bg-[#5b6620]', fg: 'text-tile-cream' }}>
         <RulesStepsPaged rules={b.rules} prev={t.ui.prev} next={t.ui.next} done={t.ui.close} onDone={() => setHelpOpen(false)} />
       </Modal>
