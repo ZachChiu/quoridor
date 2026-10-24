@@ -1,7 +1,8 @@
 'use client';
 import { useEffect, useLayoutEffect, useRef } from 'react';
+import { preload } from 'react-dom';
 import { SIZE, type Cell, type Move, type Point, type Side } from '@/games/bagh-chal/engine';
-import { GOAT_SRC, TIGER_SRC, TIGER_OPEN_SRC } from './tokens';
+import { GOAT_SRC, ROSETTE_SRC, TIGER_SRC, TIGER_OPEN_SRC } from './tokens';
 import { BAGH } from './palette';
 import { playIdle } from './idleMotion';
 
@@ -30,19 +31,12 @@ export const xy = (p: Point) => ({ x: 10 + (p % SIZE) * 20, y: 10 + Math.floor(p
 
 const reducedMotion = () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-/** 米字形的小花：四瓣深褐、四瓣陶紅、紙色花心（印刷棋盤交叉點上的那朵）。現在是「可以走到這裡」的標記 */
+/**
+ * 米字形的小花（「可以走到這裡」的標記）：Zach 10/24 用 Gemini 照 board-art 中間那朵畫的，綠在外、橘在內的兩層八瓣。
+ * 先前是程式畫的四瓣深褐、四瓣陶紅的星形，跟主視覺那朵對不上。用背景圖畫（理由同棋子）；選了棋子才出現，所以先 preload。
+ */
 function Rosette({ className = '' }: { className?: string }) {
-  return (
-    <svg viewBox="-1 -1 2 2" className={className} aria-hidden="true">
-      {[0, 90, 180, 270].map((a) => (
-        <path key={a} transform={`rotate(${a})`} d="M0-1C.28-.5.24-.18 0 0C-.24-.18-.28-.5 0-1Z" fill={BAGH.brown} />
-      ))}
-      {[45, 135, 225, 315].map((a) => (
-        <path key={a} transform={`rotate(${a})`} d="M0-.72C.22-.4.18-.16 0 0C-.18-.16-.22-.4 0-.72Z" fill={BAGH.terracotta} />
-      ))}
-      <circle r=".2" fill={BAGH.paper} />
-    </svg>
-  );
+  return <span aria-hidden="true" className={`bg-contain bg-center bg-no-repeat ${className}`} style={{ backgroundImage: `url(${ROSETTE_SRC})` }} />;
 }
 
 /** 棋盤線：直線、橫線、兩條對角線與中間的菱形 —— 斜線只經過列＋行為偶數的點 */
@@ -124,6 +118,7 @@ export function BaghBoard({ board, targets, movable, selected, last, plies, plac
   labels: { tiger: string; goat: string };
   onPick: (p: Point) => void;
 }) {
+  preload(ROSETTE_SRC, { as: 'image' });
   const squareRef = useRef<HTMLDivElement>(null);
   const seen = useRef(plies);
 

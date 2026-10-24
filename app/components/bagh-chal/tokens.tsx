@@ -21,6 +21,8 @@ export const TIGER_SRC = '/games/bagh-chal/tiger.webp';
 export const GOAT_SRC = '/games/bagh-chal/goat.webp';
 /** 張嘴的老虎（Zach 10/24 用 Gemini 照 tiger.webp 改的，同一個外圈），只在吃羊的那一下出現 */
 export const TIGER_OPEN_SRC = '/games/bagh-chal/tiger-open.webp';
+/** 可以走到這裡的米字小花（Zach 10/24 用 Gemini 照 board-art 中間那朵畫的：綠在外、橘在內的兩層八瓣） */
+export const ROSETTE_SRC = '/games/bagh-chal/rosette.webp';
 export const TigerToken = token(TIGER_SRC);
 export const GoatToken = token(GOAT_SRC);
 /** 選單用的三枚圓牌（同一套畫風）：虎羊對看＝兩人對戰、蠟封信＝邀請朋友、貝葉經上的棋盤＝規則 */
