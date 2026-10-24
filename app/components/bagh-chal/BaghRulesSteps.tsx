@@ -1,8 +1,9 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { MiniBoard } from './BaghBoard';
 import { BAGH_PRIMARY, BAGH_SECONDARY } from './styles';
 import type { Move, Point } from '@/games/bagh-chal/engine';
+import { useStep, useSwipePager } from '@/hook/useSwipePager';
 
 /**
  * Bagh Chal 規則的四個步驟，每步一張小棋盤。規則頁（全部攤開）與對局中的說明彈窗（一次一步）共用。
@@ -40,28 +41,57 @@ export function RulesStepsList({ rules }: { rules: readonly string[] }) {
   );
 }
 
-/** 一次一步（說明彈窗） */
-export function RulesStepsPaged({ rules, prev, next, done, onDone }: {
-  rules: readonly string[]; prev: string; next: string; done: string; onDone: () => void;
+/**
+ * 一次一步（說明彈窗）：四張並排在一條軌道上，手指左右拖（同 Wall Go 的遊玩方式，hook/useSwipePager.ts），
+ * 也可以按下面的按鈕、點頁碼的小圓點，或用左右方向鍵。
+ * 彈窗關著時內容仍掛在頁面上（Modal 只加 inert），所以要 `open`：開著才聽方向鍵、每次打開從第一步開始（同 Wall Go）。
+ */
+export function RulesStepsPaged({ open, rules, prev, next, done, onDone }: {
+  open: boolean; rules: readonly string[]; prev: string; next: string; done: string; onDone: () => void;
 }) {
-  const [i, setI] = useState(0);
+  const [i, goTo] = useStep(STEPS.length);
+  const pager = useSwipePager(STEPS.length, i, goTo);
+  const [wasOpen, setWasOpen] = useState(open);
+  if (open !== wasOpen) {
+    setWasOpen(open);
+    if (open) goTo(0);
+  }
+  const { onKeyDown } = pager;
+  useEffect(() => {
+    if (!open) return;
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [open, onKeyDown]);
   const text = captions(rules);
-  const s = STEPS[i];
   const last = i === STEPS.length - 1;
   return (
     <div className="flex flex-col gap-4">
-      <div className="mx-auto w-full max-w-[280px]"><MiniBoard rows={s.rows} marks={s.marks} victims={s.victims} /></div>
-      <p className="min-h-[4.5rem] text-sm font-bold leading-relaxed">{text[i]}</p>
-      <div className="flex items-center justify-between gap-3">
-        <span className="text-xs font-black tabular-nums text-ink-soft">{i + 1} / {STEPS.length}</span>
-        <div className="flex gap-2">
-          {i > 0 && (
-            <button type="button" onClick={() => setI(i - 1)} className={`${BAGH_SECONDARY} px-4 py-2 text-sm`}>{prev}</button>
-          )}
-          <button type="button" onClick={() => (last ? onDone() : setI(i + 1))} className={`${BAGH_PRIMARY} px-4 py-2 text-sm`}>
-            {last ? done : next}
-          </button>
+      <div {...pager.viewport}>
+        <div className="flex items-start" style={pager.trackStyle}>
+          {STEPS.map((s, n) => (
+            <div key={n} className="w-full shrink-0 px-0.5" aria-hidden={n !== i}>
+              <div className="mx-auto w-full max-w-[280px]"><MiniBoard rows={s.rows} marks={s.marks} victims={s.victims} /></div>
+              <p className="mt-4 min-h-[4.5rem] text-sm font-bold leading-relaxed">{text[n]}</p>
+            </div>
+          ))}
         </div>
+      </div>
+      {/* 頁碼：每一步一顆小圓點，點了直接跳過去（觸控範圍撐到 24px）。放在圖文下面置中（同 Wall Go），按鈕另起一排才不會擠到折行 */}
+      <div className="-mt-2 flex justify-center gap-1" role="group" aria-label={`${i + 1} / ${STEPS.length}`}>
+        {STEPS.map((_, n) => (
+          <button key={n} type="button" onClick={() => goTo(n)} aria-label={`${n + 1}`} aria-current={n === i ? 'step' : undefined}
+            className="grid size-6 place-items-center">
+            <span className={`block size-2 rounded-full transition ${n === i ? 'scale-125 bg-[#5b6620]' : 'bg-[#5b6620]/30'}`} />
+          </button>
+        ))}
+      </div>
+      <div className="flex justify-end gap-2">
+        {i > 0 && (
+          <button type="button" onClick={() => goTo(i - 1)} className={`${BAGH_SECONDARY} whitespace-nowrap px-4 py-2 text-sm`}>{prev}</button>
+        )}
+        <button type="button" onClick={() => (last ? onDone() : goTo(i + 1))} className={`${BAGH_PRIMARY} whitespace-nowrap px-4 py-2 text-sm`}>
+          {last ? done : next}
+        </button>
       </div>
     </div>
   );

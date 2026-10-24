@@ -37,6 +37,15 @@ export function trialOnline(game: OnlineTrialGame): string {
   return `${game}/online`;
 }
 
+/**
+ * 第二批的規則頁（2026-10-25 Zach：「怎麼玩都沒有換新頁，最好是跟 Wall Go 一樣，圖配字」）。
+ * 每款在自己的分支加 `<遊戲>/rules` 的頁面；對局中的說明彈窗是同一份步驟、一次一步、可以左右滑（hook/useSwipePager.ts）。
+ */
+export type TrialGame = typeof TIME_AUCTION | typeof NINE_MENS_MORRIS | typeof BLIND_GOMOKU | typeof BALANCE_MANCALA | typeof KNIGHTS_TOUR;
+export function trialRules(game: TrialGame): string {
+  return `${game}/rules`;
+}
+
 /** Wall Go 底下的路徑，例如 wallGo('/rules') → '/wall-go/rules'；不給參數是 Wall Go 首頁 */
 export function wallGo(sub: '' | '/rules' | '/solo' | '/local' | '/local/3' | '/online' | '/replay' = ''): string {
   return WALL_GO + sub;

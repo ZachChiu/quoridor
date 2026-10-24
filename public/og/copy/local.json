@@ -1,0 +1,38 @@
+{
+  "zh-TW": {
+    "kicker": "牆壁圍棋 Wall Go",
+    "title": [
+      "本機對戰"
+    ]
+  },
+  "en": {
+    "kicker": "Wall Go",
+    "title": [
+      "Local play"
+    ]
+  },
+  "ja": {
+    "kicker": "壁囲碁 Wall Go",
+    "title": [
+      "ローカル対戦"
+    ]
+  },
+  "ko": {
+    "kicker": "벽바둑 Wall Go",
+    "title": [
+      "로컬 대전"
+    ]
+  },
+  "zh-Hans": {
+    "kicker": "墙壁围棋 Wall Go",
+    "title": [
+      "本地对战"
+    ]
+  },
+  "th": {
+    "kicker": "Wall Go",
+    "title": [
+      "เล่นเครื่องเดียว"
+    ]
+  }
+}
