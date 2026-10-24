@@ -28,6 +28,15 @@ export const BLIND_GOMOKU = '/blind-gomoku';
 export const BALANCE_MANCALA = '/balance-mancala';
 export const KNIGHTS_TOUR = '/knights-tour';
 
+/**
+ * 第二批的連線房（2026-10-24 Zach：有兩方互動的都補連線版，騎士巡遊是一個人解的、不用）。
+ * 房間在 `<遊戲>/online#roomId=…`，開房是 `#new=…`（hook/useTurnRoom.ts；時間拍賣是同時出價，房間另外做）。
+ */
+export type OnlineTrialGame = typeof TIME_AUCTION | typeof NINE_MENS_MORRIS | typeof BLIND_GOMOKU | typeof BALANCE_MANCALA;
+export function trialOnline(game: OnlineTrialGame): string {
+  return `${game}/online`;
+}
+
 /** Wall Go 底下的路徑，例如 wallGo('/rules') → '/wall-go/rules'；不給參數是 Wall Go 首頁 */
 export function wallGo(sub: '' | '/rules' | '/solo' | '/local' | '/local/3' | '/online' | '/replay' = ''): string {
   return WALL_GO + sub;

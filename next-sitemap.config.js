@@ -32,6 +32,8 @@ module.exports = {
     '/bagh-chal/solo', '/*/bagh-chal/solo', '/bagh-chal/local', '/*/bagh-chal/local', '/bagh-chal/online', '/*/bagh-chal/online',
     // 第二批五款還在試做（頁面 robots noindex），上線前再拿掉
     ...['/time-auction', '/nine-mens-morris', '/blind-gomoku', '/balance-mancala', '/knights-tour'].flatMap((p) => [p, `/*${p}`]),
+    // 第二批的連線房（2026-10-24 加）：跟 Wall Go、虎棋的連線頁一樣是空殼，上線後也不收
+    ...['/time-auction', '/nine-mens-morris', '/blind-gomoku', '/balance-mancala'].flatMap((p) => [`${p}/online`, `/*${p}/online`]),
     // 舊網址（2026-10 平台化前），只做轉址：真正的 301 在 CloudFront，這些頁面是備援。
     // 逐一列出，不能寫 '/*/rules' —— * 也會對到 wall-go，連新的 /wall-go/rules 一起排除掉
     '/match',

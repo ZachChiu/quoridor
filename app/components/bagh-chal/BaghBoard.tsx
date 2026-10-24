@@ -1,7 +1,8 @@
 'use client';
 import { useEffect, useLayoutEffect, useRef } from 'react';
+import { preload } from 'react-dom';
 import { SIZE, type Cell, type Move, type Point, type Side } from '@/games/bagh-chal/engine';
-import { GOAT_SRC, TIGER_SRC } from './tokens';
+import { GOAT_SRC, ROSETTE_SRC, TIGER_SRC, TIGER_OPEN_SRC } from './tokens';
 import { BAGH } from './palette';
 import { playIdle } from './idleMotion';
 
@@ -30,19 +31,12 @@ export const xy = (p: Point) => ({ x: 10 + (p % SIZE) * 20, y: 10 + Math.floor(p
 
 const reducedMotion = () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-/** 米字形的小花：四瓣深褐、四瓣陶紅、紙色花心（印刷棋盤交叉點上的那朵）。現在是「可以走到這裡」的標記 */
+/**
+ * 米字形的小花（「可以走到這裡」的標記）：Zach 10/24 用 Gemini 照 board-art 中間那朵畫的，綠在外、橘在內的兩層八瓣。
+ * 先前是程式畫的四瓣深褐、四瓣陶紅的星形，跟主視覺那朵對不上。用背景圖畫（理由同棋子）；選了棋子才出現，所以先 preload。
+ */
 function Rosette({ className = '' }: { className?: string }) {
-  return (
-    <svg viewBox="-1 -1 2 2" className={className} aria-hidden="true">
-      {[0, 90, 180, 270].map((a) => (
-        <path key={a} transform={`rotate(${a})`} d="M0-1C.28-.5.24-.18 0 0C-.24-.18-.28-.5 0-1Z" fill={BAGH.brown} />
-      ))}
-      {[45, 135, 225, 315].map((a) => (
-        <path key={a} transform={`rotate(${a})`} d="M0-.72C.22-.4.18-.16 0 0C-.18-.16-.22-.4 0-.72Z" fill={BAGH.terracotta} />
-      ))}
-      <circle r=".2" fill={BAGH.paper} />
-    </svg>
-  );
+  return <span aria-hidden="true" className={`bg-contain bg-center bg-no-repeat ${className}`} style={{ backgroundImage: `url(${ROSETTE_SRC})` }} />;
 }
 
 /** 棋盤線：直線、橫線、兩條對角線與中間的菱形 —— 斜線只經過列＋行為偶數的點 */
@@ -69,8 +63,11 @@ const TOKEN = 'block rounded-full bg-cover bg-center shadow-[0_2px_0_rgba(74,38,
 
 export function TigerPiece({ selected = false }: { selected?: boolean }) {
   return (
-    <span data-piece aria-hidden="true" className={`${TOKEN} size-[96%] ${selected ? 'scale-110 ring-4 ring-tile-ink' : ''}`}
-      style={{ backgroundImage: `url(${TIGER_SRC})` }} />
+    <span data-piece aria-hidden="true" className={`${TOKEN} relative size-[96%] ${selected ? 'scale-110 ring-4 ring-tile-ink' : ''}`}
+      style={{ backgroundImage: `url(${TIGER_SRC})` }}>
+      {/* 張嘴的那張疊在上面、平常透明，吃羊時才亮（一直在 DOM 裡，第一次吃羊前就載好了） */}
+      <span data-open className="absolute inset-0 rounded-full bg-cover bg-center opacity-0" style={{ backgroundImage: `url(${TIGER_OPEN_SRC})` }} />
+    </span>
   );
 }
 
@@ -121,6 +118,7 @@ export function BaghBoard({ board, targets, movable, selected, last, plies, plac
   labels: { tiger: string; goat: string };
   onPick: (p: Point) => void;
 }) {
+  preload(ROSETTE_SRC, { as: 'image' });
   const squareRef = useRef<HTMLDivElement>(null);
   const seen = useRef(plies);
 
@@ -139,7 +137,7 @@ export function BaghBoard({ board, targets, movable, selected, last, plies, plac
       piece.animate([{ translate: `${dx}px ${dy}px` }, { translate: '0 0' }], { duration: 260, easing: 'cubic-bezier(.2,.8,.3,1)' });
       return;
     }
-    // 老虎吃羊：一口吞下 —— 老虎貼地衝過去，被吃的羊被吸進落點縮不見，老虎嚼兩下。
+    // 老虎吃羊：一口吞下 —— 老虎張嘴貼地衝過去，被吃的羊被吸進落點縮不見，老虎嚼兩下。
     // Zach 10/24 從五種（跳過去羊彈開、一口吞下、甩出棋盤、收進比分、踩扁）裡選的
     piece.animate([
       { translate: `${dx}px ${dy}px`, scale: '1', offset: 0 },
@@ -149,6 +147,11 @@ export function BaghBoard({ board, targets, movable, selected, last, plies, plac
       { scale: '1.12 0.88', offset: 0.82 },
       { translate: '0 0', scale: '1' },
     ], { duration: 640, easing: 'ease-in' });
+    // 衝過去時張嘴、壓扁那一下咬住（閉上），嚼的時候再開合一次 —— 跟上面的壓扁、拉長同一個節拍
+    piece.querySelector<HTMLElement>('[data-open]')?.animate([
+      { opacity: 0, offset: 0 }, { opacity: 1, offset: 0.06 }, { opacity: 1, offset: 0.55 }, { opacity: 0, offset: 0.59 },
+      { opacity: 0, offset: 0.65 }, { opacity: 1, offset: 0.69 }, { opacity: 1, offset: 0.76 }, { opacity: 0, offset: 0.8 }, { opacity: 0 },
+    ], { duration: 640 });
     root.querySelector<HTMLElement>('[data-captured] [data-piece]')?.animate([
       { opacity: 1, translate: '0 0', scale: '1', offset: 0 },
       { opacity: 1, translate: '0 0', scale: '1', offset: 0.3 },

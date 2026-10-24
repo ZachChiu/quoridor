@@ -56,6 +56,7 @@ const ko: Messages = {
     ogDescription: '호랑이 4마리와 염소 20마리의 네팔 전통 게임. 『데블스 플랜: 데스룸』 결승. 설치도 가입도 필요 없습니다.',
     title: 'Bagh Chal',
     subtitle: '바그찰',
+    name: '바그찰',
     tagline: '호랑이 4마리 대 염소 20마리',
     local: '로컬 대전',
     vsAi: 'AI와',
@@ -102,6 +103,7 @@ const ko: Messages = {
     rulesCta: '처음 화면에서 모드 고르기',
     onlineTitle: '온라인 대전',
     rulesMetaTitle: '바그찰 Bagh Chal 규칙과 하는 법',
+    rulesTitle: '바그찰 규칙',
     rulesMetaDescription: '바그찰(Bagh Chal) 전체 규칙을 그림으로: 5×5 판, 호랑이 4마리 대 염소 20마리, 염소 놓기, 호랑이의 뛰어넘어 잡기, 염소가 호랑이를 가두는 방법. 『데블스 플랜: 데스룸』 결승 게임.',
     rulesHeading: '하는 법',
     rules: [
