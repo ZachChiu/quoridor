@@ -26,7 +26,7 @@ import MancalaFrame from './MancalaFrame';
 import MancalaRing, { LAND, type RingMark } from './MancalaRing';
 import ScorePanel from './ScorePanel';
 import OrderEditor from './OrderEditor';
-import MancalaRules from './MancalaRules';
+import { RulesStepsPaged } from './MancalaRulesSteps';
 import PieceDisc from './PieceDisc';
 
 /** 節奏（毫秒）。AI 每手約 1.5–2 秒；點盤面可以直接跳過播種動畫。hop／hopHuman 是一顆種子跳一格的時間（比間隔長一點，前後兩顆會交疊） */
@@ -491,9 +491,10 @@ export default function MancalaPlay({ locale, setup, onHome, onAgain, online = n
         </div>
       </div>
 
+      {/* 說明：跟規則頁同一份七步，一次一步、可以左右滑（MancalaRulesSteps）。不放會離開對局的連結 */}
       <Modal isOpen={helpOpen} onClose={() => setHelpOpen(false)} title={t.rulesHeading} kicker={t.title}
         icon={GiRuleBook} band={MCL_BAND} panelClassName={MCL_PANEL}>
-        <MancalaRules t={t} />
+        <RulesStepsPaged open={helpOpen} prev={msgs.ui.prev} next={msgs.ui.next} done={msgs.ui.close} onDone={() => setHelpOpen(false)} />
       </Modal>
 
       <Modal isOpen={leaving} onClose={() => setLeaving(false)} title={online ? t.leaveTitleOnline : t.leaveTitle} icon={GiExitDoor}

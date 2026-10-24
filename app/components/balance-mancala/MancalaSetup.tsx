@@ -1,13 +1,12 @@
 'use client';
 import { useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { GiRuleBook } from 'react-icons/gi';
 import { LuCircleHelp } from 'react-icons/lu';
-import Modal from '@/components/Modal';
 import PlatformCorner from '@/components/PlatformCorner';
 import { fill, useTextTable } from '@/i18n/gameText';
 import { localePath, type Locale } from '@/i18n/locales';
-import { BALANCE_MANCALA, trialOnline } from '@/i18n/routes';
+import { BALANCE_MANCALA, trialOnline, trialRules } from '@/i18n/routes';
 import { TEXT } from '@/games/balance-mancala/text';
 import { MAX_SEATS, MIN_SEATS } from '@/games/balance-mancala/engine';
 import type { Difficulty } from '@/games/balance-mancala/ai';
@@ -15,8 +14,7 @@ import { useMessages } from '@/i18n/LocaleProvider';
 import { localSeats, type MatchSetup } from './match';
 import { ONLINE_MAX, ONLINE_MIN } from './online';
 import MancalaFrame from './MancalaFrame';
-import MancalaRules from './MancalaRules';
-import { CLOTH, MCL_BAND, MCL_PANEL, WOOD } from './palette';
+import { CLOTH, WOOD } from './palette';
 import { MCL_CORNER } from './styles';
 
 const SEAT_CHOICES = Array.from({ length: MAX_SEATS - MIN_SEATS + 1 }, (_, i) => MIN_SEATS + i);
@@ -31,6 +29,7 @@ const KEY_ART = '/games/balance-mancala/weights.webp';
  * 開局設定（這一頁同時是遊戲首頁）。整頁是一塊 Adinkra 印花布（MancalaFrame）；上面是三件黃金砝碼與標題，
  * 下面選模式、席數、難度。有 AI 時按難度就開始；全部是真人時按「開始」。
  * 連線對戰選人數（4–7，全部是真人）、按「開房間」到 /balance-mancala/online#new=N 開房（不播轉場，這款裡面換頁直接換）。
+ * 「怎麼玩」連到規則頁（/balance-mancala/rules，一步一張圖；2026-10-25 之前是開一個整面文字的彈窗），一樣不播轉場。
  * 選項照全站：選中的是墨、其餘是布上一層淡墨，沒有框線；難度的點數用砝碼的黃銅（一個面板一個色相）。
  * 左上是平台 logo、右上是聯絡與語言（PlatformCorner，遊戲首頁才放），離邊多讓一個布邊的寬度；
  * 那兩顆鈕與打開的彈窗用這款自己的樣子（MCL_CORNER：切角淡布片、亮布面板、黃銅牌）。
@@ -42,7 +41,6 @@ export default function MancalaSetup({ locale, initial, onStart }: { locale: Loc
   const [seats, setSeats] = useState(initial.mode === 'solo' ? initial.seats : 4);
   const [humans, setHumans] = useState(initial.mode === 'local' ? initial.humans : 2);
   const [online, setOnline] = useState(ONLINE_MIN);
-  const [helpOpen, setHelpOpen] = useState(false);
   const m = useMessages();
   const levelNames = [m.solo.level1, m.solo.level2, m.solo.level3];
 
@@ -129,16 +127,11 @@ export default function MancalaSetup({ locale, initial, onStart }: { locale: Loc
             className="mcl-plaque h-14 text-lg font-black active:scale-[0.98]">{t.start}</button>
         )}
 
-        <button type="button" onClick={() => setHelpOpen(true)}
+        <Link href={localePath(locale, trialRules(BALANCE_MANCALA))}
           className="mcl-link mx-auto flex h-11 items-center justify-center gap-1.5 text-sm">
           <LuCircleHelp aria-hidden="true" />{t.howTo}
-        </button>
+        </Link>
       </main>
-
-      <Modal isOpen={helpOpen} onClose={() => setHelpOpen(false)} title={t.rulesHeading} kicker={t.title}
-        icon={GiRuleBook} band={MCL_BAND} panelClassName={MCL_PANEL}>
-        <MancalaRules t={t} />
-      </Modal>
     </MancalaFrame>
   );
 }

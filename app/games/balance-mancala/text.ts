@@ -95,6 +95,13 @@ export type BalanceMancalaText = {
   stay: string;
   rulesHeading: string;
   rules: string[];
+  /** 每一步的小標（規則頁與對局中的說明彈窗，跟 rules 同索引，一條一張圖） */
+  ruleTitles: string[];
+  /** 規則頁（/balance-mancala/rules）：畫面上的大標、網頁標題與描述、最後那顆回這款首頁的鈕 */
+  rulesTitle: string;
+  rulesMetaTitle: string;
+  rulesMetaDescription: string;
+  rulesCta: string;
   example: string;
   showNote: string;
   /** 遊戲名的由來（Zach 10/24：名字照 Netflix 版本、在規則裡介紹）：節目中文版叫「平衡播棋」，「播棋」是曼卡拉的中文名 */
@@ -191,8 +198,13 @@ export const TEXT: TextTable<BalanceMancalaText> = {
       '任何人任一色到 30 分，遊戲立刻結束。',
       '最終分數＝2×最低色−最高色，三色越平均越高。同分時，最高色較低的人排前面。',
     ],
+    ruleTitles: ['14 格一圈', '開局放子', '播種', '最後一顆得分', '天使格與惡魔格', '30 分結束', '最終分數'],
+    rulesTitle: '平衡播棋規則',
+    rulesMetaTitle: '平衡播棋 Balance Mancala 規則與玩法',
+    rulesMetaDescription: '平衡播棋（Balance Mancala）完整規則：14 格一圈的盤面、天使格與惡魔格、輪流放子、拿起一格的子順時針播下、最後一顆讓誰得分、30 分結束與最終分數＝2×最低−最高。附圖一步一步說明，《魔鬼的計謀：死亡密室》第 5 天主賽的遊戲。',
+    rulesCta: '回首頁選玩法',
     example: '例：紅 13、藍 11、綠 20 → 2×11−20＝2 分',
-    showNote: '出自 Netflix《魔鬼的計謀：死亡密室》第 5 天主賽。這是非官方的粉絲版本；節目原本 7 人，這裡預設 4 席、由 AI 補位。',
+    showNote: '出自 Netflix《魔鬼的計謀：死亡密室》第 5 天主賽。這是非官方的粉絲版本；節目原本 7 人，這裡 4–7 席都能玩：跟 AI 玩或本機對戰時空位由 AI 補上，連線對戰全部是真人。',
     nameNote: '名字：節目裡的中文是「平衡播棋」（第二季第 5 天主賽）。「播棋」是曼卡拉（mancala）這一類遊戲的中文名稱：把一格的子全部拿起來，沿路一格放一顆，像在播種。',
     credit: '圖示：game-icons.net（CC BY 3.0）。外框是 Adinkra 印花布的布邊：上下是寶螺殼（Nsirewa，財富）、左右是曲折（Nkyimkyim，隨機應變）、四角是連在一起的心（Akoma ntoaso，同心），符號取自 R. S. Rattray《Religion and Art in Ashanti》（1927）。',
   },
@@ -283,8 +295,13 @@ export const TEXT: TextTable<BalanceMancalaText> = {
       'As soon as anyone has 30 in any colour, the game ends.',
       'Final score = 2 × lowest − highest, so keep your colours even. Ties go to the player with the lower highest colour.',
     ],
+    ruleTitles: ['A ring of 14 cells', 'Setup', 'Sowing', 'The last piece scores', 'The Angel and the Devil', 'The game ends at 30', 'Final score'],
+    rulesTitle: 'Balance Mancala Rules',
+    rulesMetaTitle: 'Balance Mancala Rules: How to Play',
+    rulesMetaDescription: "Full Balance Mancala rules with pictures: the 14-cell ring with the Angel and the Devil, placing pieces, sowing clockwise, the last piece deciding who scores, the end at 30 and final score = 2 × lowest − highest. The Day 5 main match from The Devil's Plan: Death Room.",
+    rulesCta: 'Choose how to play',
     example: 'e.g. red 13, blue 11, green 20 → 2×11 − 20 = 2',
-    showNote: "From the Day 5 main match of Netflix's The Devil's Plan: Death Room. This is an unofficial fan version; the show had 7 players, here the default is 4 seats with AI players filling in.",
+    showNote: "From the Day 5 main match of Netflix's The Devil's Plan: Death Room. This is an unofficial fan version; the show had 7 players, here you can play with 4–7 seats. Against the AI and in local play, AI players fill the empty seats; online games are all human players.",
     nameNote: 'The name: the show (season 2, day 5 main match) calls it Balance Mancala; in Chinese it is 平衡播棋. Mancala (播棋 in Chinese) is the family of sowing games: pick up every piece in a cell and drop them one per cell along the way.',
     credit: 'Icons: game-icons.net (CC BY 3.0). The border is the edge of an adinkra cloth: cowries (Nsirewa, wealth) along the top and bottom, twisting (Nkyimkyim, adaptability) down the sides and linked hearts (Akoma ntoaso, unity) in the corners. Symbols from R. S. Rattray, Religion and Art in Ashanti (1927).',
   },
@@ -375,8 +392,13 @@ export const TEXT: TextTable<BalanceMancalaText> = {
       '誰かのどれか1色が30点に達したら、すぐにゲーム終了です。',
       '最終スコア＝2×最低色−最高色。3色がそろうほど高くなります。同点なら最高色が低い人が上位。',
     ],
+    ruleTitles: ['14マスの輪', '最初の配置', '種まき', '最後の駒が得点', '天使マスと悪魔マス', '30点で終了', '最終スコア'],
+    rulesTitle: 'バランス・マンカラのルール',
+    rulesMetaTitle: 'バランス・マンカラ（Balance Mancala）のルールと遊び方',
+    rulesMetaDescription: 'バランス・マンカラの全ルールを図で解説：14マスの輪と天使・悪魔マス、駒の配置、時計回りの種まき、最後の駒で決まる得点、30点での終了と最終スコア＝2×最低−最高。『悪魔の計略 ～デビルズ・プラン～』シーズン2・5日目のメインマッチのゲーム。',
+    rulesCta: 'トップで遊び方を選ぶ',
     example: '例：赤 13・青 11・緑 20 → 2×11−20＝2 点',
-    showNote: 'Netflix『悪魔の計略 ～デビルズ・プラン～』シーズン2・5日目のメインマッチより。非公式のファン版です。番組は7人でしたが、ここでは4席が基本で、空いた席はAIが入ります。',
+    showNote: 'Netflix『悪魔の計略 ～デビルズ・プラン～』シーズン2・5日目のメインマッチより。非公式のファン版です。番組は7人でしたが、ここでは4〜7席で遊べます。AI対戦とローカル対戦では空いた席にAIが入り、オンライン対戦は全員プレイヤーです。',
     nameNote: '名前：番組（シーズン2・5日目のメインマッチ）では Balance Mancala、中国語では「平衡播棋」。マンカラ（中国語で「播棋」）は、1マスの駒をすべて取って道なりに1つずつまいていく「種まき」の遊びの仲間です。',
     credit: 'アイコン：game-icons.net（CC BY 3.0）。外枠はアディンクラ布の縁取り：上下は子安貝（Nsirewa、富）、左右はねじれ（Nkyimkyim、臨機応変）、四隅はつながった心（Akoma ntoaso、団結）。記号は R. S. Rattray『Religion and Art in Ashanti』（1927）より。',
   },
@@ -467,8 +489,13 @@ export const TEXT: TextTable<BalanceMancalaText> = {
       '누구든 한 색이 30점에 닿으면 게임이 바로 끝납니다.',
       '최종 점수 = 2 × 최저 색 − 최고 색. 세 색이 고를수록 높습니다. 동점이면 최고 색이 낮은 사람이 앞섭니다.',
     ],
+    ruleTitles: ['14칸 원판', '처음 말 놓기', '씨뿌리기', '마지막 말이 득점', '천사 칸과 악마 칸', '30점이면 종료', '최종 점수'],
+    rulesTitle: '균형의 만칼라 규칙',
+    rulesMetaTitle: '균형의 만칼라 Balance Mancala 규칙과 하는 법',
+    rulesMetaDescription: '균형의 만칼라(Balance Mancala) 전체 규칙을 그림으로: 14칸 원판과 천사·악마 칸, 말 놓기, 시계 방향 씨뿌리기, 마지막 말로 정해지는 득점, 30점 종료와 최종 점수 = 2 × 최저 − 최고. 『데블스 플랜: 데스룸』 5일차 메인 매치 게임.',
+    rulesCta: '처음 화면에서 모드 고르기',
     example: '예: 빨강 13, 파랑 11, 초록 20 → 2×11 − 20 = 2점',
-    showNote: '넷플릭스 「데블스 플랜: 데스룸」 5일차 메인 매치에서 나온 게임입니다. 비공식 팬 버전이며, 방송은 7명이었지만 여기서는 기본 4자리에 빈자리는 AI가 채웁니다.',
+    showNote: '넷플릭스 「데블스 플랜: 데스룸」 5일차 메인 매치에서 나온 게임입니다. 비공식 팬 버전이며, 방송은 7명이었지만 여기서는 4~7자리로 즐길 수 있습니다. AI 대전과 로컬 대전에서는 빈자리를 AI가 채우고, 온라인 대전은 모두 사람입니다.',
     nameNote: '이름: 방송 RULE 카드에 적힌 이름은 ‘균형의 만칼라’이고, 중국어로는 ‘平衡播棋’라고 합니다. 만칼라(중국어로 ‘播棋’)는 한 칸의 말을 모두 집어 한 칸씩 뿌려 나가는 씨뿌리기 놀이 계열을 말합니다.',
     credit: '아이콘: game-icons.net (CC BY 3.0). 테두리는 아딘크라 천의 가장자리입니다: 위아래는 개오지 조개(Nsirewa, 부), 양옆은 굽이(Nkyimkyim, 융통성), 네 모서리는 이어진 심장(Akoma ntoaso, 화합). 기호는 R. S. Rattray, 『Religion and Art in Ashanti』(1927)에서 가져왔습니다.',
   },
@@ -559,8 +586,13 @@ export const TEXT: TextTable<BalanceMancalaText> = {
       '任何人任一颜色到 30 分，游戏立刻结束。',
       '最终分数＝2×最低色−最高色，三色越平均越高。同分时，最高色较低的人排前面。',
     ],
+    ruleTitles: ['14 格一圈', '开局摆子', '播种', '最后一颗得分', '天使格与恶魔格', '30 分结束', '最终分数'],
+    rulesTitle: '平衡播棋规则',
+    rulesMetaTitle: '平衡播棋 Balance Mancala 规则与玩法',
+    rulesMetaDescription: '平衡播棋（Balance Mancala）完整规则：14 格一圈的盘面、天使格与恶魔格、轮流摆子、拿起一格的棋子顺时针播下、最后一颗让谁得分、30 分结束与最终分数＝2×最低−最高。附图一步一步说明，《魔鬼的计谋：死亡密室》第 5 天主赛的游戏。',
+    rulesCta: '回首页选玩法',
     example: '例：红 13、蓝 11、绿 20 → 2×11−20＝2 分',
-    showNote: '出自 Netflix《魔鬼的计谋：死亡密室》第 5 天主赛。这是非官方的粉丝版本；节目原本 7 人，这里默认 4 席、由 AI 补位。',
+    showNote: '出自 Netflix《魔鬼的计谋：死亡密室》第 5 天主赛。这是非官方的粉丝版本；节目原本 7 人，这里 4–7 席都能玩：跟 AI 玩或本地对战时空位由 AI 补上，联机对战全部是真人。',
     nameNote: '名字：节目里的中文是“平衡播棋”（第二季第 5 天主赛）。“播棋”是曼卡拉（mancala）这一类游戏的中文名称：把一格的棋子全部拿起来，沿路一格放一颗，像在播种。',
     credit: '图标：game-icons.net（CC BY 3.0）。外框是阿丁克拉（Adinkra）印花布的布边：上下是宝螺（Nsirewa，财富）、左右是曲折（Nkyimkyim，随机应变）、四角是连在一起的心（Akoma ntoaso，同心），符号取自 R. S. Rattray《Religion and Art in Ashanti》（1927）。',
   },
@@ -651,8 +683,13 @@ export const TEXT: TextTable<BalanceMancalaText> = {
       'เมื่อใครก็ตามมีสีใดสีหนึ่งถึง 30 แต้ม เกมจบทันที',
       'คะแนนสุดท้าย = 2 × สีต่ำสุด − สีสูงสุด ยิ่งสามสีใกล้กันยิ่งดี ถ้าเสมอ คนที่สีสูงสุดต่ำกว่าได้อันดับดีกว่า',
     ],
+    ruleTitles: ['วง 14 ช่อง', 'วางหมากตอนเริ่ม', 'หว่าน', 'หมากตัวสุดท้ายได้แต้ม', 'ช่องเทวดาและช่องปีศาจ', 'ถึง 30 แต้มจบเกม', 'คะแนนสุดท้าย'],
+    rulesTitle: 'กติกาแมนคาลาสมดุล',
+    rulesMetaTitle: 'กติกาแมนคาลาสมดุล (Balance Mancala) วิธีเล่น',
+    rulesMetaDescription: "กติกาแมนคาลาสมดุล (Balance Mancala) ครบพร้อมภาพ: วง 14 ช่องกับช่องเทวดาและช่องปีศาจ การวางหมาก การหว่านตามเข็มนาฬิกา หมากตัวสุดท้ายตัดสินว่าใครได้แต้ม เกมจบที่ 30 แต้ม และคะแนนสุดท้าย = 2 × ต่ำสุด − สูงสุด จากเกมหลักวันที่ 5 ของ The Devil's Plan: Death Room",
+    rulesCta: 'กลับไปเลือกวิธีเล่น',
     example: 'ตัวอย่าง: แดง 13 ฟ้า 11 เขียว 20 → 2×11 − 20 = 2 แต้ม',
-    showNote: "จากเกมหลักวันที่ 5 ของ The Devil's Plan: Death Room บน Netflix นี่เป็นเวอร์ชันแฟนเมดที่ไม่เป็นทางการ ในรายการเล่น 7 คน ที่นี่ตั้งต้นที่ 4 ที่นั่ง ที่ว่างให้ AI เล่นแทน",
+    showNote: "จากเกมหลักวันที่ 5 ของ The Devil's Plan: Death Room บน Netflix นี่เป็นเวอร์ชันแฟนเมดที่ไม่เป็นทางการ ในรายการเล่น 7 คน ที่นี่เล่นได้ 4–7 ที่นั่ง เล่นกับ AI และเล่นเครื่องเดียวมี AI เล่นแทนที่ว่าง ส่วนเล่นออนไลน์เป็นผู้เล่นจริงทุกคน",
     nameNote: 'ชื่อ: ในรายการ (ซีซัน 2 เกมหลักวันที่ 5) เกมนี้ชื่อ Balance Mancala ภาษาจีนเรียกว่า 平衡播棋 ส่วนแมนคาลา (ภาษาจีนเรียก 播棋) คือตระกูลเกม “หว่านเมล็ด” ที่หยิบหมากทั้งช่องขึ้นมาแล้ววางทีละตัวไปตามทาง',
     credit: 'ไอคอน: game-icons.net (CC BY 3.0) กรอบคือขอบผ้าอาดิงกรา (adinkra): บนและล่างเป็นเปลือกหอยเบี้ย (Nsirewa ความมั่งคั่ง) ซ้ายและขวาเป็นเส้นคดเคี้ยว (Nkyimkyim การปรับตัว) สี่มุมเป็นหัวใจที่เชื่อมกัน (Akoma ntoaso ความสามัคคี) สัญลักษณ์จาก R. S. Rattray, Religion and Art in Ashanti (1927)',
   },
