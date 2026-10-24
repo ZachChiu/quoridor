@@ -109,14 +109,14 @@ export default function PlatformView({ locale }: { locale: Locale }) {
  * 大卡片的高度（10/24 Zach：上面的大卡片縮小一點點 —— 原本手機 680、桌機最高 640）。
  * 手機上文字區塊幾乎跟畫面一樣寬，區塊要夠高主視覺才露得出來。
  */
-const HERO = 'relative flex min-h-[600px] items-end overflow-hidden rounded-3xl md:min-h-[min(560px,max(460px,48vw))]';
+const HERO = 'relative flex min-h-[600px] overflow-hidden rounded-3xl md:min-h-[min(560px,max(460px,48vw))]';
 
 /** Wall Go 的大卡片：它自己的藍底，棋盤放大、斜擺、裁出畫面右上角 */
 function WallGoHero({ locale }: { locale: Locale }) {
   const t = getMessages(locale);
   const p = t.platform;
   return (
-    <section data-slide={WALL_GO} className={`${HERO} bg-tile-blue`}>
+    <section data-slide={WALL_GO} className={`${HERO} items-end bg-tile-blue`}>
       {/* 主視覺：Wall Go 的棋盤放大、斜擺、裁出畫面右上角 */}
       {/* eslint-disable-next-line @next/next/no-img-element -- 靜態匯出、SVG，不需要 next/image */}
       <img
@@ -154,12 +154,17 @@ function GameHero({ game, locale }: { game: CatalogGame; locale: Locale }) {
   const look = game.look!;
   const copy = game.playable === BAGH_CHAL ? [p.baghHeroMeta, p.baghHeroBody] : null;
   return (
-    <section data-slide={game.playable} className={`${HERO} bg-black`}>
-      {/* 手機：圖只放上面六成（橫幅圖鋪滿直的大卡片，主角會躲在字後面），字在下面的暗底上；桌機：圖鋪滿、字在左邊 */}
-      {/* eslint-disable-next-line @next/next/no-img-element -- 靜態匯出，不需要 next/image */}
-      <img src={look.hero ?? look.art} alt="" loading="lazy"
-        className="pointer-events-none absolute inset-x-0 top-0 h-[62%] w-full object-cover object-[70%_center] md:inset-0 md:h-full md:object-center" />
-      <span aria-hidden="true" className="absolute inset-0 bg-gradient-to-t from-black from-40% via-black/60 via-55% to-transparent to-80% md:bg-gradient-to-r md:from-black/85 md:from-0% md:via-black/45 md:via-40% md:to-transparent md:to-100%" />
+    <section data-slide={game.playable} className={`${HERO} flex-col bg-black md:flex-row md:items-end`}>
+      {/* 手機：圖整張放在上面、字接在下面的黑底上（10/24 Zach：手機只看得到老虎 —— 先前圖鋪在字後面，羊被字蓋住）；
+          有方圖就用方圖。桌機：橫幅鋪滿、字在左邊 */}
+      <div className={`relative w-full shrink-0 md:absolute md:inset-0 md:aspect-auto md:h-full ${look.heroSquare ? 'aspect-square' : 'aspect-[4/3]'}`}>
+        <picture>
+          {look.heroSquare && <source media="(max-width: 767px)" srcSet={look.heroSquare} />}
+          <img src={look.hero ?? look.art} alt="" loading="lazy" className="pointer-events-none absolute inset-0 size-full object-cover" />
+        </picture>
+        <span aria-hidden="true" className="absolute inset-x-0 bottom-0 h-1/4 bg-gradient-to-t from-black to-transparent md:hidden" />
+      </div>
+      <span aria-hidden="true" className="absolute inset-0 hidden bg-gradient-to-r from-black/85 from-0% via-black/45 via-40% to-transparent to-100% md:block" />
       <div className="relative flex max-w-[560px] flex-col gap-4 p-[clamp(24px,4vw,56px)]">
         <span className="self-start rounded-md bg-brand-red px-2.5 py-0.5 text-[13px] font-black text-white">{p.heroBadge}</span>
         <h2 className="text-[clamp(44px,6vw,84px)] font-black leading-[0.95] tracking-tight">{gameName(game, locale)}</h2>
