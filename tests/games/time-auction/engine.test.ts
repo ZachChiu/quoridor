@@ -22,9 +22,11 @@ describe('開局', () => {
     expect(MODES.show.countdownMs).toBe(5000);
   });
 
-  it('4–6 席，其他人數丟錯', () => {
-    expect(() => createAuction('quick', 3)).toThrow();
+  it('2–6 席（跟電腦 4–6、連線最少 2），其他人數丟錯', () => {
+    expect(() => createAuction('quick', 1)).toThrow();
     expect(() => createAuction('quick', 7)).toThrow();
+    expect(() => createAuction('quick', 2.5)).toThrow();
+    expect(createAuction('quick', 2).seats).toBe(2);
     expect(createAuction('quick', 4).seats).toBe(4);
   });
 });

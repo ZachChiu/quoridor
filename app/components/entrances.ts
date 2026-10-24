@@ -26,7 +26,7 @@ export type EntranceScene = {
 };
 
 const LOADERS: Record<string, () => Promise<{ default: EntranceScene }>> = {
-  // 時間拍賣（feat/game-time-auction 打開這一行）
+  'time-auction': () => import('./time-auction/Entrance'),
 
   'nine-mens-morris': () => import('./nine-mens-morris/Entrance'),
 
