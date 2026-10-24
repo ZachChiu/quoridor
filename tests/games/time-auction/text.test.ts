@@ -17,6 +17,8 @@ describe('時間拍賣文案', () => {
     for (const l of LOCALES) {
       expect(flat(TEXT[l]).map(([k]) => k).sort(), l).toEqual(ref);
       expect(TEXT[l].rules, l).toHaveLength(TEXT['zh-TW'].rules.length);
+      // 規則頁與說明彈窗：一條規則一個小標（AuctionRulesSteps 靠索引對齊）
+      expect(TEXT[l].stepTitles, l).toHaveLength(TEXT[l].rules.length);
       for (const [k, v] of flat(TEXT[l])) expect(v.trim(), `${l}.${k}`).not.toBe('');
     }
   });
@@ -32,6 +34,8 @@ describe('時間拍賣文案', () => {
       expect(t.winOther, l).toContain('{name}');
       expect(t.rules[0], l).toContain('{budget}');
       expect(t.rules[1], l).toContain('{countdown}');
+      expect(t.rulesAsShow, l).toContain('{budget}');
+      expect(t.rulesAsShow, l).toContain('{countdown}');
     }
   });
 

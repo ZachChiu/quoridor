@@ -82,6 +82,16 @@ type Text = {
   controls: string;
   /** 說明最上面的名字由來：節目第 2 季的遊戲、名字指的是什麼（Zach 10/24：名字照 Netflix 版，在規則裡介紹） */
   nameNote: string;
+  /**
+   * 規則頁（/time-auction/rules）與對局中的說明彈窗（一次一步、可以左右滑）：
+   * stepTitles 是每一步的小標，跟 rules 一條對一條（長度由測試鎖住）；rulesAsShow 是規則頁開頭那句「下面照節目局」；
+   * rulesCta 是規則頁最下面回這款首頁的鈕
+   */
+  rulesTitle: string;
+  rulesMetaDescription: string;
+  stepTitles: string[];
+  rulesAsShow: string;
+  rulesCta: string;
   /** 連線（AuctionOnline.tsx）：設定頁的「邀請朋友」鈕與小字、對局中標題旁的「連線」 */
   onlineTitle: string;
   onlineSub: string;
@@ -201,6 +211,19 @@ export const TEXT: TextTable<Text> = {
     rulesShow: '節目局跟節目一樣，連自己剩多少都不顯示，要自己記。',
     controls: '手機按住大按鈕；電腦可以按住空白鍵。',
     nameNote: '名字：時間拍賣是第 2 季《魔鬼的計謀：死亡密室》裡的遊戲。拍賣出價用的不是錢，是自己的時間 —— 按住多久，就付多久。',
+    rulesTitle: '時間拍賣怎麼玩',
+    rulesMetaDescription: '時間拍賣的規則圖解：每人一筆時間，按住按鈕出價，最後放手的人得標，但每個人都要付掉自己按住的時間。七條規則一條一張圖，另有快速局與節目局的差別、怎麼跟朋友連線。',
+    stepTitles: [
+      '每人一筆時間',
+      '先按住，等倒數',
+      '按多久，出價多久',
+      '最後放手的人得標',
+      '每個人都要付',
+      '看不到別人',
+      '19 回合後比標記',
+    ],
+    rulesAsShow: '下面照節目局：每人 {budget}、倒數 {countdown} 秒。快速局的差別寫在最後。',
+    rulesCta: '回首頁開拍',
     onlineTitle: '邀請朋友',
     onlineSub: '傳連結給朋友，2–6 人坐滿就開拍',
     online: '連線',
@@ -310,6 +333,19 @@ export const TEXT: TextTable<Text> = {
     rulesShow: 'Show rules hide even your own time, just like on the show — you have to remember it.',
     controls: 'On a phone, hold the big button. On a computer, you can hold the space bar.',
     nameNote: "The name: Time Auction is a game from season 2, The Devil's Plan: Death Room. You bid with time instead of money — however long you hold, that's what you pay.",
+    rulesTitle: 'How to play Time Auction',
+    rulesMetaDescription: 'Time Auction rules, illustrated: everyone has a bank of time, you bid by holding a button, and the last to let go wins — but everyone pays for the time they held. Seven rules with a picture each, plus the two modes and how to play online with friends.',
+    stepTitles: [
+      'Everyone gets the same time',
+      'Press and hold',
+      'Hold to bid',
+      'Last to let go wins',
+      'Everyone pays',
+      "You can't see the others",
+      'Most tokens wins',
+    ],
+    rulesAsShow: 'The times below follow the show rules: {budget} each and a {countdown}-second countdown. How Quick mode differs is at the end.',
+    rulesCta: 'Play Time Auction',
     onlineTitle: 'Invite friends',
     onlineSub: 'Send a link — the sale starts when 2–6 seats fill',
     online: 'Online',
@@ -419,6 +455,19 @@ export const TEXT: TextTable<Text> = {
     rulesShow: '番組ルールでは番組と同じく、自分の残り時間も表示されません。自分で覚えておきましょう。',
     controls: 'スマホは大きなボタンを長押し。パソコンはスペースキーの長押しでも遊べます。',
     nameNote: '名前：タイムオークションは『悪魔の計略 ～デビルズ・プラン～』シーズン2のゲームです。お金ではなく自分の持ち時間で入札し、押していた時間をそのまま支払います。',
+    rulesTitle: 'タイムオークションの遊び方',
+    rulesMetaDescription: 'タイムオークションのルールを図解。全員が同じ持ち時間を持ち、ボタンを押し続けて入札し、最後に離した人が落札。ただし全員が押した時間を支払います。7つのルールを1枚ずつの図で、クイックと番組ルールの違い、友だちとのオンライン対戦も。',
+    stepTitles: [
+      '持ち時間は全員同じ',
+      'まず押し続ける',
+      '押した時間が入札額',
+      '最後に離した人が落札',
+      '全員が支払う',
+      'ほかの人は見えない',
+      '19ラウンド後はトークンの数',
+    ],
+    rulesAsShow: '以下は番組ルール（持ち時間{budget}、カウントダウン{countdown}秒）で説明します。クイックとの違いは最後に。',
+    rulesCta: 'トップに戻って遊ぶ',
     onlineTitle: '友だちを招待',
     onlineSub: 'リンクを送って、2〜6人そろったら競り開始',
     online: 'オンライン',
@@ -528,6 +577,19 @@ export const TEXT: TextTable<Text> = {
     rulesShow: '방송 룰에서는 방송처럼 내 남은 시간도 보이지 않습니다. 직접 기억해야 합니다.',
     controls: '휴대폰에서는 큰 버튼을 길게 누르고, 컴퓨터에서는 스페이스바를 눌러도 됩니다.',
     nameNote: '이름: 시간 경매는 『데블스 플랜: 데스룸』(시즌 2)에 나온 게임입니다. 돈이 아니라 자기 시간으로 입찰하고, 누르고 있던 만큼 그대로 냅니다.',
+    rulesTitle: '시간 경매 하는 법',
+    rulesMetaDescription: '시간 경매 규칙 그림 설명: 모두 같은 시간을 갖고, 버튼을 누르고 있으면 입찰, 마지막에 손을 뗀 사람이 낙찰. 단, 모두 누른 만큼 시간을 냅니다. 규칙 일곱 개를 그림 한 장씩, 빠른 게임과 방송 룰의 차이, 친구와 온라인으로 하는 법까지.',
+    stepTitles: [
+      '모두 같은 시간',
+      '먼저 누르고 있기',
+      '누른 만큼 입찰',
+      '마지막에 손을 뗀 사람이 낙찰',
+      '모두 낸다',
+      '다른 사람은 보이지 않는다',
+      '19라운드 후 토큰 수로 승부',
+    ],
+    rulesAsShow: '아래는 방송 룰 기준입니다: 1인 {budget}, 카운트다운 {countdown}초. 빠른 게임과의 차이는 마지막에 있습니다.',
+    rulesCta: '처음으로 가서 경매 시작',
     onlineTitle: '친구 초대',
     onlineSub: '링크를 보내고, 2~6명이 모이면 경매 시작',
     online: '온라인',
@@ -637,6 +699,19 @@ export const TEXT: TextTable<Text> = {
     rulesShow: '节目局和节目一样，连自己剩多少都不显示，要自己记。',
     controls: '手机按住大按钮；电脑可以按住空格键。',
     nameNote: '名字：时间拍卖是第 2 季《魔鬼的计谋：死亡密室》里的游戏。拍卖出价用的不是钱，是自己的时间 —— 按住多久，就付多久。',
+    rulesTitle: '时间拍卖怎么玩',
+    rulesMetaDescription: '时间拍卖的规则图解：每人一笔时间，按住按钮出价，最后松手的人得标，但每个人都要付掉自己按住的时间。七条规则一条一张图，另有快速局与节目局的差别、怎么跟朋友联机。',
+    stepTitles: [
+      '每人一笔时间',
+      '先按住，等倒数',
+      '按多久，出价多久',
+      '最后松手的人得标',
+      '每个人都要付',
+      '看不到别人',
+      '19 回合后比标记',
+    ],
+    rulesAsShow: '下面照节目局：每人 {budget}、倒数 {countdown} 秒。快速局的差别写在最后。',
+    rulesCta: '回首页开拍',
     onlineTitle: '邀请朋友',
     onlineSub: '把链接发给朋友，2–6 人坐满就开拍',
     online: '联机',
@@ -746,6 +821,19 @@ export const TEXT: TextTable<Text> = {
     rulesShow: 'กติกาแบบในรายการจะไม่แสดงแม้แต่เวลาของคุณเอง เหมือนในรายการ ต้องจำเอาเอง',
     controls: 'บนมือถือให้กดปุ่มใหญ่ค้างไว้ บนคอมพิวเตอร์กดแป้นเว้นวรรคค้างไว้ก็ได้',
     nameNote: "ชื่อ: ประมูลเวลาเป็นเกมจาก The Devil's Plan ซีซัน 2 (Death Room) ประมูลด้วยเวลาของตัวเองแทนเงิน กดค้างไว้นานเท่าไรก็จ่ายเท่านั้น",
+    rulesTitle: 'วิธีเล่นประมูลเวลา',
+    rulesMetaDescription: 'กติกาประมูลเวลาแบบมีภาพประกอบ: ทุกคนมีเวลาเท่ากัน กดปุ่มค้างไว้เพื่อประมูล คนที่ปล่อยมือคนสุดท้ายชนะ แต่ทุกคนต้องจ่ายเวลาที่ตัวเองกดค้างไว้ กติกา 7 ข้อ ข้อละหนึ่งภาพ พร้อมความต่างของเกมเร็วกับกติกาแบบในรายการ และวิธีเล่นออนไลน์กับเพื่อน',
+    stepTitles: [
+      'ทุกคนมีเวลาเท่ากัน',
+      'กดค้างไว้ก่อน',
+      'กดนานเท่าไร ประมูลเท่านั้น',
+      'คนปล่อยมือคนสุดท้ายชนะ',
+      'ทุกคนต้องจ่าย',
+      'มองไม่เห็นคนอื่น',
+      'ครบ 19 รอบ นับเหรียญ',
+    ],
+    rulesAsShow: 'ด้านล่างใช้กติกาแบบในรายการ: คนละ {budget} นับถอยหลัง {countdown} วินาที ส่วนเกมเร็วต่างกันอย่างไร อยู่ท้ายหน้า',
+    rulesCta: 'กลับหน้าแรกไปเริ่มประมูล',
     onlineTitle: 'ชวนเพื่อน',
     onlineSub: 'ส่งลิงก์ให้เพื่อน ครบ 2–6 คนก็เริ่มประมูล',
     online: 'ออนไลน์',

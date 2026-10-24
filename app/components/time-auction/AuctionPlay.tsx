@@ -11,7 +11,7 @@ import {
 } from '@/games/time-auction/engine';
 import { assignPersonas, decideBid, type Difficulty } from '@/games/time-auction/ai';
 import { TEXT } from '@/games/time-auction/text';
-import AuctionRules from './AuctionRules';
+import { RulesStepsPaged } from './AuctionRulesSteps';
 import { TAU_BAND, TAU_PANEL } from './theme';
 import TauFrame from './TauFrame';
 import { playTau } from './sounds';
@@ -328,7 +328,8 @@ export default function AuctionPlay({ locale, mode, opponents, difficulty, seed,
 
       <Modal isOpen={helpOpen} onClose={() => setHelpOpen(false)} title={t.howTo} kicker={t.title}
         icon={GiRuleBook} band={TAU_BAND} panelClassName={TAU_PANEL}>
-        <AuctionRules mode={mode} />
+        {/* 跟規則頁同一份步驟，一次一步、可以左右滑；時間照這一局的模式。不放會離開對局的連結 */}
+        <RulesStepsPaged open={helpOpen} mode={mode} onDone={() => setHelpOpen(false)} />
       </Modal>
 
       <Modal isOpen={leave} onClose={() => setLeave(false)} title={t.leaveTitle} kicker={t.title}

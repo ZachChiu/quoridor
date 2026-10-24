@@ -2,7 +2,6 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { GiRuleBook } from 'react-icons/gi';
 import { LuCircleHelp, LuUsers } from 'react-icons/lu';
 import Modal from '@/components/Modal';
 import PlatformMark from '@/components/PlatformMark';
@@ -12,11 +11,10 @@ import { brandName } from '@/brand';
 import { useMessages } from '@/i18n/LocaleProvider';
 import { fill, useTextTable } from '@/i18n/gameText';
 import { localePath, type Locale } from '@/i18n/locales';
-import { TIME_AUCTION, trialOnline } from '@/i18n/routes';
+import { TIME_AUCTION, trialOnline, trialRules } from '@/i18n/routes';
 import { MAX_SEATS, ONLINE_MIN_SEATS, type Mode } from '@/games/time-auction/engine';
 import type { Difficulty } from '@/games/time-auction/ai';
 import { TEXT } from '@/games/time-auction/text';
-import AuctionRules from './AuctionRules';
 import { KEY_ART, TAU_BAND, TAU_CORNER, TAU_PANEL, roundBtn } from './theme';
 import TauFrame from './TauFrame';
 import TauWordmark from './TauWordmark';
@@ -39,6 +37,8 @@ const PLAYERS = Array.from({ length: MAX_SEATS - ONLINE_MIN_SEATS + 1 }, (_, i) 
  * 區段標題左右夾細線、選項是方角雙線的票（選中＝紅色版塊）、對手人數是打孔的拍品票、難度用羅馬數字、
  * 開拍是紅色鉛字版塊、怎麼玩是一隻指示手 ☞。桌機（lg）改成左右兩欄。
  *
+ * 怎麼玩（右上的問號與最下面那隻指示手）連到規則頁 /time-auction/rules（一條一張圖，2026-10-25），不再開彈窗；換頁不播轉場。
+ *
  * 最上面一列跟其他遊戲首頁一樣：左邊平台 logo（回平台首頁）、右邊說明、聯絡我們與語言。
  * 不用 PlatformCorner 釘在畫面角落 —— 那樣會疊在紅色牛津角框上（虎羊棋的教訓），所以放在框裡、跟內容走同一個流。
  * 聯絡與語言的圓鈕和彈窗換成這款的拍賣目錄（TAU_CORNER），不是 Wall Go 的奶油底黑鈕（Zach 10/24）。
@@ -56,9 +56,9 @@ export default function AuctionSetup({ locale, value, onChange, onStart }: {
   const t = useTextTable(TEXT);
   const m = useMessages();
   const router = useRouter();
-  const [helpOpen, setHelpOpen] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [players, setPlayers] = useState(2);
+  const rulesHref = localePath(locale, trialRules(TIME_AUCTION));
   const openRoom = () => router.push(`${localePath(locale, trialOnline(TIME_AUCTION))}#new=${value.mode}-${players}`);
   const levelNames = [m.solo.level1, m.solo.level2, m.solo.level3];
 
@@ -94,7 +94,7 @@ export default function AuctionSetup({ locale, value, onChange, onStart }: {
           <PlatformMark className="!size-11" />
         </Link>
         <div className="flex gap-1.5">
-          <button type="button" onClick={() => setHelpOpen(true)} aria-label={t.howTo} className={roundBtn}><LuCircleHelp aria-hidden="true" /></button>
+          <Link href={rulesHref} aria-label={t.howTo} title={t.howTo} className={roundBtn}><LuCircleHelp aria-hidden="true" /></Link>
           <ContactButton theme={TAU_CORNER} />
           <LanguageSwitcher theme={TAU_CORNER} />
         </div>
@@ -166,16 +166,11 @@ export default function AuctionSetup({ locale, value, onChange, onStart }: {
           <button type="button" onClick={() => setInviteOpen(true)} className="tau-lot flex h-12 w-full items-center justify-center gap-2 text-base font-black">
             <LuUsers aria-hidden="true" className="text-lg" />{t.onlineTitle}
           </button>
-          <button type="button" onClick={() => setHelpOpen(true)} className="tau-hand mx-auto text-sm">
+          <Link href={rulesHref} className="tau-hand mx-auto text-sm">
             {t.howTo}
-          </button>
+          </Link>
         </section>
       </main>
-
-      <Modal isOpen={helpOpen} onClose={() => setHelpOpen(false)} title={t.howTo} kicker={t.title}
-        icon={GiRuleBook} band={TAU_BAND} panelClassName={TAU_PANEL}>
-        <AuctionRules mode={value.mode} />
-      </Modal>
 
       <Modal isOpen={inviteOpen} onClose={() => setInviteOpen(false)} title={t.onlineTitle} kicker={t.title}
         icon={LuUsers} band={TAU_BAND} panelClassName={TAU_PANEL}
