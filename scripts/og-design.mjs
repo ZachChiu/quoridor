@@ -37,8 +37,9 @@ export const TONES = {
   replay: { bg: C.ink,    fg: C.cream, pill: C.cream,  pillFg: C.ink },
   // 平台首頁：深色外殼＋紅色膠囊（平台名）
   platform: { bg: C.ink, fg: C.cream, pill: C.brandRed, pillFg: '#ffffff' },
-  // Bagh Chal：陶橘（老虎）＋深墨（羊）
-  'bagh-chal': { bg: C.orange, fg: C.ink, pill: C.ink, pillFg: C.orange },
+  // Bagh Chal：虎棋自己的顏色（app/components/bagh-chal/palette.ts）—— 手工紙底、深褐字、橄欖綠膠囊。
+  // 10/25 之前是 Wall Go 磁磚的陶橘＋深墨（虎棋還沒有自己的識別時做的）。深褐在紙上 10:1、紙色在橄欖綠上 5.9:1
+  'bagh-chal': { bg: '#f1e6cd', fg: '#4a2616', pill: '#5b6620', pillFg: '#fbf4e1' },
 };
 
 // 格線細、牆粗 —— 兩者同粗的話牆會被讀成格線，盤面就只剩一張網格
@@ -127,9 +128,18 @@ export function fitTitleSize(lines, max = 92, min = 56, room = 500) {
  */
 /**
  * `art`（選填）：右邊放這張圖（data URI），取代 Wall Go 的棋盤 —— 其他遊戲的分享圖用自己的主視覺。
+ * `bg`（選填）：整張鋪滿的背景圖（data URI），字靠左壓在上面、右邊不放東西 —— 平台首頁那張七款卡片斜排的牆。
+ * `tone`：TONES 的代號，或直接給 { bg, fg, pill, pillFg }（scripts/og-games/ 各款自己帶）。
  */
-export function poster({ tone, copy, titleImages, art }) {
-  const t = TONES[tone];
+export function poster({ tone, copy, titleImages, art, bg }) {
+  const t = typeof tone === 'string' ? TONES[tone] : tone;
+  const text = textColumn(t, copy, titleImages);
+  if (bg) {
+    return div({ width: 1200, height: 630, background: t.bg, color: t.fg, alignItems: 'center', padding: '0 80px', fontFamily: 'OG', position: 'relative' }, [
+      { type: 'img', props: { src: bg, width: 1200, height: 630, style: { position: 'absolute', left: 0, top: 0 } } },
+      text,
+    ]);
+  }
   return div({
     width: 1200, height: 630, background: t.bg, color: t.fg,
     // 文字與棋盤當成一組置中，中間固定 72px。先前文字欄撐滿左半邊、標題又短，
@@ -137,30 +147,35 @@ export function poster({ tone, copy, titleImages, art }) {
     alignItems: 'center', justifyContent: 'center', gap: 72, padding: '0 70px',
     fontFamily: 'OG',
   }, [
-    div({ flexDirection: 'column', flexShrink: 1 }, [
-      div({
-        alignSelf: 'flex-start', background: t.pill, color: t.pillFg,
-        // 站名／節目名是品牌 —— 聊天室縮圖只有原圖一半大，26px 縮下來約 13px，
-        // 幾乎看不到「Wall Go」（Zach 回報）。放大到 36px、900 字重。
-        // 但不能換行：英文節目名「The Devil's Plan: Death Room」36px 會折成兩行。
-        // 照字寬估計，放得下就 36px，放不下就縮，最小 26px。
-        borderRadius: 999, padding: '12px 30px', fontSize: pillSize(copy.kicker), fontWeight: 900,
-        whiteSpace: 'nowrap', marginBottom: 30,
-      }, copy.kicker),
-      // 標題下面不放描述句（Zach：「描述我不喜歡，全部拔掉」）—— 圖只講是哪一頁
-      ...copy.title.map((line, i) => {
-        const marginBottom = i === copy.title.length - 1 ? 34 : 0;
-        const img = titleImages?.[i];
-        if (img) {
-          return { type: 'img', props: { src: img.src, width: img.width, height: img.height, style: { marginTop: -img.pad, marginBottom: marginBottom - img.pad } } };
-        }
-        // 韓文詞與詞之間有空格，要在空格換行（keep-all）；satori 預設逐字斷，
-        // 「벽바둑 규칙과 하는 법」會斷成「…하／는 법」。中文、日文沒有空格，不能套 —— 套了就完全不換行
-        const hangul = /[\uAC00-\uD7AF]/.test(line);
-        return div({ fontSize: copy.titleSize ?? titleSize(line), fontWeight: 900, lineHeight: 1.08, marginBottom, ...(hangul ? { wordBreak: 'keep-all' } : {}) }, line);
-      }),
-      div({ fontSize: 26, fontWeight: 900, opacity: 0.55 }, 'quoridorgame.com'),
-    ]),
+    text,
     art ? { type: 'img', props: { src: art, width: 408, height: 408, style: { borderRadius: 24 } } } : board(),
+  ]);
+}
+
+/** 左邊那一欄：膠囊（站名／節目名）、標題、網址 */
+function textColumn(t, copy, titleImages) {
+  return div({ flexDirection: 'column', flexShrink: 1 }, [
+    div({
+      alignSelf: 'flex-start', background: t.pill, color: t.pillFg,
+      // 站名／節目名是品牌 —— 聊天室縮圖只有原圖一半大，26px 縮下來約 13px，
+      // 幾乎看不到「Wall Go」（Zach 回報）。放大到 36px、900 字重。
+      // 但不能換行：英文節目名「The Devil's Plan: Death Room」36px 會折成兩行。
+      // 照字寬估計，放得下就 36px，放不下就縮，最小 26px。
+      borderRadius: 999, padding: '12px 30px', fontSize: pillSize(copy.kicker), fontWeight: 900,
+      whiteSpace: 'nowrap', marginBottom: 30,
+    }, copy.kicker),
+    // 標題下面不放描述句（Zach：「描述我不喜歡，全部拔掉」）—— 圖只講是哪一頁
+    ...copy.title.map((line, i) => {
+      const marginBottom = i === copy.title.length - 1 ? 34 : 0;
+      const img = titleImages?.[i];
+      if (img) {
+        return { type: 'img', props: { src: img.src, width: img.width, height: img.height, style: { marginTop: -img.pad, marginBottom: marginBottom - img.pad } } };
+      }
+      // 韓文詞與詞之間有空格，要在空格換行（keep-all）；satori 預設逐字斷，
+      // 「벽바둑 규칙과 하는 법」會斷成「…하／는 법」。中文、日文沒有空格，不能套 —— 套了就完全不換行
+      const hangul = /[\uAC00-\uD7AF]/.test(line);
+      return div({ fontSize: copy.titleSize ?? titleSize(line), fontWeight: 900, lineHeight: 1.08, marginBottom, ...(hangul ? { wordBreak: 'keep-all' } : {}) }, line);
+    }),
+    div({ fontSize: 26, fontWeight: 900, opacity: 0.55 }, 'quoridorgame.com'),
   ]);
 }

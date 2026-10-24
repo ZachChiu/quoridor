@@ -1,0 +1,42 @@
+{
+  "zh-TW": {
+    "kicker": "魔鬼的計謀：死亡密室",
+    "title": [
+      "牆壁圍棋",
+      "Wall Go"
+    ]
+  },
+  "en": {
+    "kicker": "The Devil's Plan: Death Room",
+    "title": [
+      "Wall Go"
+    ]
+  },
+  "ja": {
+    "kicker": "悪魔の計略 ～デビルズ・プラン～",
+    "title": [
+      "壁囲碁",
+      "Wall Go"
+    ]
+  },
+  "ko": {
+    "kicker": "데블스 플랜: 데스룸",
+    "title": [
+      "벽바둑",
+      "Wall Go"
+    ]
+  },
+  "zh-Hans": {
+    "kicker": "魔鬼的计谋：死亡密室",
+    "title": [
+      "墙壁围棋",
+      "Wall Go"
+    ]
+  },
+  "th": {
+    "kicker": "The Devil's Plan: Death Room",
+    "title": [
+      "Wall Go"
+    ]
+  }
+}
