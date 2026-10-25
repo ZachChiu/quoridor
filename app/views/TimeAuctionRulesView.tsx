@@ -43,7 +43,8 @@ export default function TimeAuctionRulesView({ locale }: { locale: Locale }) {
           <Link href={home} aria-label={t.home} title={t.home} className={`${roundBtn} justify-self-start`}>
             <LuHouse aria-hidden="true" />
           </Link>
-          <TauWordmark className="h-5 w-auto" />
+          {/* 320 寬的手機上 20px 高的字標（188px 寬）會壓到右邊的語言鈕：跟著畫面寬度縮 */}
+          <TauWordmark className="h-[min(1.25rem,5vw)] w-auto" />
           <div className="justify-self-end"><LanguageSwitcher theme={TAU_CORNER} /></div>
         </div>
       </header>
