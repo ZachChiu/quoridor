@@ -164,7 +164,7 @@ const zhHans: Messages = {
 
   ui: { next: '下一步', prev: '上一步', startGame: '开始游戏', close: '关闭', pickLevel: '选择难度' },
   error: { title: '出了点问题', body: '页面运行时出错了，刷新一下通常就好。联机对局的每一步都保存在房间里，刷新后可以接着下。', retry: '刷新', home: '返回首页' },
-  notFound: { title: '找不到这个页面', body: '网址可能输错了，或者那一局已经结束了。', home: '返回首页', rules: '看看怎么玩' },
+  notFound: { title: '找不到这个页面', body: '网址可能输错了，或者这个页面已经搬家了。', home: '返回首页', browse: '或者看看各季的游戏' },
   crumb: { home: '首页' },
   nav: { language: '语言', backHome: '返回首页' },
   credits: { prefix: '图标来自', middle: '（CC BY 3.0）和', suffix: '（ISC）' },

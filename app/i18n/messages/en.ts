@@ -158,7 +158,7 @@ const en: Messages = {
 
   ui: { next: 'Next', prev: 'Back', startGame: 'Start playing', close: 'Close', pickLevel: 'Pick a level' },
   error: { title: 'Something went wrong', body: 'The page hit an error. Reloading usually fixes it — online games pick up where you left off, because the room keeps every move.', retry: 'Reload', home: 'Back to home' },
-  notFound: { title: 'Page not found', body: 'That address may have a typo in it, or the game it pointed to has already finished.', home: 'Go home', rules: 'How to play' },
+  notFound: { title: 'Page not found', body: 'That address may have a typo in it, or the page has moved.', home: 'Go home', browse: 'Or browse the games by season' },
   crumb: { home: 'Home' },
   nav: { language: 'Language', backHome: 'Back to home' },
   credits: { prefix: 'Icons from', middle: '(CC BY 3.0) and', suffix: '(ISC)' },
