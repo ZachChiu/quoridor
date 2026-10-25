@@ -29,13 +29,3 @@ export const siteViewport: Viewport = {
   */
 };
 
-
-/**
- * 尼泊爾虎棋：頁面畫到狀態列底下（viewport-fit=cover），圖騰才鋪得到那一條。
- *
- * 10/25 圖騰改成鋪在頁面本身之後，Zach 用 iPhone 的 Safari 看，停在最上面時狀態列那條仍是純番紅花色：
- * 沒有 cover 時頁面從狀態列下緣開始，上面那條不屬於頁面，Safari 只塗得上一個顏色。
- * 只開在虎棋：別款的角落有 fixed 的圓鈕（PlatformCorner），蓋到狀態列底下要另外讓位。
- * 虎棋面板四周的留白加上 env(safe-area-inset-*)（BaghFrame），內容不會跑進狀態列、瀏海與底下的橫條。
- */
-export const baghViewport: Viewport = { ...siteViewport, viewportFit: 'cover' };
