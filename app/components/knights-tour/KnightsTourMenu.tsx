@@ -3,12 +3,14 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { GiChessKnight, GiStopwatch } from 'react-icons/gi';
 import { LuChevronRight } from 'react-icons/lu';
+import LocalName, { letteringOf } from '@/components/LocalName';
 import PlatformCorner from '@/components/PlatformCorner';
 import { useTextTable } from '@/i18n/gameText';
 import { localePath, type Locale } from '@/i18n/locales';
 import { KNIGHTS_TOUR, trialRules } from '@/i18n/routes';
 import { SIZES } from '@/games/knights-tour/engine';
 import { EULER_TOUR } from '@/games/knights-tour/euler';
+import { NAME_LETTERING } from '@/games/knights-tour/nameLettering';
 import { TEXT, type KnightsText } from '@/games/knights-tour/text';
 import KtFrame from './KtFrame';
 import SizePicker from './SizePicker';
@@ -33,6 +35,8 @@ export default function KnightsTourMenu({ locale, onShow, onPractice }: {
   onPractice: (n: number) => void;
 }) {
   const t = useTextTable<KnightsText>(TEXT);
+  // 中日韓泰的標題用同一種風格的字（宋體／明朝）寫成的字標，平台卡片用的是同一份；英文照舊用字型
+  const lettering = letteringOf(NAME_LETTERING, locale, t.title);
   const best = useBestTimes();
   const [sizeOpen, setSizeOpen] = useState(false);
   const records = ([['show', t.showMode], ...SIZES.map((n) => [practiceKey(n), sizeLabel(n)])] as [RecordKey, string][])
@@ -45,8 +49,15 @@ export default function KnightsTourMenu({ locale, onShow, onPractice }: {
       <PlatformCorner locale={locale} theme={KT_CORNER} offset="calc(clamp(6px, 1.6vw, 14px) + var(--kt-frame, 8px) + 6px)" />
       <main className="flex w-full max-w-[420px] flex-col items-center pt-10 lg:max-w-[900px] lg:flex-row lg:items-center lg:gap-14 lg:pt-0">
         <header className="flex w-full flex-col items-center text-center lg:flex-1">
-          <h1 className="flex flex-col items-center">
-            <span className="text-[clamp(2.1rem,6.5svh,3.5rem)] font-black leading-none tracking-[0.04em]">{t.title}</span>
+          <h1 className="flex w-full flex-col items-center">
+            {lettering ? (
+              <>
+                <span className="sr-only">{t.title}</span>
+                <LocalName data={lettering} className="justify-center text-[clamp(2.1rem,6.5svh,3.5rem)]" />
+              </>
+            ) : (
+              <span className="text-[clamp(2.1rem,6.5svh,3.5rem)] font-black leading-none tracking-[0.04em]">{t.title}</span>
+            )}
             {t.subtitle && <span className="kt-serif mt-1 text-[clamp(1.1rem,3svh,1.6rem)] italic">{t.subtitle}</span>}
           </h1>
           <p className="mt-[max(0.4rem,1.2svh)] text-sm font-bold opacity-80 md:text-base">{t.tagline}</p>
