@@ -1,5 +1,5 @@
 "use client"
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { GiPlayButton, GiRuleBook } from "react-icons/gi";
 import Modal from './Modal';
 import Button from './Button';
@@ -29,6 +29,8 @@ const RuleModal: React.FC = () => {
     setStep(Math.min(Math.max(n, 0), STEPS.length - 1));
   }, []);
   const isOpen = ruleModalState.isOpen;
+  // 掛在對局頁裡（PlayClient）：開著時離開對局，下次進來不該一進門就是打開的
+  useEffect(() => () => setRuleModalState((s) => (s.isOpen ? { ...s, isOpen: false } : s)), [setRuleModalState]);
   const last = step === STEPS.length - 1;
 
   const close = () => {

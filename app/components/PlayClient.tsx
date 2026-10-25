@@ -33,6 +33,7 @@ import FeedbackModal from "@/components/FeedbackModal";
 import BreakWallConfirmModal from "@/components/BreakWallConfirmModal";
 import SurrenderConfirmModal from "@/components/SurrenderConfirmModal";
 import LeaveConfirmModal from "@/components/LeaveConfirmModal";
+import RuleModal from "@/components/RuleModal";
 import { clearSavedGame, loadSavedGame, saveGame, savedGameKey } from "@/utils/savedGame";
 import { useIsoLayoutEffect } from "@/hook/useIsoLayoutEffect";
 
@@ -1398,6 +1399,10 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
           onClose={() => setShareModalOpen(false)}
         />
       )}
+
+      {/* 遊玩方式：只有對局頁打得開，所以掛在這裡、不掛在整站的 shell 上 ——
+          關著的 Modal 照樣排版，掛在每一頁就讓每一頁（各款遊戲的頁面也是）都下載全站的黑體（2026-10-25） */}
+      <RuleModal />
     </>
   );
 }
