@@ -41,6 +41,7 @@ CLAUDE.md 用 `@~/Desktop/projects/sites-data/protocol.md` 引用分工規則，
   - 搬家要的「舊→新對照表＋新 sitemap 清單」已做好：`docs/platform-launch/`。
   - 加到主畫面的 start_url 帶 `?utm_source=pwa&utm_medium=homescreen`（已做，canonical 不帶）；上正式站那天的【追蹤變更】要寫進去。
   - 它轉達的方向更新：AdSense 審查結果一出來，不管過或沒過，就上平台版＋尼泊爾虎棋（不再固定 11/16）；平台分支要隨時可上、跟 main 同步，回饋規則上線前提醒 Zach 先發布。**這是大腦筋轉述的，還沒跟 Zach 本人確認過**。
+- **10/25 07:34 Zach 在大腦筋那邊說「聽你的建議／推上去」**（我們用 `list_events` 讀過原話與前一則問句才動手）：平台首頁大卡片預設先放 Wall Go（`catalog.ts` 的 `HERO_DEFAULT`，上線 4 週大腦驗收後再定何時換回最新的）、`feat/platform-bagh` 推上 GitHub。五條遊戲分支不在那句話裡，沒推。
 
 ## 3. 分支與 beta 站
 
