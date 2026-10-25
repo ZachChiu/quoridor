@@ -25,8 +25,10 @@ export default function GameName({ game, locale, sub, swap }: {
 }) {
   const name = gameName(game, locale);
   const l = game.look?.lettering;
-  const english = name !== game.name && <span aria-hidden="true" className={`font-bold ${sub.font}`}>{game.name}</span>;
-  if (!l) return <>{name}{english && <span className="mt-[0.25em] block">{english}</span>}</>;
+  const english = name !== game.name;
+  // 字級要掛在換行的那一塊本身：包進一塊名字字級的 block，那一行就有名字那麼高，英文跟名字中間多空一截（10/25 Zach：「英文往上推太多」）
+  const en = (cls = '') => <span aria-hidden="true" className={`${cls} font-bold ${sub.font}`}>{game.name}</span>;
+  if (!l) return <>{name}{english && en('mt-[0.25em] block')}</>;
   const same = l.spellsName && name === game.name;
   const local = letteringOf(game.playable ? NAME_LETTERINGS[game.playable] : undefined, locale, name);
   const title = local ? <><span className="sr-only">{name}</span><LocalName data={local} /></> : name;
@@ -38,7 +40,7 @@ export default function GameName({ game, locale, sub, swap }: {
   if (same) return <><span className="sr-only">{name}</span><Mark src={l.mark} ratio={l.ratio} height={swap} /></>;
   const mark = <Mark src={l.mark} ratio={l.ratio} height={sub.mark} className={english && !l.spellsName ? 'min-w-0' : 'mt-[0.3em]'} />;
   return english && !l.spellsName
-    ? <>{title}<span className="mt-[0.3em] flex items-center gap-[0.35em]">{english}{mark}</span></>
+    ? <>{title}<span className="mt-[0.3em] flex items-center gap-[0.35em]">{en()}{mark}</span></>
     : <>{title}{mark}</>;
 }
 
