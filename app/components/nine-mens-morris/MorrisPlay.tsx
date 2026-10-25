@@ -1,7 +1,10 @@
 'use client';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { GiExitDoor } from 'react-icons/gi';
 import { LuArrowLeft, LuCircleHelp, LuHouse, LuRotateCcw, LuUndo2, LuVolume2, LuVolumeX } from 'react-icons/lu';
+import Modal from '@/components/Modal';
 import { ShareResultModal, useShareCard } from '@/components/ShareResultModal';
+import { useLeaveGuard } from '@/hook/useLeaveGuard';
 import { useSound } from '@/hook/useSound';
 import { useGameText, useMessages } from '@/i18n/LocaleProvider';
 import { fill, useTextTable } from '@/i18n/gameText';
@@ -13,14 +16,18 @@ import {
 } from '@/games/nine-mens-morris/engine';
 import { chooseTurn } from '@/games/nine-mens-morris/ai';
 import { TEXT } from '@/games/nine-mens-morris/text';
-import { MorrisBoard, PieceGlyph } from './MorrisBoard';
+import { MorrisBoard, PieceGlyph, type Pluck, type PluckStage } from './MorrisBoard';
 import MorrisFrame from './MorrisFrame';
 import { MorrisRulesModal } from './MorrisRules';
 import { clearSession, saveSession, type MorrisMode } from './session';
 import { drawMorrisCard } from './shareCard';
+import { PLUCK_MS } from './pluck';
 import { playMorris } from './sounds';
+import { MORRIS_BAND, MORRIS_PANEL } from './ui';
 
 const LEVELS = ['easy', 'normal', 'hard'] as const;
+
+const reducedMotion = () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /** 接回存著的棋譜；壞掉（被改過、規則對不上）就開新局，不畫一盤錯的棋 */
 function restore(moves: string, showRules: boolean): MorrisState {
@@ -74,12 +81,37 @@ export default function MorrisPlay({ locale, mode, showRules, moves = '', onMenu
   /** 電腦這一回合成三時預先算好的拿子，跟「拿子前的那個局面」綁在一起，局面一變（悔棋、重來）就作廢 */
   const plan = useRef<{ before: MorrisState; move: Move } | null>(null);
 
+  const h = game.history;
+  const last = h[h.length - 1];
+  const prev = h[h.length - 2];
+  // 被拿掉的是哪一方：拿子前那一手的子（成三的那一顆）還在盤上，它的對手就是被拿的
+  const removedSide = last?.kind === 'remove' && prev && prev.kind !== 'remove' && game.board[prev.to] ? other(sideOf(game.board[prev.to]!)) : undefined;
+  const removedCount = (s: Side) => PIECES - game.inHand[s] - countOnBoard(game.board, s);
+
+  // 拿子的手（MorrisBoard 播，pluck.ts）：剛好多一手、而且那一手是拿子才播 —— 悔棋、重來、重整接回、連線一次補好幾手都不播；
+  // 減少動態效果時不播（跟原本一樣直接不見、出現在下方）。
+  // 在 render 裡跟著棋譜長度調整（React 的「依 props 調整 state」），第一個畫面就知道要不要擋住操作、晚點開結算
+  const [pluck, setPluck] = useState<Pluck | null>(null);
+  const [pluckSeen, setPluckSeen] = useState(h.length);
+  if (pluckSeen !== h.length) {
+    setPluckSeen(h.length);
+    setPluck(h.length === pluckSeen + 1 && last?.kind === 'remove' && removedSide && !reducedMotion()
+      ? { plies: h.length, at: last.at, side: removedSide, slot: removedCount(removedSide) - 1 }
+      : null);
+  }
+  const plucking = pluck !== null;
+
   const human: Side | null = mode.kind === 'local' ? null : mode.human;
   const aiTurn = mode.kind === 'ai' && !game.winner && game.turn !== mode.human;
   // 連線時輪到對方：跟電腦的回合一樣不能動，狀態寫「輪到對方」
   const theirTurn = online && !game.winner && game.turn !== human;
+  // 下到一半要離開先問（房子鈕、換模式、返回鍵、電腦版關分頁；hook/useLeaveGuard.ts）。連線局一開打就算
+  const leave = useLeaveGuard({ live: !game.winner, inProgress: !game.winner && (online || h.length > 0) });
+  const toMenu = () => leave.request(onMenu);
   const locked = aiTurn || theirTurn;
-  const legal = useMemo(() => (locked ? [] : legalMoves(game)), [game, locked]);
+  // 拿子的手還在動：局面已經換人了，但手縮回去之前盤上不浮出可以放、可以走的提示（點了也不算，見 pick）
+  const still = locked || plucking;
+  const legal = useMemo(() => (still ? [] : legalMoves(game)), [game, still]);
 
   // 每一步都存起來，重新整理能接回；分出勝負就清掉。連線局不存（房間裡就有整串走法）
   useEffect(() => {
@@ -89,9 +121,10 @@ export default function MorrisPlay({ locale, mode, showRules, moves = '', onMenu
   }, [game, mode, showRules]);
 
   // 電腦的回合：讓出一格畫面再算（困難級約 0.2 秒），停一下也像在想。
-  // 成三的話先只落那一手，讓人看到連成的線，隔一下再拿子（下一輪 effect 用預先算好的那一顆）
+  // 成三的話先只落那一手，讓人看到連成的線，隔一下再拿子（下一輪 effect 用預先算好的那一顆）。
+  // 拿子的手還在動就先等（手縮回去才輪到電腦）
   useEffect(() => {
-    if (!aiTurn || mode.kind !== 'ai') return;
+    if (!aiTurn || mode.kind !== 'ai' || plucking) return;
     const id = window.setTimeout(() => {
       const planned = plan.current;
       plan.current = null;
@@ -103,25 +136,33 @@ export default function MorrisPlay({ locale, mode, showRules, moves = '', onMenu
       setGame(after);
     }, game.removing ? 750 : 450);
     return () => window.clearTimeout(id);
-  }, [aiTurn, game, mode]);
+  }, [aiTurn, game, mode, plucking]);
 
   // 音效（跟 Wall Go 共用開關）：剛好多一手才響 —— 悔棋、重來、重整接回、連線一次補好幾手都不響。九子棋自己的一套見 sounds.ts
+  // 有手來拿子時，拿子的聲音跟著手（捏起來、放下去，見 onPluck），之後的勝負、換你也等手縮回去
   const heard = useRef(game.history.length);
   useEffect(() => {
     const prev = heard.current;
     heard.current = game.history.length;
     if (game.history.length !== prev + 1) return;
     const mv = game.history[game.history.length - 1];
-    playMorris(mv.kind === 'remove' ? 'remove' : mv.kind === 'place' ? 'place' : NEIGHBORS[mv.from].includes(mv.to) ? 'move' : 'fly');
+    const byHand = mv.kind === 'remove' && pluck?.plies === game.history.length;
+    if (!byHand) playMorris(mv.kind === 'remove' ? 'remove' : mv.kind === 'place' ? 'place' : NEIGHBORS[mv.from].includes(mv.to) ? 'move' : 'fly');
     if (mv.kind !== 'remove' && lastMills(game).length) window.setTimeout(() => playMorris('mill'), 200);
     if (game.winner) {
       const result = game.winner === 'draw' ? 'draw' : !human || game.winner === human ? 'win' : 'lose';
-      window.setTimeout(() => playMorris(result), 700);
+      window.setTimeout(() => playMorris(result), byHand ? PLUCK_MS : 700);
     } else if (online && game.turn === human && !game.removing) {
       // 對方下完（成三的話是拿完子）、換你：分頁在背景也聽得到
-      window.setTimeout(() => playMorris('turn'), 450);
+      window.setTimeout(() => playMorris('turn'), byHand ? PLUCK_MS : 450);
     }
-  }, [game, human, online]);
+  }, [game, human, online, pluck]);
+
+  const onPluck = (stage: PluckStage) => {
+    if (stage === 'grip') playMorris('pluck');
+    else if (stage === 'drop') playMorris('lay');
+    else setPluck(null);
+  };
 
   const commit = (mv: Move) => {
     if (mode.kind === 'online') mode.onMove(mv);
@@ -131,7 +172,8 @@ export default function MorrisPlay({ locale, mode, showRules, moves = '', onMenu
 
   const movable = new Set(legal.flatMap((x) => (x.kind === 'move' ? [x.from] : [])));
   const pick = (p: Point) => {
-    if (locked || game.winner) return;
+    // 拿子的手還在動：盤上點了不算（手縮回去之前局面已經換人了，免得點到手底下、還沒看清楚的盤面）
+    if (locked || game.winner || plucking) return;
     if (game.removing) {
       const mv = legal.find((x) => x.kind === 'remove' && x.at === p);
       if (mv) commit(mv);
@@ -159,17 +201,11 @@ export default function MorrisPlay({ locale, mode, showRules, moves = '', onMenu
     else if (x.kind === 'move' && x.from === selected) targets.set(x.to, 'move');
   }
   // 電腦或對方在挑要拿哪一顆時，自己的子不搖（跟電腦下一樣，提示列寫「正在挑」）
-  const removableNow = new Set(locked ? [] : removable(game));
-  const h = game.history;
-  const last = h[h.length - 1];
-  const prev = h[h.length - 2];
+  const removableNow = new Set(still ? [] : removable(game));
   // 這一回合（成三的話是拿子之前那一手）放下或走動的子
   const step = last?.kind === 'remove' ? prev : last;
   const lastTo = step && step.kind !== 'remove' ? step.to : undefined;
   const lastFrom = step?.kind === 'move' ? step.from : undefined;
-  // 被拿掉的是哪一方：拿子前那一手的子（成三的那一顆）還在盤上，它的對手就是被拿的
-  const removedSide = last?.kind === 'remove' && prev && prev.kind !== 'remove' && game.board[prev.to] ? other(sideOf(game.board[prev.to]!)) : undefined;
-  const removedCount = (s: Side) => PIECES - game.inHand[s] - countOnBoard(game.board, s);
   const removed = { black: removedCount('black'), white: removedCount('white') };
   const mills = lastMills(game);
   // 成三了卻沒進入拿子（節目規則：對方的子全在線上）
@@ -216,7 +252,8 @@ export default function MorrisPlay({ locale, mode, showRules, moves = '', onMenu
     : selected !== null ? t.hint.moveSelected
     : phase === 'fly' ? t.hint.fly : t.hint.move;
 
-  const endOpen = !!game.winner && closedFor !== game;
+  // 最後一手是拿子：等手把子放好、縮回去才開結算
+  const endOpen = !!game.winner && closedFor !== game && !plucking;
   // 標題本來就是英文名（英文、泰文）就不重複寫兩次
   const brand = /^[ -~’]+$/.test(t.title) ? t.title : `${t.title} ${t.subtitle}`;
   const card = {
@@ -298,7 +335,7 @@ export default function MorrisPlay({ locale, mode, showRules, moves = '', onMenu
     <MorrisFrame className="items-center px-4 pb-4 pt-3 lg:flex-row lg:items-center lg:justify-center lg:gap-12 lg:py-10">
       {/* 手機的上方一排 */}
       <div className="flex w-full max-w-[520px] items-center gap-3 lg:hidden">
-        <button type="button" onClick={onMenu} aria-label={t.home} className={round}><LuHouse aria-hidden="true" /></button>
+        <button type="button" onClick={toMenu} aria-label={t.home} className={round}><LuHouse aria-hidden="true" /></button>
         <div className="min-w-0 flex-1">
           <h1 className="truncate text-lg font-black leading-tight">{t.title}</h1>
           <p className="text-xs font-bold leading-snug text-[#eee0c4]/80">{summary}</p>
@@ -315,8 +352,8 @@ export default function MorrisPlay({ locale, mode, showRules, moves = '', onMenu
       {/* 棋盤比寬多一段（下方放被拿掉的子，106:118），桌機照高度算寬 */}
       <div className="flex w-full max-w-[500px] flex-1 items-center py-2 lg:max-w-[min(580px,calc((100svh-5rem)*0.9))] lg:flex-none lg:py-0">
         <MorrisBoard board={game.board} targets={targets} movable={selected === null ? movable : new Set()} removable={removableNow}
-          selected={selected} lastTo={lastTo} lastFrom={lastFrom} mills={mills} removed={removed} last={last} removedSide={removedSide}
-          plies={h.length} idle={game.winner ? null : other(game.turn)} ghost={phase === 'place' && !locked ? game.turn : undefined}
+          selected={selected} lastTo={lastTo} lastFrom={lastFrom} mills={mills} removed={removed} last={last}
+          plies={h.length} pluck={pluck} onPluck={onPluck} idle={game.winner ? null : other(game.turn)} ghost={phase === 'place' && !still ? game.turn : undefined}
           labels={{ black: t.black, white: t.white, empty: t.empty, remove: t.phase.remove }} onPick={pick} />
       </div>
 
@@ -325,14 +362,14 @@ export default function MorrisPlay({ locale, mode, showRules, moves = '', onMenu
         <div className="grid w-full max-w-[520px] grid-cols-3 gap-2 lg:hidden">
           <button type="button" onClick={doUndo} disabled={!canUndo} className={stacked}><LuUndo2 aria-hidden="true" />{t.undo}</button>
           <button type="button" onClick={restart} className={stacked}><LuRotateCcw aria-hidden="true" />{t.restart}</button>
-          <button type="button" onClick={onMenu} className={stacked}><LuArrowLeft aria-hidden="true" />{t.menu}</button>
+          <button type="button" onClick={toMenu} className={stacked}><LuArrowLeft aria-hidden="true" />{t.menu}</button>
         </div>
       )}
 
       {/* 桌機的右邊一欄 */}
       <aside className="hidden w-[340px] shrink-0 flex-col gap-5 lg:flex">
         <div className="flex items-start gap-3">
-          <button type="button" onClick={onMenu} aria-label={t.home} className={round}><LuHouse aria-hidden="true" /></button>
+          <button type="button" onClick={toMenu} aria-label={t.home} className={round}><LuHouse aria-hidden="true" /></button>
           <div className="min-w-0 flex-1">
             <h1 className="text-3xl font-black leading-none">{t.title}</h1>
             <p className="mt-1.5 text-sm font-bold text-[#eee0c4]/80">{summary}</p>
@@ -347,11 +384,20 @@ export default function MorrisPlay({ locale, mode, showRules, moves = '', onMenu
             <button type="button" onClick={restart} className={wide}><LuRotateCcw aria-hidden="true" />{t.restart}</button>
           </>}
           <button type="button" onClick={() => setHelpOpen(true)} className={wide}><LuCircleHelp aria-hidden="true" />{t.rulesHeading}</button>
-          <button type="button" onClick={onMenu} className={wide}><LuArrowLeft aria-hidden="true" />{t.menu}</button>
+          <button type="button" onClick={toMenu} className={wide}><LuArrowLeft aria-hidden="true" />{t.menu}</button>
         </div>
       </aside>
 
       <MorrisRulesModal t={t} open={helpOpen} onClose={() => setHelpOpen(false)} showRules={showRules} />
+
+      <Modal isOpen={leave.open} onClose={leave.cancel} title={g.leave.heading} kicker={g.leave.kicker}
+        icon={GiExitDoor} band={MORRIS_BAND} panelClassName={MORRIS_PANEL}
+        footer={<>
+          <button type="button" onClick={leave.cancel} className="nmm-arch is-small flex-1 pb-3 pt-4 font-black">{g.leave.cancel}</button>
+          <button type="button" onClick={leave.confirm} className="nmm-arch is-small is-red flex-1 pb-3 pt-4 font-black">{g.leave.confirm}</button>
+        </>}>
+        <p className="text-sm leading-relaxed">{online ? g.leave.bodyOnline : g.leave.body}</p>
+      </Modal>
 
       {/* 結算就是分享圖（Zach 10/24：每款都要有結尾的可分享畫面），圖長得像這款自己的頁面（shareCard.ts）；
           關掉就留在終局的盤面上看，換模式在頁面上 */}
