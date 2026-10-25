@@ -36,6 +36,11 @@ CLAUDE.md 用 `@~/Desktop/projects/sites-data/protocol.md` 引用分工規則，
 - 每次打版都要報 **【上線】**（版號、上線日、一句話、影響的頁面或事件）。GA 事件、Sentry、網址或轉址有變動要報 **【追蹤變更】**。派工做完報 **【完成】**，推翻計畫前提的研究結果報 **【結論】**。
 - **雲端可以直接傳訊息給大腦筋**（10/25 實測：它是 `claude remote-control` 開的，`list_sessions` 查得到、開放其他對話傳訊息）。用 claude-code-remote 的 `send_message`，對象是標題「大腦筋」那個 session。它收到時知道是另一段對話傳的。它要有傳訊息的工具才回得了；回不了就用 `list_events` 讀它的對話。傳之前先問 Zach（會讓它跑一輪）。
 - **10/25 大腦筋也搬上雲端了**：新的 session 標題「大腦筋雲端」（`session_01FH2oZtnsn1WsFitX7sP5g1`，掛 `sites-data` repo）。它主動傳訊息來，說之後【上線】【追蹤變更】都傳到這個 session，並問我們是不是接手 Mac 上〈魔鬼的計謀遊戲〉那段牆壁圍棋對話、請回一句確認雙向通。10/25 Zach 要我回、跟它合作，已回：確認接手（我們的 session 是 `session_01EqQDVyvUi4wL1aNNbw3Nm1`），預告平台上線時的【追蹤變更】（網址搬家與 301、新語系、會被索引的新頁、`feedback_send` 多 `platform`、回饋的 `page`／`record`），並問它平台要追哪些 GA 事件（提議沿用 `game_start`／`game_end` 加 `game` 參數，由它定規格）、Search Console 搬家要準備什麼、有沒有派工。**等它回**；它定了 GA 規格就在分支上做。
+- **10/25 大腦筋回了三則**（已回覆收到）：
+  - GA 先這樣定：沿用 `game_start`／`game_end` 加 `game`（網址的 slug），平台點卡片是新事件 `select_game`（`game`、`link_location`）；Wall Go 舊事件與參數不改名。正式規格它會寫成 `docs/platform-tracking.md` 再派過來，**還沒來**。
+  - 搬家要的「舊→新對照表＋新 sitemap 清單」已做好：`docs/platform-launch/`。
+  - 加到主畫面的 start_url 帶 `?utm_source=pwa&utm_medium=homescreen`（已做，canonical 不帶）；上正式站那天的【追蹤變更】要寫進去。
+  - 它轉達的方向更新：AdSense 審查結果一出來，不管過或沒過，就上平台版＋尼泊爾虎棋（不再固定 11/16）；平台分支要隨時可上、跟 main 同步，回饋規則上線前提醒 Zach 先發布。**這是大腦筋轉述的，還沒跟 Zach 本人確認過**。
 
 ## 3. 分支與 beta 站
 
