@@ -226,7 +226,9 @@ nudge { by, at }          最近一次「催一下」
 
   - 騎士巡遊（`feat/game-knights-tour`）：原件是歐拉 1759 的數學版畫、18 世紀紅粉筆素描；最外緣銅版雙線框（`.kt-frame`）；主視覺 `plate.webp`，首頁 Fig. 1 是歐拉的走法（`euler.ts`，有測試）。favicon 是紙上一匹紅粉筆的騎士、外圈一道墨線（`public/icons/knights-tour.*`）。
     聲音是歐拉那個年代的書房（`knights-tour/sounds.ts`，配方寫在檔頭）：騎士每跳一步彈一聲大鍵琴、音高看落在第幾列（D 大調，整條路就是一段旋律），點錯是鵝毛筆刮紙、悔棋是擦紅粉筆、重來是翻一頁紙，走完琶音、封閉巡遊再加一段終止式顫音；聲音開關在對局右上（手機）／標題旁（桌機）。
-    騎士沿「日」字的弧線跳、紅粉筆跟著畫過去、走完步數照順序念一遍、閒著會望向落點（`motion.ts`）；結算就是分享圖（`shareCard.ts`：一張銅版圖版，走完的棋盤當 Fig.，節目挑戰三關都畫、寫用時；**只有 9:16**，10/24 Zach），右上角聯絡／語言是 `styles.ts` 的 `KT_CORNER`。
+    騎士本身畫在 `knightArt.ts`（10/25 Zach：「騎士希望可以好看一點」；三種給他挑 —— 銅版畫、墨色圓章、紅粉筆的馬，`KNIGHT_STYLE` 一個常數切換，預設銅版畫，挑完把另外兩種刪掉；對局的 SVG、規則圖與分享圖的 Canvas 讀同一份圖層），面向前進的方向（往左跳就左右翻）。
+    騎士沿「日」字真的跳過去（10/25 Zach：「也許可以有跳過去的動畫」）：蹲一下 → 沿先長邊後短邊的弧線拋起、空中拉長 → 落地壓扁再彈回，320ms、約 224ms 落地，腳下一團排線的影子跟著、紅粉筆跟著畫過去（`motion.ts`，只動 transform／opacity、關鍵影格事先算好）。
+    飛的那顆 `pointer-events:none`、下一下點擊直接打在格子上 —— **計時模式（`#show`）連點不能被動畫吃掉或拖慢**（90ms 連點 36 下實測全收）；減少動態效果時直接出現在新格。走完步數照順序念一遍、閒著會望向落點；結算就是分享圖（`shareCard.ts`：一張銅版圖版，走完的棋盤當 Fig.，節目挑戰三關都畫、寫用時；**只有 9:16**，10/24 Zach），右上角聯絡／語言是 `styles.ts` 的 `KT_CORNER`。
     對局左上的房子回這款的選單（換 hash，不播轉場；從選單進來的是 `history.back()`，直接開 `#show`／`#practice-N` 的是 `replaceState`），只有首頁左上的骰子去平台。不做連線版（一個人解的謎題，10/24 Zach）。
     **規則頁** `/knights-tour/rules`（10/25，`views/KnightsTourRulesView.tsx`）：第二張圖版（右下角 Tab. II.），六步各一張 Fig.（對局的 `TourBoard` 畫的靜態局面，`knights-tour/RulesSteps.tsx`，局面都由 engine 重播過、測試鎖住），最後出處、名字由來、回首頁選模式、署名；選單的「遊戲規則」連過去、不開彈窗。對局中的說明彈窗是同一份步驟、一次一步、可以左右滑（`useSwipePager`），頁碼是一排小壓痕方塊，不放出處與離開的連結。分享圖 `scripts/og-games/knights-tour.mjs`（紙底、紅粉筆膠囊、右邊是 plate.webp 切出來的棋盤 `scripts/og-art/knights-tour.webp`）。
 

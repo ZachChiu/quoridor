@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useLeaveGuard } from '@/hook/useLeaveGuard';
 import { LuCheck, LuCircleHelp, LuGrid3X3, LuLightbulb, LuRotateCcw, LuTimer, LuUndo2, LuX } from 'react-icons/lu';
 import { ShareResultModal } from '@/components/ShareResultModal';
 import { fill, useTextTable } from '@/i18n/gameText';
@@ -11,6 +12,7 @@ import { TEXT, type KnightsText } from '@/games/knights-tour/text';
 import GameFrame, { type Place } from './GameFrame';
 import HowToPlay from './HowToPlay';
 import SizePicker from './SizePicker';
+import LeaveModal from './LeaveModal';
 import TourBoard from './TourBoard';
 import { finaleMs } from './motion';
 import { practiceKey, saveBest, useBestTimes } from './records';
@@ -58,6 +60,8 @@ export default function PracticeGame({ n, onMenu, onSize }: { n: number; onMenu:
   }, [running]);
 
   const done = isComplete(tour);
+  // 走到一半回選單先問（房子鈕、返回鍵）；換大小不必問，但一樣先退掉守門（hook/useLeaveGuard.ts）
+  const leave = useLeaveGuard({ live: !done, inProgress: !done && tour.path.length > 0 });
   const stuck = isStuck(tour);
   // 每一步都問一次解題器。正常局面零點幾毫秒；最壞跑滿節點上限，桌機約 10ms
   const solvable = useMemo(() => (tour.path.length && !done ? verdict(tour) : null), [tour, done]);
@@ -211,7 +215,7 @@ export default function PracticeGame({ n, onMenu, onSize }: { n: number; onMenu:
   return (
     <>
       <GameFrame title={t.title} subtitle={`${t.practiceMode} · ${size}`}
-        menuLabel={t.menu} helpLabel={t.rules} onMenu={onMenu} onHelp={() => setHelpOpen(true)}
+        menuLabel={t.menu} helpLabel={t.rules} onMenu={() => leave.request(onMenu)} onHelp={() => setHelpOpen(true)}
         status={status} controls={controls}
         board={<TourBoard n={n} path={tour.path} targets={targets} dead={dead}
           hinted={hint?.kind === 'move' ? hint.square : null} failed={stuck ? tour.path[tour.path.length - 1] : null}
@@ -220,7 +224,8 @@ export default function PracticeGame({ n, onMenu, onSize }: { n: number; onMenu:
 
       <HowToPlay open={helpOpen} onClose={() => setHelpOpen(false)} />
       <SizePicker open={sizeOpen} current={n} onClose={() => setSizeOpen(false)}
-        onPick={(next) => { setSizeOpen(false); if (next === n) restart(); else onSize(next); }} />
+        onPick={(next) => { setSizeOpen(false); if (next === n) restart(); else leave.skip(() => onSize(next)); }} />
+      <LeaveModal leave={leave} />
 
       {/* 結算就是分享圖：一張銅版圖版（shareCard.ts）。關掉就停在走完的棋盤上，換大小在棋盤下面 */}
       <ShareResultModal isOpen={!!result?.open} onClose={() => setResult((r) => (r ? { ...r, open: false } : r))}
