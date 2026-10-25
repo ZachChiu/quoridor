@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Shell, baseMetadata } from '@/shell';
 import { siteViewport } from '@/viewport';
 import { getMessages } from '@/i18n';
+import { pwaMetadata } from '@/i18n/pwa';
 
 
 /**
@@ -18,6 +19,7 @@ export const metadata: Metadata = {
   },
   description: getMessages('zh-TW').meta.description,
   keywords: [...getMessages('zh-TW').meta.keywords],
+  ...pwaMetadata('zh-TW'),
 };
 
 export default function DefaultLayout({ children }: { children: React.ReactNode }) {

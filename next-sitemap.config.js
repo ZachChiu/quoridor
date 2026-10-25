@@ -40,5 +40,7 @@ module.exports = {
     '/match',
     ...LEGACY,
     '/404',
+    // 加到主畫面的設定檔（i18n/pwa.ts），不是頁面
+    '/pwa/*',
   ],
 };

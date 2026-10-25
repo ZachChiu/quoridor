@@ -3,7 +3,7 @@ import { FAQ_TEXT } from './content/faq';
 import { localePath, type Locale } from './locales';
 import { wallGo } from './routes';
 import { brandName } from '@/brand';
-import { ogImageUrl, OG_SIZE } from './metadata';
+import { ogImageUrl, OG_SIZE, platformDescription } from './metadata';
 
 const SITE = process.env.SITE_URL || 'https://quoridorgame.com';
 
@@ -150,7 +150,7 @@ export function pageGraph(locale: Locale, kind: PageKind) {
           '@id': `${pageUrl}#webpage`,
           url: pageUrl,
           name: `${t.platform.metaTitle} | ${brandName(locale)}`,
-          description: t.platform.metaDescription,
+          description: platformDescription(locale),
           isPartOf: { '@id': id('website') },
           about: { '@id': id('series') },
           hasPart: { '@id': id('game') },
