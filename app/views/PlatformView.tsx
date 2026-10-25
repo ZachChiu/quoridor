@@ -130,7 +130,7 @@ function GameHero({ game, locale }: { game: CatalogGame; locale: Locale }) {
   const blurb = BLURBS[game.playable!]?.[locale];
   const copy = wallGoGame ? [p.heroMeta, p.heroBody] : game.playable === BAGH_CHAL ? [p.baghHeroMeta, p.baghHeroBody] : blurb ? [blurb.meta, blurb.body] : null;
   // Wall Go 的標題照舊是首頁那兩行（中文名＋Wall Go）；規則頁頂部是森綠，進規則頁就擴散森綠
-  const title = wallGoGame ? <>{t.home.titleLine1}{t.home.titleLine2 && <><br />{t.home.titleLine2}</>}</> : <GameName game={game} locale={locale} sub={{ mark: 0.42, font: 'text-[0.42em]' }} swap={0.9} />;
+  const title = wallGoGame ? <>{t.home.titleLine1}{t.home.titleLine2 && <><br />{t.home.titleLine2}</>}</> : <GameName game={game} locale={locale} sub={{ mark: 0.42, font: 'text-[0.5em]' }} swap={0.9} />;
   const rulesWipe = wallGoGame ? RULES_GREEN : look.wipe;
   return (
     <section data-slide={game.playable} className={`${HERO} flex-col bg-black md:flex-row md:items-end`}>
