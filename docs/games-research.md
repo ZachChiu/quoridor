@@ -1,6 +1,45 @@
 # 《魔鬼的計謀》S1（2023）與 S2《死亡密室》（2025）全遊戲調查
 
 > 調查日期：2026-10-19。目的：決定 quoridorgame.com 接下來要做哪些網頁遊戲，以及哪些遊戲有傳統／公有領域的原版可以做。
+> 2026-10-25 補上〈目前進度〉：哪些做了、下一批是哪些。後面的總表、排名、「直譯」都是 10/19 當時的判斷，沒有改。
+
+## 目前進度（2026-10-25）
+
+站上用的中文名在 `app/games/catalog.ts`，跟本文的直譯不一定一樣：Knight's Tour＝騎士巡遊、Balance Mancala＝平衡播棋、Blind Gomoku＝盲五子棋、Hexagon＝六角數字盤、Scale Game＝托盤天平、Equation Pyramid＝方程式金字塔、Triple Dice＝三顆骰子相同點數、Question and Truth＝提問與真相、Remove One＝移除一個、Big Small＝大或小。
+
+**已經做了（7 款）**
+
+| 遊戲 | 網址 | 在哪 | 連線 | 研究裡的排名 |
+|---|---|---|---|---|
+| 牆壁圍棋 Wall Go | `/wall-go/`（正式站目前在根網址） | 正式站 v26.10.9 | ✓ | — |
+| 尼泊爾虎棋 Bagh Chal | `/bagh-chal/` | `feat/platform-bagh`、beta | ✓（`baghRooms`） | 本文第 1 名 |
+| 時間拍賣 Time Auction | `/time-auction/` | `feat/game-time-auction`、beta | ✓（`auctionRooms`，有快速局） | 本文第 2 名、S2 細查第 1 名 |
+| 平衡播棋 Balance Mancala | `/balance-mancala/` | `feat/game-balance-mancala`、beta | ✓（`turnRooms`，4–7 人全真人） | 本文第 3 名、S2 細查第 2 名 |
+| 騎士巡遊 Knight's Tour | `/knights-tour/` | `feat/game-knights-tour`、beta | 不做（單人謎題，10/24 Zach） | 本文第 5 名、S2 細查第 3 名 |
+| 盲五子棋 Blind Gomoku | `/blind-gomoku/` | `feat/game-blind-gomoku`、beta | ✓（`turnRooms`） | S1 細查第 1 名 |
+| 九子棋 Nine Men's Morris | `/nine-mens-morris/` | `feat/game-nine-mens-morris`、beta | ✓（`turnRooms`） | S1 細查第 2 名 |
+
+- 每款都有規則頁 `/<遊戲>/rules`、自己的分享圖與 favicon，平台上的卡片要等平台上線後一款一款開。
+- 平台（骰子惡魔）等 AdSense 審查過（約 11/16 之後）才會併進正式站，見 `docs/handoff/README.md`。
+- 各款還沒做完的：平衡播棋的電腦補位與再來一局、九子棋拿子提示的文字。
+
+**下一批（研究推薦、還沒做），照建議順序**
+
+| 遊戲 | 工作量 | 理由（出處） |
+|---|---|---|
+| 六角數字盤 Hexagon | 小 | S1 細查第 3 名。單人、可做每日一題；規則和節目 10 盤的實際數字都有，可以直接寫測試；沒找到照節目規則做的網頁版 |
+| 方程式金字塔 Equation Pyramid | 小 | 本文第 4 名。骨架跟 Hexagon 幾乎一樣，可以一起做；但已有 iOS app 與十幾個粉絲版（S2 細查） |
+| 三顆骰子相同點數 Triple Dice | 中 | S2 細查的第 4 順位：4 人固定、好玩、競爭少；要做蒙地卡羅電腦與公平擲骰 |
+| 提問與真相 Question and Truth | 中 | 先做單人版（電腦藏牌、你來問、比題數），完整對戰之後再說 |
+| 移除一個 Remove One、大或小 Big Small | 小 | 小而完整，要先做「同時秘密出牌」的共用做法（時間拍賣的連線最後用的是伺服器時間戳，不是密封值，所以這個共用模組還沒有） |
+| 托盤天平 Scale Game | 小 | 推理謎題，可以當 Hexagon 之後的第二個每日題 |
+
+**之後再說**：鋪草皮遊戲（手機上 96 塊拼圖難操作）、四人三子棋（要先做 4 人房）、疑心下注（改做傳統大話骰，市場擠）、撲克精準玩家與數學式比大小（撲克類、賭博觀感，後者英文名已被商業桌遊用掉）、秘密數字（要改成單人推理題）。
+
+**不建議做**：病毒遊戲、規則競賽、腐敗警察（要很多人或主持）；合作拼圖、找鑰匙、蒙太奇、記憶碎片（靠實體道具或大量素材）；寶藏島、未知、萬聖節怪物（節目公開的盤面不完整）；動物園、單字塔；骰子撲克（沒打到、規則沒公開）。
+
+**還沒研究**：第 3 季《Dead Again》（2026-11-10 播出），播出後再查。
+
 
 ## 先講資料可信度
 
@@ -62,6 +101,8 @@
 ---
 
 ## 推薦優先做（前 5 名）
+
+> 10/25：前 5 名除了 Equation Pyramid 都做了，見上方〈目前進度〉。
 
 | 名次 | 遊戲 | 為什麼 |
 |---|---|---|
