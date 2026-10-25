@@ -52,10 +52,12 @@ const toneOf = (page) => GAMES[page]?.tone ?? TONES[page];
 
 /**
  * 右邊放各遊戲自己的主視覺（沒有的頁面畫 Wall Go 的棋盤）。點陣圖先裁成正方形、轉 PNG（satori 不吃 webp）。
- * 尼泊爾虎棋 10/25 從舊的 key-art.svg（舊版棋盤）換成平台大卡片那張方圖：遊戲裡真的棋盤與圓牌（Zach：「虎棋的 meta 圖也是舊的」）
+ * 尼泊爾虎棋 10/25 從舊的 key-art.svg（舊版棋盤）換成遊戲裡真的棋盤與圓牌（Zach：「虎棋的 meta 圖也是舊的」）；
+ * 先用平台大卡片那張方圖，棋盤是斜的，同一天改成擺正的（Zach：「棋盤不能擺正嗎」）——
+ * 同一盤局面、同一塊圖騰底，scripts/og-art/bagh-chal.webp（不部署）
  */
 const ART = {
-  'bagh-chal': 'public/games/bagh-chal/hero-square.webp',
+  'bagh-chal': 'scripts/og-art/bagh-chal.webp',
   ...Object.fromEntries(Object.values(GAMES).map((g) => [g.page, g.art])),
 };
 /** 整張鋪滿的背景：平台首頁是七款卡片斜排的牆（scripts/og-art/collage.mjs 產生，要在七款都合進來的 beta 上跑） */

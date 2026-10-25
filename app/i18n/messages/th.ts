@@ -40,7 +40,7 @@ const th: Messages = {
     ogTitle: "รวมเกมใน The Devil's Plan",
     ogDescription: 'ทุกเกมในรายการ เกมที่ทำเสร็จแล้วเล่นได้เลย ไม่ต้องดาวน์โหลด ไม่ต้องสมัครสมาชิก',
     heading: "เกมใน The Devil's Plan",
-    ogLines: ['เกมใน', "The Devil's Plan"],
+    ogLines: ['เล่นเกมจาก', "The Devil's Plan"],
     heroBadge: 'เล่นได้เลย',
     heroMeta: 'ซีซัน 2 Death Room · 2–3 คน · ไม่ต้องดาวน์โหลด',
     heroBody: 'กระดาน 7×7 แต่ละตาเดินหมากหนึ่งตัวแล้วสร้างกำแพงหนึ่งด้านเพื่อล้อมพื้นที่ เล่นกับคอมพิวเตอร์ หรือเปิดห้องแล้วส่งลิงก์ให้เพื่อน',
