@@ -3,7 +3,8 @@
  *
  * 遊戲名用 Netflix 的英文官方名稱（來源：Wikipedia〈The Devil's Plan〉，2026-10-18 查）。
  * 繁中、簡中是節目播出時媒體一致的寫法（2026-10-23 查證，來源與可信度見 app/i18n/glossary.md 的〈遊戲名〉）；
- * 其他語系還沒查證，**不要自己翻**（韓文「벽바둑」那次的教訓）—— 查證後先寫進 glossary，再在這裡補 names。
+ * 其他語系沒查證過的**不要自己翻**（韓文「벽바둑」那次的教訓）—— 查證後先寫進 glossary，再在這裡補 names。
+ * 日文、韓文 2026-10-25 查證過的一批集中在檔尾的 LOCAL_NAMES（為什麼不寫在各行見那裡）；泰文照 glossary 保留英文。
  * 第 1 季的 Cooperative Puzzle 繁中說法分歧（拼圖遊戲／合作拼圖／七巧板拼圖），先留英文。
  *
  * playable：已經做成線上版的遊戲，值是站內路徑（常數在 i18n/routes.ts）；look 是它在平台上的卡片長相（各遊戲自己的識別）。
@@ -74,7 +75,7 @@ export const SEASONS: Season[] = [
         // 底色是 Wall Go 自己的頁面底色 #e8e1d7（10/25 Zach：為什麼要用藍底）；轉場也擴散這個顏色，跟虎羊棋擴散它的紙色一樣
         look: { card: 'bg-[#e8e1d7] text-tile-ink', wipe: '#e8e1d7', art: '/games/wall-go/card.svg', hero: '/games/wall-go/hero.svg', heroSquare: '/games/wall-go/hero-square.svg', cover: true, rules: routes.wallGo('/rules') } },
       // 中文用節目的「尼泊爾虎棋」（Zach 10/24：命名用 Netflix 版本）、韓文「바그찰」是節目 RULE 卡上的寫法（見 glossary）
-      { name: 'Bagh Chal', names: { 'zh-TW': '尼泊爾虎棋', 'zh-Hans': '尼泊尔虎棋', ko: '바그찰' }, playable: routes.BAGH_CHAL,
+      { name: 'Bagh Chal', names: { 'zh-TW': '尼泊爾虎棋', 'zh-Hans': '尼泊尔虎棋', ja: 'バグチャル', ko: '바그찰' }, playable: routes.BAGH_CHAL,
         look: { card: 'bg-[#e3a43c] text-tile-ink', wipe: '#f1e6cd', art: '/games/bagh-chal/key-art.webp', hero: '/games/bagh-chal/hero.webp', heroSquare: '/games/bagh-chal/hero-square.webp', cover: true, doors: true, rules: routes.baghChal('/rules') } },
       { name: 'Crooked Cops', names: { 'zh-TW': '腐敗警察', 'zh-Hans': '腐败警察' } },
       { name: 'Remove One', names: { 'zh-TW': '移除一個', 'zh-Hans': '移除一个' } },
@@ -115,8 +116,44 @@ export const SEASONS: Season[] = [
   },
 ];
 
+/**
+ * 日文、韓文的遊戲名（2026-10-25 查證，來源與信心見 glossary〈遊戲名〉）。
+ * 不寫進上面各款那一行的 names：五款能玩的那幾行由各自的 feat/game-<id> 分支改，旁邊的行一動，依序合併就會衝突。
+ * 韓文是節目原名，只收兩個以上來源一致的；只有 namu 一個來源的（보물섬、第 1 季大部分）先留英文。
+ * 日文 Netflix 字幕看不到，收的是日本觀眾一致的寫法；タイムオークション、バランスマンカラ、ブラインド五目並べ 是中等信心（粉絲另有意譯派）。
+ */
+const LOCAL_NAMES: Partial<Record<string, Record<string, string>>> = {
+  ja: {
+    'Time Auction': 'タイムオークション',
+    'Balance Mancala': 'バランスマンカラ',
+    "Knight's Tour": 'ナイトツアー',
+    'Blind Gomoku': 'ブラインド五目並べ',
+    "Nine Men's Morris": 'ナイン・メンズ・モリス',
+  },
+  ko: {
+    'Crooked Cops': '부패 경찰',
+    'Remove One': '하나 빼기',
+    Unknown: '언노운',
+    'Time Auction': '시간 경매',
+    'Halloween Monster': '핼러윈 몬스터',
+    "Sniper Hold'em": '저격 홀덤',
+    'Triple Dice': '트리플 다이스',
+    'Balance Mancala': '균형의 만칼라',
+    'Doubt and Bet': '의심 베팅',
+    'Equation Pyramid': '수식 피라미드',
+    'Big Small': '빅 스몰',
+    'Question and Truth': '질문과 진실',
+    "Knight's Tour": '기사의 여행',
+    'Equation High-Low': '수식 하이 로우',
+    'Four Player Three in a Row': '4인 3목',
+    'Blind Gomoku': '블라인드 오목',
+    "Nine Men's Morris": '나인 멘스 모리스',
+    Hexagon: '헥사곤',
+  },
+};
+
 export function gameName(game: CatalogGame, locale: string): string {
-  return game.names?.[locale] ?? game.name;
+  return game.names?.[locale] ?? LOCAL_NAMES[locale]?.[game.name] ?? game.name;
 }
 
 /** 已經能玩的遊戲（平台首頁最上面那一排），新的一季排前面 */
