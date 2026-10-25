@@ -35,7 +35,8 @@ const zhTW = {
   platform: {
     /** 搜尋結果的標題。Wall Go 擺最前面（10/25 大腦）：搬家前九成的搜尋點擊落在 `/`，Google 認得 `/wall-go/` 之前要靠這裡接住 */
     metaTitle: '牆壁圍棋 Wall Go 與魔鬼的計謀遊戲線上玩',
-    metaDescription: 'Netflix 韓綜《魔鬼的計謀》每一季的遊戲整理：第 1 季、第 2 季《死亡密室》與即將上線的第 3 季。能玩的直接在瀏覽器開打，免下載、免註冊，目前可以玩牆壁圍棋 Wall Go。',
+    /** `{games}` 換成上線中能玩的遊戲（metadata.ts 的 platformDescription，Wall Go 一定第一個），每上一款自己補上 */
+    metaDescription: 'Netflix 韓綜《魔鬼的計謀》每一季的遊戲整理：第 1 季、第 2 季《死亡密室》與即將上線的第 3 季。能玩的直接在瀏覽器開打，免下載、免註冊，目前可以玩{games}。',
     ogTitle: '魔鬼的計謀 遊戲整理與線上玩',
     ogDescription: '節目裡的每一款遊戲，能玩的直接開打。免下載、免註冊。',
     heading: '《魔鬼的計謀》遊戲',
