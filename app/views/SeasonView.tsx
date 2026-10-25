@@ -6,7 +6,7 @@ import PlatformContact from '@/components/platform/PlatformContact';
 import GameCard from '@/components/platform/GameCard';
 import PlatformMark from '@/components/PlatformMark';
 import { brandName } from '@/brand';
-import { seasonById } from '@/games/catalog';
+import { playableFirst, seasonById } from '@/games/catalog';
 import { getMessages } from '@/i18n';
 import { localePath, type Locale } from '@/i18n/locales';
 import { SEASON_NUMBERS, season as seasonPath, type SeasonNumber } from '@/i18n/routes';
@@ -15,7 +15,8 @@ import { SEASON_NUMBERS, season as seasonPath, type SeasonNumber } from '@/i18n/
  * 季目錄頁（`/season/1`、`/season/2`、`/season/3`）：那一季的全部遊戲排成格子（2026-10-25 Zach：
  * 「點進每一季可以看遊戲的目錄」，Netflix 的分類頁）。外殼跟平台首頁同一套（深色＋紅、同一個頁首頁尾）。
  *
- * 照節目播出順序排，不把能玩的提到前面 —— 這一頁是「這一季有哪些遊戲」，首頁那一排才是「現在能玩什麼」。
+ * 能玩的排前面、其他照節目播出順序（跟首頁各季那排同一個 `playableFirst`）。原本整頁照播出順序，
+ * 能玩的散在格子裡，10/25 Zach：「可以玩的遊戲要往上面排」。
  * 上方一排三顆切換各季（目前這季實心），手機上也點得到，不必回首頁。按鈕只寫「第 N 季」：
  * 原本寫完整季名，手機上擠成兩行、選中那顆又跟底下的大標題同一句（10/25 Zach 從三種排法挑了 A；
  * 另兩種是標題下一條分頁線、標題本身當選單）。
@@ -72,7 +73,7 @@ export default function SeasonView({ locale, n }: { locale: Locale; n: SeasonNum
           </div>
         ) : (
           <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-            {s.games.map((game) => (
+            {playableFirst(s.games).map((game) => (
               <li key={game.name}>
                 <GameCard game={game} locale={locale} playable={p.playable} guide={p.guide} width="w-full" />
               </li>
