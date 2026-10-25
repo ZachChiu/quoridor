@@ -9,9 +9,10 @@ const PICK = `try{var r=document.currentScript.parentElement,k=localStorage.getI
 
 /**
  * 平台首頁的大卡片放哪一款（10/24 Zach：預設放最新上線的；使用者點過哪一款 —— 要真的點過 —— 就換成那一款）。
+ * 預設那款是 catalog 的 HERO_DEFAULT：10/25 起暫時是 Wall Go（搬家期間接住搜尋 Wall Go 進來的人），之後換回最新上線的。
  *
  * 每一款能玩的遊戲都有一張大卡片在 HTML 裡，外層的 `data-hero-pick` 決定露出哪一張（CSS 在 PlatformView）。
- * 靜態 HTML 是最新上線的那張；這裡在畫面出來之前換成上次點的：
+ * 靜態 HTML 是預設那張；這裡在畫面出來之前換成上次點的：
  * - 整頁載入：內嵌 script 在解析到這裡時就換掉（JS 還沒下載，effect 擋不住閃一下）—— 跟 SoloClient 隱藏難度選單同一招
  * - 站內換頁回到平台（內嵌 script 不會再跑）：layout effect 再換一次
  * 「點過」只算真的按下去的那一下（click，滑鼠或鍵盤都會觸發），滑過、預載不算；記的是那一款的站內路徑（卡片上的 `data-game`）。

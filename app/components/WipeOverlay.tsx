@@ -80,6 +80,34 @@ interface Props {
 /** 沒有 `from` 時的預設圓直徑。 */
 const BASE = 80;
 
+/** 捲軸佔不佔版面（量一次就記住）。手機、macOS 預設是浮在上面的，不佔 */
+let overlayScrollbars: boolean | undefined;
+
+/**
+ * 轉場層上下各往外多蓋幾 px。
+ *
+ * iOS 26 的 Safari 把頁面一路畫到狀態列與底下工具列的後面（毛玻璃底下看得到），
+ * 但 scrollY／innerHeight 只算中間那一段 —— 只蓋那一段的話，木窗門關好了，
+ * 狀態列底下還露著平台的季標題、工具列底下是舊頁面（10/25 Zach 回報）。
+ * 那兩條有多高量不到，所以照 Modal 遮罩（`.cover-viewport`）的做法多蓋一大截。
+ *
+ * 這層是 absolute，往下多蓋會把短的頁面撐長。播放中頁面不能捲（TransitionContext），
+ * 撐長的那一截捲不到；但捲軸會佔版面的瀏覽器（Windows 的桌機）會多冒出一條捲軸、
+ * 版面跳一下 —— 那些瀏覽器也沒有蓋在頁面上的工具列，所以只在捲軸不佔版面時多蓋。
+ * 上下一樣多，畫面正中央才會落在轉場層的正中央（木窗門的透視、大標都以它為準）。
+ */
+function bleedOf(): number {
+  if (typeof window === 'undefined') return 0;
+  if (overlayScrollbars === undefined) {
+    const probe = document.createElement('div');
+    probe.style.cssText = 'position:absolute;top:-300px;width:100px;height:100px;overflow:scroll;visibility:hidden';
+    document.body.appendChild(probe);
+    overlayScrollbars = probe.offsetWidth === probe.clientWidth;
+    probe.remove();
+  }
+  return overlayScrollbars ? Math.round(Math.max(window.innerHeight * 0.25, 192)) : 0;
+}
+
 const boxOf = (wipe: Wipe) => ({
   width: wipe.from?.width ?? BASE,
   height: wipe.from?.height ?? BASE,
@@ -102,12 +130,14 @@ const boxOf = (wipe: Wipe) => ({
  *  →  s ≥ √( (2dx/w)² + (2dy/h)² )
  *
  * 正方形起點時會退化成 `2·hypot(dx,dy)/w`，也就是圓要碰到對角。
+ *
+ * 上下多蓋的那一截（bleedOf）也要蓋到，所以 dy 加上它。
  */
 function coverScale(wipe: Wipe): number {
   if (typeof window === 'undefined') return 40;
   const { width, height } = boxOf(wipe);
   const dx = Math.max(wipe.x, window.innerWidth - wipe.x);
-  const dy = Math.max(wipe.y, window.innerHeight - wipe.y);
+  const dy = Math.max(wipe.y, window.innerHeight - wipe.y) + bleedOf();
   return Math.hypot((2 * dx) / width, (2 * dy) / height) * 1.04;
 }
 
@@ -145,12 +175,15 @@ const WipeOverlay: React.FC<Props> = ({ phase, wipe, onDone }) => {
       高度也用量的，不用 CSS 單位：工具列收起來時 dvh 在 iPhone 的 Chrome 上
       不會跟著變大（Zach 回報 Modal 遮罩露底，同一個原因）。innerHeight 與
       visualViewport 是瀏覽器「現在」回報的可視高度，取大的那個。
-      不能像 Modal 遮罩那樣往外多蓋 —— 這層是 absolute，多蓋會把頁面撐長。
+      上下再各多蓋 bleed（見 bleedOf）。裡面的東西照「看得到的那一段」排版的，
+      用 --bleed 退回來（木窗門的雕花、各款進場的 Scene、色塊的起點）。
     */
     const h = Math.max(window.innerHeight, window.visualViewport?.height ?? 0);
-    root.style.top = `${window.scrollY}px`;
+    const bleed = bleedOf();
+    root.style.top = `${window.scrollY - bleed}px`;
     root.style.bottom = 'auto';
-    root.style.height = `${Math.ceil(h)}px`;
+    root.style.height = `${Math.ceil(h) + 2 * bleed}px`;
+    root.style.setProperty('--bleed', `${bleed}px`);
   }, [phase, wipe]);
 
   useEffect(() => {
@@ -300,7 +333,12 @@ const WipeOverlay: React.FC<Props> = ({ phase, wipe, onDone }) => {
     const Scene = wipe.scene ? entranceOf(wipe.scene)?.Scene : undefined;
     return (
       <div ref={rootRef} className="cover-viewport z-[60] overflow-hidden" style={{ position: 'absolute' }} aria-hidden="true">
-        {Scene && <Scene phase={phase} />}
+        {/* Scene 照看得到的那一段排版（跟多蓋之前一樣大）；要蓋到上下多出來的那截，由各款自己用 --bleed 往外長 */}
+        {Scene && (
+          <div className="absolute inset-x-0 inset-y-[var(--bleed,0px)]">
+            <Scene phase={phase} />
+          </div>
+        )}
       </div>
     );
   }
@@ -309,10 +347,10 @@ const WipeOverlay: React.FC<Props> = ({ phase, wipe, onDone }) => {
   const s = coverScale(wipe);
   const Icon = wipe.icon;
 
-  /** 起點方塊在畫面上的位置與尺寸。圖示層是它的子元素，用 inset-0 貼齊。 */
+  /** 起點方塊在畫面上的位置與尺寸。圖示層是它的子元素，用 inset-0 貼齊。轉場層上緣比畫面高 --bleed，往下補回來 */
   const seat: React.CSSProperties = {
     left: wipe.x - box.width / 2,
-    top: wipe.y - box.height / 2,
+    top: `calc(var(--bleed, 0px) + ${wipe.y - box.height / 2}px)`,
     width: box.width,
     height: box.height,
   };

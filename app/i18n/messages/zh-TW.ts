@@ -33,8 +33,10 @@ const zhTW = {
   },
   /** 平台首頁（`/`）：《魔鬼的計謀》節目遊戲總覽。平台名不在這裡，見 app/brand.ts */
   platform: {
-    metaTitle: '魔鬼的計謀 遊戲整理與線上玩',
-    metaDescription: 'Netflix 韓綜《魔鬼的計謀》每一季的遊戲整理：第 1 季、第 2 季《死亡密室》與即將上線的第 3 季。能玩的直接在瀏覽器開打，免下載、免註冊，目前可以玩牆壁圍棋 Wall Go。',
+    /** 搜尋結果的標題。Wall Go 擺最前面（10/25 大腦）：搬家前九成的搜尋點擊落在 `/`，Google 認得 `/wall-go/` 之前要靠這裡接住 */
+    metaTitle: '牆壁圍棋 Wall Go 與魔鬼的計謀遊戲線上玩',
+    /** `{games}` 換成上線中能玩的遊戲（metadata.ts 的 platformDescription，Wall Go 一定第一個），每上一款自己補上 */
+    metaDescription: 'Netflix 韓綜《魔鬼的計謀》每一季的遊戲整理：第 1 季、第 2 季《死亡密室》與即將上線的第 3 季。能玩的直接在瀏覽器開打，免下載、免註冊，目前可以玩{games}。',
     ogTitle: '魔鬼的計謀 遊戲整理與線上玩',
     ogDescription: '節目裡的每一款遊戲，能玩的直接開打。免下載、免註冊。',
     heading: '《魔鬼的計謀》遊戲',
@@ -56,6 +58,17 @@ const zhTW = {
     s1: '第 1 季',
     playable: '可以玩',
     guide: '規則整理中',
+    /** 季目錄頁（`/season/1`…）。{n}、{season}、{names} 由程式代入 */
+    seeAll: '看全部',
+    allGames: '所有遊戲',
+    /** 季目錄頁上方切換各季的短名（完整季名只寫在大標題，10/25 Zach 從三種排法選了 A） */
+    seasonShort: '第 {n} 季',
+    seasonCount: '{n} 款遊戲',
+    seasonPlayable: '{n} 款可以玩',
+    seasonMetaTitle: '魔鬼的計謀 {season} 遊戲一覽',
+    seasonMetaDescription: 'Netflix 韓綜《魔鬼的計謀》{season}的全部 {n} 款遊戲：{names}。能玩的直接在瀏覽器開打，免下載、免註冊。',
+    seasonMetaDescriptionEmpty: 'Netflix 韓綜《魔鬼的計謀》{season}，11/10 上線。播出後每週更新這一季的遊戲。',
+    listSep: '、',
     disclaimer: '非官方粉絲作品，與 Netflix 及節目製作方無關。',
   },
   /** Bagh Chal。中文名照節目用「尼泊爾虎棋」（Zach 10/24：遊戲命名用 Netflix 版本，見 glossary）；「虎羊棋」留在說明與規則頁的名字由來 */
@@ -168,7 +181,7 @@ const zhTW = {
 
   ui: { next: '下一步', prev: '上一步', startGame: '開始遊戲', close: '關閉', pickLevel: '選擇難度' },
   error: { title: '出了點問題', body: '畫面執行時出錯了，重新整理通常就能恢復。連線對局的每一手都存在房間裡，重新整理後會接著下。', retry: '重新整理', home: '回首頁' },
-  notFound: { title: '找不到這一頁', body: '這個網址可能打錯了，或是那一局已經結束了。', home: '回首頁', rules: '看看怎麼玩' },
+  notFound: { title: '找不到這一頁', body: '這個網址可能打錯了，或是這一頁已經搬家了。', home: '回首頁', browse: '或是看看各季的遊戲' },
   crumb: { home: '首頁' },
   nav: { language: '語言', backHome: '回首頁' },
   credits: { prefix: '圖示來自', middle: '（CC BY 3.0）與', suffix: '（ISC）' },

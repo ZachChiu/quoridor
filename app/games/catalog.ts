@@ -61,14 +61,17 @@ export type CatalogGame = {
 
 export type Season = {
   id: 's1' | 's2' | 's3';
+  /** 開播那一年（季目錄頁的副標） */
+  year: number;
   games: CatalogGame[];
 };
 
 export const SEASONS: Season[] = [
   // 第 3 季《Dead Again》2026-11-10 上線，遊戲播出後才知道
-  { id: 's3', games: [] },
+  { id: 's3', year: 2026, games: [] },
   {
     id: 's2',
+    year: 2025,
     games: [
       // since 是 v25.6.1（第一版）上線那天
       { name: 'Wall Go', names: { 'zh-TW': '牆壁圍棋', 'zh-Hans': '墙壁围棋', ja: '壁囲碁', ko: '벽바둑' }, playable: routes.WALL_GO, since: '2025-06-02',
@@ -96,6 +99,7 @@ export const SEASONS: Season[] = [
   },
   {
     id: 's1',
+    year: 2023,
     games: [
       { name: 'Virus Game', names: { 'zh-TW': '病毒遊戲', 'zh-Hans': '病毒游戏' } },
       { name: 'Rules Race', names: { 'zh-TW': '規則競賽', 'zh-Hans': '规则竞赛' } },
@@ -168,8 +172,20 @@ export const PLAYABLE: CatalogGame[] = SEASONS.flatMap((s) => s.games).filter((g
  */
 export const NEWEST: CatalogGame | undefined = [...PLAYABLE].sort((a, b) => (b.since ?? '9999').localeCompare(a.since ?? '9999'))[0];
 
+/**
+ * 大卡片**現在**預設放的那一款：Wall Go（10/25 Zach 照大腦的建議）。平台上線後 `/` 從 Wall Go 首頁換成平台首頁，
+ * 搬家前九成的搜尋點擊落在 `/`、找的是 Wall Go —— Google 認得 `/wall-go/` 之前，第一眼要先看到它。
+ * 什麼時候換回 NEWEST（放最新上線的），等上線 4 週大腦驗收 `/wall-go/` 接住多少搜尋再定。使用者點過哪一款照舊換成那一款。
+ */
+export const HERO_DEFAULT: CatalogGame | undefined = PLAYABLE.find((g) => g.playable === routes.WALL_GO) ?? NEWEST;
+
 /** 一季裡能玩的排前面，其他照節目播出順序 */
 export function playableFirst(games: CatalogGame[]): CatalogGame[] {
   return [...games].sort((a, b) => Number(!!b.playable) - Number(!!a.playable));
 }
 
+
+/** 季目錄頁用：'2' → 第 2 季 */
+export function seasonById(n: '1' | '2' | '3'): Season {
+  return SEASONS.find((s) => s.id === `s${n}`)!;
+}
