@@ -42,7 +42,12 @@ const DISH = 11;
 function Scene({ phase }: { phase: WipePhase }) {
   const covered = phase === 'uncover';
   return (
-    <div className="absolute left-1/2 top-1/2 size-[150vmax] -translate-x-1/2 -translate-y-1/2">
+    // 正方形再加上下多蓋的那兩截（WipeOverlay 的 --bleed，iOS 26 Safari 的狀態列、工具列底下）：
+    // 每一塊都是從中心放射出去的扇形，放大正方形只是把扇形往外延長，看得到的那一段不變
+    <div
+      className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+      style={{ width: 'calc(150vmax + 2 * var(--bleed, 0px))', height: 'calc(150vmax + 2 * var(--bleed, 0px))' }}
+    >
       {Array.from({ length: CELLS }, (_, i) => {
         const a0 = startOf(i);
         const mid = a0 + SPAN / 2;
