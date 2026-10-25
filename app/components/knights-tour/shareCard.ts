@@ -1,5 +1,6 @@
-import { isKnightMove, type Square } from '@/games/knights-tour/engine';
+import { colOf, isKnightMove, type Square } from '@/games/knights-tour/engine';
 import { drawBrand, drawQr, fillBox, fitText, type CardLayout, type ShareAssets } from '@/utils/shareCard';
+import { drawKnight, KNIGHT_GAP, KNIGHT_SIZE } from './knightArt';
 import { KT } from './palette';
 
 /**
@@ -45,8 +46,6 @@ export type KtCardData = {
 export const KT_SERIF = '"Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif';
 /** 走過的格子（同 TourBoard） */
 const WASH = '#e2c9b1';
-/** game-icons.net 的 GiChessKnight（CC BY 3.0，對局裡的騎士也是它），viewBox 512 */
-const KNIGHT = 'M60.81 476.91h300v-60h-300v60zm233.79-347.3l13.94 7.39c31.88-43.62 61.34-31.85 61.34-31.85l-21.62 53 35.64 19 2.87 33 64.42 108.75-43.55 29.37s-26.82-36.39-39.65-43.66c-10.66-6-41.22-10.25-56.17-12l-67.54-76.91-12 10.56 37.15 42.31c-.13.18-.25.37-.38.57-35.78 58.17 23 105.69 68.49 131.78H84.14C93 85 294.6 129.61 294.6 129.61z';
 
 export const isClosed = (p: KtPlate) => p.path.length === p.n * p.n && isKnightMove(p.n, p.path[0], p.path[p.path.length - 1]);
 
@@ -103,9 +102,11 @@ function plate(ctx: CanvasRenderingContext2D, p: KtPlate, x: number, y: number, 
   if (path.length > 1) {
     const [ax, ay] = center(path[path.length - 2]);
     const [bx, by] = center(path[path.length - 1]);
+    // 停在騎士前面一點（同 TourBoard）
+    const k = 1 - KNIGHT_GAP / Math.sqrt(5);
     ctx.strokeStyle = KT.chalk;
     ctx.lineWidth = c * 0.08;
-    ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(ax + (bx - ax) * k, ay + (by - ay) * k); ctx.stroke();
   }
   ctx.restore();
 
@@ -116,17 +117,9 @@ function plate(ctx: CanvasRenderingContext2D, p: KtPlate, x: number, y: number, 
   path.forEach((sq, i) => {
     const [px, py] = center(sq);
     if (i === path.length - 1) {
-      ctx.beginPath();
-      ctx.arc(px, py, c * 0.42, 0, Math.PI * 2);
-      ctx.fillStyle = KT.ink;
-      ctx.fill();
-      const s = (c * 0.84 * 0.7) / 512;
-      ctx.save();
-      ctx.translate(px - 256 * s, py - 256 * s);
-      ctx.scale(s, s);
-      ctx.fillStyle = KT.paper;
-      ctx.fill(new Path2D(KNIGHT));
-      ctx.restore();
+      // 騎士跟對局同一隻（knightArt.ts），面向最後一步前進的方向
+      const face = i > 0 && colOf(n, sq) < colOf(n, path[i - 1]) ? -1 : 1;
+      drawKnight(ctx, px, py, c * KNIGHT_SIZE, face);
       return;
     }
     const k = i + 1;

@@ -1,12 +1,12 @@
 'use client';
 import { useEffect, useId, useLayoutEffect, useMemo, useRef } from 'react';
-import { GiChessKnight } from 'react-icons/gi';
 import { colOf, colorOf, isKnightMove, rowOf, type Square } from '@/games/knights-tour/engine';
+import { KNIGHT_ART, KNIGHT_GAP, KNIGHT_SIZE } from './knightArt';
 import { animateFail, animateStep, idleGlance, JUMP_MS, reducedMotion } from './motion';
 
 const NONE: ReadonlySet<Square> = new Set();
 /** 騎士一步的長度（格子座標）：√(1² + 2²) */
-const STEP_LEN = Math.sqrt(5).toFixed(4);
+const STEP = Math.sqrt(5);
 
 /**
  * 騎士巡遊的棋盤（對局與說明彈窗共用；不給 onTap 就是靜態的示意圖）。
@@ -14,7 +14,7 @@ const STEP_LEN = Math.sqrt(5).toFixed(4);
  * 長相照 18 世紀的數學版畫與老書裡的棋譜圖（配色見 palette.ts）：紙色的淺格、深格用墨色斜線排線，
  * 外面一圈墨線是棋盤的邊。走過的格子淡淡一層紅粉筆、寫上第幾步（舊式數字，像歐拉 1759 年那張表），
  * 走過的整條路徑用淡紅粉筆連起來，最後一步用重的紅粉筆。現在點得到的落點是紅粉筆圓點，
- * 犯規或卡住的那一格整格塗紅粉筆。騎士是墨色圓底上的紙色剪影。
+ * 犯規或卡住的那一格整格塗紅粉筆。騎士的樣子在 knightArt.ts（三種給 Zach 挑），面向最後一步前進的方向。
  *
  * 層次：格子（SVG）→ 路徑 → 最上面透明的按鈕（數字、圓點、騎士）。路徑畫在數字下面，才不會把步數劃掉。
  * 走完而且最後一步跳得回起點（封閉巡遊）時，多一段淡紅粉筆的虛線接回第 1 格。
@@ -55,6 +55,10 @@ export default function TourBoard({ n, path, targets = NONE, dead = NONE, hinted
   const current = path.length ? path[path.length - 1] : null;
   const prev = path.length > 1 ? path[path.length - 2] : null;
   const closed = path.length === n * n && isKnightMove(n, path[0], path[path.length - 1]);
+  // 騎士面向前進的方向（往左跳就翻過來）；剛放下時面向棋盤中間
+  const face: 1 | -1 = current === null ? 1
+    : prev !== null ? (colOf(n, current) >= colOf(n, prev) ? 1 : -1)
+    : (colOf(n, current) < n / 2 ? 1 : -1);
   const squareRef = useRef<HTMLDivElement>(null);
 
   // 剛好多走一步才播跳的動作；走錯（failed 從沒有變成有）時騎士探過去搖頭、或原地張望
@@ -96,7 +100,7 @@ export default function TourBoard({ n, path, targets = NONE, dead = NONE, hinted
       <>
         {/* 提示：一圈往外擴散；開了減少動態就改成一圈不動的淡色圓 */}
         {sq === hinted && <span aria-hidden="true" className="absolute inset-[16%] animate-ping rounded-full bg-[#834d36]/40 motion-reduce:animate-none motion-reduce:bg-[#834d36]/25" />}
-        {sq === current && showKnight ? <Knight />
+        {sq === current && showKnight ? <Knight face={face} />
           : k > 0 ? <Num k={k} light={isFail} />
           : targets.has(sq) || sq === hinted ? <span data-dot aria-hidden="true" className="size-[26%] rounded-full bg-[#834d36]" />
           : dead.has(sq) ? <Cross />
@@ -107,7 +111,8 @@ export default function TourBoard({ n, path, targets = NONE, dead = NONE, hinted
 
   return (
     <div className="w-full bg-[#322e2a] p-[0.7%]">
-      <div ref={squareRef} className="relative aspect-square w-full touch-manipulation overflow-hidden bg-[#edddc7]">
+      {/* 不裁切（沒有 overflow-hidden）：騎士從最上面一排起跳時會跳出棋盤上緣一點 */}
+      <div ref={squareRef} className="relative aspect-square w-full touch-manipulation bg-[#edddc7]">
         <svg aria-hidden="true" viewBox={`0 0 ${n} ${n}`} className="pointer-events-none absolute inset-0 size-full">
           <defs>
             {/* 深格的斜線排線（銅版畫的陰影），間距跟著格子縮放 */}
@@ -132,11 +137,18 @@ export default function TourBoard({ n, path, targets = NONE, dead = NONE, hinted
             <polyline points={path.slice(0, -1).map((sq) => `${center(sq).x},${center(sq).y}`).join(' ')} fill="none"
               stroke="#bf8d70" strokeWidth={0.05} strokeLinecap="round" strokeLinejoin="round" />
           )}
-          {/* 騎士的一步在格子座標裡一定是 √5 長（1² + 2²）：虛線長度設成它，動畫只要把 dashoffset 從 √5 收到 0 */}
-          {prev !== null && current !== null && (
-            <line data-last x1={center(prev).x} y1={center(prev).y} x2={center(current).x} y2={center(current).y}
-              stroke="#834d36" strokeWidth={0.08} strokeLinecap="round" strokeDasharray={`${STEP_LEN} ${STEP_LEN}`} />
-          )}
+          {/* 騎士的一步在格子座標裡一定是 √5 長（1² + 2²），畫著騎士時再扣掉 KNIGHT_GAP：虛線長度設成它，
+              動畫只要把 dashoffset 從這個長度收到 0 */}
+          {prev !== null && current !== null && (() => {
+            const a = center(prev), b = center(current);
+            const len = showKnight ? STEP - KNIGHT_GAP : STEP;
+            const k = len / STEP;
+            const dash = len.toFixed(4);
+            return (
+              <line data-last x1={a.x} y1={a.y} x2={a.x + (b.x - a.x) * k} y2={a.y + (b.y - a.y) * k}
+                stroke="#834d36" strokeWidth={0.08} strokeLinecap="round" strokeDasharray={`${dash} ${dash}`} />
+            );
+          })()}
         </svg>
 
         {onTap ? (
@@ -159,11 +171,46 @@ export default function TourBoard({ n, path, targets = NONE, dead = NONE, hinted
   );
 }
 
-function Knight() {
+/** 跳起來時留在棋盤上的影子：斜線排線（銅版畫畫投影的方式），跟深格同一個墨色 */
+const SHADOW_HATCH = 'repeating-linear-gradient(45deg, rgb(50 46 42 / 0.75) 0 1.5px, transparent 1.5px 3.5px)';
+
+/**
+ * 騎士（樣子在 knightArt.ts），face = -1 時左右翻過來。腳下的影子平常看不到，只在跳起來、落下來的時候出現（motion.ts）。
+ * 騎士與影子都不吃點擊：跳的時候會飛過別的格子，點擊要穿過去落在底下那一格（計時的時候玩家可能在騎士落地前就點下一步）。
+ * z-10：飛過 DOM 順序在後面的格子時，不被那些格子的數字、圓點蓋住。縮放、轉動的中心在腳下（壓扁時腳不離地）。
+ */
+function Knight({ face }: { face: 1 | -1 }) {
   return (
-    <span data-knight className="grid size-[84%] place-items-center rounded-full bg-[#322e2a] text-[#edddc7]">
-      <GiChessKnight aria-hidden="true" className="size-[70%]" />
-    </span>
+    <>
+      <span data-knight-shadow aria-hidden="true" style={{ backgroundImage: SHADOW_HATCH }}
+        className="pointer-events-none absolute inset-x-[20%] bottom-[3%] z-[9] h-[18%] rounded-[50%] opacity-0" />
+      <span data-knight data-face={face} style={{ width: `${KNIGHT_SIZE * 100}%`, height: `${KNIGHT_SIZE * 100}%` }}
+        className="pointer-events-none relative z-10 shrink-0 [transform-origin:50%_92%]">
+        <KnightSvg className={`size-full ${face < 0 ? '-scale-x-100' : ''}`} />
+      </span>
+    </>
+  );
+}
+
+/** 照 knightArt.ts 的圖層畫成 SVG（結算分享圖用同一份圖層畫在 Canvas 上） */
+function KnightSvg({ className }: { className?: string }) {
+  const id = `kt-knight-${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
+  return (
+    <svg aria-hidden="true" viewBox="0 0 100 100" overflow="visible" className={className}>
+      <defs>
+        {KNIGHT_ART.flatMap((layer, i) => (layer.clip ?? []).map((d, j) => (
+          <clipPath key={`${i}-${j}`} id={`${id}-${i}-${j}`}><path d={d} /></clipPath>
+        )))}
+      </defs>
+      {KNIGHT_ART.map((layer, i) => {
+        let el = (
+          <path d={layer.d} fill={layer.fill ?? 'none'} stroke={layer.stroke} strokeWidth={layer.width} opacity={layer.opacity}
+            strokeLinecap="round" strokeLinejoin="round" />
+        );
+        (layer.clip ?? []).forEach((_, j) => { el = <g clipPath={`url(#${id}-${i}-${j})`}>{el}</g>; });
+        return <g key={i} transform={layer.at ? `translate(${layer.at[0]} ${layer.at[1]}) scale(${layer.at[2]})` : undefined}>{el}</g>;
+      })}
+    </svg>
   );
 }
 
