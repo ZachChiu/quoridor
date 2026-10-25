@@ -35,7 +35,7 @@ const th: Messages = {
     rules: 'วิธีเล่น',
   },
   platform: {
-    metaTitle: "รวมเกมใน The Devil's Plan กติกาและเล่นออนไลน์",
+    metaTitle: "Wall Go และรวมเกม The Devil's Plan เล่นออนไลน์",
     metaDescription: "รวมเกมทุกซีซันจากรายการเรียลลิตี้เกาหลีของ Netflix เรื่อง The Devil's Plan ทั้งซีซัน 1 ซีซัน 2 (Death Room) และซีซัน 3 ที่กำลังจะมา เกมที่ทำเสร็จแล้วเล่นบนเบราว์เซอร์ได้ทันที ฟรี ไม่ต้องดาวน์โหลด ไม่ต้องสมัครสมาชิก เริ่มจาก Wall Go",
     ogTitle: "รวมเกมใน The Devil's Plan",
     ogDescription: 'ทุกเกมในรายการ เกมที่ทำเสร็จแล้วเล่นได้เลย ไม่ต้องดาวน์โหลด ไม่ต้องสมัครสมาชิก',

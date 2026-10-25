@@ -27,7 +27,7 @@ const en: Messages = {
     rules: 'How to play',
   },
   platform: {
-    metaTitle: "The Devil's Plan Games: Rules & Play Online",
+    metaTitle: "Wall Go & The Devil's Plan Games: Play Online",
     metaDescription: "Every game from Netflix's Korean reality show The Devil's Plan: season 1, season 2 (Death Room) and the upcoming season 3. Play the ones we've built right in your browser, free, no download or sign-up — starting with Wall Go.",
     ogTitle: "The Devil's Plan Games: Rules & Play Online",
     ogDescription: 'Every game from the show — play the ones we have built. Free, no download, no sign-up.',
