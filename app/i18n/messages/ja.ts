@@ -48,6 +48,7 @@ const ja: Messages = {
     guide: 'ルール準備中',
     seeAll: 'すべて見る',
     allGames: 'すべてのゲーム',
+    seasonShort: 'シーズン{n}',
     seasonCount: '{n} ゲーム',
     seasonPlayable: '{n} ゲームがプレイ可',
     seasonMetaTitle: '悪魔の計略 {season} ゲーム一覧',

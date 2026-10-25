@@ -57,6 +57,7 @@ const th: Messages = {
     guide: 'กำลังเรียบเรียงกติกา',
     seeAll: 'ดูทั้งหมด',
     allGames: 'เกมทั้งหมด',
+    seasonShort: 'ซีซัน {n}',
     seasonCount: '{n} เกม',
     seasonPlayable: 'เล่นได้ {n} เกม',
     seasonMetaTitle: "รวมเกม The Devil's Plan {season}",
