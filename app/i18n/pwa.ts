@@ -8,6 +8,9 @@ import { HTML_LANG, LOCALES, type Locale, localePath } from '@/i18n/locales';
  *
  * **不管從哪一款遊戲的頁面加，打開都是平台首頁**（Zach：「設定上一定要回根目錄，不管從哪一個遊戲註冊」）：
  * - start_url 是那個語系的平台首頁（繁中 `/`、英文 `/en/`…）—— 英文頁加的人不該一打開就是中文
+ * - start_url 帶 `utm_source=pwa&utm_medium=homescreen`（10/25 大腦）：從主畫面打開的造訪在 GA 記成 pwa，
+ *   才看得出多少人加了、之後還回來玩。GA 的預設管道不認 homescreen、會落在 Unassigned，大腦用 source=pwa 篩。
+ *   canonical 不受影響（各頁 metadata 寫的是乾淨的網址）
  * - scope 是整個站，id 全部同一個：在哪個語系、哪一款加，都是同一個 App
  * - 名字是平台名、圖示是骰子惡魔；主畫面的圖示（apple-touch-icon）因此每一頁都用平台的，
  *   分頁上的 favicon 才是各款自己的（metadata.ts 的 iconSet）
@@ -30,6 +33,9 @@ export const manifestPath = (locale: Locale) => `/pwa/${locale}.json`;
 /** 每個語系一份設定檔的檔名（route 的 generateStaticParams 用） */
 export const MANIFEST_FILES = LOCALES.map((locale) => ({ locale, file: `${locale}.json` }));
 
+/** 從主畫面打開時帶的追蹤參數 */
+export const PWA_UTM = 'utm_source=pwa&utm_medium=homescreen';
+
 export function webManifest(locale: Locale): MetadataRoute.Manifest {
   const home = localePath(locale, '/');
   return {
@@ -39,7 +45,7 @@ export function webManifest(locale: Locale): MetadataRoute.Manifest {
     description: getMessages(locale).platform.ogDescription,
     lang: HTML_LANG[locale],
     // trailingSlash: true：/en 會被轉成 /en/，直接給轉完的
-    start_url: home.endsWith('/') ? home : `${home}/`,
+    start_url: `${home.endsWith('/') ? home : `${home}/`}?${PWA_UTM}`,
     scope: '/',
     display: 'standalone',
     background_color: PLAT_BG,
