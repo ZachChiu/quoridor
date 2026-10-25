@@ -49,7 +49,7 @@ export default function HowToPlay({ open, onClose }: { open: boolean; onClose: (
               {/* 圖的寬度跟著可視高度走（扣掉標題、文字、按鈕約 30rem），不讓彈窗出現捲軸。
                   矮的橫放手機改成圖在左、字在右，只留棋盤（圖說、練習的狀態列拿掉）、頁碼縮小，扣掉標題列、按鈕列、頁碼約 16.5rem */}
               <RuleFigure index={n} shortCompact
-                className="mx-auto w-[clamp(7.5rem,calc(100dvh-30rem),13rem)] short:mx-0 short:w-[clamp(5.5rem,calc(100dvh-16.5rem),9rem)] short:shrink-0" />
+                className="mx-auto w-[clamp(7.5rem,calc(100svh-30rem),13rem)] short:mx-0 short:w-[clamp(5.5rem,calc(100svh-16.5rem),9rem)] short:shrink-0" />
               <div className="short:min-w-0 short:flex-1">
                 <h3 className="mt-3 text-base font-black leading-snug short:mt-0">{t.howTitles[n]}</h3>
                 <p className="mt-1.5 text-sm font-bold leading-relaxed">{t.howSteps[n]}</p>
