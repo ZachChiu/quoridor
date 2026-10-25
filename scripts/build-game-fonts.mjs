@@ -162,7 +162,8 @@ function charsOf(config) {
     for (const p of paths.game) s += stringsAt(GAME_TEXT[loc], p).join('');
     for (const p of paths.messages) s += stringsAt(MESSAGES[loc], p).join('');
     for (const ch of s) {
-      if (ch.codePointAt(0) <= 0x7f || /\s/.test(ch)) continue;
+      // 表情符號（回饋的三張臉）交給系統的表情字型，哪一套字裡都沒有
+      if (ch.codePointAt(0) <= 0x7f || /\s|\p{Extended_Pictographic}|\uFE0F/u.test(ch)) continue;
       // 泰文頁上的非泰文符號（✓ · …）由那款的英文那份提供（跟全站一樣：泰文字型裡沒有）
       if (loc === 'th' && !isThai(ch)) { (sets.en ?? sets.th).add(ch); continue; }
       sets[loc].add(ch);
