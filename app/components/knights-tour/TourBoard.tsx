@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useId, useLayoutEffect, useMemo, useRef } from 'react';
 import { colOf, colorOf, isKnightMove, rowOf, type Square } from '@/games/knights-tour/engine';
-import { KNIGHT_ART, KNIGHT_GAP, KNIGHT_SIZE } from './knightArt';
+import { KNIGHT_ART, KNIGHT_GAP } from './knightArt';
 import { animateFail, animateStep, idleGlance, JUMP_MS, reducedMotion } from './motion';
 
 const NONE: ReadonlySet<Square> = new Set();
@@ -184,8 +184,8 @@ function Knight({ face }: { face: 1 | -1 }) {
     <>
       <span data-knight-shadow aria-hidden="true" style={{ backgroundImage: SHADOW_HATCH }}
         className="pointer-events-none absolute inset-x-[20%] bottom-[3%] z-[9] h-[18%] rounded-[50%] opacity-0" />
-      <span data-knight data-face={face} style={{ width: `${KNIGHT_SIZE * 100}%`, height: `${KNIGHT_SIZE * 100}%` }}
-        className="pointer-events-none relative z-10 shrink-0 [transform-origin:50%_92%]">
+      <span data-knight data-face={face}
+        className="pointer-events-none relative z-10 size-full shrink-0 [transform-origin:50%_92%]">
         <KnightSvg className={`size-full ${face < 0 ? '-scale-x-100' : ''}`} />
       </span>
     </>
@@ -208,7 +208,7 @@ function KnightSvg({ className }: { className?: string }) {
             strokeLinecap="round" strokeLinejoin="round" />
         );
         (layer.clip ?? []).forEach((_, j) => { el = <g clipPath={`url(#${id}-${i}-${j})`}>{el}</g>; });
-        return <g key={i} transform={layer.at ? `translate(${layer.at[0]} ${layer.at[1]}) scale(${layer.at[2]})` : undefined}>{el}</g>;
+        return <g key={i}>{el}</g>;
       })}
     </svg>
   );

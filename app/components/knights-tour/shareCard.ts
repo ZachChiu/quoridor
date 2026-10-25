@@ -1,6 +1,6 @@
 import { colOf, isKnightMove, type Square } from '@/games/knights-tour/engine';
 import { drawBrand, drawQr, fillBox, fitText, type CardLayout, type ShareAssets } from '@/utils/shareCard';
-import { drawKnight, KNIGHT_GAP, KNIGHT_SIZE } from './knightArt';
+import { drawKnight, KNIGHT_GAP } from './knightArt';
 import { KT } from './palette';
 
 /**
@@ -119,7 +119,7 @@ function plate(ctx: CanvasRenderingContext2D, p: KtPlate, x: number, y: number, 
     if (i === path.length - 1) {
       // 騎士跟對局同一隻（knightArt.ts），面向最後一步前進的方向
       const face = i > 0 && colOf(n, sq) < colOf(n, path[i - 1]) ? -1 : 1;
-      drawKnight(ctx, px, py, c * KNIGHT_SIZE, face);
+      drawKnight(ctx, px, py, c, face);
       return;
     }
     const k = i + 1;
