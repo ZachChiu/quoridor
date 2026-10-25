@@ -1,5 +1,7 @@
 # 交接：2026-10-25 本機 → Claude Code 雲端
 
+> 10/25 雲端那段對話已照下面做過一輪，改過的地方直接寫進各節（§2 能傳訊息給大腦筋、§5 已決定的打勾、§7 雲端實測）。
+
 本機那段對話（10/17–10/25）搬不上雲端，這份是它的交接。**先整份讀完再動手。** CLAUDE.md 照舊是主要規範，這裡只補 CLAUDE.md 沒寫、但本機對話裡一直在遵守的事，以及做到哪、還在等什麼。
 
 ## 1. 一定要遵守的（本機的記憶檔，雲端讀不到）
@@ -31,7 +33,7 @@ CLAUDE.md 用 `@~/Desktop/projects/sites-data/protocol.md` 引用分工規則，
 
 - 大腦筋是 `~/Desktop/projects/sites-data` 的另一段對話，負責 GA4、Search Console、Sentry 判讀、寫計畫、到期驗收。它只寫 docs，不碰程式。
 - 每次打版都要報 **【上線】**（版號、上線日、一句話、影響的頁面或事件）。GA 事件、Sentry、網址或轉址有變動要報 **【追蹤變更】**。派工做完報 **【完成】**，推翻計畫前提的研究結果報 **【結論】**。
-- **雲端收不到也回不了大腦筋的訊息**：要報的事寫成一段文字給 Zach，請他轉貼。
+- **雲端可以直接傳訊息給大腦筋**（10/25 實測：它是 `claude remote-control` 開的，`list_sessions` 查得到、開放其他對話傳訊息）。用 claude-code-remote 的 `send_message`，對象是標題「大腦筋」那個 session。它收到時知道是另一段對話傳的。它要有傳訊息的工具才回得了；回不了就用 `list_events` 讀它的對話。傳之前先問 Zach（會讓它跑一輪）。
 
 ## 3. 分支與 beta 站
 
@@ -66,18 +68,19 @@ CLAUDE.md 用 `@~/Desktop/projects/sites-data/protocol.md` 引用分工規則，
 
 ## 5. 等 Zach 決定的事（不要自己選）
 
-1. **尼泊爾虎棋桌機首頁左邊的圖**（`app/views/BaghChalView.tsx` 的 `chase.webp`，目前是 AI 畫的老虎追羊）。Zach 要「跟其他棋一樣從網路找視覺圖」。找不到「老虎和羊同框、南亞傳統、授權乾淨」的原件，候選都是印度拉賈斯坦 Kota 派的老虎畫（CC0，沒有羊）：
+1. ✅ **10/25 決定：回到第一版的整面印刷棋盤 `board-art.webp`**（Zach：「虎羊圖回到第一版」）。`chase.webp` 刪掉，`docs/handoff/bagh-left/` 的候選圖也一起刪了。以下是當時的候選，留作紀錄：
+   **尼泊爾虎棋桌機首頁左邊的圖**（`app/views/BaghChalView.tsx` 的 `chase.webp`，目前是 AI 畫的老虎追羊）。Zach 要「跟其他棋一樣從網路找視覺圖」。找不到「老虎和羊同框、南亞傳統、授權乾淨」的原件，候選都是印度拉賈斯坦 Kota 派的老虎畫（CC0，沒有羊）：
    - A（推薦）Cleveland Museum of Art 1991.168《Tiger Hunt of Ram Singh II》約 1830–40：紫色懸崖上的大老虎
    - B Cleveland 1985.64《Tiger Hunt》約 1800：老虎躍出綠林，下緣有獵人
    - C Met 2019.445.4《Study for a Tiger Hunt》1780：淡彩習作，最融合但縮小偏弱
    - 另一個選項：老虎原件＋芝加哥藝術博物館 1919.944 蒙兀兒的山羊畫（約 1600，CC0）並排
    - 不能用：Met 2008.359.50（捐贈者是被定罪的文物走私者 Subhash Kapoor）；大英博物館的 Gazi 卷軸（CC BY-NC-SA）
-   - 裁好的方圖與換上去的比較圖在 `docs/handoff/bagh-left/`（`compare.jpg`；裁切參數在 `crop.cjs`，原圖要從博物館 Open Access 重新下載）。選定後還要補出處說明（規則頁的出處段）。
+   - （比較圖與裁切腳本原本在 `docs/handoff/bagh-left/`，已刪，要看去 git 歷史 `3c39555`）
 2. **骰子惡魔 logo 收到角落**（Zach 嫌它在各遊戲首頁太搶眼）：A＝28px、換成那款自己的墨色（用 `public/brand/die-mark-mono.svg` 當遮罩）；B＝28px、原本的藍淡到 45%。比較圖 `docs/handoff/logo-corner/options-phone.jpg`，做法在 `opts.mjs`（是注入 CSS 的示意，還沒改程式）。
-3. **泰文的遊戲名**：泰國那邊講這些遊戲都用英文名，平台卡片維持英文。但五款遊戲裡的泰文標題是當初自己翻的（例如時間拍賣 ประมูลเวลา），沒人這樣叫，跟卡片也對不上。A（推薦）改成「英文名＋泰文說明副名」，跟尼泊爾虎棋泰文頁一樣；B 保留泰文標題，但要找泰文母語者確認。
-4. **日文中等信心的三個名字**：タイムオークション、バランスマンカラ、ブラインド五目並べ。日本粉絲另有照韓文意譯的寫法（時間オークション、均衡のマンカラ、目隠し五目並べ）。有 Netflix 日本帳號的話，看第 2 集與第 9、10 集的字幕就能確定。
-5. **「每一季一個目錄頁」**：Zach 問過「點進每一季可以看遊戲的第二季目錄如何（分類頁的概念）」，我說了看法、提議做示意，他還沒回。
-6. **平台分享圖的拼貼含了還沒在平台上開的五款**：等平台正式上線時，看要不要只留能玩的。
+3. **泰文的遊戲名**（10/25 網路查證：泰國媒體寫節目名一律用英文 The Devil's Plan，遊戲名沒有找到通行的泰文寫法；`ประมูลเวลา` 這類自己翻的沒有人在用。Netflix 有泰語配音，正式泰文名要在泰國區看才知道。搜尋可以補的泰文詞：`เดอะเดวิลส์แพลน`、傳統遊戲名 `หมากขุม`（泰國本土的播棋）、`แมนคาลา`。還是等 Zach 選 A／B）：泰國那邊講這些遊戲都用英文名，平台卡片維持英文。但五款遊戲裡的泰文標題是當初自己翻的（例如時間拍賣 ประมูลเวลา），沒人這樣叫，跟卡片也對不上。A（推薦）改成「英文名＋泰文說明副名」，跟尼泊爾虎棋泰文頁一樣；B 保留泰文標題，但要找泰文母語者確認。
+4. **日文中等信心的三個名字**（10/25 網路查證：現在用的寫法都跟日本觀眾的部落格、note 一致，意譯派的「均衡のマンカラ」「目隠し五目並べ」找不到實際用例，「時間オークション」只有一篇。節目名要同時打「悪魔の計略」與「デビルズプラン」兩個關鍵字。搜傳統遊戲的人會打 五目並べ、騎士巡回問題／騎士の巡歴、マンカラ。Netflix 字幕仍沒看到）：タイムオークション、バランスマンカラ、ブラインド五目並べ。日本粉絲另有照韓文意譯的寫法（時間オークション、均衡のマンカラ、目隠し五目並べ）。有 Netflix 日本帳號的話，看第 2 集與第 9、10 集的字幕就能確定。
+5. ✅ **「每一季一個目錄頁」10/25 做了**：`/season/1`、`/season/2`、`/season/3`（`app/views/SeasonView.tsx`），平台首頁每一季的標題連過去（多一個「看全部 ›」）。照播出順序排成格子、上方三顆切換各季、會被索引（標題與描述列出那一季的遊戲名），分享圖先共用平台那張。卡片抽成 `components/platform/GameCard.tsx` 兩邊共用。
+6. ✅ **平台分享圖的拼貼 10/25 決定都留著**，只把棋盤類（Wall Go、尼泊爾虎棋、騎士巡遊）擺正重新輸出：整面牆照舊斜 12°，這三張卡片裡的盤面反向轉回來、在圖上是正的（`scripts/og-art/collage.mjs` 的 `UPRIGHT`）。`DEG=0` 可以出整面牆都正的版本（`DEG=0 OUT=… node scripts/og-art/collage.mjs`）。
 
 ## 6. 更早的待辦
 
@@ -89,8 +92,9 @@ CLAUDE.md 用 `@~/Desktop/projects/sites-data/protocol.md` 引用分工規則，
 
 ## 7. 雲端環境要知道的
 
-- **截圖驗證**：本機用的是別的專案裡的 playwright-core，雲端沒有。要截圖就 `npx playwright install chromium`（網路權限要 Full，或自訂允許 Playwright 的下載網域）。
-- **`npm run og:build`**：泰文標題由 Chrome 畫（`scripts/lib/chrome-text.mjs`），要設 `CHROME_PATH` 指到雲端的 Chromium。字型從 `fonts.googleapis.com` 抓。
-- **`npm run font:subset`**：原始字型從 `raw.githubusercontent.com` 下載。
-- **AI 產圖**（OpenAI／Gemini）：金鑰不在雲端，要用請 Zach 決定怎麼給（文件建議用 network secret）。
+- **截圖驗證**：雲端容器**已經內建 Chromium 與 Playwright**（`require('playwright')` 直接能用），**不要** `npx playwright install`（裝了別的版本反而找不到瀏覽器）。`npx next dev` 開起來後用 Playwright 截圖就行（10/25 實測）。要模擬 iPhone 可以用 `webkit`，但驗證 WebKit 專屬問題還是以真機為準。
+- **`npm run og:build`**：`CHROME_PATH=/opt/pw-browsers/chromium-1243/chrome-linux64/chrome npm run og:build`（版本號以 `ls /opt/pw-browsers` 為準）。容器是 root，`chrome-text.mjs` 會自動加 `--no-sandbox`。**注意**：Linux 的 Chrome 畫出來的泰文標題跟本機 Mac 的有細微差別，整批重跑會讓所有 `*-th.png`（還有個別幾張）跟著變；只 commit 真的要改的那幾張，其他 `git checkout` 還原。
+- **`npm run font:subset`**：原始字型從 `raw.githubusercontent.com` 下載，雲端連得到（10/25 實測）。
+- **lint**：交接文件附的 `crop.cjs` 會讓 `npm run lint` 報錯（`require()`），已經隨 bagh-left 一起刪掉。
+- **AI 產圖**（OpenAI／Gemini）：金鑰不在雲端。要在雲端用，Zach 在雲端環境的設定（對話標題列的環境選單 → Edit）的 Network secrets（沒有這區就用環境變數）加 `OPENAI_API_KEY`／`GEMINI_API_KEY`，**新開的對話**才讀得到；金鑰不要貼進對話。網路權限也要允許 `api.openai.com`／`generativelanguage.googleapis.com`。不設的話，Zach 在 ChatGPT／Gemini 網頁版畫好、把圖傳進對話，雲端這邊負責裁切、轉 webp、放進專案。
 - **環境變數**：開發只需要 `NEXT_PUBLIC_FIREBASE_*`，而且要用 **beta 專案 `quoridor-beta`** 的值（`.github/workflows/deploy.yml` 的 `BETA_FIREBASE_*`；API key 在 Firebase Console）。本機 `.env` 那份是正式資料庫，不要貼。
