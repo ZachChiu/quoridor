@@ -474,8 +474,13 @@ body {
    那時改扣 12rem，並且版面轉成左右並排（標題在左、磁磚在右），
    把橫式多出來的寬度用掉。
 
-   限定 max-height: 600px 才套，桌機（同樣是 landscape）不受影響。 */
+   限定 max-height: 600px 才套，桌機（同樣是 landscape）不受影響。
+
+   直式另有下限 18rem：矮手機上不再為了塞進一個畫面把磁磚縮小，放不下就往下捲（2026-10-25 Zach）。 */
 .home-grid { max-width: min(380px, calc(100dvh - 22rem)); }
+@media (orientation: portrait) {
+  .home-grid { max-width: min(380px, max(18rem, calc(100dvh - 22rem))); }
+}
 
 @media (orientation: landscape) and (max-height: 600px) {
   .home-grid { max-width: min(320px, calc(100dvh - 12rem)); }
@@ -508,7 +513,8 @@ body {
 html:has(.platform-root), body:has(.platform-root) { background: rgb(var(--plat-bg)); }
 /* 虎羊棋的整頁畫框是番紅花底（BaghFrame），同一個理由 */
 html:has(.bagh-root), body:has(.bagh-root) { background: #e3a43c; }
-/* 虎羊棋的背景：米提拉圖騰滿版鋪（BaghFrame）。
+/* 虎羊棋的背景：米提拉圖騰滿版鋪，鋪在頁面本身（BaghFrame 的根節點），跟著頁面捲 ——
+   iOS 26 Safari 的狀態列與工具列底下只畫得出捲過去的內容（fixed 的層、背景圖都不會），先前那層 fixed 的圖騰在那兩條只剩番紅花色塊。
    圖塊是把一整幅 AI 圖騰用 image quilting 縫成上下左右都無縫的一塊（在接縫帶裡找差異最小的切線拼接），
    所以可以縮小重複鋪、看不出接縫。先前試過四條飾帶拼的畫框（接縫明顯）、一整幅 cover（虎羊太大），Zach 都要改。
    圖塊的顏色用 Lab 空間的色彩轉移對齊到 board-art.webp 外圈的飾帶（原圖偏亮、偏檸檬黃，Zach 要跟那張一致），接近白色的地方保留色相。

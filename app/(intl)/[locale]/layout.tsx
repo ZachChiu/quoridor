@@ -3,6 +3,7 @@ import { Shell, baseMetadata } from '@/shell';
 import { siteViewport } from '@/viewport';
 import { getMessages } from '@/i18n';
 import { PREFIXED, toLocale } from '@/i18n/locales';
+import { pwaMetadata } from '@/i18n/pwa';
 
 /**
  * en / ja / ko 的 root layout。
@@ -30,6 +31,7 @@ export async function generateMetadata({
     title: { default: t.meta.titleDefault, template: t.meta.titleTemplate },
     description: t.meta.description,
     keywords: [...t.meta.keywords],
+    ...pwaMetadata(locale),
   };
 }
 

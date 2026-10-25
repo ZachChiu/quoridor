@@ -10,6 +10,7 @@ import { fmt as fill } from '@/i18n/content/game';
 import { useRouter } from 'next/navigation';
 import { useGameText, useMessages } from '@/i18n/LocaleProvider';
 import { useSound } from '@/hook/useSound';
+import { useLeaveGuard } from '@/hook/useLeaveGuard';
 import { playBagh } from './sounds';
 import { localePath, type Locale } from '@/i18n/locales';
 import { BAGH_CHAL, baghChal } from '@/i18n/routes';
@@ -100,7 +101,9 @@ export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghM
     }
   }, [game, mode]);
   // 虎羊棋裡面換頁不播轉場（木窗門只留在從平台卡片進來的那一下）
-  const home = () => router.push(localePath(locale, BAGH_CHAL));
+  // 下到一半離開先問（房子鈕、返回鍵、電腦版關分頁）：連線局一開打就算，其他下過一步才算
+  const leave = useLeaveGuard({ live: !game.winner, inProgress: !game.winner && (online || game.history.length > 0) });
+  const home = () => leave.request(() => router.push(localePath(locale, BAGH_CHAL)));
 
   const commit = (m: Move) => {
     if (mode.kind === 'online') mode.onMove(m);
@@ -275,6 +278,15 @@ export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghM
           <button type="button" onClick={home} className={wide}><LuHouse aria-hidden="true" />{b.menu}</button>
         </div>
       </aside>
+
+      <Modal skin="bagh" isOpen={leave.open} onClose={leave.cancel} title={g.leave.heading} kicker={g.leave.kicker}
+        band={{ className: 'bg-[#4a2616]', fg: 'text-tile-cream' }}
+        footer={<>
+          <button type="button" onClick={leave.cancel} className={`${BAGH_SECONDARY} h-12 flex-1`}>{g.leave.cancel}</button>
+          <button type="button" onClick={leave.confirm} className={`${BAGH_PRIMARY} h-12 flex-1`}>{g.leave.confirm}</button>
+        </>}>
+        <p className="text-sm leading-relaxed">{online ? g.leave.bodyOnline : g.leave.body}</p>
+      </Modal>
 
       <Modal skin="bagh" isOpen={helpOpen} onClose={() => setHelpOpen(false)} title={b.rulesHeading} kicker={b.name}
         icon={RulesToken} band={{ className: 'bg-[#5b6620]', fg: 'text-tile-cream' }}>
