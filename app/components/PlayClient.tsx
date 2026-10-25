@@ -302,7 +302,7 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
     橫式靠右：貼著控制盤，左下那塊空地讓給比分。
 
     ── 為什麼 coarse 要能蓋掉 md ──────────────────────────────────
-    橫躺的手機（例如 844x390）寬度超過 md 斷點，md:landscape:size-[90dvh]
+    橫躺的手機（例如 844x390）寬度超過 md 斷點，md:landscape:size-[90svh]
     會蓋掉替控制盤讓位的尺寸 —— 斷點量的是寬度，但「這是不是手機」量的是
     有沒有精準指標。所以 coarse 在 tailwind.config.ts 裡宣告在 md 後面。
   */
@@ -334,8 +334,10 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
     控制盤收起來，棋盤就撐到 582px，按「看看棋盤」只看得到上半截，
     頁面又不能捲。桌機把視窗拉成矮寬的時候整局都是這樣。
     （自動對局在手機橫式截圖量到的。）
+
+    高度用 svh（工具列展開時的畫面高）不用 dvh：工具列收起、展開時棋盤不跟著縮放（2026-10-25）。
   */
-  const BOARD_FREE = 'size-[min(90dvw,90dvh)]';
+  const BOARD_FREE = 'size-[min(90dvw,90svh)]';
   const boardBox = padGone ? BOARD_FREE
     : BOARD_FREE
       /*
@@ -346,10 +348,10 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
 
         直式：控制盤 + 12px + 步驟標 26px + 20px + 按鈕 72px + 呼吸 18px ≈ 9.25rem
         橫式：控制盤 + 按鈕欄 72px + 左右呼吸 40px ≈ 7rem
-        大螢幕不受影響（那邊是 90dvw / 86dvh 先封頂）。
+        大螢幕不受影響（那邊是 90dvw / 86svh 先封頂）。
       */
-      + ' coarse:size-[min(90dvw,calc(100dvh-var(--wall-pad-h)-9.25rem))]'
-      + ' coarse-land:size-[min(86dvh,calc(100dvw-var(--wall-pad-w)-7rem))]';
+      + ' coarse:size-[min(90dvw,calc(100svh-var(--wall-pad-h)-9.25rem))]'
+      + ' coarse-land:size-[min(86svh,calc(100dvw-var(--wall-pad-w)-7rem))]';
 
   /*
     控制盤與棋盤共用的兩個 UI 狀態。
@@ -1226,7 +1228,7 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
               紙色而非磚紅 —— 它要能被找到，但不該比盤面搶眼；
               真正的警告留在按下去之後的確認 Modal 上。 */}
           {!isLock && !isPlacing && (
-            <div className="fixed bottom-5 left-5 z-40 flex items-center gap-2 lg:bottom-[5dvh] coarse:hidden">
+            <div className="fixed bottom-5 left-5 z-40 flex items-center gap-2 lg:bottom-[5svh] coarse:hidden">
               <button
                 type="button"
                 onClick={() => setSurrenderOpen(true)}

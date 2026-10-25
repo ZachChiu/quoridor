@@ -104,7 +104,7 @@ const RuleModal: React.FC = () => {
             <div key={i} className="w-full shrink-0 px-0.5 short:flex short:items-start short:gap-5">
               {/* 盤面寬度 = 可視高度扣掉色帶、文字、按鈕約 33rem，夾在 120–200px。
                   矮螢幕並排時改扣色帶與按鈕就好。 */}
-              <div className="mx-auto w-[clamp(6rem,calc(100dvh-33rem),12.5rem)] short:mx-0 short:w-[clamp(6rem,calc(100dvh-16rem),10rem)] short:shrink-0">
+              <div className="mx-auto w-[clamp(6rem,calc(100svh-33rem),12.5rem)] short:mx-0 short:w-[clamp(6rem,calc(100svh-16rem),10rem)] short:shrink-0">
                 <TutorialBoard {...st.board} />
               </div>
               {/* 標題搬進軌道裡 —— 留在色帶上的話，滑動時內容在移動、
