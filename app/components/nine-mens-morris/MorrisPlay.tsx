@@ -1,7 +1,10 @@
 'use client';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { GiExitDoor } from 'react-icons/gi';
 import { LuArrowLeft, LuCircleHelp, LuHouse, LuRotateCcw, LuUndo2, LuVolume2, LuVolumeX } from 'react-icons/lu';
+import Modal from '@/components/Modal';
 import { ShareResultModal, useShareCard } from '@/components/ShareResultModal';
+import { useLeaveGuard } from '@/hook/useLeaveGuard';
 import { useSound } from '@/hook/useSound';
 import { useGameText, useMessages } from '@/i18n/LocaleProvider';
 import { fill, useTextTable } from '@/i18n/gameText';
@@ -20,6 +23,7 @@ import { clearSession, saveSession, type MorrisMode } from './session';
 import { drawMorrisCard } from './shareCard';
 import { PLUCK_MS } from './pluck';
 import { playMorris } from './sounds';
+import { MORRIS_BAND, MORRIS_PANEL } from './ui';
 
 const LEVELS = ['easy', 'normal', 'hard'] as const;
 
@@ -101,6 +105,9 @@ export default function MorrisPlay({ locale, mode, showRules, moves = '', onMenu
   const aiTurn = mode.kind === 'ai' && !game.winner && game.turn !== mode.human;
   // 連線時輪到對方：跟電腦的回合一樣不能動，狀態寫「輪到對方」
   const theirTurn = online && !game.winner && game.turn !== human;
+  // 下到一半要離開先問（房子鈕、換模式、返回鍵、電腦版關分頁；hook/useLeaveGuard.ts）。連線局一開打就算
+  const leave = useLeaveGuard({ live: !game.winner, inProgress: !game.winner && (online || h.length > 0) });
+  const toMenu = () => leave.request(onMenu);
   const locked = aiTurn || theirTurn;
   // 拿子的手還在動：局面已經換人了，但手縮回去之前盤上不浮出可以放、可以走的提示（點了也不算，見 pick）
   const still = locked || plucking;
@@ -328,7 +335,7 @@ export default function MorrisPlay({ locale, mode, showRules, moves = '', onMenu
     <MorrisFrame className="items-center px-4 pb-4 pt-3 lg:flex-row lg:items-center lg:justify-center lg:gap-12 lg:py-10">
       {/* 手機的上方一排 */}
       <div className="flex w-full max-w-[520px] items-center gap-3 lg:hidden">
-        <button type="button" onClick={onMenu} aria-label={t.home} className={round}><LuHouse aria-hidden="true" /></button>
+        <button type="button" onClick={toMenu} aria-label={t.home} className={round}><LuHouse aria-hidden="true" /></button>
         <div className="min-w-0 flex-1">
           <h1 className="truncate text-lg font-black leading-tight">{t.title}</h1>
           <p className="text-xs font-bold leading-snug text-[#eee0c4]/80">{summary}</p>
@@ -355,14 +362,14 @@ export default function MorrisPlay({ locale, mode, showRules, moves = '', onMenu
         <div className="grid w-full max-w-[520px] grid-cols-3 gap-2 lg:hidden">
           <button type="button" onClick={doUndo} disabled={!canUndo} className={stacked}><LuUndo2 aria-hidden="true" />{t.undo}</button>
           <button type="button" onClick={restart} className={stacked}><LuRotateCcw aria-hidden="true" />{t.restart}</button>
-          <button type="button" onClick={onMenu} className={stacked}><LuArrowLeft aria-hidden="true" />{t.menu}</button>
+          <button type="button" onClick={toMenu} className={stacked}><LuArrowLeft aria-hidden="true" />{t.menu}</button>
         </div>
       )}
 
       {/* 桌機的右邊一欄 */}
       <aside className="hidden w-[340px] shrink-0 flex-col gap-5 lg:flex">
         <div className="flex items-start gap-3">
-          <button type="button" onClick={onMenu} aria-label={t.home} className={round}><LuHouse aria-hidden="true" /></button>
+          <button type="button" onClick={toMenu} aria-label={t.home} className={round}><LuHouse aria-hidden="true" /></button>
           <div className="min-w-0 flex-1">
             <h1 className="text-3xl font-black leading-none">{t.title}</h1>
             <p className="mt-1.5 text-sm font-bold text-[#eee0c4]/80">{summary}</p>
@@ -377,11 +384,20 @@ export default function MorrisPlay({ locale, mode, showRules, moves = '', onMenu
             <button type="button" onClick={restart} className={wide}><LuRotateCcw aria-hidden="true" />{t.restart}</button>
           </>}
           <button type="button" onClick={() => setHelpOpen(true)} className={wide}><LuCircleHelp aria-hidden="true" />{t.rulesHeading}</button>
-          <button type="button" onClick={onMenu} className={wide}><LuArrowLeft aria-hidden="true" />{t.menu}</button>
+          <button type="button" onClick={toMenu} className={wide}><LuArrowLeft aria-hidden="true" />{t.menu}</button>
         </div>
       </aside>
 
       <MorrisRulesModal t={t} open={helpOpen} onClose={() => setHelpOpen(false)} showRules={showRules} />
+
+      <Modal isOpen={leave.open} onClose={leave.cancel} title={g.leave.heading} kicker={g.leave.kicker}
+        icon={GiExitDoor} band={MORRIS_BAND} panelClassName={MORRIS_PANEL}
+        footer={<>
+          <button type="button" onClick={leave.cancel} className="nmm-arch is-small flex-1 pb-3 pt-4 font-black">{g.leave.cancel}</button>
+          <button type="button" onClick={leave.confirm} className="nmm-arch is-small is-red flex-1 pb-3 pt-4 font-black">{g.leave.confirm}</button>
+        </>}>
+        <p className="text-sm leading-relaxed">{online ? g.leave.bodyOnline : g.leave.body}</p>
+      </Modal>
 
       {/* 結算就是分享圖（Zach 10/24：每款都要有結尾的可分享畫面），圖長得像這款自己的頁面（shareCard.ts）；
           關掉就留在終局的盤面上看，換模式在頁面上 */}
