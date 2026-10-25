@@ -2,6 +2,7 @@
 import { useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';
 import { GiExitDoor, GiRuleBook } from 'react-icons/gi';
 import Modal from '@/components/Modal';
+import { useLeaveGuard } from '@/hook/useLeaveGuard';
 import { useMessages } from '@/i18n/LocaleProvider';
 import { fill, useTextTable } from '@/i18n/gameText';
 import type { Locale } from '@/i18n/locales';
@@ -75,7 +76,6 @@ export default function AuctionPlay({ locale, mode, opponents, difficulty, seed,
   /** 這回合是時間用完、按鈕自己彈起來的 */
   const [popped, setPopped] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
-  const [leave, setLeave] = useState(false);
   const [endShown, setEndShown] = useState(false);
   const [endClosed, setEndClosed] = useState(false);
   /** 事件處理器用：還按著沒（擋重複放手）。不參與畫面 */
@@ -88,12 +88,14 @@ export default function AuctionPlay({ locale, mode, opponents, difficulty, seed,
   const [flying, setFlying] = useState<number | null>(null);
 
   const over = isOver(game);
+  // 下到一半離開先問：房子鈕、瀏覽器返回鍵、電腦版關分頁（hook/useLeaveGuard.ts）
+  const leave = useLeaveGuard({ live: !over, inProgress: !over && (game.history.length > 0 || phase === 'live') });
   const myLeft = remaining(game, 0);
   const last = game.history[game.history.length - 1];
   const pub = useMemo(() => publicHistory(game), [game]);
   const holdingNow = phase === 'live' && myBid === null;
   const endOpen = over && endShown && !endClosed;
-  const modalOpen = helpOpen || leave || endOpen;
+  const modalOpen = helpOpen || leave.open || endOpen;
   const canBegin = !over && phase !== 'live';
   const roundNo = phase === 'live' || (phase === 'ready' && !over) ? game.history.length + 1 : game.history.length;
   const name = (seat: number) => (seat === 0 ? t.you : fill(t.computer, { n: seat }));
@@ -226,11 +228,7 @@ export default function AuctionPlay({ locale, mode, opponents, difficulty, seed,
     };
   }, [waiting]);
 
-  const inProgress = !over && (game.history.length > 0 || phase === 'live');
-  const askLeave = () => {
-    if (inProgress) setLeave(true);
-    else onHome();
-  };
+  const askLeave = () => leave.request(onHome);
 
   // ── 文字 ──────────────────────────────────────────────────────────────
   const fmt = formatTenths;
@@ -332,12 +330,12 @@ export default function AuctionPlay({ locale, mode, opponents, difficulty, seed,
         <RulesStepsPaged open={helpOpen} mode={mode} onDone={() => setHelpOpen(false)} />
       </Modal>
 
-      <Modal isOpen={leave} onClose={() => setLeave(false)} title={t.leaveTitle} kicker={t.title}
+      <Modal isOpen={leave.open} onClose={leave.cancel} title={t.leaveTitle} kicker={t.title}
         icon={GiExitDoor} band={TAU_BAND} panelClassName={TAU_PANEL}
         footer={
           <>
-            <button type="button" className="tau-lot flex-1 font-black" onClick={() => setLeave(false)}>{t.stay}</button>
-            <button type="button" className="tau-press flex-1 font-black" onClick={onHome}>{t.leave}</button>
+            <button type="button" className="tau-lot flex-1 font-black" onClick={leave.cancel}>{t.stay}</button>
+            <button type="button" className="tau-press flex-1 font-black" onClick={leave.confirm}>{t.leave}</button>
           </>
         }>
         <p className="text-sm font-bold leading-relaxed">{t.leaveBody}</p>

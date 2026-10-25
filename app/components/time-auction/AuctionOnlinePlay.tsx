@@ -3,6 +3,7 @@ import { useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { GiExitDoor, GiRuleBook } from 'react-icons/gi';
 import Modal from '@/components/Modal';
+import { useLeaveGuard } from '@/hook/useLeaveGuard';
 import { fill, useTextTable } from '@/i18n/gameText';
 import type { Locale } from '@/i18n/locales';
 import { MODES, TENTH_MS, bidFromHold, formatTenths, maxRemaining, publicHistory, remaining, standings } from '@/games/time-auction/engine';
@@ -56,6 +57,8 @@ export default function AuctionOnlinePlay({ locale, room, me, home, onAgain }: {
   const start = round?.start ?? null;
   const myLeft = remaining(game, me);
   const over = phase === 'over';
+  // 離開先問（連線局開打就算）：房子鈕、瀏覽器返回鍵、電腦版關分頁（hook/useLeaveGuard.ts）
+  const leave = useLeaveGuard({ live: !over, inProgress: !over });
   const last = game.history[game.history.length - 1];
   const pub = useMemo(() => publicHistory(game), [game]);
 
@@ -70,11 +73,10 @@ export default function AuctionOnlinePlay({ locale, room, me, home, onAgain }: {
   const holdingNow = holdingN === n && myUp === null && (phase === 'gathering' || phase === 'live');
 
   const [helpOpen, setHelpOpen] = useState(false);
-  const [leave, setLeave] = useState(false);
   const [endShown, setEndShown] = useState(over);
   const [endClosed, setEndClosed] = useState(false);
   const endOpen = over && endShown && !endClosed;
-  const modalOpen = helpOpen || leave || endOpen;
+  const modalOpen = helpOpen || leave.open || endOpen;
   const canBegin = (phase === 'open' || phase === 'gathering') && !iPressed && myLeft > 0;
 
   const clockRef = useRef<HTMLDivElement>(null);
@@ -282,7 +284,7 @@ export default function AuctionOnlinePlay({ locale, room, me, home, onAgain }: {
     : fill(t.pressJoin, { n });
   const roundNo = over ? game.history.length : n;
 
-  const askLeave = () => (over ? router.push(home) : setLeave(true));
+  const askLeave = () => leave.request(() => router.push(home));
 
   return (
     <TauFrame rootClassName="h-dvh overflow-hidden short:h-auto short:min-h-dvh short:overflow-visible"
@@ -346,12 +348,12 @@ export default function AuctionOnlinePlay({ locale, room, me, home, onAgain }: {
         <RulesStepsPaged open={helpOpen} mode={room.mode} online onDone={() => setHelpOpen(false)} />
       </Modal>
 
-      <Modal isOpen={leave} onClose={() => setLeave(false)} title={t.leaveTitle} kicker={t.title}
+      <Modal isOpen={leave.open} onClose={leave.cancel} title={t.leaveTitle} kicker={t.title}
         icon={GiExitDoor} band={TAU_BAND} panelClassName={TAU_PANEL}
         footer={
           <>
-            <button type="button" className="tau-lot flex-1 font-black" onClick={() => setLeave(false)}>{t.stay}</button>
-            <button type="button" className="tau-press flex-1 font-black" onClick={() => router.push(home)}>{t.leave}</button>
+            <button type="button" className="tau-lot flex-1 font-black" onClick={leave.cancel}>{t.stay}</button>
+            <button type="button" className="tau-press flex-1 font-black" onClick={leave.confirm}>{t.leave}</button>
           </>
         }>
         <p className="text-sm font-bold leading-relaxed">{t.leaveOnlineBody}</p>
