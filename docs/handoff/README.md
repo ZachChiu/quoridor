@@ -35,7 +35,7 @@ CLAUDE.md 用 `@~/Desktop/projects/sites-data/protocol.md` 引用分工規則，
 - 大腦筋是 `~/Desktop/projects/sites-data` 的另一段對話，負責 GA4、Search Console、Sentry 判讀、寫計畫、到期驗收。它只寫 docs，不碰程式。
 - 每次打版都要報 **【上線】**（版號、上線日、一句話、影響的頁面或事件）。GA 事件、Sentry、網址或轉址有變動要報 **【追蹤變更】**。派工做完報 **【完成】**，推翻計畫前提的研究結果報 **【結論】**。
 - **雲端可以直接傳訊息給大腦筋**（10/25 實測：它是 `claude remote-control` 開的，`list_sessions` 查得到、開放其他對話傳訊息）。用 claude-code-remote 的 `send_message`，對象是標題「大腦筋」那個 session。它收到時知道是另一段對話傳的。它要有傳訊息的工具才回得了；回不了就用 `list_events` 讀它的對話。傳之前先問 Zach（會讓它跑一輪）。
-- **10/25 大腦筋也搬上雲端了**：新的 session 標題「大腦筋雲端」（`session_01FH2oZtnsn1WsFitX7sP5g1`，掛 `sites-data` repo）。它主動傳訊息來，說之後【上線】【追蹤變更】都傳到這個 session，並問我們是不是接手 Mac 上〈魔鬼的計謀遊戲〉那段牆壁圍棋對話、請回一句確認雙向通。**還沒回**，在等 Zach 點頭（§5）。
+- **10/25 大腦筋也搬上雲端了**：新的 session 標題「大腦筋雲端」（`session_01FH2oZtnsn1WsFitX7sP5g1`，掛 `sites-data` repo）。它主動傳訊息來，說之後【上線】【追蹤變更】都傳到這個 session，並問我們是不是接手 Mac 上〈魔鬼的計謀遊戲〉那段牆壁圍棋對話、請回一句確認雙向通。10/25 Zach 要我回、跟它合作，已回：確認接手（我們的 session 是 `session_01EqQDVyvUi4wL1aNNbw3Nm1`），預告平台上線時的【追蹤變更】（網址搬家與 301、新語系、會被索引的新頁、`feedback_send` 多 `platform`、回饋的 `page`／`record`），並問它平台要追哪些 GA 事件（提議沿用 `game_start`／`game_end` 加 `game` 參數，由它定規格）、Search Console 搬家要準備什麼、有沒有派工。**等它回**；它定了 GA 規格就在分支上做。
 
 ## 3. 分支與 beta 站
 
@@ -88,7 +88,7 @@ CLAUDE.md 用 `@~/Desktop/projects/sites-data/protocol.md` 引用分工規則，
 5. ✅ **「每一季一個目錄頁」10/25 做了**：`/season/1`、`/season/2`、`/season/3`（`app/views/SeasonView.tsx`），平台首頁每一季的標題連過去（多一個「看全部 ›」）。排成格子（能玩的排前面、其他照播出順序）、上方一排「第 N 季」切換各季、會被索引（標題與描述列出那一季的遊戲名），分享圖先共用平台那張。卡片抽成 `components/platform/GameCard.tsx` 兩邊共用。
 6. ✅ **平台分享圖的拼貼 10/25 決定都留著**，只把棋盤類（Wall Go、尼泊爾虎棋、騎士巡遊）重做：拼貼原本直接拿平台小卡片的圖，那幾張是要配字的（棋盤斜放、偏右），放進拼貼就是歪的、靠邊的。改成擺正的盤面放在卡片正中間、底色用那款自己分享圖的底色（`scripts/og-art/collage.mjs` 的 `BOARDS`）。整面牆照舊斜 12°；`DEG=0` 可以出整面牆也擺正的版本。
 7. **要不要推 `feat/platform-bagh`，再併進五條 `feat/game-*`**（10/25 問了還沒回）。這條分支在雲端有十幾個 commit 沒推，但內容全部已經在 `origin/beta` 裡，不會丟。這條分支上的 deploy.yml 只在 `main`、`dev` 有推送時才跑，推了不會部署。
-8. **要不要回大腦筋雲端那則訊息**（見 §2，10/25 問了還沒回）。
+8. ✅ **回大腦筋雲端**：10/25 Zach 說要回、要跟它合作，已回（內容見 §2），等它回 GA 規格。
 
 ## 6. 更早的待辦
 
@@ -96,7 +96,6 @@ CLAUDE.md 用 `@~/Desktop/projects/sites-data/protocol.md` 引用分工規則，
 - 平衡播棋：AI 補位、再來一局。
 - 九子棋：拿子提示的文字。
 - 平台正式上線前，Zach 要在正式 Firebase 發布規則：`feedback` 的 `page`／`record` 欄位、`baghRooms`、`turnRooms`、`auctionRooms`。**規則先發布、程式後上線**（順序反過來，新程式的回饋會整筆送不出去）。beta 專案也要貼同一份。
-- 可以順便跟大腦筋說平台名定案了（骰子惡魔／Dice Devil）。
 - 設計總表（artifact）：https://claude.ai/artifact/Ky3S2VeCc5CXidHTYfzCtA ——「全部改完在總表放上更新版桌機手機樣式」是 Zach 要的，五款規則頁那批還沒放進去。
 
 ## 7. 雲端環境要知道的
