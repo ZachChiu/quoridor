@@ -194,7 +194,7 @@ nudge { by, at }          最近一次「催一下」
   線條圖示在大尺寸色塊上會顯得單薄。署名放在遊玩方式 Modal 裡。
 - **貼紙風（粗黑框＋硬影子）試過、不用**：2026-10-20 先放在 Wall Go 首頁磁磚、再試在對局頁的按鈕與牆（磚牆），
   Zach 都要復原（「Wall Go 決定不改」）。不要再加回來。
-- **這套視覺只管 Wall Go 與平台**：虎羊棋是印刷棋盤＋米提拉的自己一套（見路由表）。平台標誌是長角的藍骰子（`public/brand/die-mark.svg`，試套）。
+- **這套視覺只管 Wall Go 與平台**：虎羊棋是印刷棋盤＋米提拉的自己一套（見路由表）。平台標誌是長角的藍骰子（`public/brand/die-mark.svg`，試套）；各遊戲頁左上那顆是同樣大小的灰色半透明單色版（`PlatformMark` 的 `mono`、`die-mark-gray.svg`，10/25 Zach 試看看），平台自己的頁面照舊是藍的。
   **favicon 每款一組**（2026-10-24）：全站預設 `/favicon.*`、`/icon-*.png` 是平台的骰子惡魔平面版（16px 下立體版糊掉），Wall Go 那兩個人搬到 `public/icons/wall-go.*`、尼泊爾虎棋是老虎圓牌 `public/icons/bagh-chal*`，由 `i18n/metadata.ts` 的 `GAME_ICONS` 依路徑指定；結算分享圖站名前那顆也用那款自己的。第二批五款還沒有自己的，沿用平台的。
   **加到主畫面的圖示（apple-touch-icon）例外，每一頁都是平台的**（10/25）：從哪一款加，打開都是平台首頁（見下一條），圖示跟著是平台。
 - **加到主畫面（PWA）**（2026-10-25 Zach：「PWA 也做上去，設定上一定要回根目錄，不管從哪一個遊戲註冊」）：設定檔一個語系一份 `/pwa/<語系>.json`（`app/pwa/[file]/route.ts`，內容在 `i18n/pwa.ts`），兩個 root layout 依語系掛 `<link rel="manifest">`。
