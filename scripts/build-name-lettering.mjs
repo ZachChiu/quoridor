@@ -52,7 +52,10 @@ async function loadFont({ src, axes = {} }) {
   const font = new hb.Font(face);
   const vars = Object.entries(axes).map(([tag, v]) => hb.Variation.fromString(`${tag}=${v}`));
   if (vars.length) font.setVariations(vars);
-  const entry = { font, upem: face.upem, family: face.getName(1, 'en') || cached.split('/').pop() };
+  // 可變字型的 name 1 是預設那一套（ExtraLight 之類），16 才是字族名；用了哪個字重寫在後面
+  const family = (face.getName(16, 'en') || face.getName(1, 'en') || cached.split('/').pop()) +
+    Object.entries(axes).map(([tag, v]) => ` ${tag} ${v}`).join('');
+  const entry = { font, upem: face.upem, family };
   fonts.set(key, entry);
   return entry;
 }
