@@ -31,6 +31,17 @@ function Scene({ phase }: { phase: WipePhase }) {
         // 第一格就給對：翻下來之前是掀著的、翻走之前是平貼的（見 EntranceScene 的說明）
         style={{ transformOrigin: 'left center', backfaceVisibility: 'hidden', willChange: 'transform', transform: covered ? FLAT : LIFTED }}
       >
+        {/* 外框外面上下再接一截群青底，跟著這頁一起翻：轉場層在 iOS 26 Safari 會多蓋到狀態列、工具列底下
+            （WipeOverlay 的 --bleed），朱紅框照舊貼著看得到的那一段。left／right 退一個框寬，跟外框一樣寬 */}
+        {(['bottom', 'top'] as const).map((anchor) => (
+          <div
+            key={anchor}
+            className="nmm-field pointer-events-none absolute"
+            style={{ [anchor]: 'calc(100% + var(--nmm-frame, 12px))', left: 'calc(-1 * var(--nmm-frame, 12px))', right: 'calc(-1 * var(--nmm-frame, 12px))', height: 'var(--bleed, 0px)' }}
+          >
+            <div data-shade className="absolute inset-0 bg-[#1e120a]" style={{ opacity: covered ? 0 : SHADE }} />
+          </div>
+        ))}
         <MorrisWordmark className="h-auto w-[min(84%,26rem)]" />
         {/* eslint-disable-next-line @next/next/no-img-element -- 轉場層裡的裝飾圖，平台卡片已經載過 */}
         <img src={ART} alt="" decoding="sync" className="max-h-[48vh] w-[min(88%,560px)] object-contain" />
@@ -44,8 +55,9 @@ function Scene({ phase }: { phase: WipePhase }) {
 
 function play(root: HTMLElement, phase: WipePhase): Animation[] {
   const page = root.querySelector<HTMLElement>('[data-page]');
-  const shade = root.querySelector<HTMLElement>('[data-shade]');
-  if (!page || !shade) return [];
+  // 這頁本身＋上下接出去的那兩截，一起變暗
+  const shades = Array.from(root.querySelectorAll<HTMLElement>('[data-shade]'));
+  if (!page || !shades.length) return [];
   const o: KeyframeAnimationOptions = phase === 'cover'
     // 放下一頁紙：一開始慢、中段快、貼到紙面前輕輕收住
     ? { duration: 620, easing: 'cubic-bezier(0.4, 0, 0.2, 1)', fill: 'both' }
@@ -55,7 +67,7 @@ function play(root: HTMLElement, phase: WipePhase): Animation[] {
   const [s0, s1] = phase === 'cover' ? [SHADE, 0] : [0, SHADE];
   return [
     page.animate([{ transform: from }, { transform: to }], o),
-    shade.animate([{ opacity: s0 }, { opacity: s1 }], o),
+    ...shades.map((shade) => shade.animate([{ opacity: s0 }, { opacity: s1 }], o)),
   ];
 }
 
