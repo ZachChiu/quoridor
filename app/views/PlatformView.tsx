@@ -7,9 +7,10 @@ import PlatformContact from '@/components/platform/PlatformContact';
 import HeroPicker from '@/components/platform/HeroPicker';
 import CardRow from '@/components/platform/CardRow';
 import GameCard from '@/components/platform/GameCard';
+import GameName from '@/components/platform/GameName';
 import { brandName } from '@/brand';
 import PlatformMark from '@/components/PlatformMark';
-import { HERO_DEFAULT, PLAYABLE, SEASONS, gameName, playableFirst, type CatalogGame } from '@/games/catalog';
+import { HERO_DEFAULT, PLAYABLE, SEASONS, playableFirst, type CatalogGame } from '@/games/catalog';
 import { getMessages } from '@/i18n';
 import { localePath, type Locale } from '@/i18n/locales';
 import { BAGH_CHAL, WALL_GO, season as seasonPath, type SeasonNumber } from '@/i18n/routes';
@@ -129,7 +130,7 @@ function GameHero({ game, locale }: { game: CatalogGame; locale: Locale }) {
   const blurb = BLURBS[game.playable!]?.[locale];
   const copy = wallGoGame ? [p.heroMeta, p.heroBody] : game.playable === BAGH_CHAL ? [p.baghHeroMeta, p.baghHeroBody] : blurb ? [blurb.meta, blurb.body] : null;
   // Wall Go 的標題照舊是首頁那兩行（中文名＋Wall Go）；規則頁頂部是森綠，進規則頁就擴散森綠
-  const title = wallGoGame ? <>{t.home.titleLine1}{t.home.titleLine2 && <><br />{t.home.titleLine2}</>}</> : gameName(game, locale);
+  const title = wallGoGame ? <>{t.home.titleLine1}{t.home.titleLine2 && <><br />{t.home.titleLine2}</>}</> : <GameName game={game} locale={locale} sub={{ mark: 0.42, font: 'text-[0.42em]' }} swap={0.9} />;
   const rulesWipe = wallGoGame ? RULES_GREEN : look.wipe;
   return (
     <section data-slide={game.playable} className={`${HERO} flex-col bg-black md:flex-row md:items-end`}>
