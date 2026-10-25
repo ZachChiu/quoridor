@@ -37,14 +37,17 @@ export default function Door({ side }: { side: 'left' | 'right' }) {
   );
   return (
     <div className="absolute inset-0" style={{ background: WOOD, border: `3px solid ${DARK}` }}>
-      {/* 上了彩的內框線 */}
-      <div className="absolute inset-[10px] rounded-md border-2" style={{ borderColor: SAFFRON }} />
-      {panel({ top: 20, height: '15%', backgroundRepeat: 'round' }, CARVE, '40px 40px')}
-      {panel({ top: 'calc(15% + 30px)', bottom: 'calc(15% + 30px)' }, LATTICE, '36px 36px')}
-      {panel({ bottom: 20, height: '15%', backgroundRepeat: 'round' }, CARVE, '40px 40px')}
-      {/* 銅環：在兩扇門相接的那一側 */}
-      <div className="absolute top-1/2 size-[30px] -translate-y-1/2 rounded-full border-[5px] border-[#c9a24a]"
-        style={side === 'left' ? { right: 8 } : { left: 8 }} />
+      {/* 門板本身蓋到轉場層上下多蓋的那截（iOS 26 Safari 的狀態列、工具列底下）；雕花照看得到的那一段排 */}
+      <div className="absolute inset-x-0 inset-y-[var(--bleed,0px)]">
+        {/* 上了彩的內框線 */}
+        <div className="absolute inset-[10px] rounded-md border-2" style={{ borderColor: SAFFRON }} />
+        {panel({ top: 20, height: '15%', backgroundRepeat: 'round' }, CARVE, '40px 40px')}
+        {panel({ top: 'calc(15% + 30px)', bottom: 'calc(15% + 30px)' }, LATTICE, '36px 36px')}
+        {panel({ bottom: 20, height: '15%', backgroundRepeat: 'round' }, CARVE, '40px 40px')}
+        {/* 銅環：在兩扇門相接的那一側 */}
+        <div className="absolute top-1/2 size-[30px] -translate-y-1/2 rounded-full border-[5px] border-[#c9a24a]"
+          style={side === 'left' ? { right: 8 } : { left: 8 }} />
+      </div>
     </div>
   );
 }

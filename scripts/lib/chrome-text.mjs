@@ -25,7 +25,10 @@ export async function openChrome() {
   const port = 9400 + Math.floor(Math.random() * 400);
   const proc = spawn(CHROME, [
     `--remote-debugging-port=${port}`, `--user-data-dir=${dir}`, '--headless=new',
-    '--no-first-run', '--no-default-browser-check', '--disable-extensions', 'about:blank',
+    '--no-first-run', '--no-default-browser-check', '--disable-extensions',
+    // 雲端容器是 root，Chrome 在 root 底下不開沙箱就不肯啟動
+    ...(process.getuid?.() === 0 ? ['--no-sandbox'] : []),
+    'about:blank',
   ], { stdio: 'ignore' });
   let ver;
   for (let i = 0; i < 60 && !ver; i++) {
