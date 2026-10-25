@@ -13,11 +13,22 @@
  * 大小位置不變，換成灰階、半透明，不跟那款自己的配色搶。平台自己的頁面（首頁、季目錄、404）照舊是藍色。
  * 灰色是另一張圖 die-mark-gray.svg（顏色照比較圖上的 grayscale＋brightness＋contrast 算好寫死），
  * 不在 <img> 上加 filter —— iPhone 會漏畫（虎棋圓牌踩過）。
+ * 滑過、按下去、鍵盤 focus 時變回藍色（同一天 Zach：「HOVER 或點下去要變回正常顏色」）：
+ * 藍色那張疊在灰色上面、平常透明，外面那顆連結要帶 `group`。滑過只給滑鼠（fine:），手指點過會一直停在 :hover；
+ * 按下去那一下不淡入、直接換，手指按著的時間很短。
  */
 export default function PlatformMark({ className = '', mono = false }: { className?: string; mono?: boolean }) {
-  return (
+  if (!mono) {
     // eslint-disable-next-line @next/next/no-img-element -- 靜態匯出、SVG，不需要 next/image
-    <img src={mono ? '/brand/die-mark-gray.svg' : '/brand/die-mark.svg'} alt="" aria-hidden="true" width={40} height={40}
-      className={`size-10 shrink-0 ${mono ? 'opacity-50' : ''} ${className}`} />
+    return <img src="/brand/die-mark.svg" alt="" aria-hidden="true" width={40} height={40} className={`size-10 shrink-0 ${className}`} />;
+  }
+  return (
+    <span aria-hidden="true" className={`relative block size-10 shrink-0 ${className}`}>
+      {/* eslint-disable-next-line @next/next/no-img-element -- 同上 */}
+      <img src="/brand/die-mark-gray.svg" alt="" width={40} height={40} className="absolute inset-0 size-10 opacity-50" />
+      {/* eslint-disable-next-line @next/next/no-img-element -- 同上 */}
+      <img src="/brand/die-mark.svg" alt="" width={40} height={40}
+        className="absolute inset-0 size-10 opacity-0 transition-opacity duration-150 group-focus-visible:opacity-100 group-active:opacity-100 group-active:duration-0 fine:group-hover:opacity-100" />
+    </span>
   );
 }

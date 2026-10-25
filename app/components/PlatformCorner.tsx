@@ -31,7 +31,7 @@ export default function PlatformCorner({ locale, theme, buttonClassName, offset 
         href={localePath(locale, '/')}
         aria-label={brandName(locale)}
         title={brandName(locale)}
-        className="fixed left-2.5 top-2.5 z-40 transition hover:brightness-110 active:scale-95"
+        className="group fixed left-2.5 top-2.5 z-40 transition active:scale-95"
         style={offset ? { left: offset, top: offset } : undefined}
       >
         <PlatformMark mono />
