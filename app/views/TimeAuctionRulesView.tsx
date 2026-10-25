@@ -51,7 +51,7 @@ export default function TimeAuctionRulesView({ locale }: { locale: Locale }) {
       <main className="mx-auto w-full max-w-[46rem] px-5 pb-[max(3rem,6svh)] pt-8">
         <header className="text-center">
           <p className="text-xs font-bold tracking-wide text-ink-soft">{t.tag}</p>
-          <h1 className="mt-2 text-balance text-[clamp(1.75rem,7vw,2.75rem)] font-black leading-[1.15] tracking-tight">{t.rulesTitle}</h1>
+          <h1 className="mt-2 text-balance text-[clamp(1.75rem,7vw,2.75rem)] font-black leading-[1.15] tracking-tight [word-break:auto-phrase]">{keepKatakana(t.rulesTitle)}</h1>
           {!latinTitle && <p className="sr-only">{t.nameEn}</p>}
           <p className="mt-2 text-sm font-bold">{t.tagline}</p>
           <p className="mx-auto mt-4 max-w-lg text-sm font-bold leading-relaxed text-ink-soft">
@@ -101,4 +101,12 @@ export default function TimeAuctionRulesView({ locale }: { locale: Locale }) {
       </main>
     </TauFrame>
   );
+}
+
+/**
+ * 日文的標題不斷在片假名的字中間（「タイムオークシ／ョンの遊び方」，2026-10-25）：一整串片假名不換行。
+ * Chrome 另外照語意斷句（h1 的 word-break: auto-phrase，斷在「の」後面）；Safari 不支援，至少不會把字切開。
+ */
+function keepKatakana(s: string): React.ReactNode {
+  return s.split(/([ァ-ヺー]+)/).map((part, i) => (i % 2 ? <span key={i} className="whitespace-nowrap">{part}</span> : part));
 }
