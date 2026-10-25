@@ -49,6 +49,16 @@ function Scene({ phase }: { phase: WipePhase }) {
           <div data-chalk className="absolute inset-0" style={{ backgroundColor: KT.chalk, opacity: 0 }} />
         </div>
       ))}
+      {/* 棋盤上下再接一截紙，跟著巡遊慢慢浮出來、收的時候慢慢淡掉：轉場層在 iOS 26 Safari 會多蓋到狀態列、
+          工具列底下（WipeOverlay 的 --bleed），8×8 的格子照舊排在看得到的那一段 */}
+      {(['bottom', 'top'] as const).map((anchor) => (
+        <div
+          key={anchor}
+          data-bleed
+          className="absolute inset-x-0"
+          style={{ [anchor]: '100%', height: 'var(--bleed, 0px)', backgroundColor: KT.paper, opacity: covered ? 1 : 0 }}
+        />
+      ))}
     </div>
   );
 }
@@ -57,6 +67,11 @@ function play(root: HTMLElement, phase: WipePhase): Animation[] {
   const cells = root.querySelectorAll<HTMLElement>('[data-sq]');
   if (cells.length !== 64) return [];
   const anims: Animation[] = [];
+  root.querySelectorAll<HTMLElement>('[data-bleed]').forEach((strip) => {
+    anims.push(phase === 'cover'
+      ? strip.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 64 * STEP_MS + 90, fill: 'both' })
+      : strip.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 60 + 64 * STEP_MS + 110, fill: 'both' }));
+  });
   EULER_TOUR.forEach((sq, i) => {
     const cell = cells[sq];
     if (phase === 'cover') {
