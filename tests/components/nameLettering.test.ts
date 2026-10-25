@@ -47,7 +47,7 @@ describe('各語系的遊戲名字標', () => {
     const game: CatalogGame = { name: 'Nine Men\'s Morris', names: { 'zh-TW': '九子棋' }, playable: path,
       look: { card: '', wipe: '', art: '', lettering: { mark: '/games/x/wordmark.svg', ratio: 10, spellsName: true } } };
     const html = (text: string) => {
-      NAME_LETTERINGS[path] = { 'zh-TW': { text, h: 0.94, gap: 0.06, lead: 0.16, pieces: [piece] } };
+      NAME_LETTERINGS[path] = { 'zh-TW': { text, h: 0.94, gap: 0.06, lead: 0.16, fit: 3.12, pieces: [piece] } };
       return renderToStaticMarkup(createElement(GameName, { game, locale: 'zh-TW', sub: { mark: 0.5, font: '' }, swap: 0.95 }));
     };
     try {
