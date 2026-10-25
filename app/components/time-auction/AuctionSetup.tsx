@@ -3,6 +3,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { LuCircleHelp, LuUsers } from 'react-icons/lu';
+import LocalName, { letteringOf } from '@/components/LocalName';
 import Modal from '@/components/Modal';
 import PlatformMark from '@/components/PlatformMark';
 import ContactButton from '@/components/ContactButton';
@@ -14,6 +15,7 @@ import { localePath, type Locale } from '@/i18n/locales';
 import { TIME_AUCTION, trialOnline, trialRules } from '@/i18n/routes';
 import { MAX_SEATS, ONLINE_MIN_SEATS, type Mode } from '@/games/time-auction/engine';
 import type { Difficulty } from '@/games/time-auction/ai';
+import { NAME_LETTERING } from '@/games/time-auction/nameLettering';
 import { TEXT } from '@/games/time-auction/text';
 import { KEY_ART, TAU_BAND, TAU_CORNER, TAU_PANEL, roundBtn } from './theme';
 import TauFrame from './TauFrame';
@@ -66,6 +68,8 @@ export default function AuctionSetup({ locale, value, onChange, onStart }: {
   const ROMAN = ['I', 'II', 'III'];
   // 名字本來就是英文（英文版）就讓字標當標題，不重複寫兩次
   const latinTitle = t.nameEn === t.title;
+  // 其他語系的標題用同一種風格的字（最粗的宋體／明朝）寫成的字標，平台卡片用的是同一份
+  const lettering = letteringOf(NAME_LETTERING, locale, t.title);
 
   const modeField = (
     <fieldset>
@@ -115,7 +119,14 @@ export default function AuctionSetup({ locale, value, onChange, onStart }: {
               <h1 className="mt-1.5"><span className="sr-only">{t.title}</span><TauWordmark className="mx-auto h-auto w-[min(100%,22rem)] lg:mx-0" /></h1>
             ) : (
               <h1 className="mt-1 flex flex-col items-center lg:items-start">
-                <span className="text-[clamp(2.25rem,5.5svh,3.25rem)] font-black leading-none tracking-[0.04em]">{t.title}</span>
+                {lettering ? (
+                  <>
+                    <span className="sr-only">{t.title}</span>
+                    <LocalName data={lettering} className="justify-center text-[clamp(2.25rem,5.5svh,3.25rem)] lg:justify-start" />
+                  </>
+                ) : (
+                  <span className="text-[clamp(2.25rem,5.5svh,3.25rem)] font-black leading-none tracking-[0.04em]">{t.title}</span>
+                )}
                 <span className="sr-only">{t.nameEn}</span>
                 <TauWordmark className="mt-2 h-[clamp(1.1rem,2.8svh,1.6rem)] w-auto" />
               </h1>
