@@ -2,14 +2,20 @@
 import { useEffect, useId, useLayoutEffect, useRef, type SVGProps } from 'react';
 import type { IconType } from 'react-icons';
 import { COORDS, MILLS, NEIGHBORS, POINT_NAMES, sideOf, type Cell, type Move, type Point, type Side } from '@/games/nine-mens-morris/engine';
-import { BOARD_H, BOARD_W, FRAME_INSET, MAN_BOX, MAN_HEAD, MAN_ORIGIN, MAN_OUTLINE, MAN_PARTS, MAN_SIZE, STRIP, TRAY_BOX, TRAY_Y, gx, trayX } from './art';
+import {
+  BOARD_H, BOARD_W, FRAME_INSET, MAN_BOX, MAN_HEAD, MAN_ORIGIN, MAN_OUTLINE, MAN_PARTS, MAN_SCALE, MAN_TOP, SPOT_Y, STRIP, TRAY_BOX, TRAY_Y,
+  gx, gy, trayTurn, trayX,
+} from './art';
 import { playIdle } from './idleMotion';
+import { MorrisHand } from './MorrisHand';
 import { NMM } from './palette';
+import { PLUCK_AT, PLUCK_MS, handFrom, handSleeve, pluckPlan } from './pluck';
 
 /**
  * 九子棋的棋盤與棋子，照首頁那幅《遊戲之書》（1283）插圖（Zach 10/24：「棋盤可以跟視覺圖一樣」、「棋子有點醜」）：
  * 木頭棋盤上有深淺的斑，線是嵌進去的淺金色木條，邊上一圈同樣的木條，下方多一段空木頭；
- * 棋子是插圖裡那種側面看的鐘形小人，站在交叉點上。形狀與尺寸在 art.ts（分享圖也用同一份）。
+ * 棋子是插圖裡那種側面看的鐘形小人，腳底站在交叉點上（不是把方框置中在交叉點：那樣交叉點落在胸口，整顆子看起來比點低半顆）。
+ * 形狀與尺寸在 art.ts（分享圖也用同一份）。
  *
  * 「現在可以做的事」一律用羊皮紙色，像粉筆畫在木板上（群青、朱紅在木頭上都看不清楚，見 palette.ts）：
  * - 可以走的子：腳下一圈淡淡的粉筆圈；選起來的子被拿起來（往上浮），原地留一塊粉筆印
@@ -19,10 +25,11 @@ import { NMM } from './palette';
  * - 上一手的子：頭上一個反色的小點
  * 放子時每個空點都能放，不畫標記（一整片點只會讓盤面變雜）；滑鼠滑過去才浮出一顆淡淡的子。
  *
- * 被拿掉的子倒下來、躺到下方那段木頭上（插圖裡放骰子的地方）：黑的從左邊排、白的從右邊排。
+ * 被拿掉的子躺到下方那段木頭上（插圖裡放骰子的地方）：黑的從左邊排、白的從右邊排。
  *
  * 動作（剛好多一手才播，悔棋、重來、重整接回都不播）：放子從上面落下、走子沿線滑過去、飛子劃一道弧、
- * 連成一線時粉筆畫出來、三顆依序跳一下、被拿的子倒下飛進下方。等的那一方偶爾自己動（idleMotion.ts）。
+ * 連成一線時粉筆畫出來、三顆依序跳一下。等的那一方偶爾自己動（idleMotion.ts）。
+ * 拿子是一隻插圖畫風的手從畫面外伸進來、捏起那顆、放到下方（pluck.ts、MorrisHand.tsx），什麼時候播由 MorrisPlay 決定（pluck）。
  */
 
 const reducedMotion = () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -54,12 +61,12 @@ export const WhitePieceIcon: IconType = ({ className }) => <PieceGlyph side="whi
 
 const lineLength = (l: readonly Point[]) => {
   const a = COORDS[l[0]], b = COORDS[l[2]];
-  return Math.hypot(gx(b.x) - gx(a.x), gx(b.y) - gx(a.y));
+  return Math.hypot(gx(b.x) - gx(a.x), gy(b.y) - gy(a.y));
 };
 
 function StripLine({ l, ...rest }: { l: readonly Point[] } & SVGProps<SVGLineElement>) {
   const a = COORDS[l[0]], b = COORDS[l[2]];
-  return <line x1={gx(a.x)} y1={gx(a.y)} x2={gx(b.x)} y2={gx(b.y)} {...rest} />;
+  return <line x1={gx(a.x)} y1={gy(a.y)} x2={gx(b.x)} y2={gy(b.y)} {...rest} />;
 }
 
 /** 木頭、斑、木條、粉筆線。斑用 SVG 的 feTurbulence 畫（插圖的棋盤是一塊塊深淺不一的木色），顏色是插圖取樣的 */
@@ -106,8 +113,18 @@ function BoardArt({ uid, mills }: { uid: string; mills: Point[][] }) {
   );
 }
 
-/** 一個點的位置與大小（整塊棋盤的百分比） */
-const pointStyle = (x: number, y: number) => ({ left: left(gx(x)), top: top(gx(y)), width: `${(MAN_BOX / BOARD_W) * 100}%` });
+/**
+ * 一個點的位置與大小（整塊棋盤的百分比）。按鈕是正方形，交叉點在按鈕的 SPOT_Y 高度（不是正中間）：
+ * 按鈕往上挪，剛好框住站在交叉點上的小人（見 art.ts）
+ */
+const pointStyle = (x: number, y: number) => ({
+  left: left(gx(x)), top: top(gy(y)), width: `${(MAN_BOX / BOARD_W) * 100}%`, transform: `translate(-50%, -${SPOT_Y * 100}%)`,
+});
+const pct = (v: number) => `${v * 100}%`;
+/** 按鈕裡：交叉點（粉筆點、粉筆圈的中心） */
+const SPOT = { left: '50%', top: pct(SPOT_Y) };
+/** 按鈕裡：站著的小人的方框（腳底在交叉點上） */
+const MAN = { left: pct((1 - MAN_SCALE) / 2), top: pct(MAN_TOP), width: pct(MAN_SCALE), height: pct(MAN_SCALE) };
 
 /**
  * 一個點上畫的東西：棋子、腳下的粉筆、粉筆點、浮出來的子。對局的棋盤（每個點是按鈕）與規則的小圖（靜態）共用，
@@ -125,26 +142,29 @@ function PointMarks({ cell, selected, removable, movable, mark, target, ghost, f
   from: boolean;
   hover?: boolean;
 }) {
-  // 腳下的粉筆：選起來的子原地留一塊印、可以拿的子是虛線圈、可以走的子是淡淡的實線圈
+  // 腳下的粉筆：選起來的子原地留一塊印、可以拿的子是虛線圈、可以走的子是淡淡的實線圈。
+  // 圈的中心在交叉點（腳底）稍下一點 —— 跟空點上的粉筆點、粉筆圈同一個中心
   const foot = !cell ? '' : selected ? 'bg-[#eee0c4]/75'
     : removable ? 'border-2 border-dashed border-[#eee0c4]'
     : movable ? 'border-2 border-[#eee0c4]/55' : '';
+  const dot = 'absolute -translate-x-1/2 -translate-y-1/2 rounded-full';
   return (
     <>
-      {foot && <span aria-hidden="true" className={`absolute bottom-[-3%] left-1/2 h-[26%] w-[84%] -translate-x-1/2 rounded-[50%] ${foot}`} />}
+      {foot && <span aria-hidden="true" className={`absolute h-[26%] w-[84%] -translate-x-1/2 -translate-y-1/2 rounded-[50%] ${foot}`}
+        style={{ left: '50%', top: pct(SPOT_Y + 0.03) }} />}
       {cell && (
-        <span data-piece="" style={{ transformOrigin: MAN_ORIGIN }}
-          className={`absolute inset-[4%] transition-transform duration-200 ${selected ? 'translate-y-[-16%] scale-105' : movable && hover ? 'fine:group-hover:translate-y-[-6%]' : ''} ${removable ? 'nmm-teeter' : ''}`}>
+        <span data-piece="" style={{ ...MAN, transformOrigin: MAN_ORIGIN }}
+          className={`absolute transition-transform duration-200 ${selected ? 'translate-y-[-16%] scale-105' : movable && hover ? 'fine:group-hover:translate-y-[-6%]' : ''} ${removable ? 'nmm-teeter' : ''}`}>
           <PieceGlyph side={sideOf(cell)} mark={mark} className="size-full" />
         </span>
       )}
-      {!cell && target === 'move' && <span aria-hidden="true" className="size-[30%] rounded-full bg-[#eee0c4] shadow-[0_0_0_1.5px_rgb(30_18_10/0.45)]" />}
+      {!cell && target === 'move' && <span aria-hidden="true" className={`${dot} size-[30%] bg-[#eee0c4] shadow-[0_0_0_1.5px_rgb(30_18_10/0.45)]`} style={SPOT} />}
       {!cell && target === 'place' && ghost && (
-        <span aria-hidden="true" className={`absolute inset-0 transition-opacity ${hover ? 'opacity-0 fine:group-hover:opacity-45' : 'opacity-45'}`}>
+        <span aria-hidden="true" style={MAN} className={`absolute transition-opacity ${hover ? 'opacity-0 fine:group-hover:opacity-45' : 'opacity-45'}`}>
           <PieceGlyph side={ghost} className="size-full" />
         </span>
       )}
-      {!cell && !target && from && <span aria-hidden="true" className="size-[34%] rounded-full border-2 border-[#eee0c4]/60" />}
+      {!cell && !target && from && <span aria-hidden="true" className={`${dot} size-[34%] border-2 border-[#eee0c4]/60`} style={SPOT} />}
     </>
   );
 }
@@ -155,7 +175,7 @@ function TrayPieces({ removed }: { removed: Record<Side, number> }) {
     <span key={`${s}${i}`} data-tray={s} data-slot={i} aria-hidden="true"
       className="pointer-events-none absolute aspect-square -translate-x-1/2 -translate-y-1/2"
       style={{ left: left(trayX(s, i)), top: top(TRAY_Y), width: `${(TRAY_BOX / BOARD_W) * 100}%` }}>
-      <span className={`block size-full ${s === 'black' ? '-rotate-90' : 'rotate-90'}`}><PieceGlyph side={s} className="size-full" /></span>
+      <span className="block size-full" style={{ rotate: `${trayTurn(s)}deg` }}><PieceGlyph side={s} className="size-full" /></span>
     </span>
   )))}</>;
 }
@@ -192,7 +212,7 @@ export function MorrisMiniBoard({ board, mills = [], removable = [], selected, t
         const { x, y } = COORDS[p];
         const target = targets.includes(p) ? 'move' : ghost?.at === p ? 'place' : undefined;
         return (
-          <span key={p} className="absolute grid aspect-square -translate-x-1/2 -translate-y-1/2 place-items-center" style={pointStyle(x, y)}>
+          <span key={p} className="absolute aspect-square" style={pointStyle(x, y)}>
             <PointMarks cell={cell} selected={selected === p} removable={!!cell && removable.includes(p)} movable={false} mark={p === lastTo}
               target={target} ghost={ghost?.at === p ? ghost.side : undefined} from={p === lastFrom} />
           </span>
@@ -204,8 +224,13 @@ export function MorrisMiniBoard({ board, mills = [], removable = [], selected, t
 
 export type BoardLabels = { black: string; white: string; empty: string; remove: string };
 
+/** 這一手的拿子要播手（MorrisPlay 決定）：在第幾手、拿掉哪一點的哪一方、躺到下方第幾格 */
+export type Pluck = { plies: number; at: Point; side: Side; slot: number };
+/** 手的進度：捏住、放下（MorrisPlay 對時放音效）、整段播完 */
+export type PluckStage = 'grip' | 'drop' | 'done';
+
 /** 對局用的棋盤：每個點都是按鈕 */
-export function MorrisBoard({ board, targets, movable, removable, selected, lastTo, lastFrom, mills, removed, last, removedSide, plies, idle, ghost, labels, onPick }: {
+export function MorrisBoard({ board, targets, movable, removable, selected, lastTo, lastFrom, mills, removed, last, plies, pluck, onPluck, idle, ghost, labels, onPick }: {
   board: Cell[];
   /** 現在可以放／走過去的空點 */
   targets: Map<Point, 'place' | 'move'>;
@@ -224,8 +249,9 @@ export function MorrisBoard({ board, targets, movable, removable, selected, last
   /** 最後一個動作與走了幾手：剛好多一手才播動畫 */
   last?: Move;
   plies: number;
-  /** 最後一個動作是拿子時，被拿的是哪一方 */
-  removedSide?: Side;
+  /** 拿子的手：有值就播（替身與手只在播的時候畫）；換成別的或 null 就停 */
+  pluck: Pluck | null;
+  onPluck: (stage: PluckStage) => void;
   /** 沒輪到、在等的那一方（它的子偶爾自己動一下）；分出勝負後 null */
   idle: Side | null;
   /** 放子階段：滑鼠滑過空點時浮出的那一方的子 */
@@ -236,6 +262,8 @@ export function MorrisBoard({ board, targets, movable, removable, selected, last
   const uid = useId().replace(/[^a-zA-Z0-9]/g, '');
   const rootRef = useRef<HTMLDivElement>(null);
   const seen = useRef(plies);
+  const onPluckRef = useRef(onPluck);
+  useLayoutEffect(() => { onPluckRef.current = onPluck; });
 
   useLayoutEffect(() => {
     const prev = seen.current;
@@ -244,25 +272,10 @@ export function MorrisBoard({ board, targets, movable, removable, selected, last
     if (plies !== prev + 1 || !last || !root || reducedMotion()) return;
     const point = (p: Point) => root.querySelector<HTMLElement>(`[data-point="${p}"]`);
     const piece = (p: Point) => root.querySelector<HTMLElement>(`[data-point="${p}"] [data-piece]`);
-    const center = (el: Element) => { const r = el.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2, h: r.height }; };
+    const center = (el: Element) => { const r = el.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; };
 
-    if (last.kind === 'remove') {
-      // 被拿的子：在原地被碰倒、飛進下方躺好。躺著的那顆一開始轉回站姿、放大成棋盤上的大小，從原本的點出發
-      const from = point(last.at);
-      const slot = removedSide && root.querySelector<HTMLElement>(`[data-tray="${removedSide}"][data-slot="${removed[removedSide] - 1}"]`);
-      if (!from || !slot) return;
-      const a = center(from), b = center(slot);
-      const dx = a.x - b.x, dy = a.y - b.y;
-      const up = removedSide === 'black' ? 90 : -90;
-      const s = MAN_SIZE / TRAY_BOX;
-      slot.animate([
-        { translate: `${dx}px ${dy}px`, rotate: `${up}deg`, scale: `${s}` },
-        { translate: `${dx}px ${dy}px`, rotate: `${up * 0.82}deg`, scale: `${s}`, offset: 0.18 },
-        { translate: `${dx * 0.45}px ${dy * 0.45 - a.h * 0.7}px`, rotate: `${up * 0.3}deg`, scale: `${(s + 1) / 2}`, offset: 0.6 },
-        { translate: '0 0', rotate: '0deg', scale: '1' },
-      ], { duration: 720, easing: 'ease-in-out' });
-      return;
-    }
+    // 拿子是那隻手（下面那個 effect）；減少動態效果時跟原本一樣直接不見、出現在下方
+    if (last.kind === 'remove') return;
 
     const el = piece(last.to);
     if (!el) return;
@@ -273,9 +286,10 @@ export function MorrisBoard({ board, targets, movable, removable, selected, last
         { translate: '0 0', scale: '1' },
       ], { duration: 360, easing: 'ease-in' });
     } else {
-      const fromEl = point(last.from);
-      if (fromEl) {
-        const a = center(fromEl), b = center(el);
+      // 兩個點的按鈕相減（不是按鈕減棋子：交叉點不在按鈕正中間，棋子也不在）
+      const fromEl = point(last.from), toEl = point(last.to);
+      if (fromEl && toEl) {
+        const a = center(fromEl), b = center(toEl);
         const dx = a.x - b.x, dy = a.y - b.y;
         const fly = !NEIGHBORS[last.from].includes(last.to);
         el.animate(fly ? [
@@ -297,7 +311,38 @@ export function MorrisBoard({ board, targets, movable, removable, selected, last
       { translate: '0 -22%', scale: '0.97 1.04', offset: 0.5 },
       { translate: '0 0', scale: '1' },
     ], { duration: 480, delay: 560 + i * 100, easing: 'ease-in-out' }));
-  }, [plies, last, mills, removed, removedSide]);
+  }, [plies, last, mills]);
+
+  // 拿子：一隻手從畫面外伸進來，捏起盤上那顆（替身）、放到下方那一格，再縮回去（pluck.ts）。
+  // 只動 transform／opacity，全部是 element.animate()；局面一變（悔棋、重來）就整段取消
+  useLayoutEffect(() => {
+    const root = rootRef.current;
+    if (!pluck || !root) return;
+    const hand = root.querySelector<HTMLElement>('[data-hand]');
+    const carried = root.querySelector<HTMLElement>('[data-carried]');
+    if (!hand || !carried) { onPluckRef.current('done'); return; }
+    const slot = root.querySelector<HTMLElement>(`[data-tray="${pluck.side}"][data-slot="${pluck.slot}"]`);
+    const r = root.getBoundingClientRect();
+    const plan = pluckPlan({ ...pluck, board: { left: r.left, width: r.width }, viewport: document.documentElement.clientWidth });
+    const opts: KeyframeAnimationOptions = { duration: PLUCK_MS, fill: 'forwards' };
+    const anims = [
+      hand.animate(plan.hand, opts),
+      carried.animate(plan.piece, opts),
+      ...[...hand.querySelectorAll<SVGGElement>('[data-finger]')].map((f) => f.animate(f.dataset.finger === 'index' ? plan.index : plan.thumb, opts)),
+      ...(slot ? [slot.animate(plan.tray, { duration: PLUCK_MS })] : []),
+    ];
+    const timers = [
+      window.setTimeout(() => onPluckRef.current('grip'), PLUCK_MS * PLUCK_AT.grip),
+      window.setTimeout(() => onPluckRef.current('drop'), PLUCK_MS * PLUCK_AT.set),
+    ];
+    let live = true;
+    anims[0].finished.then(() => { if (live) onPluckRef.current('done'); }, () => {});
+    return () => {
+      live = false;
+      timers.forEach((t) => window.clearTimeout(t));
+      anims.forEach((a) => a.cancel());
+    };
+  }, [pluck]);
 
   // 等的那一方偶爾動一下：每 2.5～5.5 秒挑一顆
   useEffect(() => {
@@ -323,13 +368,26 @@ export function MorrisBoard({ board, targets, movable, removable, selected, last
         const label = `${POINT_NAMES[p]} ${cell ? (cell === 'B' ? labels.black : labels.white) : labels.empty}${canRemove ? ` · ${labels.remove}` : ''}`;
         return (
           <button key={p} data-point={p} type="button" onClick={() => onPick(p)} aria-label={label} aria-pressed={isSelected || undefined}
-            className="group absolute grid aspect-square -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full"
-            style={pointStyle(x, y)}>
+            className="group absolute aspect-square rounded-full" style={pointStyle(x, y)}>
             <PointMarks cell={cell} selected={isSelected} removable={canRemove} movable={movable.has(p)} mark={p === lastTo}
               target={target} ghost={target === 'place' ? ghost : undefined} from={p === lastFrom} hover />
           </button>
         );
       })}
+
+      {/* 拿子的替身（局面裡那顆已經不在了）與手：只在播的時候畫，蓋在棋子上面、點不到 */}
+      {pluck && (
+        <span data-pluck="" aria-hidden="true" className="pointer-events-none absolute z-10 aspect-square" style={pointStyle(COORDS[pluck.at].x, COORDS[pluck.at].y)}>
+          <span data-carried="" className="absolute" style={{ ...MAN, transformOrigin: `${MAN_HEAD.x}% ${MAN_HEAD.y}%` }}>
+            <PieceGlyph side={pluck.side} className="size-full" />
+          </span>
+        </span>
+      )}
+      {pluck && (
+        <div data-hand="" aria-hidden="true" className="pointer-events-none absolute inset-0 z-20">
+          <MorrisHand from={handFrom(pluck.side)} sleeve={handSleeve(pluck.side)} />
+        </div>
+      )}
     </div>
   );
 }

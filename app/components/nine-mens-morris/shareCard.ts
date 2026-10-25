@@ -1,6 +1,6 @@
 import { COORDS, MILLS, type Cell, type Side } from '@/games/nine-mens-morris/engine';
 import { drawBrand, drawQr, fitText, type CardLayout, type ShareAssets, type ShareDraw } from '@/utils/shareCard';
-import { BOARD_H, BOARD_W, FRAME_INSET, MAN_OUTLINE, MAN_SIZE, MAN_PARTS, STRIP, TRAY_BOX, TRAY_Y, gx, trayX } from './art';
+import { BOARD_H, BOARD_W, FRAME_INSET, MAN_FOOT, MAN_OUTLINE, MAN_SIZE, MAN_PARTS, STRIP, TRAY_BOX, TRAY_Y, gx, gy, trayTurn, trayX } from './art';
 import { NMM } from './palette';
 import { WORDMARK_PATH, WORDMARK_VIEWBOX } from './MorrisWordmark';
 
@@ -114,17 +114,18 @@ function drawBoard(ctx: CanvasRenderingContext2D, d: MorrisCardData, x: number, 
     ctx.beginPath();
     for (const l of MILLS) {
       const a = COORDS[l[0]], b = COORDS[l[2]];
-      ctx.moveTo(gx(a.x), gx(a.y));
-      ctx.lineTo(gx(b.x), gx(b.y));
+      ctx.moveTo(gx(a.x), gy(a.y));
+      ctx.lineTo(gx(b.x), gy(b.y));
     }
     ctx.stroke();
   }
 
+  // 跟對局一樣：腳底站在交叉點上（方框中心在交叉點上方）
   d.board.forEach((cell, p) => {
-    if (cell) drawMan(ctx, cell === 'B' ? 'black' : 'white', gx(COORDS[p].x), gx(COORDS[p].y), MAN_SIZE);
+    if (cell) drawMan(ctx, cell === 'B' ? 'black' : 'white', gx(COORDS[p].x), gy(COORDS[p].y) - (MAN_FOOT - 0.5) * MAN_SIZE, MAN_SIZE);
   });
   for (const s of ['black', 'white'] as const) {
-    for (let i = 0; i < d.removed[s]; i++) drawMan(ctx, s, trayX(s, i), TRAY_Y, TRAY_BOX, s === 'black' ? -Math.PI / 2 : Math.PI / 2);
+    for (let i = 0; i < d.removed[s]; i++) drawMan(ctx, s, trayX(s, i), TRAY_Y, TRAY_BOX, (trayTurn(s) * Math.PI) / 180);
   }
   ctx.restore();
 }
