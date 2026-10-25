@@ -2,6 +2,13 @@
 
 > 調查日期：2026-10-20。延續 `docs/games-research.md`（概覽不重做），只針對 S2 這 10 款往下挖一層。
 > 網站現況：quoridorgame.com，靜態 Next.js；已上線 Wall Go、Bagh Chal（純函式 engine、Web Worker 裡的 alpha-beta 電腦、本機雙人、Firebase 連線房）。
+>
+> **2026-10-25 現況**：建議的 3 款都做了，在各自的分支與 beta 上：
+> - 時間拍賣：有快速局與連線。連線沒有用下面〈共用技術〉的密封值，改成每個人只寫自己按下、放開的伺服器時間，整場由各台自己推算（`auctionRooms`，見 `app/types/auctionRoom.ts`）。所以 Remove One、Big Small 等要用的密封值共用模組**還沒做**。
+> - 平衡播棋：4–7 人的連線（全部真人、坐滿才開打），電腦補位還沒做。
+> - 騎士巡遊：Zach 決定不做連線（一個人解的謎題）。
+>
+> 備選的 Triple Dice、Question and Truth、Equation Pyramid、Remove One、Big Small 都還沒做。全部遊戲的進度見 `games-research.md`〈目前進度〉。
 
 ## 先講結論
 
