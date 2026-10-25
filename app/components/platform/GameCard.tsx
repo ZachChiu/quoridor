@@ -2,8 +2,13 @@ import WipeLink from '@/components/WipeLink';
 import { gameName, type CatalogGame } from '@/games/catalog';
 import { localePath, type Locale } from '@/i18n/locales';
 
-/** 平台上的遊戲卡（首頁一排排、季目錄頁的格子共用）。寬度由呼叫的地方給：首頁是固定 240px 橫向捲動，目錄頁跟著格子走 */
-const CARD = 'relative block aspect-video overflow-hidden rounded-xl';
+/**
+ * 平台上的遊戲卡（首頁一排排、季目錄頁的格子共用）。寬度由呼叫的地方給：首頁是固定 240px 橫向捲動，目錄頁跟著格子走。
+ * 卡片本身是 container：名字的字級跟著卡片寬度（`NAME`），首頁 240px 的卡片照舊 22px；
+ * 320 寬的手機上目錄頁一格只剩 138px，固定 22px 的長名字（Time Auction、タイムオークション）換成兩行會疊到「可以玩」標籤
+ */
+const CARD = 'relative block aspect-video overflow-hidden rounded-xl [container-type:inline-size]';
+const NAME = 'text-[clamp(15px,12cqw,22px)] font-black leading-none';
 
 export default function GameCard({ game, locale, playable, guide, width = 'w-[240px]' }: {
   game: CatalogGame; locale: Locale; playable: string; guide: string; width?: string;
@@ -21,14 +26,14 @@ export default function GameCard({ game, locale, playable, guide, width = 'w-[24
             {/* eslint-disable-next-line @next/next/no-img-element -- 同上 */}
             <img src={art} alt="" loading="lazy" className="pointer-events-none absolute inset-0 size-full object-cover" />
             <span aria-hidden="true" className="absolute inset-x-0 bottom-0 h-3/5 bg-gradient-to-t from-black/80 to-transparent" />
-            <span className="absolute inset-x-3 bottom-2.5 text-[22px] font-black leading-none text-white">{name}</span>
+            <span className={`absolute inset-x-3 bottom-2.5 ${NAME} text-white`}>{name}</span>
           </>
         ) : (
           <>
             {/* eslint-disable-next-line @next/next/no-img-element -- 同上 */}
             <img src={art} alt="" className="pointer-events-none absolute right-[-70px] top-[-50px] w-[230px] rotate-[-14deg]" />
             {/* 名字壓在主視覺上會看不清楚，墊一塊卡片同色的底 */}
-            <span className={`absolute bottom-2 left-2 rounded-md px-1.5 py-1 text-[22px] font-black leading-none ${card}`}>{name}</span>
+            <span className={`absolute bottom-2 left-2 rounded-md px-1.5 py-1 ${NAME} ${card}`}>{name}</span>
           </>
         )}
         <span className="absolute left-3 top-3 rounded-md bg-brand-red px-2 py-0.5 text-xs font-black text-white">▶ {playable}</span>
