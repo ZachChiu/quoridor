@@ -133,7 +133,7 @@ export default function ReplayClient() {
       />
 
       <div className="flex flex-col items-center gap-4">
-        <div className="chessboard-container size-[86dvw] md:size-[70dvh]">
+        <div className="chessboard-container size-[86dvw] md:size-[70svh]">
           <Chessboard
             size={BOARD_SIZE}
             board={state.board}
