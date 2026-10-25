@@ -104,7 +104,9 @@ export const SEASONS: Season[] = [
       { name: 'Big Small', names: { 'zh-TW': '大或小', 'zh-Hans': '大或小' } },
       { name: 'Question and Truth', names: { 'zh-TW': '提問與真相', 'zh-Hans': '提问与真相' } },
       { name: "Knight's Tour", names: { 'zh-TW': '騎士巡遊', 'zh-Hans': '骑士巡游' }, playable: routes.KNIGHTS_TOUR,
-        look: { card: 'bg-[#edddc7] text-[#322e2a]', wipe: '#edddc7', art: '/games/knights-tour/plate.webp', cover: true, entrance: 'knights-tour', rules: routes.trialRules(routes.KNIGHTS_TOUR) } },
+        // 小卡片是 plate.webp 左邊的空白處加上對局那隻騎士（10/25 Zach：「視覺圖偏空泛」）；大卡片照舊 plate.webp —— 桌機字壓在左邊，騎士會在字底下
+        look: { card: 'bg-[#edddc7] text-[#322e2a]', wipe: '#edddc7', art: '/games/knights-tour/card.webp', hero: '/games/knights-tour/plate.webp', cover: true, entrance: 'knights-tour', rules: routes.trialRules(routes.KNIGHTS_TOUR),
+          lettering: { font: 'kt-serif font-normal italic', spellsName: true } } },
     ],
   },
   {
