@@ -1,6 +1,6 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { GiRuleBook } from 'react-icons/gi';
+import { GiExitDoor, GiRuleBook } from 'react-icons/gi';
 import { LuCircleHelp, LuHouse, LuRotateCcw, LuUndo2, LuVolume2, LuVolumeX } from 'react-icons/lu';
 import Modal from '@/components/Modal';
 import { ShareResultModal, useShareCard } from '@/components/ShareResultModal';
@@ -9,6 +9,7 @@ import { fill, useTextTable } from '@/i18n/gameText';
 import { localePath } from '@/i18n/locales';
 import { BLIND_GOMOKU } from '@/i18n/routes';
 import { useSound } from '@/hook/useSound';
+import { useLeaveGuard } from '@/hook/useLeaveGuard';
 import { TEXT } from '@/games/blind-gomoku/text';
 import {
   COLORS, applyMove, createGame, isLegal, lastColor, other, play, pointName, undo,
@@ -80,6 +81,9 @@ export default function GomokuPlay({ mode, onMenu }: { mode: GomokuMode | Online
   // 連線時輪到對方：跟電腦的回合一樣不能動
   const theirTurn = !!online && !game.winner && game.turn !== online.side;
   const canPlay = !game.winner && !aiTurn && !theirTurn;
+  // 下到一半離開先問：房子鈕、瀏覽器返回鍵、電腦版關分頁（hook/useLeaveGuard.ts）。連線局一開打就算，其他下過一手才算
+  const leave = useLeaveGuard({ live: !game.winner, inProgress: !game.winner && (!!online || game.moves.length > 0) });
+  const toMenu = () => leave.request(onMenu);
 
   // 電腦的回合：問 Worker，回來時局面沒變才下（中途重來、悔棋的答案丟掉）
   useEffect(() => {
@@ -252,7 +256,7 @@ export default function GomokuPlay({ mode, onMenu }: { mode: GomokuMode | Online
   );
   const afterGame = (
     <div className="grid grid-cols-2 gap-2.5">
-      <button type="button" onClick={onMenu} className={wide}>{t.menu}</button>
+      <button type="button" onClick={toMenu} className={wide}>{t.menu}</button>
       <button type="button" onClick={again} className={ink}>{t.again}</button>
     </div>
   );
@@ -263,7 +267,7 @@ export default function GomokuPlay({ mode, onMenu }: { mode: GomokuMode | Online
       <div className="flex w-full max-w-[520px] items-center justify-between gap-1.5 lg:hidden">
         {/* 左邊：換模式、聲音（跟 Wall Go 一樣聲音在左上）；右邊：說明、重來。兩邊一樣寬，標題才在正中間 */}
         <div className="flex shrink-0 gap-1">
-          <button type="button" onClick={onMenu} aria-label={t.menu} className={round}><LuHouse aria-hidden="true" /></button>
+          <button type="button" onClick={toMenu} aria-label={t.menu} className={round}><LuHouse aria-hidden="true" /></button>
           {soundButton}
         </div>
         <div className="min-w-0 text-center">
@@ -342,9 +346,18 @@ export default function GomokuPlay({ mode, onMenu }: { mode: GomokuMode | Online
           {!blind && !online && <button type="button" onClick={doUndo} disabled={!canUndo} className={wide}><LuUndo2 aria-hidden="true" />{t.undo}</button>}
           {!online && <button type="button" onClick={restart} className={wide}><LuRotateCcw aria-hidden="true" />{t.restart}</button>}
           <button type="button" onClick={() => setHelpOpen(true)} className={wide}><LuCircleHelp aria-hidden="true" />{t.rules}</button>
-          <button type="button" onClick={onMenu} className={wide}><LuHouse aria-hidden="true" />{t.menu}</button>
+          <button type="button" onClick={toMenu} className={wide}><LuHouse aria-hidden="true" />{t.menu}</button>
         </div>
       </aside>
+
+      <Modal isOpen={leave.open} onClose={leave.cancel} title={g.leave.heading} kicker={g.leave.kicker}
+        icon={GiExitDoor} band={GMK_BAND} panelClassName={GMK_PANEL}
+        footer={<>
+          <button type="button" onClick={leave.cancel} className={`${wide} flex-1`}>{g.leave.cancel}</button>
+          <button type="button" onClick={leave.confirm} className={`${ink} flex-1`}>{g.leave.confirm}</button>
+        </>}>
+        <p className="text-sm leading-relaxed">{online ? g.leave.bodyOnline : g.leave.body}</p>
+      </Modal>
 
       <Modal isOpen={helpOpen} onClose={() => setHelpOpen(false)} title={t.rules} kicker={t.title}
         icon={GiRuleBook} band={GMK_BAND} panelClassName={GMK_PANEL}>
