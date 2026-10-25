@@ -9,7 +9,7 @@ import CardRow from '@/components/platform/CardRow';
 import GameCard from '@/components/platform/GameCard';
 import { brandName } from '@/brand';
 import PlatformMark from '@/components/PlatformMark';
-import { NEWEST, PLAYABLE, SEASONS, gameName, playableFirst, type CatalogGame } from '@/games/catalog';
+import { HERO_DEFAULT, PLAYABLE, SEASONS, gameName, playableFirst, type CatalogGame } from '@/games/catalog';
 import { getMessages } from '@/i18n';
 import { localePath, type Locale } from '@/i18n/locales';
 import { BAGH_CHAL, WALL_GO, season as seasonPath, type SeasonNumber } from '@/i18n/routes';
@@ -48,10 +48,10 @@ export default function PlatformView({ locale }: { locale: Locale }) {
       <main className="mx-auto flex max-w-[1360px] flex-col gap-9 px-4 pb-14">
         <h1 className="sr-only">{p.heading}</h1>
 
-        {/* 推薦作品：預設是最新上線的那一款，使用者點過哪一款就換成那一款（10/24 Zach）。
+        {/* 推薦作品：預設是 HERO_DEFAULT（現在是 Wall Go，見 catalog；原本是最新上線的那款），使用者點過哪一款就換成那一款（10/24 Zach）。
             每一款能玩的都有一張在 HTML 裡，外層的 data-hero-pick 決定露出哪張；換的那段在 HeroPicker。
             suppressHydrationWarning：data-hero-pick 會在 hydrate 之前被內嵌 script 換掉 */}
-        <div data-hero-pick={NEWEST?.playable} suppressHydrationWarning>
+        <div data-hero-pick={HERO_DEFAULT?.playable} suppressHydrationWarning>
           <style dangerouslySetInnerHTML={{ __html: PLAYABLE.map((g) => `[data-hero-pick="${g.playable}"]>[data-slide]:not([data-slide="${g.playable}"]){display:none}`).join('') }} />
           {PLAYABLE.map((game) => <GameHero key={game.name} game={game} locale={locale} />)}
           <HeroPicker />
