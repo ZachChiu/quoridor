@@ -1,0 +1,14 @@
+/* 由 scripts/build-game-fonts.mjs 依 scripts/game-fonts/knights-tour.mjs 產生，不要手改（npm run font:subset）。
+   這款的頁面（html:has(.kt-root)）整頁換成自己的字，--font-site 是全站那套黑體、當備援。 */
+@font-face { font-family: 'knights-tour zh-TW'; src: url('/fonts/games/knights-tour/zh-TW.woff2') format('woff2'); font-weight: 400 900; font-style: normal; font-display: swap; }
+@font-face { font-family: 'knights-tour en'; src: url('/fonts/games/knights-tour/en.woff2') format('woff2'); font-weight: 400 900; font-style: normal; font-display: swap; }
+@font-face { font-family: 'knights-tour ja'; src: url('/fonts/games/knights-tour/ja.woff2') format('woff2'); font-weight: 400 900; font-style: normal; font-display: swap; }
+@font-face { font-family: 'knights-tour ko'; src: url('/fonts/games/knights-tour/ko.woff2') format('woff2'); font-weight: 400 900; font-style: normal; font-display: swap; }
+@font-face { font-family: 'knights-tour zh-Hans'; src: url('/fonts/games/knights-tour/zh-Hans.woff2') format('woff2'); font-weight: 400 900; font-style: normal; font-display: swap; }
+@font-face { font-family: 'knights-tour th'; src: url('/fonts/games/knights-tour/th.woff2') format('woff2'); font-weight: 400 900; font-style: normal; font-display: swap; }
+:root:lang(zh-Hant-TW):has(.kt-root) { --font-app: 'knights-tour zh-TW', var(--font-site); }
+:root:lang(en):has(.kt-root) { --font-app: 'knights-tour en', var(--font-site); }
+:root:lang(ja):has(.kt-root) { --font-app: 'knights-tour ja', var(--font-site); }
+:root:lang(ko):has(.kt-root) { --font-app: 'knights-tour ko', var(--font-site); }
+:root:lang(zh-Hans):has(.kt-root) { --font-app: 'knights-tour zh-Hans', var(--font-site); }
+:root:lang(th):has(.kt-root) { --font-app: 'knights-tour th', 'knights-tour en', var(--font-site); }
