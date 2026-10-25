@@ -15,6 +15,7 @@
  */
 // 整包匯入：各遊戲的分支打開自己那一行時用 routes.XXX，不必改這一行（不然五條分支都改同一行，合併會衝突）
 import * as routes from '@/i18n/routes';
+import type { NameLettering } from '@/types/lettering';
 
 export type GameLook = {
   /** 卡片底色與文字色（Tailwind class） */
@@ -47,8 +48,9 @@ export type GameLook = {
    * 這款自己的字（2026-10-25 Zach：「各遊戲不是有自己的字體嗎」）：平台卡片與大卡片的名字底下多一行原名，用那款首頁標題的同一種字
    *（components/platform/GameName.tsx）。mark 是字標（單色外框的 SVG，public/ 底下）與它的寬高比；font 是那款的字型 class。
    * spellsName：那行就是英文官方名（name）—— 名字本身是英文時（英文版）不重複寫兩次，直接拿它當名字。
+   * local：上面那行在地的名字也用那款的字（各語系挑了同一種風格的字，scripts/build-name-lettering.mjs 產生；同一天 Zach：「各語系有沒有辦法也找到一樣的字型」）
    */
-  lettering?: ({ mark: string; ratio: number } | { font: string }) & { spellsName?: boolean };
+  lettering?: ({ mark: string; ratio: number } | { font: string }) & { spellsName?: boolean; local?: NameLettering };
 };
 
 export type CatalogGame = {
