@@ -36,7 +36,8 @@ export default function GameCard({ game, locale, playable, guide, width = 'w-[24
             <span className={`absolute bottom-2 left-2 rounded-md px-1.5 py-1 ${NAME} ${card}`}>{name}</span>
           </>
         )}
-        <span className="absolute left-3 top-3 rounded-md bg-brand-red px-2 py-0.5 text-xs font-black text-white">▶ {playable}</span>
+        {/* 窄卡片上往角落靠（240px 的卡片照舊 12px），兩行的名字才不會貼著它 */}
+        <span className="absolute left-[min(12px,5cqw)] top-[min(12px,5cqw)] rounded-md bg-brand-red px-2 py-0.5 text-xs font-black text-white">▶ {playable}</span>
       </WipeLink>
     );
   }
