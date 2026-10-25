@@ -21,7 +21,7 @@ import { colOf, rowOf, type Square } from '@/games/knights-tour/engine';
  * 騎士面向前進的方向（往左跳就整隻翻過來，TourBoard 的 data-face）：揚蹄、刨地、鼻子朝上朝下這些有方向的轉動都乘上它。
  * 全部是 WAAPI、只動 translate／rotate／scale／opacity（紅粉筆的線是 stroke-dashoffset），不加顏色；關鍵影格事先算好，
  * 不每格用 JS 寫 style。開了「減少動態效果」就一個都不播，騎士直接出現在新的格子。
- * translate 的百分比是相對騎士自己（knightArt.ts 的 KNIGHT_SIZE）；縮放與轉動的中心在騎士腳下（壓扁時腳不離地）。
+ * translate 的百分比是相對騎士自己（佔滿整格）；縮放與轉動的中心在騎士腳下（壓扁時腳不離地）。
  */
 
 /** 跳一步要多久（含落地壓扁、回彈）；走完的琶音、結算的時間都從這裡算 */
