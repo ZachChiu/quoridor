@@ -1,13 +1,14 @@
 import type React from 'react';
 import LocalName, { letteringOf } from '@/components/LocalName';
 import { gameName, type CatalogGame } from '@/games/catalog';
+import { NAME_LETTERINGS } from '@/games/nameLetterings';
 import type { Locale } from '@/i18n/locales';
 
 /**
  * 平台上的遊戲名（小卡片、大卡片共用）：有自己的字的那幾款，名字底下多一行用那款的字寫的原名（catalog 的 look.lettering）。
  * 2026-10-25 Zach：「各遊戲不是有自己的字體嗎／遊戲平台應該要可以讓他們呈現自己的字體在他們的標題或描述上」。
  *
- * 在地的名字（中日韓）有字標的那幾款（look.lettering.local），名字本身也是那款風格的字（LocalName），跟各款首頁的標題同一份；
+ * 在地的名字（中日韓）有字標的那幾款（games/nameLetterings.ts，依路徑查），名字本身也是那款風格的字（LocalName），跟各款首頁的標題同一份；
  * 沒有的照全站字型。泰文的名字是英文，就是那行原名。
  * 名字本身就是那行原名（英文版的 Time Auction）就不重複寫兩次，直接用那款的字當名字，跟各款首頁的做法一樣。
  *
@@ -24,7 +25,7 @@ export default function GameName({ game, locale, sub, swap }: {
   const l = game.look?.lettering;
   if (!l) return <>{name}</>;
   const same = l.spellsName && name === game.name;
-  const local = letteringOf(l.local, locale, name);
+  const local = letteringOf(game.playable ? NAME_LETTERINGS[game.playable] : undefined, locale, name);
   const title = local ? <><span className="sr-only">{name}</span><LocalName data={local} /></> : name;
   if ('font' in l) {
     return same
