@@ -61,14 +61,17 @@ export type CatalogGame = {
 
 export type Season = {
   id: 's1' | 's2' | 's3';
+  /** 開播那一年（季目錄頁的副標） */
+  year: number;
   games: CatalogGame[];
 };
 
 export const SEASONS: Season[] = [
   // 第 3 季《Dead Again》2026-11-10 上線，遊戲播出後才知道
-  { id: 's3', games: [] },
+  { id: 's3', year: 2026, games: [] },
   {
     id: 's2',
+    year: 2025,
     games: [
       // since 是 v25.6.1（第一版）上線那天
       { name: 'Wall Go', names: { 'zh-TW': '牆壁圍棋', 'zh-Hans': '墙壁围棋', ja: '壁囲碁', ko: '벽바둑' }, playable: routes.WALL_GO, since: '2025-06-02',
@@ -95,6 +98,7 @@ export const SEASONS: Season[] = [
   },
   {
     id: 's1',
+    year: 2023,
     games: [
       { name: 'Virus Game', names: { 'zh-TW': '病毒遊戲', 'zh-Hans': '病毒游戏' } },
       { name: 'Rules Race', names: { 'zh-TW': '規則競賽', 'zh-Hans': '规则竞赛' } },
@@ -172,3 +176,8 @@ export function playableFirst(games: CatalogGame[]): CatalogGame[] {
   return [...games].sort((a, b) => Number(!!b.playable) - Number(!!a.playable));
 }
 
+
+/** 季目錄頁用：'2' → 第 2 季 */
+export function seasonById(n: '1' | '2' | '3'): Season {
+  return SEASONS.find((s) => s.id === `s${n}`)!;
+}
