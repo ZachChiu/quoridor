@@ -30,6 +30,15 @@ function Scene({ phase }: { phase: WipePhase }) {
       // 第一格就給對：拍下來之前在畫面外、撕走之前蓋滿（見 EntranceScene 的說明）
       style={{ transform: covered ? 'none' : HIDDEN, willChange: 'transform' }}
     >
+      {/* 外框外面上下再接一截同一張紙，跟著紙落下、撕走：轉場層在 iOS 26 Safari 會多蓋到狀態列、工具列底下
+          （WipeOverlay 的 --bleed），框照舊貼著看得到的那一段。left／right 退一個框寬，接的紙跟外框一樣寬 */}
+      {(['bottom', 'top'] as const).map((anchor) => (
+        <span
+          key={anchor}
+          className="absolute bg-[#ebe1b8]"
+          style={{ [anchor]: 'calc(100% + var(--tau-frame, 14px))', left: 'calc(-1 * var(--tau-frame, 14px))', right: 'calc(-1 * var(--tau-frame, 14px))', height: 'var(--bleed, 0px)' }}
+        />
+      ))}
       <div className="relative flex w-[min(84%,600px)] flex-col items-center gap-[2.2vh]">
         <TauWordmark className="w-full text-[#35331c]" />
         {/* 字標與版畫之間、版畫底下各一道雙線，跟拍賣目錄的分隔線同一種 */}
