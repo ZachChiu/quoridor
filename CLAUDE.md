@@ -233,7 +233,7 @@ nudge { by, at }          最近一次「催一下」
     對局左上的房子回這款的選單（換 hash，不播轉場；從選單進來的是 `history.back()`，直接開 `#show`／`#practice-N` 的是 `replaceState`），只有首頁左上的骰子去平台。不做連線版（一個人解的謎題，10/24 Zach）。
     **規則頁** `/knights-tour/rules`（10/25，`views/KnightsTourRulesView.tsx`）：第二張圖版（右下角 Tab. II.），六步各一張 Fig.（對局的 `TourBoard` 畫的靜態局面，`knights-tour/RulesSteps.tsx`，局面都由 engine 重播過、測試鎖住），最後出處、名字由來、回首頁選模式、署名；選單的「遊戲規則」連過去、不開彈窗。對局中的說明彈窗是同一份步驟、一次一步、可以左右滑（`useSwipePager`），頁碼是一排小壓痕方塊，不放出處與離開的連結。分享圖 `scripts/og-games/knights-tour.mjs`（紙底、紅粉筆膠囊、右邊是 plate.webp 切出來的棋盤 `scripts/og-art/knights-tour.webp`）。
 
-  - 時間拍賣（`feat/game-time-auction`）：原件是 Cruikshank 1819、《Puck》1888 的拍賣版畫；最外緣紅色牛津角框（`.tau-frame`）；主視覺是拍賣場 `auction.webp`、Abril Fatface 字標。favicon 是拍賣行紅底上一支紙色的成交木槌（`public/icons/time-auction.*`）。
+  - 時間拍賣（`feat/game-time-auction`）：原件是 Cruikshank 1819、《Puck》1888 的拍賣版畫；最外緣紅色牛津角框（`.tau-frame`）；主視覺是拍賣場 `auction.webp`、Abril Fatface 字標；整頁其他的字（按鈕、說明、彈窗、分享圖）是 Noto Serif，各語系跟名字字標同一套（`scripts/game-fonts/time-auction.mjs`，10/25）。favicon 是拍賣行紅底上一支紙色的成交木槌（`public/icons/time-auction.*`）。
     聲音是拍賣行（`time-auction/sounds.ts`：倒數懷錶、開始計時叫人鈴、跑秒座鐘滴答、成交木槌、你得標多一枚金幣、結束手搖鈴），只在事件當下響一次；成交時金幣從大螢幕拋到得標者名片、落下才加一與蓋章，你放手在等時電腦名片互相瞄一眼（亂數，不洩漏誰還按著；`motion.ts`）。
     結算就是分享圖（`time-auction/shareCard.ts`）：一頁拍賣目錄的成交紀錄 —— 字標、版畫（9:16）、大標＋成交章、排名表（第一名紅色版塊）、19 件拍品各由幾號得標；首頁右上聯絡／語言用 `TAU_CORNER`（`theme.ts`），放在框裡不釘角落。
     **連線（邀請朋友，10/24）**：`/time-auction/online#new=quick-4`（模式-人數，2–6 人，全是真人、坐滿才開）→ 開好換成 `#roomId=…`；房間在 RTDB `auctionRooms/`（不是 turnRooms —— 這款是同時出價，結構與「讀得到別人放手時間」的信任程度寫在 `types/auctionRoom.ts`），
