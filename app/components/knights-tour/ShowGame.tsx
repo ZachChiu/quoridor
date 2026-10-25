@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useLeaveGuard } from '@/hook/useLeaveGuard';
 import { GiHourglass } from 'react-icons/gi';
 import { LuArrowRight, LuCheck, LuRotateCcw, LuTimer } from 'react-icons/lu';
 import Modal from '@/components/Modal';
@@ -12,6 +13,7 @@ import {
 import { TEXT, type KnightsText } from '@/games/knights-tour/text';
 import GameFrame, { type Place } from './GameFrame';
 import HowToPlay from './HowToPlay';
+import LeaveModal from './LeaveModal';
 import TourBoard from './TourBoard';
 import { finaleMs } from './motion';
 import { saveBest, useBestTimes } from './records';
@@ -131,6 +133,8 @@ export default function ShowGame({ onMenu, onPractice }: {
   const size = sizeLabel(n);
   const attempt = run.attempts[run.level] ?? 1;
   const over = status === 'won' || status === 'timeUp';
+  // 走到一半回選單先問（房子鈕、返回鍵）；換到練習不必問，但一樣先退掉守門（hook/useLeaveGuard.ts）
+  const leave = useLeaveGuard({ live: !over, inProgress: !over && (tour.path.length > 0 || run.level > 0) });
 
   const alert = status === 'failed' ? (run.failure?.reason === 'revisit' ? t.failRevisit : t.failStuck) : null;
   const message = status === 'cleared' ? fill(t.levelClear, { size })
@@ -215,13 +219,14 @@ export default function ShowGame({ onMenu, onPractice }: {
   return (
     <>
       <GameFrame title={t.title} subtitle={`${t.showMode} · ${SHOW_SIZES.map(sizeLabel).join(' → ')}`}
-        menuLabel={t.menu} helpLabel={t.rules} onMenu={onMenu} onHelp={() => setHelpOpen(true)}
+        menuLabel={t.menu} helpLabel={t.rules} onMenu={() => leave.request(onMenu)} onHelp={() => setHelpOpen(true)}
         status={status_} controls={controls}
         board={<TourBoard n={n} path={tour.path} targets={targets} dead={dead} failed={run.failure?.square ?? null}
           idle={playing && tour.path.length > 0}
           label={label} boardLabel={`${t.board} ${size}`} onTap={tap} />} />
 
       <HowToPlay open={helpOpen} onClose={() => setHelpOpen(false)} />
+      <LeaveModal leave={leave} />
 
       {/* 結算就是分享圖：三關的棋盤畫在一張銅版圖版上（shareCard.ts）。關掉就停在 8×8 走完的棋盤上 */}
       <ShareResultModal isOpen={wonOpen} onClose={() => setEndClosed(true)} title={t.wonTitle} card={share}
@@ -236,7 +241,7 @@ export default function ShowGame({ onMenu, onPractice }: {
       <Modal isOpen={status === 'timeUp' && !endClosed} onClose={() => setEndClosed(true)} title={t.timeUpTitle} kicker={t.title}
         icon={GiHourglass} band={BAND_INK} panelClassName={MODAL_PANEL}
         footer={<>
-          <button type="button" className="kt-plate flex-1 py-3.5 font-black" onClick={() => onPractice(SHOW_SIZES[stoppedAt])}>{t.toPractice}</button>
+          <button type="button" className="kt-plate flex-1 py-3.5 font-black" onClick={() => leave.skip(() => onPractice(SHOW_SIZES[stoppedAt]))}>{t.toPractice}</button>
           <button type="button" className="kt-chalk flex-1 py-3.5 font-black" onClick={again}>{t.again}</button>
         </>}>
         <p className="text-sm font-bold leading-relaxed">{fill(t.timeUpBody, { i: stoppedAt + 1, size: sizeLabel(SHOW_SIZES[stoppedAt]) })}</p>
