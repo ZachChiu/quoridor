@@ -106,7 +106,8 @@ export default function TimeAuctionRulesView({ locale }: { locale: Locale }) {
 /**
  * 日文的標題不斷在片假名的字中間（「タイムオークシ／ョンの遊び方」，2026-10-25）：一整串片假名不換行。
  * Chrome 另外照語意斷句（h1 的 word-break: auto-phrase，斷在「の」後面）；Safari 不支援，至少不會把字切開。
+ * 片假名的範圍寫成碼位：寫字的話，字型子集的腳本會把它們當成畫面上的字收進去。
  */
 function keepKatakana(s: string): React.ReactNode {
-  return s.split(/([ァ-ヺー]+)/).map((part, i) => (i % 2 ? <span key={i} className="whitespace-nowrap">{part}</span> : part));
+  return s.split(/([\u30a1-\u30fa\u30fc]+)/).map((part, i) => (i % 2 ? <span key={i} className="whitespace-nowrap">{part}</span> : part));
 }
