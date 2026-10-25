@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { getMessages } from './index';
+import { gameName, seasonById } from '@/games/catalog';
 import { brandName } from '@/brand';
 import { LOCALES, DEFAULT_LOCALE, HREFLANG, OG_LOCALE, localePath, type Locale } from './locales';
 
@@ -14,6 +15,8 @@ const SITE = process.env.SITE_URL || 'https://quoridorgame.com';
  */
 const PAGE_KEY = {
   '/': 'platform',
+  // 季目錄頁先用平台首頁那張分享圖（圖上是節目名＋「遊戲線上玩」，三季都說得通）
+  '/season/1': 'platform', '/season/2': 'platform', '/season/3': 'platform',
   '/wall-go': 'home', '/wall-go/rules': 'rules', '/wall-go/solo': 'solo',
   '/wall-go/local': 'local', '/wall-go/online': 'online', '/wall-go/replay': 'replay',
   // Bagh Chal 的子頁先共用遊戲首頁那張分享圖（圖上是遊戲名，子頁之間差別不大）
@@ -78,6 +81,10 @@ function copy(locale: Locale, path: PagePath) {
   switch (path) {
     case '/':
       return { title: undefined, description: t.platform.metaDescription, ogTitle: t.platform.ogTitle, ogDescription: t.platform.ogDescription };
+    case '/season/1':
+    case '/season/2':
+    case '/season/3':
+      return seasonCopy(locale, path.slice(-1) as '1' | '2' | '3');
     case '/bagh-chal':
       return { title: t.baghChal.metaTitle, description: t.baghChal.metaDescription, ogTitle: t.baghChal.ogTitle, ogDescription: t.baghChal.ogDescription };
     case '/bagh-chal/rules':
@@ -101,6 +108,18 @@ function copy(locale: Locale, path: PagePath) {
     default:
       return { title: undefined, description: t.meta.description, ogTitle: t.meta.ogTitle, ogDescription: t.meta.ogDescription };
   }
+}
+
+/** 季目錄頁的標題與描述：描述裡列出那一季的遊戲名（搜「魔鬼的計謀 第二季 遊戲」的人要找的就是這張清單） */
+function seasonCopy(locale: Locale, n: '1' | '2' | '3') {
+  const p = getMessages(locale).platform;
+  const s = seasonById(n);
+  const name = { s1: p.s1, s2: p.s2, s3: p.s3 }[s.id];
+  const title = p.seasonMetaTitle.replace('{season}', name);
+  const description = s.games.length
+    ? p.seasonMetaDescription.replace('{season}', name).replace('{n}', String(s.games.length)).replace('{names}', s.games.map((g) => gameName(g, locale)).join(p.listSep))
+    : p.seasonMetaDescriptionEmpty.replace('{season}', name);
+  return { title, description, ogTitle: title, ogDescription: description };
 }
 
 function openGraph(locale: Locale, path: PagePath) {
@@ -197,6 +216,8 @@ export function localeMetadata(locale: Locale, path: PagePath): Metadata {
     // 平台首頁是「節目遊戲整理｜平台名」，Wall Go 首頁維持原本的標題
     ...(path === '/' ? { title: { absolute: `${t.platform.metaTitle} | ${brandName(locale)}` } } : {}),
     ...(path === '/wall-go' ? { title: { absolute: t.meta.titleDefault } } : {}),
+    // 季目錄頁同平台首頁：接平台名，不套 Wall Go 的標題格式
+    ...(path.startsWith('/season/') ? { title: { absolute: `${c.title} | ${brandName(locale)}` } } : {}),
     // 其他遊戲不套 Wall Go 的標題格式（「… | 牆壁圍棋 Wall Go」），接平台名
     ...otherGameTitle(locale, path, c.title),
     ...gameIcons(path),

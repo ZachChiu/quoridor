@@ -56,6 +56,15 @@ const zhTW = {
     s1: '第 1 季',
     playable: '可以玩',
     guide: '規則整理中',
+    /** 季目錄頁（`/season/1`…）。{n}、{season}、{names} 由程式代入 */
+    seeAll: '看全部',
+    allGames: '所有遊戲',
+    seasonCount: '{n} 款遊戲',
+    seasonPlayable: '{n} 款可以玩',
+    seasonMetaTitle: '魔鬼的計謀 {season} 遊戲一覽',
+    seasonMetaDescription: 'Netflix 韓綜《魔鬼的計謀》{season}的全部 {n} 款遊戲：{names}。能玩的直接在瀏覽器開打，免下載、免註冊。',
+    seasonMetaDescriptionEmpty: 'Netflix 韓綜《魔鬼的計謀》{season}，11/10 上線。播出後每週更新這一季的遊戲。',
+    listSep: '、',
     disclaimer: '非官方粉絲作品，與 Netflix 及節目製作方無關。',
   },
   /** Bagh Chal。中文名照節目用「尼泊爾虎棋」（Zach 10/24：遊戲命名用 Netflix 版本，見 glossary）；「虎羊棋」留在說明與規則頁的名字由來 */
