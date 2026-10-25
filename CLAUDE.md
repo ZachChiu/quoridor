@@ -40,7 +40,7 @@ zh-TW 不加前綴（`app/(default)/`），en / ja / ko / zh-Hans / th 加前綴
 
 | 路由 | 說明 |
 |---|---|
-| `/` | 平台首頁（`PlatformView`）— Netflix 式深色外殼＋紅（`--brand-red`），推薦作品大區塊（預設放最新上線的那款＝catalog 的 `since`、使用者真的點過哪款就換成那款，見 `components/platform/HeroPicker.tsx`；10/24）＋依季橫向捲動的遊戲卡（還沒做的卡角落是骰子惡魔的淡剪影；不畫捲軸，電腦版兩端是翻頁箭頭、滾輪照舊捲整頁，`components/platform/CardRow.tsx`）；遊戲清單在 `app/games/catalog.ts`（英文官方名，譯名查證後才補） |
+| `/` | 平台首頁（`PlatformView`）— Netflix 式深色外殼＋紅（`--brand-red`），推薦作品大區塊（預設放 catalog 的 `HERO_DEFAULT`：原本是最新上線的那款＝`since`，10/25 起暫時是 Wall Go —— 搬家前九成的搜尋點擊落在 `/`、找的是 Wall Go，Zach 照大腦的建議先放它，上線 4 週大腦驗收後再定何時換回；使用者真的點過哪款就換成那款，見 `components/platform/HeroPicker.tsx`；10/24）＋依季橫向捲動的遊戲卡（還沒做的卡角落是骰子惡魔的淡剪影；不畫捲軸，電腦版兩端是翻頁箭頭、滾輪照舊捲整頁，`components/platform/CardRow.tsx`）；遊戲清單在 `app/games/catalog.ts`（英文官方名，譯名查證後才補） |
 | `/season/1`、`/season/2`、`/season/3` | 季目錄頁（`SeasonView`，2026-10-25 Zach：「點進每一季可以看遊戲的目錄」）。平台首頁每一季的標題連過來（「看全部 ›」）；那一季的遊戲排成格子，能玩的排前面、其他照播出順序（10/25 Zach：「可以玩的遊戲要往上面排」）、上方一排三顆切換各季（只寫「第 N 季」，完整季名留給大標題；10/25 Zach 從三種排法挑的 A）。卡片跟首頁共用 `components/platform/GameCard.tsx`。會被索引，描述列出那一季的遊戲名；分享圖先共用平台那張 |
 | `/wall-go` | Wall Go 首頁（`HomeView` → `HomeClient`）— 選模式、建立連線房間 |
 | `/wall-go/rules` | 規則頁，SEO 主力落地頁 |

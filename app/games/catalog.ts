@@ -171,6 +171,13 @@ export const PLAYABLE: CatalogGame[] = SEASONS.flatMap((s) => s.games).filter((g
  */
 export const NEWEST: CatalogGame | undefined = [...PLAYABLE].sort((a, b) => (b.since ?? '9999').localeCompare(a.since ?? '9999'))[0];
 
+/**
+ * 大卡片**現在**預設放的那一款：Wall Go（10/25 Zach 照大腦的建議）。平台上線後 `/` 從 Wall Go 首頁換成平台首頁，
+ * 搬家前九成的搜尋點擊落在 `/`、找的是 Wall Go —— Google 認得 `/wall-go/` 之前，第一眼要先看到它。
+ * 什麼時候換回 NEWEST（放最新上線的），等上線 4 週大腦驗收 `/wall-go/` 接住多少搜尋再定。使用者點過哪一款照舊換成那一款。
+ */
+export const HERO_DEFAULT: CatalogGame | undefined = PLAYABLE.find((g) => g.playable === routes.WALL_GO) ?? NEWEST;
+
 /** 一季裡能玩的排前面，其他照節目播出順序 */
 export function playableFirst(games: CatalogGame[]): CatalogGame[] {
   return [...games].sort((a, b) => Number(!!b.playable) - Number(!!a.playable));
