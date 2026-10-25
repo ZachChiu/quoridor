@@ -262,7 +262,7 @@ nudge { by, at }          最近一次「催一下」
   英文名本來就是那款的字，中日韓泰的名字各挑一種同風格的對應（肥臉體 ↔ 粗宋、哥德手抄本 ↔ 毛筆、舊式襯線 ↔ 宋體／明朝，同一款不同語系可以不同字），
   `scripts/build-name-lettering.mjs` 用 harfbuzz 轉成向量圖（**不載網頁字型**），一款一份設定 `scripts/name-lettering/<遊戲>.mjs`（README 在那裡）。
   名字切成幾段（中間點後面、空格），放得下排一行、放不下才在段與段之間換行（`components/LocalName.tsx`）—— 先前日文、韓文的標題會斷在字中間（モ／リス、모／리스）。
-  平台卡片與大卡片（`look.lettering.local`）、各款首頁標題用同一份；名字改了沒重建，測試會擋、畫面退回一般文字。
+  平台卡片與大卡片（`games/nameLetterings.ts` 依路徑查，平台替五款各放一個空的 `nameLettering.ts`、各款分支蓋掉自己的）、各款首頁標題用同一份；名字改了沒重建，測試會擋、畫面退回一般文字。
 - **蓋滿畫面的東西不要剛好等於畫面高度**。手機工具列會隨捲動展開／收起，`inset:0`、`100lvh`、`100dvh` 各在某個瀏覽器／狀態下露底（Safari 與 iPhone 上的 Chrome 各被咬過）。
   Modal 遮罩（`.cover-viewport`）上下各往外多蓋 `max(25vh, 12rem)`，fixed 超出畫面會被裁掉、不產生捲軸；手機控制盤用 `::after` 往下延伸同色底；
   換頁轉場是 absolute，改由 JS 量 `innerHeight`／`visualViewport` 設高度，**上下再各多蓋 `max(25%, 192px)`**（`WipeOverlay` 的 `bleedOf`，2026-10-25）：
