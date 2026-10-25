@@ -59,6 +59,8 @@ const zhTW = {
     /** 季目錄頁（`/season/1`…）。{n}、{season}、{names} 由程式代入 */
     seeAll: '看全部',
     allGames: '所有遊戲',
+    /** 季目錄頁上方切換各季的短名（完整季名只寫在大標題，10/25 Zach 從三種排法選了 A） */
+    seasonShort: '第 {n} 季',
     seasonCount: '{n} 款遊戲',
     seasonPlayable: '{n} 款可以玩',
     seasonMetaTitle: '魔鬼的計謀 {season} 遊戲一覽',

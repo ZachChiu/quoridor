@@ -51,6 +51,7 @@ const ko: Messages = {
     guide: '규칙 정리 중',
     seeAll: '모두 보기',
     allGames: '모든 게임',
+    seasonShort: '시즌{n}',
     seasonCount: '게임 {n}개',
     seasonPlayable: '{n}개 플레이 가능',
     seasonMetaTitle: '데블스 플랜 {season} 게임 목록',

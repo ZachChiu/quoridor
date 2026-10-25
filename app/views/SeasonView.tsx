@@ -16,7 +16,9 @@ import { SEASON_NUMBERS, season as seasonPath, type SeasonNumber } from '@/i18n/
  * 「點進每一季可以看遊戲的目錄」，Netflix 的分類頁）。外殼跟平台首頁同一套（深色＋紅、同一個頁首頁尾）。
  *
  * 照節目播出順序排，不把能玩的提到前面 —— 這一頁是「這一季有哪些遊戲」，首頁那一排才是「現在能玩什麼」。
- * 上方一排三顆切換各季（目前這季實心），手機上也點得到，不必回首頁。
+ * 上方一排三顆切換各季（目前這季實心），手機上也點得到，不必回首頁。按鈕只寫「第 N 季」：
+ * 原本寫完整季名，手機上擠成兩行、選中那顆又跟底下的大標題同一句（10/25 Zach 從三種排法挑了 A；
+ * 另兩種是標題下一條分頁線、標題本身當選單）。
  */
 export default function SeasonView({ locale, n }: { locale: Locale; n: SeasonNumber }) {
   const p = getMessages(locale).platform;
@@ -38,12 +40,12 @@ export default function SeasonView({ locale, n }: { locale: Locale; n: SeasonNum
           <Link href={localePath(locale, '/')} className="flex items-center gap-1 self-start text-[15px] font-bold text-plat-muted transition fine:hover:text-tile-cream">
             <LuChevronLeft aria-hidden="true" className="text-[20px]" />{p.allGames}
           </Link>
-          <ul className="flex flex-wrap gap-2">
+          <ul className="flex gap-2">
             {SEASON_NUMBERS.map((m) => (
               <li key={m}>
                 <Link href={localePath(locale, seasonPath(m))} aria-current={m === n ? 'page' : undefined}
-                  className={`flex h-10 items-center rounded-full px-4 text-[15px] font-black transition ${m === n ? 'bg-tile-cream text-tile-ink' : 'bg-plat-surface text-tile-cream fine:hover:bg-plat-raised'}`}>
-                  {title[`s${m}`]}
+                  className={`flex h-10 items-center whitespace-nowrap rounded-full px-4 text-[15px] font-black transition ${m === n ? 'bg-tile-cream text-tile-ink' : 'bg-plat-surface text-tile-cream fine:hover:bg-plat-raised'}`}>
+                  {p.seasonShort.replace('{n}', m)}
                 </Link>
               </li>
             ))}

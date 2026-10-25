@@ -49,6 +49,7 @@ const en: Messages = {
     guide: 'Rules coming',
     seeAll: 'See all',
     allGames: 'All games',
+    seasonShort: 'Season {n}',
     seasonCount: '{n} games',
     seasonPlayable: '{n} playable',
     seasonMetaTitle: "The Devil's Plan {season}: All Games",

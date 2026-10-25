@@ -55,6 +55,7 @@ const zhHans: Messages = {
     guide: '规则整理中',
     seeAll: '看全部',
     allGames: '所有游戏',
+    seasonShort: '第 {n} 季',
     seasonCount: '{n} 款游戏',
     seasonPlayable: '{n} 款可以玩',
     seasonMetaTitle: '魔鬼的计谋 {season} 游戏一览',
