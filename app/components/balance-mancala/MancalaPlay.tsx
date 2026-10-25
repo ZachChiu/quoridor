@@ -6,6 +6,7 @@ import Modal from '@/components/Modal';
 import { ShareResultModal, useShareCard } from '@/components/ShareResultModal';
 import { useSound } from '@/hook/useSound';
 import { useTitleAlert } from '@/hook/useTitleAlert';
+import { useLeaveGuard } from '@/hook/useLeaveGuard';
 import { fill, useTextTable } from '@/i18n/gameText';
 import { useGameText, useMessages } from '@/i18n/LocaleProvider';
 import { localePath, type Locale } from '@/i18n/locales';
@@ -97,7 +98,6 @@ export default function MancalaPlay({ locale, setup, onHome, onAgain, online = n
   const [anim, setAnim] = useState<Anim | null>(null);
   const [pick, setPick] = useState<Pick | null>(null);
   const [helpOpen, setHelpOpen] = useState(false);
-  const [leaving, setLeaving] = useState(false);
   const [endClosed, setEndClosed] = useState(false);
   const reduced = useSyncExternalStore(subscribeMotion, () => window.matchMedia(motionQuery).matches, () => false);
 
@@ -208,15 +208,10 @@ export default function MancalaPlay({ locale, setup, onHome, onAgain, online = n
     }
   }, [game, reduced, self]);
 
-  // 電腦版的「確定要離開嗎？」—— 只管整頁跳轉（CLAUDE.md〈離開前確認〉），手機另靠房子鈕的確認。
+  // 下到一半離開先問：房子鈕、瀏覽器返回鍵、電腦版關分頁（hook/useLeaveGuard.ts）。
   // 連線局一坐滿就算開始了：離開的話其他人會停在那裡等
   const inProgress = game.phase !== 'over' && (online !== null || game.placements.length > 0);
-  useEffect(() => {
-    if (!inProgress) return;
-    const onBeforeUnload = (e: BeforeUnloadEvent) => { e.preventDefault(); };
-    window.addEventListener('beforeunload', onBeforeUnload);
-    return () => window.removeEventListener('beforeunload', onBeforeUnload);
-  }, [inProgress]);
+  const leave = useLeaveGuard({ live: game.phase !== 'over', inProgress });
 
   const preview = useMemo(() => (pick ? sow(game, pick.from, pick.order, pick.colour) : null), [game, pick]);
   // 連線：輪到自己、而且畫面已經追上房間（別人的一手還在播就先等）
@@ -388,10 +383,7 @@ export default function MancalaPlay({ locale, setup, onHome, onAgain, online = n
   });
   const srText = [endTitle, endReason, ...table.map((r) => `${fill(t.rank, { n: r.rank })} ${names[r.seat]}: ${t.colourShort.map((c, k) => `${c} ${r.scores[k]}`).join(', ')}; ${t.final} ${r.final}`)].join(' ');
 
-  const askLeave = () => {
-    if (inProgress) setLeaving(true);
-    else onHome();
-  };
+  const askLeave = () => leave.request(onHome);
 
   // 角落的小鈕是切角的淡布片（黃銅留給主要動作），寬的是一條印花布（上下兩道梳線）—— styles.ts、globals.css 的 .mcl-*
   const round = MCL_ROUND;
@@ -497,12 +489,12 @@ export default function MancalaPlay({ locale, setup, onHome, onAgain, online = n
         <RulesStepsPaged open={helpOpen} prev={msgs.ui.prev} next={msgs.ui.next} done={msgs.ui.close} onDone={() => setHelpOpen(false)} />
       </Modal>
 
-      <Modal isOpen={leaving} onClose={() => setLeaving(false)} title={online ? t.leaveTitleOnline : t.leaveTitle} icon={GiExitDoor}
+      <Modal isOpen={leave.open} onClose={leave.cancel} title={online ? t.leaveTitleOnline : t.leaveTitle} icon={GiExitDoor}
         band={MCL_BAND} panelClassName={MCL_PANEL}
         footer={
           <>
-            <button type="button" className="mcl-cloth flex-1 py-3.5 font-black" onClick={() => setLeaving(false)}>{t.stay}</button>
-            <button type="button" className="mcl-plaque flex-1 py-3.5 font-black" onClick={() => { setLeaving(false); onHome(); }}>
+            <button type="button" className="mcl-cloth flex-1 py-3.5 font-black" onClick={leave.cancel}>{t.stay}</button>
+            <button type="button" className="mcl-plaque flex-1 py-3.5 font-black" onClick={leave.confirm}>
               {online ? t.leaveOnline : t.leave}
             </button>
           </>
