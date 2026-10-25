@@ -14,6 +14,7 @@ npm run font:subset     # 依原始碼實際用字重建字型子集
 npm run font:check      # 只檢查子集有沒有落後（CI 用）
 npm run og:build        # 重建每頁每語系的分享圖至 public/og/（要連網）
 npm run og:check        # 只檢查文案有沒有落後（CI 用）
+npm run name:build      # 重建各款在地名字的字標（public/games/<遊戲>/name/，要連網；`-- <遊戲>` 只重建那款）
 npm start               # 以 serve 提供 /out 靜態檔案（next start 不支援 output: export）
 
 npm run release:preview       # 先看會打成什麼版號、併哪條分支
@@ -49,7 +50,7 @@ zh-TW 不加前綴（`app/(default)/`），en / ja / ko / zh-Hans / th 加前綴
 | `/wall-go/online#roomId=…` | 連線對戰（`OnlineClient` → `PlayClient`，帶 `roomId`）。roomId 放 hash 而非 query。noindex |
 | `/wall-go/online#new=2\|3` | Wall Go 首頁連線磁磚的目的地：連線頁自己開房，開好後 `replaceState` 換成 `#roomId=…` |
 | `/wall-go/replay#wgf=…` | 棋譜回放。**開發者工具，不是給玩家的功能** —— 見下 |
-| `/bagh-chal` | Bagh Chal 首頁（`BaghChalView` → `BaghHub`）。2026-10-20 起是自己的識別（試做中），**不沿用 Wall Go 的元件與視覺**：每一頁的背景是米提拉圖騰滿版鋪（`BaghFrame`＋`globals.css` 的 `.bagh-bg`：一塊用 image quilting 縫成上下左右無縫的圖塊 `pattern.avif／webp`，手機 520px、桌機 720px 重複鋪；先前四條飾帶拼的畫框接縫太明顯、一整幅 cover 虎羊太大。10/25 起鋪在頁面本身、跟著捲，不是 fixed 的一層 —— iOS 26 Safari 的狀態列、工具列底下只畫得出捲過去的內容；停在最上面時工具列底下畫得出超出畫面的頁面，所以往下多鋪一截（`100lvh − 100svh`），狀態列那條 Safari 26 一律只塗 html 的底色，網頁畫不進去（viewport-fit=cover 試過、沒用，拿掉了），紙色面板浮在上面，面板頂列放平台 logo 與聯絡／語言（`BaghHeader`，不疊在背景上）；首頁是天城體字標＋四個按鈕（老虎、羊、本機對戰、連線對戰）；彈窗用 `Modal` 的 `skin="bagh"`（上方一條飾帶、標題在紙色上，不要色帶）、按鈕是米提拉畫的畫框（10/24 Zach：「虎羊棋明明是圖騰風，按鈕也要那樣」—— 一律兩條線 `.bagh-line`（橄欖綠底上是 `.bagh-line-on`）、圓鈕是雙圈小圓牌 `.bagh-medal`，一律直角；兩條線中間夾一排三角的鋸齒框做過，同一天 Zach 說「按鈕不要有那個菱形外框」）、主要鈕與選中的選項是橄欖綠（黑色按鈕是 Wall Go 的風格）、按鈕樣式在 `bagh-chal/styles.ts`（不能放進 `'use client'` 檔：伺服器元件匯入會變成 client reference，className 會變成一段錯誤文字）、難度在 `BaghUi`；棋子與圖示是 AI 畫的米提拉圓牌（`bagh-chal/tokens.tsx`，用背景圖畫，不用 `<img>`＋filter —— iPhone 會漏畫）。木窗門轉場（`WipeOverlay` 的 `DOORS`）只留在從平台卡片進來的那一下；虎羊棋裡面換頁（首頁、規則、對局之間）不播轉場、直接換頁（2026-10-22 Zach）。盤面（10/24 Zach）：一開始只有線、沒有任何符號，選了棋子才在可以去的點開出米字小花；**老虎可以吃羊時不給任何提示**（不閃、不加框、不寫字，做過都被拿掉）；棋子有落下／滑過去／一口吞下的動畫與閒置互動（老虎逗羊，不是羊頂老虎），見 `bagh-chal/idleMotion.ts`。結算就是分享圖（`bagh-chal/shareCard.ts`，番紅花圖騰底＋紙色面板＋鋸齒框；共用的殼是 `components/ShareResultModal.tsx`）。中文名用節目的「尼泊爾虎棋」（10/24，見 glossary）；桌機首頁左邊是 AI 畫的整面印刷棋盤 `board-art.webp`（第一版；10/24 換成老虎追羊的概念圖 `chase.webp`，10/25 Zach 要回到第一版，chase.webp 刪掉了；飾帶與米字小花的顏色也以這張為準）。平台上的圖（大卡片 `hero.webp`、手機方圖 `hero-square.webp`、小卡片 `key-art.webp`）反過來是**遊戲裡真的棋盤與圓牌**擺一盤電腦對下出來的局面、放在圖騰底上（同一天 Zach：平台那張老虎追羊好看，但跟點進去看到的不一樣）。配色在 `bagh-chal/palette.ts`。程式在 `app/games/bagh-chal/`（規則與電腦對手）、`app/components/bagh-chal/`（畫面） |
+| `/bagh-chal` | Bagh Chal 首頁（`BaghChalView` → `BaghHub`）。2026-10-20 起是自己的識別（試做中），**不沿用 Wall Go 的元件與視覺**：每一頁的背景是米提拉圖騰滿版鋪（`BaghFrame`＋`globals.css` 的 `.bagh-bg`：一塊用 image quilting 縫成上下左右無縫的圖塊 `pattern.avif／webp`，手機 520px、桌機 720px 重複鋪；先前四條飾帶拼的畫框接縫太明顯、一整幅 cover 虎羊太大。10/25 起鋪在頁面本身、跟著捲，不是 fixed 的一層 —— iOS 26 Safari 的狀態列、工具列底下只畫得出捲過去的內容；停在最上面時狀態列、工具列那兩條仍只有番紅花：狀態列 Safari 26 一律只塗 html 的底色（viewport-fit=cover 試過、沒用），工具列那條往下多鋪一截圖騰（`100lvh − 100svh`）也試過、沒接上，10/25 Zach「好像無解，改回原來」，兩個都拿掉了，紙色面板浮在上面，面板頂列放平台 logo 與聯絡／語言（`BaghHeader`，不疊在背景上）；首頁是天城體字標＋四個按鈕（老虎、羊、本機對戰、連線對戰）；彈窗用 `Modal` 的 `skin="bagh"`（上方一條飾帶、標題在紙色上，不要色帶）、按鈕是米提拉畫的畫框（10/24 Zach：「虎羊棋明明是圖騰風，按鈕也要那樣」—— 一律兩條線 `.bagh-line`（橄欖綠底上是 `.bagh-line-on`）、圓鈕是雙圈小圓牌 `.bagh-medal`，一律直角；兩條線中間夾一排三角的鋸齒框做過，同一天 Zach 說「按鈕不要有那個菱形外框」）、主要鈕與選中的選項是橄欖綠（黑色按鈕是 Wall Go 的風格）、按鈕樣式在 `bagh-chal/styles.ts`（不能放進 `'use client'` 檔：伺服器元件匯入會變成 client reference，className 會變成一段錯誤文字）、難度在 `BaghUi`；棋子與圖示是 AI 畫的米提拉圓牌（`bagh-chal/tokens.tsx`，用背景圖畫，不用 `<img>`＋filter —— iPhone 會漏畫）。木窗門轉場（`WipeOverlay` 的 `DOORS`）只留在從平台卡片進來的那一下；虎羊棋裡面換頁（首頁、規則、對局之間）不播轉場、直接換頁（2026-10-22 Zach）。盤面（10/24 Zach）：一開始只有線、沒有任何符號，選了棋子才在可以去的點開出米字小花；**老虎可以吃羊時不給任何提示**（不閃、不加框、不寫字，做過都被拿掉）；棋子有落下／滑過去／一口吞下的動畫與閒置互動（老虎逗羊，不是羊頂老虎），見 `bagh-chal/idleMotion.ts`。結算就是分享圖（`bagh-chal/shareCard.ts`，番紅花圖騰底＋紙色面板＋鋸齒框；共用的殼是 `components/ShareResultModal.tsx`）。中文名用節目的「尼泊爾虎棋」（10/24，見 glossary）；桌機首頁左邊是 AI 畫的整面印刷棋盤 `board-art.webp`（第一版；10/24 換成老虎追羊的概念圖 `chase.webp`，10/25 Zach 要回到第一版，chase.webp 刪掉了；飾帶與米字小花的顏色也以這張為準）。平台上的圖（大卡片 `hero.webp`、手機方圖 `hero-square.webp`、小卡片 `key-art.webp`）反過來是**遊戲裡真的棋盤與圓牌**擺一盤電腦對下出來的局面、放在圖騰底上（同一天 Zach：平台那張老虎追羊好看，但跟點進去看到的不一樣）。配色在 `bagh-chal/palette.ts`。程式在 `app/games/bagh-chal/`（規則與電腦對手）、`app/components/bagh-chal/`（畫面） |
 | `/bagh-chal/rules` | 規則頁，每步一張小棋盤（`BaghRulesSteps`，對局中的說明彈窗共用） |
 | `/bagh-chal/solo#tiger-normal`、`/bagh-chal/local` | 跟電腦下（hash 是邊＋難度，沒帶就在頁面上選）、兩人同一台。noindex |
 | `/bagh-chal/online#new=tiger\|goat`、`#roomId=…` | 邀請朋友。房間在 RTDB `baghRooms/`（跟 Wall Go 的 `rooms/` 分開，結構見 `types/baghRoom.ts`），存走法字串（`encodeMoves`），只有輪到的人能寫。noindex |
@@ -257,6 +258,11 @@ nudge { by, at }          最近一次「催一下」
   先前腳本只抓到第一片（emoji），線上的中文字一直是系統字型而沒人發現（2026-09）。
   改文案後要跑 `npm run font:subset`（會下載原始字型到 `node_modules/.cache`），否則新字會**安靜地**掉到系統備援字體；
   CI 有 `font:check` 擋著。
+- **各款在地的名字也用那款風格的字**（2026-10-25 Zach：「我發現很多字體可能是不是比較偏英文／各語系有沒有辦法也找到一樣的字型」）：
+  英文名本來就是那款的字，中日韓泰的名字各挑一種同風格的對應（肥臉體 ↔ 粗宋、哥德手抄本 ↔ 毛筆、舊式襯線 ↔ 宋體／明朝，同一款不同語系可以不同字），
+  `scripts/build-name-lettering.mjs` 用 harfbuzz 轉成向量圖（**不載網頁字型**），一款一份設定 `scripts/name-lettering/<遊戲>.mjs`（README 在那裡）。
+  名字切成幾段（中間點後面、空格），放得下排一行、放不下才在段與段之間換行（`components/LocalName.tsx`）—— 先前日文、韓文的標題會斷在字中間（モ／リス、모／리스）。
+  平台卡片與大卡片（`look.lettering.local`）、各款首頁標題用同一份；名字改了沒重建，測試會擋、畫面退回一般文字。
 - **蓋滿畫面的東西不要剛好等於畫面高度**。手機工具列會隨捲動展開／收起，`inset:0`、`100lvh`、`100dvh` 各在某個瀏覽器／狀態下露底（Safari 與 iPhone 上的 Chrome 各被咬過）。
   Modal 遮罩（`.cover-viewport`）上下各往外多蓋 `max(25vh, 12rem)`，fixed 超出畫面會被裁掉、不產生捲軸；手機控制盤用 `::after` 往下延伸同色底；
   換頁轉場是 absolute，改由 JS 量 `innerHeight`／`visualViewport` 設高度，**上下再各多蓋 `max(25%, 192px)`**（`WipeOverlay` 的 `bleedOf`，2026-10-25）：
