@@ -1,4 +1,5 @@
 import WipeLink from '@/components/WipeLink';
+import GameName from '@/components/platform/GameName';
 import { gameName, type CatalogGame } from '@/games/catalog';
 import { localePath, type Locale } from '@/i18n/locales';
 
@@ -9,6 +10,8 @@ import { localePath, type Locale } from '@/i18n/locales';
  */
 const CARD = 'relative block aspect-video overflow-hidden rounded-xl [container-type:inline-size]';
 const NAME = 'text-[clamp(15px,12cqw,22px)] font-black leading-none';
+/** 名字底下那行這款自己的字：字標高半個字、字型那行六成大 */
+const SUB = { mark: 0.5, font: 'text-[0.6em]' };
 
 export default function GameCard({ game, locale, playable, guide, width = 'w-[240px]' }: {
   game: CatalogGame; locale: Locale; playable: string; guide: string; width?: string;
@@ -26,7 +29,7 @@ export default function GameCard({ game, locale, playable, guide, width = 'w-[24
             {/* eslint-disable-next-line @next/next/no-img-element -- 同上 */}
             <img src={art} alt="" loading="lazy" className="pointer-events-none absolute inset-0 size-full object-cover" />
             <span aria-hidden="true" className="absolute inset-x-0 bottom-0 h-3/5 bg-gradient-to-t from-black/80 to-transparent" />
-            <span className={`absolute inset-x-3 bottom-2.5 ${NAME} text-white`}>{name}</span>
+            <span className={`absolute inset-x-3 bottom-2.5 ${NAME} text-white`}><GameName game={game} locale={locale} sub={SUB} swap={0.95} /></span>
           </>
         ) : (
           <>
