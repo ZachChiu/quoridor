@@ -49,7 +49,7 @@ zh-TW 不加前綴（`app/(default)/`），en / ja / ko / zh-Hans / th 加前綴
 | `/wall-go/online#roomId=…` | 連線對戰（`OnlineClient` → `PlayClient`，帶 `roomId`）。roomId 放 hash 而非 query。noindex |
 | `/wall-go/online#new=2\|3` | Wall Go 首頁連線磁磚的目的地：連線頁自己開房，開好後 `replaceState` 換成 `#roomId=…` |
 | `/wall-go/replay#wgf=…` | 棋譜回放。**開發者工具，不是給玩家的功能** —— 見下 |
-| `/bagh-chal` | Bagh Chal 首頁（`BaghChalView` → `BaghHub`）。2026-10-20 起是自己的識別（試做中），**不沿用 Wall Go 的元件與視覺**：每一頁的背景是米提拉圖騰滿版鋪（`BaghFrame`＋`globals.css` 的 `.bagh-bg`：一塊用 image quilting 縫成上下左右無縫的圖塊 `pattern.avif／webp`，手機 520px、桌機 720px 重複鋪；先前四條飾帶拼的畫框接縫太明顯、一整幅 cover 虎羊太大。10/25 起鋪在頁面本身、跟著捲，不是 fixed 的一層 —— iOS 26 Safari 的狀態列、工具列底下只畫得出捲過去的內容），紙色面板浮在上面，面板頂列放平台 logo 與聯絡／語言（`BaghHeader`，不疊在背景上）；首頁是天城體字標＋四個按鈕（老虎、羊、本機對戰、連線對戰）；彈窗用 `Modal` 的 `skin="bagh"`（上方一條飾帶、標題在紙色上，不要色帶）、按鈕是米提拉畫的畫框（10/24 Zach：「虎羊棋明明是圖騰風，按鈕也要那樣」—— 一律兩條線 `.bagh-line`（橄欖綠底上是 `.bagh-line-on`）、圓鈕是雙圈小圓牌 `.bagh-medal`，一律直角；兩條線中間夾一排三角的鋸齒框做過，同一天 Zach 說「按鈕不要有那個菱形外框」）、主要鈕與選中的選項是橄欖綠（黑色按鈕是 Wall Go 的風格）、按鈕樣式在 `bagh-chal/styles.ts`（不能放進 `'use client'` 檔：伺服器元件匯入會變成 client reference，className 會變成一段錯誤文字）、難度在 `BaghUi`；棋子與圖示是 AI 畫的米提拉圓牌（`bagh-chal/tokens.tsx`，用背景圖畫，不用 `<img>`＋filter —— iPhone 會漏畫）。木窗門轉場（`WipeOverlay` 的 `DOORS`）只留在從平台卡片進來的那一下；虎羊棋裡面換頁（首頁、規則、對局之間）不播轉場、直接換頁（2026-10-22 Zach）。盤面（10/24 Zach）：一開始只有線、沒有任何符號，選了棋子才在可以去的點開出米字小花；**老虎可以吃羊時不給任何提示**（不閃、不加框、不寫字，做過都被拿掉）；棋子有落下／滑過去／一口吞下的動畫與閒置互動（老虎逗羊，不是羊頂老虎），見 `bagh-chal/idleMotion.ts`。結算就是分享圖（`bagh-chal/shareCard.ts`，番紅花圖騰底＋紙色面板＋鋸齒框；共用的殼是 `components/ShareResultModal.tsx`）。中文名用節目的「尼泊爾虎棋」（10/24，見 glossary）；桌機首頁左邊是 AI 畫的整面印刷棋盤 `board-art.webp`（第一版；10/24 換成老虎追羊的概念圖 `chase.webp`，10/25 Zach 要回到第一版，chase.webp 刪掉了；飾帶與米字小花的顏色也以這張為準）。平台上的圖（大卡片 `hero.webp`、手機方圖 `hero-square.webp`、小卡片 `key-art.webp`）反過來是**遊戲裡真的棋盤與圓牌**擺一盤電腦對下出來的局面、放在圖騰底上（同一天 Zach：平台那張老虎追羊好看，但跟點進去看到的不一樣）。配色在 `bagh-chal/palette.ts`。程式在 `app/games/bagh-chal/`（規則與電腦對手）、`app/components/bagh-chal/`（畫面） |
+| `/bagh-chal` | Bagh Chal 首頁（`BaghChalView` → `BaghHub`）。2026-10-20 起是自己的識別（試做中），**不沿用 Wall Go 的元件與視覺**：每一頁的背景是米提拉圖騰滿版鋪（`BaghFrame`＋`globals.css` 的 `.bagh-bg`：一塊用 image quilting 縫成上下左右無縫的圖塊 `pattern.avif／webp`，手機 520px、桌機 720px 重複鋪；先前四條飾帶拼的畫框接縫太明顯、一整幅 cover 虎羊太大。10/25 起鋪在頁面本身、跟著捲，不是 fixed 的一層 —— iOS 26 Safari 的狀態列、工具列底下只畫得出捲過去的內容；停在最上面時狀態列那條不屬於頁面，所以虎棋的頁面開了 viewport-fit=cover（`viewport.ts` 的 `baghViewport`，由 `bagh-chal/layout.tsx` 掛上，只開在虎棋），面板四周留白加上安全區），紙色面板浮在上面，面板頂列放平台 logo 與聯絡／語言（`BaghHeader`，不疊在背景上）；首頁是天城體字標＋四個按鈕（老虎、羊、本機對戰、連線對戰）；彈窗用 `Modal` 的 `skin="bagh"`（上方一條飾帶、標題在紙色上，不要色帶）、按鈕是米提拉畫的畫框（10/24 Zach：「虎羊棋明明是圖騰風，按鈕也要那樣」—— 一律兩條線 `.bagh-line`（橄欖綠底上是 `.bagh-line-on`）、圓鈕是雙圈小圓牌 `.bagh-medal`，一律直角；兩條線中間夾一排三角的鋸齒框做過，同一天 Zach 說「按鈕不要有那個菱形外框」）、主要鈕與選中的選項是橄欖綠（黑色按鈕是 Wall Go 的風格）、按鈕樣式在 `bagh-chal/styles.ts`（不能放進 `'use client'` 檔：伺服器元件匯入會變成 client reference，className 會變成一段錯誤文字）、難度在 `BaghUi`；棋子與圖示是 AI 畫的米提拉圓牌（`bagh-chal/tokens.tsx`，用背景圖畫，不用 `<img>`＋filter —— iPhone 會漏畫）。木窗門轉場（`WipeOverlay` 的 `DOORS`）只留在從平台卡片進來的那一下；虎羊棋裡面換頁（首頁、規則、對局之間）不播轉場、直接換頁（2026-10-22 Zach）。盤面（10/24 Zach）：一開始只有線、沒有任何符號，選了棋子才在可以去的點開出米字小花；**老虎可以吃羊時不給任何提示**（不閃、不加框、不寫字，做過都被拿掉）；棋子有落下／滑過去／一口吞下的動畫與閒置互動（老虎逗羊，不是羊頂老虎），見 `bagh-chal/idleMotion.ts`。結算就是分享圖（`bagh-chal/shareCard.ts`，番紅花圖騰底＋紙色面板＋鋸齒框；共用的殼是 `components/ShareResultModal.tsx`）。中文名用節目的「尼泊爾虎棋」（10/24，見 glossary）；桌機首頁左邊是 AI 畫的整面印刷棋盤 `board-art.webp`（第一版；10/24 換成老虎追羊的概念圖 `chase.webp`，10/25 Zach 要回到第一版，chase.webp 刪掉了；飾帶與米字小花的顏色也以這張為準）。平台上的圖（大卡片 `hero.webp`、手機方圖 `hero-square.webp`、小卡片 `key-art.webp`）反過來是**遊戲裡真的棋盤與圓牌**擺一盤電腦對下出來的局面、放在圖騰底上（同一天 Zach：平台那張老虎追羊好看，但跟點進去看到的不一樣）。配色在 `bagh-chal/palette.ts`。程式在 `app/games/bagh-chal/`（規則與電腦對手）、`app/components/bagh-chal/`（畫面） |
 | `/bagh-chal/rules` | 規則頁，每步一張小棋盤（`BaghRulesSteps`，對局中的說明彈窗共用） |
 | `/bagh-chal/solo#tiger-normal`、`/bagh-chal/local` | 跟電腦下（hash 是邊＋難度，沒帶就在頁面上選）、兩人同一台。noindex |
 | `/bagh-chal/online#new=tiger\|goat`、`#roomId=…` | 邀請朋友。房間在 RTDB `baghRooms/`（跟 Wall Go 的 `rooms/` 分開，結構見 `types/baghRoom.ts`），存走法字串（`encodeMoves`），只有輪到的人能寫。noindex |
@@ -194,7 +194,7 @@ nudge { by, at }          最近一次「催一下」
   線條圖示在大尺寸色塊上會顯得單薄。署名放在遊玩方式 Modal 裡。
 - **貼紙風（粗黑框＋硬影子）試過、不用**：2026-10-20 先放在 Wall Go 首頁磁磚、再試在對局頁的按鈕與牆（磚牆），
   Zach 都要復原（「Wall Go 決定不改」）。不要再加回來。
-- **這套視覺只管 Wall Go 與平台**：虎羊棋是印刷棋盤＋米提拉的自己一套（見路由表）。平台標誌是長角的藍骰子（`public/brand/die-mark.svg`，試套）。
+- **這套視覺只管 Wall Go 與平台**：虎羊棋是印刷棋盤＋米提拉的自己一套（見路由表）。平台標誌是長角的藍骰子（`public/brand/die-mark.svg`，試套）；各遊戲頁左上那顆是同樣大小的灰色半透明單色版（`PlatformMark` 的 `mono`、`die-mark-gray.svg`，10/25 Zach 試看看），平台自己的頁面照舊是藍的。
   **favicon 每款一組**（2026-10-24）：全站預設 `/favicon.*`、`/icon-*.png` 是平台的骰子惡魔平面版（16px 下立體版糊掉），Wall Go 那兩個人搬到 `public/icons/wall-go.*`、尼泊爾虎棋是老虎圓牌 `public/icons/bagh-chal*`，由 `i18n/metadata.ts` 的 `GAME_ICONS` 依路徑指定；結算分享圖站名前那顆也用那款自己的。第二批五款還沒有自己的，沿用平台的。
   **加到主畫面的圖示（apple-touch-icon）例外，每一頁都是平台的**（10/25）：從哪一款加，打開都是平台首頁（見下一條），圖示跟著是平台。
 - **加到主畫面（PWA）**（2026-10-25 Zach：「PWA 也做上去，設定上一定要回根目錄，不管從哪一個遊戲註冊」）：設定檔一個語系一份 `/pwa/<語系>.json`（`app/pwa/[file]/route.ts`，內容在 `i18n/pwa.ts`），兩個 root layout 依語系掛 `<link rel="manifest">`。
@@ -261,6 +261,10 @@ nudge { by, at }          最近一次「催一下」
   iOS 26 的 Safari 把頁面一路畫到狀態列與底下工具列的後面，scrollY／innerHeight 只算中間那段，只蓋那段的話木窗門關好了、上下還露著平台的季標題（Zach 回報）。
   往下多蓋會撐長短的頁面，所以只在捲軸不佔版面時多蓋（手機都是；Windows 桌機會多冒一條捲軸，那裡也沒有蓋在頁面上的工具列）。
   裡面的東西照看得到的那一段排：木窗門的雕花、色塊的起點、各款的 `Scene` 都用 `--bleed` 退回來，多出的那截只接同樣的底。模擬器裡沒辦法用手指把工具列收起來，這類問題以「不依賴任何單位」的寫法處理，不要再換單位。
+- **字、圖、棋盤、磁磚的大小不能跟著工具列變**（2026-10-25 Zach：Wall Go 首頁往下捲、工具列一收，大磁磚就變大變小）：
+  照畫面高度縮放的尺寸、字級、間距一律用 **`svh`**（工具列展開時的高度，不會變），**不用 `dvh`**（工具列收起來就變大）。
+  `dvh` 只留給「鋪滿畫面的底」（`min-h-dvh` 的頁面容器），而且容器裡的東西不能照容器高度算大小（`flex-1` 撐出來的棋盤那種）。
+  寬度方向不受工具列影響，`vw`／`dvw`／`cqw` 都可以。新增前 `git grep -n "[0-9]dvh"` 看一眼。
 - **iOS 26 Safari 的工具列顏色**取自「貼著畫面上下緣的 fixed 元素」（不看 theme-color、不管祖先的 opacity），而且反應慢半秒。
   所以關著的 Modal 遮罩要 `display:none`；換頁轉場（`WipeOverlay`）的根節點用 `absolute` 定位在目前的捲動位置而不是 `fixed` ——
   fixed 的話工具列會慢一拍染成磁磚色，畫面都換好了才變回來。上下各內縮 1px 沒有用，實測過。
@@ -295,7 +299,7 @@ nudge { by, at }          最近一次「催一下」
 - **瀏覽器自己的「確定要離開嗎？」（`beforeunload`）只在電腦版有用**：它只管整頁跳轉，站內換頁不觸發；iPhone 的 Safari 與 Chrome 完全不顯示。保留它給電腦版，但不能只靠它。
 - **房子鈕**：對局還沒結束就先開 `LeaveConfirmModal`。
 - **瀏覽器返回鍵**：對局頁第一次點擊時，在歷史紀錄最上面放一筆同網址的「守門」（`__wallgoGuard`）。按返回只是從守門退回真正那筆、頁面不換，`popstate` 裡攔下來問；離開就再退一步，不離開就把守門放回去。沒東西會丟（還沒下、已下完、連線還在等人）就自動替使用者再退一步。守門**必須在點擊當下 push**（WebKit 規則，見上方〈站內換頁〉那條），所以不等「有進度」才放。確認視窗開著時的點擊不放守門；重整後若停在守門上要先認出來。從房子鈕離開時用 `navigate(..., { replace: true })` 取代守門。
-- **其他遊戲共用 `hook/useLeaveGuard.ts`**（10/25 Zach：「遊戲玩到一半要退出離開都要有一個提示詢問」）：同一套房子鈕、返回鍵守門、電腦版 `beforeunload`，確認視窗由各款用自己的樣子畫（文案共用 `useGameText().leave`）。房子鈕呼叫 `request(離開要做的事)`，守門那筆會先退掉再走，回到選單後按一次返回就回得去。Wall Go 的 `PlayClient` 是原版，沒有改用它。
+- **其他遊戲共用 `hook/useLeaveGuard.ts`**（10/25 Zach：「遊戲玩到一半要退出離開都要有一個提示詢問」）：同一套房子鈕、返回鍵守門、電腦版 `beforeunload`，確認視窗由各款用自己的樣子畫（文案共用 `useGameText().leave`）。房子鈕呼叫 `request(離開要做的事)`，守門那筆會先退掉再走，回到選單後按一次返回就回得去；不必問、用 replaceState 換網址的換局（騎士巡遊換大小）走 `skip`，同樣先退掉守門。Wall Go 的 `PlayClient` 是原版，沒有改用它。
 - **重整接回**（本機、單人）：每一步把 WGF 寫進 sessionStorage（`utils/savedGame.ts`，只活在這個分頁），掛載時 `replay` 回來；分出勝負、重新開始、確認離開就清掉。從首頁磁磚或 `/solo` 選難度進來是新的一局（會清）。進行到一半的那一手不會保留。連線局本來就從 Firebase 接回。接回的那一下不送 GA 的 `game_start`。
 
 ## 單人對戰

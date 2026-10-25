@@ -476,14 +476,17 @@ body {
 
    限定 max-height: 600px 才套，桌機（同樣是 landscape）不受影響。
 
-   直式另有下限 18rem：矮手機上不再為了塞進一個畫面把磁磚縮小，放不下就往下捲（2026-10-25 Zach）。 */
-.home-grid { max-width: min(380px, calc(100dvh - 22rem)); }
+   直式另有下限 18rem：矮手機上不再為了塞進一個畫面把磁磚縮小，放不下就往下捲（2026-10-25 Zach）。
+
+   高度一律用 svh（工具列展開時的高度，不會變）不用 dvh：手機往下捲、工具列收起來時 dvh 會變大，
+   磁磚跟著脹大縮小（2026-10-25 Zach 回報）。 */
+.home-grid { max-width: min(380px, calc(100svh - 22rem)); }
 @media (orientation: portrait) {
-  .home-grid { max-width: min(380px, max(18rem, calc(100dvh - 22rem))); }
+  .home-grid { max-width: min(380px, max(18rem, calc(100svh - 22rem))); }
 }
 
 @media (orientation: landscape) and (max-height: 600px) {
-  .home-grid { max-width: min(320px, calc(100dvh - 12rem)); }
+  .home-grid { max-width: min(320px, calc(100svh - 12rem)); }
   .home-main {
     flex-direction: row;
     align-items: center;

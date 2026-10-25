@@ -19,6 +19,8 @@ const isGuard = (state: unknown) => {
  * - 電腦版關分頁、重新整理：瀏覽器自己的「確定要離開嗎？」（iPhone 不顯示，所以不能只靠它）。
  *
  * 確認視窗由各款自己畫（各有各的樣子）：`open` 時顯示，「繼續」接 `cancel`、「離開」接 `confirm`。
+ * 不必問的換局（換大小、從挑戰換到練習這類 replaceState 換網址的）走 `skip(go)`：一樣先退掉守門再換，
+ * 不然換掉的是守門那筆，底下還留著舊的那局、按返回會先回到它。
  *
  * @param live 對局頁正在進行（還沒分出勝負）：這段期間才放守門
  * @param inProgress 離開會丟掉東西（下過了、或連線局已經開打）：這時才問
@@ -107,5 +109,5 @@ export function useLeaveGuard({ live, inProgress }: { live: boolean; inProgress:
     if (leave) dropGuardThen(leave);
   }, [via, dropGuardThen]);
 
-  return { open: via !== null, request, cancel, confirm };
+  return { open: via !== null, request, skip: dropGuardThen, cancel, confirm };
 }
