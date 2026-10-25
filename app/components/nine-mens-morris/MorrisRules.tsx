@@ -136,7 +136,7 @@ export function MorrisRulesModal({ t, open, onClose, showRules }: { t: MorrisTex
                 <div key={n} className="w-full shrink-0 px-0.5 short:flex short:items-start short:gap-5" aria-hidden={n !== i}>
                   {/* 盤面寬度跟著可視高度走（扣掉色帶、字、頁碼、按鈕），放不下時縮的是盤面、不是讓內容捲（同 Wall Go）。
                       手機橫放（short）圖在左、字在右，扣的是色帶、頁碼與按鈕 */}
-                  <div className="mx-auto w-[clamp(7rem,calc((100dvh-33rem)*0.9),14rem)] short:mx-0 short:w-[clamp(5.5rem,calc((100dvh-17rem)*0.9),11rem)] short:shrink-0">
+                  <div className="mx-auto w-[clamp(7rem,calc((100svh-33rem)*0.9),14rem)] short:mx-0 short:w-[clamp(5.5rem,calc((100svh-17rem)*0.9),11rem)] short:shrink-0">
                     <MorrisMiniBoard {...art} />
                   </div>
                   <div className="short:min-w-0 short:flex-1">
