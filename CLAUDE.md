@@ -207,7 +207,7 @@ nudge { by, at }          最近一次「催一下」
   主視覺與平台卡片都是原件本身。每款在自己的 `feat/game-<id>` 分支（一款一款上線）；下面每款一段，**段與段之間留空行**，
   各分支改的是自己那一段，依序合併才不會衝突（globals.css 底部的五個標記、catalog.ts 的寫法也是同一個道理）。
 
-  - 九子棋（`feat/game-nine-mens-morris`）：原件是《遊戲之書》（1283）的插圖；最外緣朱紅框、四角小方塊裡一朵四瓣小花（`.nmm-frame`；原本畫叉，右上角像關閉鈕，換掉了），群青底撒白點（`.nmm-field`）；主視覺是插圖 `libro.webp`、Grenze Gotisch 字標。favicon 是群青底、朱紅框裡一個羊皮紙色的鐘形小人（`public/icons/nine-mens-morris.*`）。
+  - 九子棋（`feat/game-nine-mens-morris`）：原件是《遊戲之書》（1283）的插圖；最外緣朱紅框、四角小方塊裡一朵四瓣小花（`.nmm-frame`；原本畫叉，右上角像關閉鈕，換掉了），群青底撒白點（`.nmm-field`）；主視覺是插圖 `libro.webp`、Grenze Gotisch 字標。favicon 是群青底、朱紅框裡一個羊皮紙色的鐘形小人（`public/icons/nine-mens-morris.*`）。整頁的字（按鈕、說明、彈窗、分享圖）跟名字字標同一套：繁簡霞鶩文楷（10/25 先選了毛筆 Yuji Boku，缺常用字、內文排不了，統一字體時連標題一起換）、日 Zen Antique、韓 Song Myung（都只有一個字重，`font-black` 照原本粗細）、英泰 Noto Serif（`scripts/game-fonts/nine-mens-morris.mjs`）。
     10/24 棋盤照插圖做（Zach：「棋盤可以跟視覺圖一樣」）：木頭上的深淺斑（feTurbulence）、線是嵌進去的淺金色木條、下方多一段木頭放被拿掉的子；棋子是插圖裡側面看的鐘形小人（形狀在 `art.ts`，分享圖共用）。拿子不畫紅色 ×，改成可以拿的子以腳底為軸搖晃（`.nmm-teeter`）。音效是骨棋子碰木頭＋撥弦琴（`sounds.ts`），等的那一方會鞠躬、用肩膀頂人（`idleMotion.ts`），結算是分享圖（`shareCard.ts`，只留 9:16），右上角彈窗用 `MORRIS_CORNER`。
     10/25 Zach「棋子的定位有點怪」：原本小人的方框置中在交叉點上，交叉點落在胸口、整顆看起來低半顆，腳下的粉筆圈也畫在交叉點下面、跟正中央的粉筆點對不上。改成**腳底站在交叉點上**（`art.ts` 的 `MAN_FOOT`／`SPOT_Y`／`MAN_TOP`）：點的按鈕往上挪、框住站著的小人，格線整排往下挪 `GRID_DROP` 讓最上排的頭有地方放；粉筆圈、粉筆點、選中的腳印都對在交叉點，走子的滑動、分享圖同一套。躺在下方的子頭一律朝棋盤外（`trayTurn`）。
     **拿子是一隻手**（10/25 Zach：「被拔除可以跟視覺圖一樣嗎，有一隻手去把它拔掉的感覺」）：照插圖裡跪著下棋的人的手畫成 SVG（`MorrisHand.tsx`：米黃手、細褐輪廓、條紋窄袖；拿白子的黑方從右邊伸進來、土黃袖，拿黑子的白方從左邊、朱紅袖，顏色在 `palette.ts` 的 `HAND`），從畫面外伸進來、食指拇指捏住小人的頭、提起來邊走邊放倒到下方那一格、縮回去，約 1.9 秒（`pluck.ts` 算關鍵影格，`MorrisBoard` 用 `element.animate()` 播，只動 transform／opacity）。局面裡那顆早就沒了（拿子是走法字串裡的一步），手帶走的是替身（`data-carried`），下方那一格真的子在手指張開那一刻才出現。

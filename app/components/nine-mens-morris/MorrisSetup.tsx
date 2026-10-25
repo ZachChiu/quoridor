@@ -69,7 +69,7 @@ export default function MorrisSetup({ locale, onStart }: { locale: Locale; onSta
   const row = 'nmm-arch is-small flex w-full items-center gap-3 px-4 pb-3 pt-4 text-left';
   // 標題本來就是英文名（英文、泰文）就讓字標當標題，不重複寫兩次
   const latinTitle = /^[ -~’]+$/.test(t.title);
-  // 中日韓的標題用同一種風格的字（毛筆、古風明朝、宋體）寫成的字標，平台卡片用的是同一份
+  // 中日韓的標題用同一種風格的字（楷書、古風明朝、宋體）寫成的字標，平台卡片用的是同一份
   const lettering = letteringOf(NAME_LETTERING, locale, t.title);
 
   return (
