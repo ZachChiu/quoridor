@@ -40,11 +40,12 @@ export default function SeasonView({ locale, n }: { locale: Locale; n: SeasonNum
           <Link href={localePath(locale, '/')} className="flex items-center gap-1 self-start text-[15px] font-bold text-plat-muted transition fine:hover:text-tile-cream">
             <LuChevronLeft aria-hidden="true" className="text-[20px]" />{p.allGames}
           </Link>
-          <ul className="flex gap-2">
+          {/* 320 寬的手機上英文、日文三顆擠不下：字與內距跟著畫面縮，真的還放不下才換行（不超出畫面） */}
+          <ul className="flex flex-wrap gap-2">
             {SEASON_NUMBERS.map((m) => (
               <li key={m}>
                 <Link href={localePath(locale, seasonPath(m))} aria-current={m === n ? 'page' : undefined}
-                  className={`flex h-10 items-center whitespace-nowrap rounded-full px-4 text-[15px] font-black transition ${m === n ? 'bg-tile-cream text-tile-ink' : 'bg-plat-surface text-tile-cream fine:hover:bg-plat-raised'}`}>
+                  className={`flex h-10 items-center whitespace-nowrap rounded-full px-[clamp(10px,3.5vw,16px)] text-[clamp(13px,4vw,15px)] font-black transition ${m === n ? 'bg-tile-cream text-tile-ink' : 'bg-plat-surface text-tile-cream fine:hover:bg-plat-raised'}`}>
                   {p.seasonShort.replace('{n}', m)}
                 </Link>
               </li>
