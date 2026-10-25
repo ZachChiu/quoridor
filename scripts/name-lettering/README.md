@@ -11,8 +11,8 @@
 import { TEXT } from '../../app/games/nine-mens-morris/text.ts';
 
 const GF = 'https://raw.githubusercontent.com/google/fonts/main/ofl';
-// 哥德手抄本字 → 毛筆。可變字型用 axes 釘字重（例如 { wght: 900 }，泰文的寬度軸 { wdth: 100 }）
-const BRUSH = { src: `${GF}/yujiboku/YujiBoku-Regular.ttf` };
+// 哥德手抄本字 → 楷書。可變字型用 axes 釘字重（例如 { wght: 900 }，泰文的寬度軸 { wdth: 100 }）
+const KAI = { src: `${GF}/lxgwwenkaitc/LXGWWenKaiTC-Bold.ttf` };
 
 const nineMensMorris = {
   // 產出 public/games/<id>/name/*.svg 與 app/games/<id>/nameLettering.ts
@@ -21,7 +21,7 @@ const nineMensMorris = {
   tracking: 0.06,
   // 名字一律從 text.ts 拿，跟畫面上寫的是同一份；英文（與照英文寫的泰文）不用列
   locales: {
-    'zh-TW': { text: TEXT['zh-TW'].title, font: BRUSH },
+    'zh-TW': { text: TEXT['zh-TW'].title, font: KAI },
     ja: { text: TEXT.ja.title, font: { src: `${GF}/zenantique/ZenAntique-Regular.ttf` } },
     // 預設在中間點後面、空格處可以換行；要在別的地方切就自己給 pieces（接起來要等於 text）
     // ja: { text: 'タイムオークション', pieces: ['タイム', 'オークション'], font: … },
@@ -34,7 +34,7 @@ export default nineMensMorris;
 做好之後：`npm run name:build -- <遊戲>`（要連網下載原始字型），產物（`app/games/<遊戲>/nameLettering.ts`，蓋掉平台先放的空檔）跟程式一起 commit，
 平台卡片會自己依路徑查到（`games/nameLetterings.ts`）；各款首頁的標題換成 `LocalName`。
 
-- **挑字**：照英文那套字的風格找各文字的對應（肥臉體 ↔ 粗宋、哥德手抄本 ↔ 毛筆、舊式襯線 ↔ 宋體／明朝），
-  只用 OFL 授權的字。**繁中的字要用繁中字型**（日本的字型寫中文，有些字的寫法不對）；名字裡每個字的寫法兩邊一樣時才可以借用。
+- **挑字**：照英文那套字的風格找各文字的對應（肥臉體 ↔ 粗宋、哥德手抄本 ↔ 楷書、舊式襯線 ↔ 宋體／明朝），
+  只用 OFL 授權的字。整頁的其他字也要用同一套（`scripts/game-fonts/`），所以挑**字夠齊、能排內文**的字 —— 九子棋先挑了毛筆 Yuji Boku，缺常用字，後來繁簡都換成霞鶩文楷。**繁中的字要用繁中字型**（日本的字型寫中文，有些字的寫法不對）；名字裡每個字的寫法兩邊一樣時才可以借用。
 - **名字改了**：重跑 `name:build`。沒重跑時 `tests/components/nameLettering.test.ts` 會擋，畫面上退回一般文字。
 - `text.ts` 只能有 `import type`（Node 直接跑 .ts 時只剝型別，不解析 `@/` 別名），跟 `scripts/og-games` 一樣。
