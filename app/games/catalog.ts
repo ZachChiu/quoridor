@@ -43,6 +43,12 @@ export type GameLook = {
    * 2026-10-22 Zach：「為啥每一個進場都跟 Wall Go 一樣」—— 有自己識別的遊戲，進場也要有自己的樣子。
    */
   entrance?: string;
+  /**
+   * 這款自己的字（2026-10-25 Zach：「各遊戲不是有自己的字體嗎」）：平台卡片與大卡片的名字底下多一行原名，用那款首頁標題的同一種字
+   *（components/platform/GameName.tsx）。mark 是字標（單色外框的 SVG，public/ 底下）與它的寬高比；font 是那款的字型 class。
+   * spellsName：那行就是英文官方名（name）—— 名字本身是英文時（英文版）不重複寫兩次，直接拿它當名字。
+   */
+  lettering?: ({ mark: string; ratio: number } | { font: string }) & { spellsName?: boolean };
 };
 
 export type CatalogGame = {
@@ -79,7 +85,8 @@ export const SEASONS: Season[] = [
         look: { card: 'bg-[#e8e1d7] text-tile-ink', wipe: '#e8e1d7', art: '/games/wall-go/card.svg', hero: '/games/wall-go/hero.svg', heroSquare: '/games/wall-go/hero-square.svg', cover: true, rules: routes.wallGo('/rules') } },
       // 中文用節目的「尼泊爾虎棋」（Zach 10/24：命名用 Netflix 版本）、韓文「바그찰」是節目 RULE 卡上的寫法（見 glossary）
       { name: 'Bagh Chal', names: { 'zh-TW': '尼泊爾虎棋', 'zh-Hans': '尼泊尔虎棋', ko: '바그찰' }, playable: routes.BAGH_CHAL,
-        look: { card: 'bg-[#e3a43c] text-tile-ink', wipe: '#f1e6cd', art: '/games/bagh-chal/key-art.webp', hero: '/games/bagh-chal/hero.webp', heroSquare: '/games/bagh-chal/hero-square.webp', cover: true, doors: true, rules: routes.baghChal('/rules') } },
+        look: { card: 'bg-[#e3a43c] text-tile-ink', wipe: '#f1e6cd', art: '/games/bagh-chal/key-art.webp', hero: '/games/bagh-chal/hero.webp', heroSquare: '/games/bagh-chal/hero-square.webp', cover: true, doors: true, rules: routes.baghChal('/rules'),
+          lettering: { mark: '/games/bagh-chal/wordmark.svg', ratio: 3140 / 679 } } },
       { name: 'Crooked Cops', names: { 'zh-TW': '腐敗警察', 'zh-Hans': '腐败警察' } },
       { name: 'Remove One', names: { 'zh-TW': '移除一個', 'zh-Hans': '移除一个' } },
       { name: 'Unknown', names: { 'zh-TW': '未知', 'zh-Hans': '未知' } },
