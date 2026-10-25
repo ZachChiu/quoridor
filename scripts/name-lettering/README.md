@@ -14,7 +14,7 @@ const GF = 'https://raw.githubusercontent.com/google/fonts/main/ofl';
 // 哥德手抄本字 → 毛筆。可變字型用 axes 釘字重（例如 { wght: 900 }，泰文的寬度軸 { wdth: 100 }）
 const BRUSH = { src: `${GF}/yujiboku/YujiBoku-Regular.ttf` };
 
-export default {
+const nineMensMorris = {
   // 產出 public/games/<id>/name/*.svg 與 app/games/<id>/nameLettering.ts
   id: 'nine-mens-morris',
   // 字距（em），跟那款首頁標題的 tracking 一樣
@@ -27,6 +27,8 @@ export default {
     // ja: { text: 'タイムオークション', pieces: ['タイム', 'オークション'], font: … },
   },
 };
+
+export default nineMensMorris;
 ```
 
 做好之後：`npm run name:build -- <遊戲>`（要連網下載原始字型），產物（`app/games/<遊戲>/nameLettering.ts`，蓋掉平台先放的空檔）跟程式一起 commit，
