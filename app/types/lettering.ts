@@ -15,6 +15,8 @@ export type LocalLettering = {
   gap: number;
   /** 換行之後兩行的間距 */
   lead: number;
+  /** 排成兩行時，比較寬那一行最窄是多寬：畫面比這個窄就整個名字一起縮小，不排到第三行 */
+  fit: number;
   /** w：寬；ml／mr：字的筆畫超出字身的部分（負的外距），沒有就省略 */
   pieces: { src: string; w: number; ml?: number; mr?: number }[];
 };
