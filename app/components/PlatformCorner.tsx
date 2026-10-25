@@ -14,7 +14,8 @@ import type { CornerTheme } from './cornerTheme';
  * 左上那顆平台標誌（長角的骰子）就是那條線索。
  *
  * 試過一整條橫跨頂端的黑色平台列：太重，把遊戲首頁的奶油底切掉一大塊（Zach：不要整條黑色）。
- * 所以縮成角落的一顆 logo，後來再縮成只有圖示的圓鈕（PlatformMark），跟右上角的圓鈕一樣大（40px、離邊 10px）。
+ * 所以縮成角落的一顆 logo，後來再縮成只有圖示的圓鈕（PlatformMark），跟右上角的圓鈕一樣大（40px、離邊 10px）；
+ * 10/25 起是單色版（PlatformMark 的 mono）。
  *
  * 只放在遊戲首頁。對局畫面、規則頁這些「遊戲裡面」的頁面不放（Zach 指定）。
  */
@@ -33,7 +34,7 @@ export default function PlatformCorner({ locale, theme, buttonClassName, offset 
         className="fixed left-2.5 top-2.5 z-40 transition hover:brightness-110 active:scale-95"
         style={offset ? { left: offset, top: offset } : undefined}
       >
-        <PlatformMark />
+        <PlatformMark mono />
       </Link>
       <div className="fixed right-2.5 top-2.5 z-40 flex gap-1" style={offset ? { right: offset, top: offset } : undefined}>
         <ContactButton theme={theme} buttonClassName={buttonClassName} />
