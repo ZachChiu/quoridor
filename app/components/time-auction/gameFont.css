@@ -1,0 +1,14 @@
+/* 由 scripts/build-game-fonts.mjs 依 scripts/game-fonts/time-auction.mjs 產生，不要手改（npm run font:subset）。
+   這款的頁面（html:has(.tau-root)）整頁換成自己的字，--font-site 是全站那套黑體、當備援。 */
+@font-face { font-family: 'time-auction zh-TW'; src: url('/fonts/games/time-auction/zh-TW.woff2') format('woff2'); font-weight: 400 900; font-style: normal; font-display: swap; }
+@font-face { font-family: 'time-auction en'; src: url('/fonts/games/time-auction/en.woff2') format('woff2'); font-weight: 400 900; font-style: normal; font-display: swap; }
+@font-face { font-family: 'time-auction ja'; src: url('/fonts/games/time-auction/ja.woff2') format('woff2'); font-weight: 400 900; font-style: normal; font-display: swap; }
+@font-face { font-family: 'time-auction ko'; src: url('/fonts/games/time-auction/ko.woff2') format('woff2'); font-weight: 400 900; font-style: normal; font-display: swap; }
+@font-face { font-family: 'time-auction zh-Hans'; src: url('/fonts/games/time-auction/zh-Hans.woff2') format('woff2'); font-weight: 400 900; font-style: normal; font-display: swap; }
+@font-face { font-family: 'time-auction th'; src: url('/fonts/games/time-auction/th.woff2') format('woff2'); font-weight: 400 900; font-style: normal; font-display: swap; }
+:root:lang(zh-Hant-TW):has(.tau-root) { --font-app: 'time-auction zh-TW', var(--font-site); }
+:root:lang(en):has(.tau-root) { --font-app: 'time-auction en', var(--font-site); }
+:root:lang(ja):has(.tau-root) { --font-app: 'time-auction ja', var(--font-site); }
+:root:lang(ko):has(.tau-root) { --font-app: 'time-auction ko', var(--font-site); }
+:root:lang(zh-Hans):has(.tau-root) { --font-app: 'time-auction zh-Hans', var(--font-site); }
+:root:lang(th):has(.tau-root) { --font-app: 'time-auction th', 'time-auction en', var(--font-site); }

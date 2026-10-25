@@ -213,7 +213,7 @@ nudge { by, at }          最近一次「催一下」
 
   - 騎士巡邏：試做中，視覺在 `feat/game-knights-tour`。
 
-  - 時間拍賣（`feat/game-time-auction`）：原件是 Cruikshank 1819、《Puck》1888 的拍賣版畫；最外緣紅色牛津角框（`.tau-frame`）；主視覺是拍賣場 `auction.webp`、Abril Fatface 字標。favicon 是拍賣行紅底上一支紙色的成交木槌（`public/icons/time-auction.*`）。
+  - 時間拍賣（`feat/game-time-auction`）：原件是 Cruikshank 1819、《Puck》1888 的拍賣版畫；最外緣紅色牛津角框（`.tau-frame`）；主視覺是拍賣場 `auction.webp`、Abril Fatface 字標；整頁其他的字（按鈕、說明、彈窗、分享圖）是 Noto Serif，各語系跟名字字標同一套（`scripts/game-fonts/time-auction.mjs`，10/25）。favicon 是拍賣行紅底上一支紙色的成交木槌（`public/icons/time-auction.*`）。
     聲音是拍賣行（`time-auction/sounds.ts`：倒數懷錶、開始計時叫人鈴、跑秒座鐘滴答、成交木槌、你得標多一枚金幣、結束手搖鈴），只在事件當下響一次；成交時金幣從大螢幕拋到得標者名片、落下才加一與蓋章，你放手在等時電腦名片互相瞄一眼（亂數，不洩漏誰還按著；`motion.ts`）。
     結算就是分享圖（`time-auction/shareCard.ts`）：一頁拍賣目錄的成交紀錄 —— 字標、版畫（9:16）、大標＋成交章、排名表（第一名紅色版塊）、19 件拍品各由幾號得標；首頁右上聯絡／語言用 `TAU_CORNER`（`theme.ts`），放在框裡不釘角落。
     **連線（邀請朋友，10/24）**：`/time-auction/online#new=quick-4`（模式-人數，2–6 人，全是真人、坐滿才開）→ 開好換成 `#roomId=…`；房間在 RTDB `auctionRooms/`（不是 turnRooms —— 這款是同時出價，結構與「讀得到別人放手時間」的信任程度寫在 `types/auctionRoom.ts`），

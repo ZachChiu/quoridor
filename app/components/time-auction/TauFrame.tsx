@@ -1,4 +1,5 @@
 import type React from 'react';
+import './gameFont.css';
 
 /**
  * 時間拍賣的整頁版面：一張維多利亞時代的拍賣傳單 —— 報紙色的紙、最外緣一圈紅色的「牛津角」框
