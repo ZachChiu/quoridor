@@ -91,7 +91,7 @@ export default function AuctionSetup({ locale, value, onChange, onStart }: {
     <TauFrame className="items-center px-4 pb-6 pt-3 lg:px-8">
       <div className="flex w-full max-w-[460px] items-center justify-between lg:max-w-[960px]">
         <Link href={localePath(locale, '/')} aria-label={brandName(locale)} title={brandName(locale)} className="transition hover:brightness-110 active:scale-95">
-          <PlatformMark className="!size-11" />
+          <PlatformMark mono className="!size-11" />
         </Link>
         <div className="flex gap-1.5">
           <Link href={rulesHref} aria-label={t.howTo} title={t.howTo} className={roundBtn}><LuCircleHelp aria-hidden="true" /></Link>
