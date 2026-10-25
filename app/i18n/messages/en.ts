@@ -32,7 +32,7 @@ const en: Messages = {
     ogTitle: "The Devil's Plan Games: Rules & Play Online",
     ogDescription: 'Every game from the show — play the ones we have built. Free, no download, no sign-up.',
     heading: "The Devil's Plan games",
-    ogLines: ["The Devil's Plan", 'games'],
+    ogLines: ["The Devil's Plan", 'games online'],
     heroBadge: 'Play now',
     heroMeta: 'Season 2: Death Room · 2–3 players · No download',
     heroBody: 'A 7×7 board. Each turn, move a piece and build one wall to claim territory. Play the computer, or open a room and send the link to friends.',
