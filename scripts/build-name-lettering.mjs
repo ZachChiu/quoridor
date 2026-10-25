@@ -8,7 +8,8 @@
  *
  * 為什麼是向量圖、不是網頁字型：只有固定的幾個字，轉成外框就好 —— 不用下載字型，也不會先閃一下系統字。
  * 名字切成幾段（日文的中間點後面、空格；也可以在設定檔自己切），每段一張 SVG，
- * 畫面上放得下就排在同一行，放不下才在段與段之間換行（components/LocalName.tsx），不會斷在字中間。
+ * 畫面上放得下就排在同一行，放不下才在段與段之間換行（components/LocalName.tsx），不會斷在字中間；
+ * 最多兩行，兩行還放不下就整個名字一起縮小（平台的小卡片上，ナイン・メンズ・モリス 排成三行會蓋到標籤）。
  *
  *   npm run name:build                重建全部（要連網下載原始字型，存在 node_modules/.cache/wallgo-fonts，跟 font:subset 共用）
  *   npm run name:build -- <遊戲>…     只重建那幾款 —— 各款的分支只重建自己的，合併才不會撞
@@ -152,11 +153,18 @@ for (const f of files) {
     });
 
     const spaceAdv = space ? shapePiece(font, ' ', 0).adv : 0;
+    const gap = (space ? spaceAdv + 2 * tracking : tracking) / upem;
+    // 最多排兩行：每一種切成兩行的方式裡、比較寬那一行最窄是多寬（只有一段就是那一段）。
+    // 畫面比這個窄就整個名字一起縮小 —— 不會排到第三行，也不會只有一段變小
+    // （用寫進檔案、四捨五入過的數字算，再多留一點，免得差千分之一就被擠到第三行）
+    const span = (a, b) => pieces.slice(a, b).reduce((sum, p) => sum + p.w + (p.ml ?? 0) + (p.mr ?? 0), 0) + em(gap) * (b - a - 1);
+    const fit = pieces.length === 1 ? span(0, 1) : Math.min(...pieces.slice(1).map((_, i) => Math.max(span(0, i + 1), span(i + 1, pieces.length))));
     data[locale] = {
       text: entry.text,
       h: em(h),
-      gap: em((space ? spaceAdv + 2 * tracking : tracking) / upem),
+      gap: em(gap),
       lead: em(Math.max(0.08, LINE - h)),
+      fit: Math.ceil((fit + 0.01) * 1000) / 1000,
       pieces,
     };
     console.log(`  ✓ ${cfg.id} ${locale}「${entry.text}」${family}，${pieces.length} 段`);

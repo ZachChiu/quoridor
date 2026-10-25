@@ -13,21 +13,24 @@ export function letteringOf(data: NameLettering | undefined, locale: Locale, tex
  * 平台卡片、大卡片、各款首頁的標題共用。
  *
  * 段排成會換行的一列：放得下就排在同一行，放不下才在切好的地方換行（不會斷在字中間）；
- * 單獨一段還是太寬就整段縮小（寬度最多到整行，高度由 aspect-ratio 跟著）。
- * 本身佔滿整行，對齊由外面給（className 帶 justify-center 之類）。
+ * 最多兩行 —— 畫面比兩行最窄的排法（fit）還窄，就整個名字一起縮小（外層當 container、裡面的字級用 cqw 算）。
+ * 本身佔滿整行，對齊由外面給（className 帶 justify-center 之類，裡面那層照抄）。
  * 只是畫出來的字，螢幕報讀要另外放一份 sr-only 的名字。
  */
 export default function LocalName({ data, className = '' }: { data: LocalLettering; className?: string }) {
   return (
-    <span aria-hidden="true" className={`flex w-full flex-wrap items-end ${className}`} style={{ columnGap: `${data.gap}em`, rowGap: `${data.lead}em` }}>
-      {data.pieces.map((p) => {
-        const mask = `url(${p.src}) center / contain no-repeat`;
-        const style: React.CSSProperties = {
-          WebkitMask: mask, mask, aspectRatio: `${p.w} / ${data.h}`, width: `min(100%, ${p.w}em)`,
-          marginLeft: p.ml && `${p.ml}em`, marginRight: p.mr && `${p.mr}em`,
-        };
-        return <span key={p.src} className="block shrink-0 bg-current" style={style} />;
-      })}
+    <span aria-hidden="true" className={`block w-full [container-type:inline-size] ${className}`}>
+      <span className="flex flex-wrap items-end [justify-content:inherit]"
+        style={{ fontSize: `min(1em, calc(100cqw / ${data.fit}))`, columnGap: `${data.gap}em`, rowGap: `${data.lead}em` }}>
+        {data.pieces.map((p) => {
+          const mask = `url(${p.src}) center / contain no-repeat`;
+          const style: React.CSSProperties = {
+            WebkitMask: mask, mask, aspectRatio: `${p.w} / ${data.h}`, width: `min(100%, ${p.w}em)`,
+            marginLeft: p.ml && `${p.ml}em`, marginRight: p.mr && `${p.mr}em`,
+          };
+          return <span key={p.src} className="block shrink-0 bg-current" style={style} />;
+        })}
+      </span>
     </span>
   );
 }
