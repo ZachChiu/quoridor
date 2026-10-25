@@ -94,6 +94,21 @@ function Scene({ phase }: { phase: WipePhase }) {
           <div data-shade className="absolute inset-0 bg-[#2a2525]" style={{ opacity: covered ? 0 : SHADE }} />
         </div>
       ))}
+      {/* 上下再接一截最外圈的布，跟著上、下那塊布角一起出現：轉場層在 iOS 26 Safari 會多蓋到狀態列、
+          工具列底下（WipeOverlay 的 --bleed），布角本身照舊折在看得到的那一段 */}
+      {(['top', 'bottom'] as const).map((side) => (
+        <div
+          key={side}
+          data-bleed={side}
+          className="absolute inset-x-0"
+          style={{
+            [side === 'top' ? 'bottom' : 'top']: '100%',
+            height: 'var(--bleed, 0px)',
+            backgroundColor: RINGS[side][0],
+            opacity: covered ? 1 : 0,
+          }}
+        />
+      ))}
     </div>
   );
 }
@@ -113,6 +128,8 @@ function play(root: HTMLElement, phase: WipePhase): Animation[] {
       : { duration: 420, delay: 60 + i * 80, easing: 'cubic-bezier(0.3, 0, 0.2, 1)', fill: 'both' };
     anims.push(flap.animate(cover ? [{ transform: OPEN[side] }, { transform: FOLDED[side] }] : [{ transform: FOLDED[side] }, { transform: OPEN[side] }], o));
     anims.push(shade.animate(cover ? [{ opacity: SHADE }, { opacity: 0 }] : [{ opacity: 0 }, { opacity: SHADE }], o));
+    const bleed = root.querySelector<HTMLElement>(`[data-bleed="${side}"]`);
+    if (bleed) anims.push(bleed.animate(cover ? [{ opacity: 0 }, { opacity: 1 }] : [{ opacity: 1 }, { opacity: 0 }], o));
   });
   return anims;
 }
