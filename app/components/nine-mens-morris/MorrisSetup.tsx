@@ -85,7 +85,7 @@ export default function MorrisSetup({ locale, onStart }: { locale: Locale; onSta
               <span className="mt-1.5 block text-base font-black text-[#eee0c4]/90">{t.subtitle}</span>
             </h1>
           ) : (
-            <h1 className="mt-1 flex flex-col items-center lg:items-start">
+            <h1 className="mt-1 flex w-full flex-col items-center lg:items-start">
               {lettering ? (
                 <>
                   <span className="sr-only">{t.title}</span>
