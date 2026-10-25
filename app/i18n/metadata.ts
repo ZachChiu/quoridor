@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { getMessages } from './index';
-import { gameName, seasonById } from '@/games/catalog';
+import { PLAYABLE, gameName, seasonById } from '@/games/catalog';
 import { brandName } from '@/brand';
 import { LOCALES, DEFAULT_LOCALE, HREFLANG, OG_LOCALE, localePath, type Locale } from './locales';
 
@@ -76,11 +76,40 @@ function shareImage(locale: Locale, path: PagePath) {
   };
 }
 
+/**
+ * 平台首頁的描述，結尾列出現在能玩的遊戲（10/25 大腦：寫上線當天真的能玩的，每上一款就補上去）。
+ * 從 catalog 的 PLAYABLE 帶出來 —— 各款的分支打開自己那一行就自動列進來，不必五條分支都改同一句文案。
+ * **Wall Go 一定排第一個**：搬家前九成的搜尋點擊是找 Wall Go 的。名字寫當地叫法＋英文（牆壁圍棋 Wall Go）。
+ */
+export function platformDescription(locale: Locale): string {
+  const games = [...PLAYABLE].sort((a, b) => Number(b.name === 'Wall Go') - Number(a.name === 'Wall Go'));
+  const names = games.map((g) => {
+    const local = gameName(g, locale);
+    return local === g.name ? g.name : `${local} ${g.name}`;
+  });
+  return getMessages(locale).platform.metaDescription.replace('{games}', joinNames(locale, names));
+}
+
+/**
+ * 中日文用頓號、韓文用逗號；英文、泰文照 Intl 的列舉。泰文的連接詞 Intl 不留空格，跟英文名黏成「Wall GoและBagh Chal」，
+ * 所以前後補空格（連接詞不寫在程式碼裡：寫了字型子集會把泰文字算進繁中那份）
+ */
+function joinNames(locale: Locale, names: string[]): string {
+  if (locale === 'en') return new Intl.ListFormat('en', { type: 'conjunction' }).format(names);
+  if (locale === 'th') {
+    return new Intl.ListFormat('th', { type: 'conjunction' }).formatToParts(names)
+      .map((p) => (p.type === 'element' ? p.value : p.value.trim() ? ` ${p.value.trim()} ` : ', '))
+      .join('');
+  }
+  if (locale === 'ko') return names.join(', ');
+  return names.join('、');
+}
+
 function copy(locale: Locale, path: PagePath) {
   const t = getMessages(locale);
   switch (path) {
     case '/':
-      return { title: undefined, description: t.platform.metaDescription, ogTitle: t.platform.ogTitle, ogDescription: t.platform.ogDescription };
+      return { title: undefined, description: platformDescription(locale), ogTitle: t.platform.ogTitle, ogDescription: t.platform.ogDescription };
     case '/season/1':
     case '/season/2':
     case '/season/3':

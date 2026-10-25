@@ -34,7 +34,7 @@ const zhHans: Messages = {
   },
   platform: {
     metaTitle: '墙壁围棋 Wall Go 与魔鬼的计谋游戏在线玩',
-    metaDescription: 'Netflix 韩综《魔鬼的计谋》每一季的游戏整理：第 1 季、第 2 季《死亡密室》与即将上线的第 3 季。能玩的直接在浏览器开玩，免下载、免注册，目前可以玩墙壁围棋 Wall Go。',
+    metaDescription: 'Netflix 韩综《魔鬼的计谋》每一季的游戏整理：第 1 季、第 2 季《死亡密室》与即将上线的第 3 季。能玩的直接在浏览器开玩，免下载、免注册，目前可以玩{games}。',
     ogTitle: '魔鬼的计谋 游戏整理与在线玩',
     ogDescription: '节目里的每一款游戏，能玩的直接开玩。免下载、免注册。',
     heading: '《魔鬼的计谋》游戏',
