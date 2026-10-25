@@ -48,22 +48,24 @@
   font-display: swap;
 }
 
-/* 依 <html lang> 換字型（lang 由 Shell 依語系給，見 i18n/locales 的 HTML_LANG）。 */
+/* 依 <html lang> 換字型（lang 由 Shell 依語系給，見 i18n/locales 的 HTML_LANG）。
+   --font-site 是全站這一套；畫面實際用的是 --font-app，預設就是 --font-site ——
+   有自己字的遊戲在自己的頁面上把 --font-app 換掉、--font-site 留著當備援（scripts/build-game-fonts.mjs）。 */
 :root:lang(zh-Hans) {
-  --font-app: 'Noto Sans SC Subset', system-ui, -apple-system, 'PingFang SC',
+  --font-site: 'Noto Sans SC Subset', system-ui, -apple-system, 'PingFang SC',
     'Microsoft YaHei', sans-serif;
 }
 /* 泰文字型裡沒有的符號（✓ · …）與英數，由繁中子集補上 */
 :root:lang(th) {
-  --font-app: 'Noto Sans Thai Subset', 'Noto Sans TC Subset', system-ui, -apple-system,
+  --font-site: 'Noto Sans Thai Subset', 'Noto Sans TC Subset', system-ui, -apple-system,
     'Thonburi', 'Leelawadee UI', sans-serif;
 }
 :root:lang(ja) {
-  --font-app: system-ui, -apple-system, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN',
+  --font-site: system-ui, -apple-system, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN',
     'Noto Sans JP', 'Yu Gothic', 'Meiryo', sans-serif;
 }
 :root:lang(ko) {
-  --font-app: system-ui, -apple-system, 'Apple SD Gothic Neo', 'Noto Sans KR',
+  --font-site: system-ui, -apple-system, 'Apple SD Gothic Neo', 'Noto Sans KR',
     'Malgun Gothic', sans-serif;
 }
 
@@ -71,8 +73,9 @@
 :root {
   /* 色票取自參考稿的實際取樣值：厚描邊 + 飽和色塊 + 奶油底的平面風格。
      所有顏色都走 CSS 變數，換色只需要改這一段。 */
-  --font-app: 'Noto Sans TC Subset', system-ui, -apple-system, 'PingFang TC',
+  --font-site: 'Noto Sans TC Subset', system-ui, -apple-system, 'PingFang TC',
     'Microsoft JhengHei', sans-serif;
+  --font-app: var(--font-site);
 
   --background: #e8e1d7;
   --foreground: #1a1613;
