@@ -196,6 +196,10 @@ nudge { by, at }          最近一次「催一下」
   Zach 都要復原（「Wall Go 決定不改」）。不要再加回來。
 - **這套視覺只管 Wall Go 與平台**：虎羊棋是印刷棋盤＋米提拉的自己一套（見路由表）。平台標誌是長角的藍骰子（`public/brand/die-mark.svg`，試套）。
   **favicon 每款一組**（2026-10-24）：全站預設 `/favicon.*`、`/icon-*.png` 是平台的骰子惡魔平面版（16px 下立體版糊掉），Wall Go 那兩個人搬到 `public/icons/wall-go.*`、尼泊爾虎棋是老虎圓牌 `public/icons/bagh-chal*`，由 `i18n/metadata.ts` 的 `GAME_ICONS` 依路徑指定；結算分享圖站名前那顆也用那款自己的。第二批五款還沒有自己的，沿用平台的。
+  **加到主畫面的圖示（apple-touch-icon）例外，每一頁都是平台的**（10/25）：從哪一款加，打開都是平台首頁（見下一條），圖示跟著是平台。
+- **加到主畫面（PWA）**（2026-10-25 Zach：「PWA 也做上去，設定上一定要回根目錄，不管從哪一個遊戲註冊」）：設定檔一個語系一份 `/pwa/<語系>.json`（`app/pwa/[file]/route.ts`，內容在 `i18n/pwa.ts`），兩個 root layout 依語系掛 `<link rel="manifest">`。
+  start_url 是**那個語系的平台首頁**（繁中 `/`、英文 `/en/`…，英文頁加的人不該一打開是中文）、scope 整站、id 全部 `/`（同一個 App），名字是平台名。
+  副檔名用 `.json`（S3 猜得到 Content-Type）。**沒有 service worker**：Chrome 從選單安裝不需要（Android 108、桌機 112 起），離線快取換版後會拿到舊的 chunk 清單，這個站不做。
 - **第二批五款各有自己的世界**（2026-10-21）：找法跟虎羊棋一樣 —— 先找原件（公有領域／CC0 的館藏），
   **顏色從原件取樣、不要自己調**（各自的 `palette.ts`／`theme.ts` 寫了出處與對比），**裝飾只有最外緣一圈**
   （`.<縮寫>-frame`，border-image，彈窗裡不放花紋），按鈕照全站（主要深墨、次要淡墨、沒有框線），彈窗用 `panelClassName` 換成那款的紙色。
@@ -271,11 +275,15 @@ nudge { by, at }          最近一次「催一下」
   CI 有 `font:check` 擋著。
 - **蓋滿畫面的東西不要剛好等於畫面高度**。手機工具列會隨捲動展開／收起，`inset:0`、`100lvh`、`100dvh` 各在某個瀏覽器／狀態下露底（Safari 與 iPhone 上的 Chrome 各被咬過）。
   Modal 遮罩（`.cover-viewport`）上下各往外多蓋 `max(25vh, 12rem)`，fixed 超出畫面會被裁掉、不產生捲軸；手機控制盤用 `::after` 往下延伸同色底；
-  換頁轉場是 absolute（多蓋會撐長頁面），改由 JS 量 `innerHeight`／`visualViewport` 設高度。模擬器裡沒辦法用手指把工具列收起來，這類問題以「不依賴任何單位」的寫法處理，不要再換單位。
+  換頁轉場是 absolute，改由 JS 量 `innerHeight`／`visualViewport` 設高度，**上下再各多蓋 `max(25%, 192px)`**（`WipeOverlay` 的 `bleedOf`，2026-10-25）：
+  iOS 26 的 Safari 把頁面一路畫到狀態列與底下工具列的後面，scrollY／innerHeight 只算中間那段，只蓋那段的話木窗門關好了、上下還露著平台的季標題（Zach 回報）。
+  往下多蓋會撐長短的頁面，所以只在捲軸不佔版面時多蓋（手機都是；Windows 桌機會多冒一條捲軸，那裡也沒有蓋在頁面上的工具列）。
+  裡面的東西照看得到的那一段排：木窗門的雕花、色塊的起點、各款的 `Scene` 都用 `--bleed` 退回來，多出的那截只接同樣的底。模擬器裡沒辦法用手指把工具列收起來，這類問題以「不依賴任何單位」的寫法處理，不要再換單位。
 - **iOS 26 Safari 的工具列顏色**取自「貼著畫面上下緣的 fixed 元素」（不看 theme-color、不管祖先的 opacity），而且反應慢半秒。
   所以關著的 Modal 遮罩要 `display:none`；換頁轉場（`WipeOverlay`）的根節點用 `absolute` 定位在目前的捲動位置而不是 `fixed` ——
   fixed 的話工具列會慢一拍染成磁磚色，畫面都換好了才變回來。上下各內縮 1px 沒有用，實測過。
 - **各款的進場**（從平台卡片點進去的那一下）：Wall Go 是磁磚脹開、虎羊棋是木窗門（`WipeOverlay` 的 doors）；其他有自己識別的遊戲各自一個（2026-10-22 Zach：「為啥每一個進場都跟 Wall Go 一樣」）。做法：在那款的資料夾放 `Entrance.tsx`（`Scene`＋`play`），在 `components/entrances.ts` 的表打開自己那一行，catalog 的 `look.entrance` 帶同一個 id。平台卡片閒置時先載好，沒載好就退回擴散色塊。進場一樣只動 transform／opacity。
+  `Scene` 被 WipeOverlay 包在「看得到的那一段」裡（跟多蓋之前一樣大），要蓋到狀態列、工具列底下那截，由各款自己用 `var(--bleed,0px)` 往外接同樣的底（各款分支 10/25 都補了：外框外面接一截紙、布條跟著布角一起出現）。
 - **轉場播放中擋住捲動**（`TransitionContext`：touchmove、wheel、捲動鍵）：遮罩是 absolute、定在點下去那一刻的捲動位置，一滑就露出底下的頁面（10/24 Zach）。不用 `useScrollLock` 的 fixed body —— 解鎖時會把舊頁的捲動位置還原到新頁上。
 - **換頁轉場用瀏覽器原生的 Web Animations API**（`element.animate()`），不用 JS 每格寫 style。transform 由合成執行緒（GPU）跑，換頁時 React 佔住主執行緒也不會凍住動畫 —— 先前用 anime.js，主執行緒卡住的 400ms 內畫面 0 格，手機上一直卡。圖示的反向縮放（色塊 s、圖示 1/s）事先取樣成關鍵影格（`components/wipeKeyframes.ts`，自適應取樣、誤差 <1% 由測試鎖住）。**不要再加回每格由 JS 驅動的動畫。**
 - **站內換頁的歷史紀錄要在點擊當下建立**（`TransitionContext.navigate` 先 `pushState` 複製目前紀錄，動畫播完才 `router.replace`）。WebKit（Safari 與 iPhone 上的 Chrome）會把「沒有使用者手勢時 JS 新增過紀錄」的那一頁在返回時跳過；動畫播完才 push 就沒有手勢了，從規則頁按返回會越過首頁。沒有手勢的 `replaceState` 不受影響（實測）。**驗證這類問題要用瀏覽器真正的返回（WebDriver `/back`），`history.back()` 不會跳過，測不出來。**

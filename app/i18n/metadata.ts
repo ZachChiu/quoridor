@@ -144,7 +144,11 @@ function openGraph(locale: Locale, path: PagePath) {
   };
 }
 
-/** 一款遊戲的 favicon 一組：public/icons/<id>.svg（或 <id>-32.png）、<id>.ico、<id>-192.png、<id>-apple.png */
+/**
+ * 一款遊戲的 favicon 一組：public/icons/<id>.svg（或 <id>-32.png）、<id>.ico、<id>-192.png。
+ * 加到主畫面的圖示（apple）一律是平台的：從哪一款加，打開都是平台首頁（i18n/pwa.ts）。
+ * 頁面的 icons 會整組蓋掉 layout 的，所以這裡要再寫一次，不能省略
+ */
 function iconSet(id: string, svg = false): Metadata['icons'] {
   return {
     icon: [
@@ -153,7 +157,7 @@ function iconSet(id: string, svg = false): Metadata['icons'] {
       { url: `/icons/${id}-192.png`, type: 'image/png', sizes: '192x192' },
     ],
     shortcut: `/icons/${id}.ico`,
-    apple: `/icons/${id}-apple.png`,
+    apple: '/apple-touch-icon.png',
   };
 }
 
