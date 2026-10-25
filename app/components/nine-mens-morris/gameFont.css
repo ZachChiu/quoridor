@@ -1,0 +1,16 @@
+/* 由 scripts/build-game-fonts.mjs 依 scripts/game-fonts/nine-mens-morris.mjs 產生，不要手改（npm run font:subset）。
+   這款的頁面（html:has(.nmm-root)）整頁換成自己的字，--font-site 是全站那套黑體、當備援。 */
+@font-face { font-family: 'nine-mens-morris zh-TW'; src: url('/fonts/games/nine-mens-morris/zh-TW-400.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: 'nine-mens-morris zh-TW'; src: url('/fonts/games/nine-mens-morris/zh-TW-700.woff2') format('woff2'); font-weight: 700; font-style: normal; font-display: swap; }
+@font-face { font-family: 'nine-mens-morris en'; src: url('/fonts/games/nine-mens-morris/en.woff2') format('woff2'); font-weight: 400 900; font-style: normal; font-display: swap; }
+@font-face { font-family: 'nine-mens-morris ja'; src: url('/fonts/games/nine-mens-morris/ja.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: 'nine-mens-morris ko'; src: url('/fonts/games/nine-mens-morris/ko.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: 'nine-mens-morris zh-Hans'; src: url('/fonts/games/nine-mens-morris/zh-Hans-400.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: 'nine-mens-morris zh-Hans'; src: url('/fonts/games/nine-mens-morris/zh-Hans-500.woff2') format('woff2'); font-weight: 500; font-style: normal; font-display: swap; }
+@font-face { font-family: 'nine-mens-morris th'; src: url('/fonts/games/nine-mens-morris/th.woff2') format('woff2'); font-weight: 400 900; font-style: normal; font-display: swap; }
+:root:lang(zh-Hant-TW):has(.nmm-root) { --font-app: 'nine-mens-morris zh-TW', var(--font-site); }
+:root:lang(en):has(.nmm-root) { --font-app: 'nine-mens-morris en', var(--font-site); }
+:root:lang(ja):has(.nmm-root) { --font-app: 'nine-mens-morris ja', var(--font-site); font-synthesis-weight: none; }
+:root:lang(ko):has(.nmm-root) { --font-app: 'nine-mens-morris ko', var(--font-site); font-synthesis-weight: none; }
+:root:lang(zh-Hans):has(.nmm-root) { --font-app: 'nine-mens-morris zh-Hans', var(--font-site); font-synthesis-weight: none; }
+:root:lang(th):has(.nmm-root) { --font-app: 'nine-mens-morris th', 'nine-mens-morris en', var(--font-site); }

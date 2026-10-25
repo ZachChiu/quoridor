@@ -1,4 +1,5 @@
 import type React from 'react';
+import './gameFont.css';
 
 /**
  * 九子棋的整頁畫框：整頁就是《遊戲之書》那幅插圖 —— 群青底撒細白點（.nmm-field），
@@ -7,6 +8,7 @@ import type React from 'react';
  * 裝飾只有最外緣這一層（虎羊棋的教訓：圖騰只能一層、在最外層）；
  * 裡面的按鈕、狀態卡是羊皮紙色、沒有框線，棋盤是木頭色 —— 跟插圖裡放在群青底上的木頭棋盤一樣。
  * html／body 在九子棋的頁面換成朱紅（globals.css），捲到底或回彈時才不會露出奶油色。
+ * 字：整頁跟名字字標同一套（繁簡霞鶩文楷、日 Zen Antique、韓 Song Myung、英泰 Noto Serif；gameFont.css 由 scripts/build-game-fonts.mjs 產生）。
  */
 export default function MorrisFrame({ className = '', children }: { className?: string; children: React.ReactNode }) {
   return (
