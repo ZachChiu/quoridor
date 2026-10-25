@@ -198,7 +198,7 @@ nudge { by, at }          最近一次「催一下」
   **favicon 每款一組**（2026-10-24）：全站預設 `/favicon.*`、`/icon-*.png` 是平台的骰子惡魔平面版（16px 下立體版糊掉），Wall Go 那兩個人搬到 `public/icons/wall-go.*`、尼泊爾虎棋是老虎圓牌 `public/icons/bagh-chal*`，由 `i18n/metadata.ts` 的 `GAME_ICONS` 依路徑指定；結算分享圖站名前那顆也用那款自己的。第二批五款還沒有自己的，沿用平台的。
   **加到主畫面的圖示（apple-touch-icon）例外，每一頁都是平台的**（10/25）：從哪一款加，打開都是平台首頁（見下一條），圖示跟著是平台。
 - **加到主畫面（PWA）**（2026-10-25 Zach：「PWA 也做上去，設定上一定要回根目錄，不管從哪一個遊戲註冊」）：設定檔一個語系一份 `/pwa/<語系>.json`（`app/pwa/[file]/route.ts`，內容在 `i18n/pwa.ts`），兩個 root layout 依語系掛 `<link rel="manifest">`。
-  start_url 是**那個語系的平台首頁**（繁中 `/`、英文 `/en/`…，英文頁加的人不該一打開是中文）、scope 整站、id 全部 `/`（同一個 App），名字是平台名。
+  start_url 是**那個語系的平台首頁**（繁中 `/`、英文 `/en/`…，英文頁加的人不該一打開是中文），帶 `?utm_source=pwa&utm_medium=homescreen`（大腦 10/25：GA 才分得出從主畫面打開的造訪；canonical 照舊是乾淨網址）、scope 整站、id 全部 `/`（同一個 App），名字是平台名。
   副檔名用 `.json`（S3 猜得到 Content-Type）。**沒有 service worker**：Chrome 從選單安裝不需要（Android 108、桌機 112 起），離線快取換版後會拿到舊的 chunk 清單，這個站不做。
 - **第二批五款各有自己的世界**（2026-10-21）：找法跟虎羊棋一樣 —— 先找原件（公有領域／CC0 的館藏），
   **顏色從原件取樣、不要自己調**（各自的 `palette.ts`／`theme.ts` 寫了出處與對比），**裝飾只有最外緣一圈**
