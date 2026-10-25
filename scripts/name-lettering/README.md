@@ -29,8 +29,8 @@ export default {
 };
 ```
 
-做好之後：`npm run name:build -- <遊戲>`（要連網下載原始字型），產物跟程式一起 commit，
-再把 `NAME_LETTERING` 交給 catalog 那一行的 `look.lettering.local`、首頁標題換成 `LocalName`。
+做好之後：`npm run name:build -- <遊戲>`（要連網下載原始字型），產物（`app/games/<遊戲>/nameLettering.ts`，蓋掉平台先放的空檔）跟程式一起 commit，
+平台卡片會自己依路徑查到（`games/nameLetterings.ts`）；各款首頁的標題換成 `LocalName`。
 
 - **挑字**：照英文那套字的風格找各文字的對應（肥臉體 ↔ 粗宋、哥德手抄本 ↔ 毛筆、舊式襯線 ↔ 宋體／明朝），
   只用 OFL 授權的字。**繁中的字要用繁中字型**（日本的字型寫中文，有些字的寫法不對）；名字裡每個字的寫法兩邊一樣時才可以借用。
