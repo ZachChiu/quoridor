@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { GiBrain, GiScrollUnfurled, GiTabletopPlayers } from 'react-icons/gi';
 import { LuChevronRight } from 'react-icons/lu';
+import LocalName, { letteringOf } from '@/components/LocalName';
 import Modal from '@/components/Modal';
 import PlatformCorner from '@/components/PlatformCorner';
 import { useMessages } from '@/i18n/LocaleProvider';
@@ -12,6 +13,7 @@ import { localePath, type Locale } from '@/i18n/locales';
 import { NINE_MENS_MORRIS, trialOnline, trialRules } from '@/i18n/routes';
 import type { Side } from '@/games/nine-mens-morris/engine';
 import type { Difficulty } from '@/games/nine-mens-morris/ai';
+import { NAME_LETTERING } from '@/games/nine-mens-morris/nameLettering';
 import { newRoomHash } from '@/games/nine-mens-morris/online';
 import { TEXT } from '@/games/nine-mens-morris/text';
 import { BlackPieceIcon, PieceGlyph, WhitePieceIcon } from './MorrisBoard';
@@ -67,6 +69,8 @@ export default function MorrisSetup({ locale, onStart }: { locale: Locale; onSta
   const row = 'nmm-arch is-small flex w-full items-center gap-3 px-4 pb-3 pt-4 text-left';
   // 標題本來就是英文名（英文、泰文）就讓字標當標題，不重複寫兩次
   const latinTitle = /^[ -~’]+$/.test(t.title);
+  // 中日韓的標題用同一種風格的字（毛筆、古風明朝、宋體）寫成的字標，平台卡片用的是同一份
+  const lettering = letteringOf(NAME_LETTERING, locale, t.title);
 
   return (
     <MorrisFrame className="nmm-setup items-center px-4 pb-6 pt-[3.75rem] lg:justify-center lg:py-10">
@@ -82,7 +86,14 @@ export default function MorrisSetup({ locale, onStart }: { locale: Locale; onSta
             </h1>
           ) : (
             <h1 className="mt-1 flex flex-col items-center lg:items-start">
-              <span className="text-[clamp(2.2rem,6.5svh,3.5rem)] font-black leading-none tracking-[0.06em]">{t.title}</span>
+              {lettering ? (
+                <>
+                  <span className="sr-only">{t.title}</span>
+                  <LocalName data={lettering} className="justify-center text-[clamp(2.2rem,6.5svh,3.5rem)] lg:justify-start" />
+                </>
+              ) : (
+                <span className="text-[clamp(2.2rem,6.5svh,3.5rem)] font-black leading-none tracking-[0.06em]">{t.title}</span>
+              )}
               <span className="sr-only">{t.subtitle}</span>
               <MorrisWordmark className="mt-2 h-[clamp(1.1rem,3.2svh,1.75rem)] w-auto" />
             </h1>
