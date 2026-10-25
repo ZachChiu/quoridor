@@ -16,7 +16,7 @@ import { BAGH_CORNER } from './styles';
 export default function BaghHeader({ locale }: { locale: Locale }) {
   return (
     <div className="flex items-center justify-between px-3 pt-3">
-      <Link href={localePath(locale, '/')} aria-label={brandName(locale)} title={brandName(locale)} className="transition hover:brightness-110 active:scale-95">
+      <Link href={localePath(locale, '/')} aria-label={brandName(locale)} title={brandName(locale)} className="group transition active:scale-95">
         <PlatformMark mono />
       </Link>
       <div className="flex gap-2">
