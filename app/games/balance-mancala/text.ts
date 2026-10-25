@@ -5,7 +5,7 @@ import type { TextTable } from '@/i18n/gameText';
  * 語系 key 在兩格縮排、依 'zh-TW' → en → ja → ko → 'zh-Hans' → th 排，字型子集靠這個切字。
  *
  * 用詞照 glossary.md：棋子／piece／駒／말／棋子／หมาก，本機對戰、單人對戰的各語說法。
- * 遊戲名：繁簡「平衡播棋」（節目的中文名；原本自己取的「均衡曼卡拉」10/24 照 Netflix 版本改掉，見 glossary〈遊戲名〉）、英文 Balance Mancala、日文「バランス・マンカラ」、
+ * 遊戲名：繁簡「平衡播棋」（節目的中文名；原本自己取的「均衡曼卡拉」10/24 照 Netflix 版本改掉，見 glossary〈遊戲名〉）、英文 Balance Mancala、日文「バランスマンカラ」（日本觀眾的寫法，不加中間的點，10/25 查證）、
  * 韓文「균형의 만칼라」（節目 RULE 卡的名字）、泰文「แมนคาลาสมดุล」。
  * {seat} 是座位字母、{cell} 是格子名（「藍 05」「惡魔」）、{colour} 是顏色名。
  */
@@ -306,12 +306,12 @@ export const TEXT: TextTable<BalanceMancalaText> = {
     credit: 'Icons: game-icons.net (CC BY 3.0). The border is the edge of an adinkra cloth: cowries (Nsirewa, wealth) along the top and bottom, twisting (Nkyimkyim, adaptability) down the sides and linked hearts (Akoma ntoaso, unity) in the corners. Symbols from R. S. Rattray, Religion and Art in Ashanti (1927).',
   },
   ja: {
-    title: 'バランス・マンカラ',
+    title: 'バランスマンカラ',
     altName: 'Balance Mancala',
     showRef: '悪魔の計略 ～デビルズ・プラン～ シーズン2 · 5日目',
     tagline: '最後の駒を誰に置くかはあなた次第。3色をそろえよう。',
-    metaTitle: 'バランス・マンカラ（Balance Mancala）を無料でオンラインプレイ',
-    metaDescription: 'Netflix『悪魔の計略 ～デビルズ・プラン～』シーズン2・5日目のメインマッチ「バランス・マンカラ」。14マスの輪から1マスの駒をすべて取り、時計回りに1つずつ置いていきます。最後の駒の持ち主が得点。赤・青・緑の3色をそろえるのがカギ：最終スコア＝2×最低−最高。AI対戦やローカル対戦で、ダウンロード・登録なしで遊べます。',
+    metaTitle: 'バランスマンカラ（Balance Mancala）を無料でオンラインプレイ',
+    metaDescription: 'Netflix『悪魔の計略 ～デビルズ・プラン～』シーズン2・5日目のメインマッチ「バランスマンカラ」。14マスの輪から1マスの駒をすべて取り、時計回りに1つずつ置いていきます。最後の駒の持ち主が得点。赤・青・緑の3色をそろえるのがカギ：最終スコア＝2×最低−最高。AI対戦やローカル対戦で、ダウンロード・登録なしで遊べます。',
     modeSolo: 'AIと対戦',
     modeLocal: 'ローカル対戦',
     modeOnline: 'オンライン対戦',
@@ -379,7 +379,7 @@ export const TEXT: TextTable<BalanceMancalaText> = {
     inviteBody: 'あと {n} 人。{total} 人そろうと自動で始まります。',
     seated: '着席',
     emptySeat: '空席',
-    shareText: '一緒にバランス・マンカラをやろう',
+    shareText: '一緒にバランスマンカラをやろう',
     leave: 'やめる',
     stay: '続ける',
     rulesHeading: '遊び方',
@@ -393,9 +393,9 @@ export const TEXT: TextTable<BalanceMancalaText> = {
       '最終スコア＝2×最低色−最高色。3色がそろうほど高くなります。同点なら最高色が低い人が上位。',
     ],
     ruleTitles: ['14マスの輪', '最初の配置', '種まき', '最後の駒が得点', '天使マスと悪魔マス', '30点で終了', '最終スコア'],
-    rulesTitle: 'バランス・マンカラのルール',
-    rulesMetaTitle: 'バランス・マンカラ（Balance Mancala）のルールと遊び方',
-    rulesMetaDescription: 'バランス・マンカラの全ルールを図で解説：14マスの輪と天使・悪魔マス、駒の配置、時計回りの種まき、最後の駒で決まる得点、30点での終了と最終スコア＝2×最低−最高。『悪魔の計略 ～デビルズ・プラン～』シーズン2・5日目のメインマッチのゲーム。',
+    rulesTitle: 'バランスマンカラのルール',
+    rulesMetaTitle: 'バランスマンカラ（Balance Mancala）のルールと遊び方',
+    rulesMetaDescription: 'バランスマンカラの全ルールを図で解説：14マスの輪と天使・悪魔マス、駒の配置、時計回りの種まき、最後の駒で決まる得点、30点での終了と最終スコア＝2×最低−最高。『悪魔の計略 ～デビルズ・プラン～』シーズン2・5日目のメインマッチのゲーム。',
     rulesCta: 'トップで遊び方を選ぶ',
     example: '例：赤 13・青 11・緑 20 → 2×11−20＝2 点',
     showNote: 'Netflix『悪魔の計略 ～デビルズ・プラン～』シーズン2・5日目のメインマッチより。非公式のファン版です。番組は7人でしたが、ここでは4〜7席で遊べます。AI対戦とローカル対戦では空いた席にAIが入り、オンライン対戦は全員プレイヤーです。',
