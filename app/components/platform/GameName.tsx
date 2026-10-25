@@ -11,6 +11,8 @@ import type { Locale } from '@/i18n/locales';
  * 在地的名字（中日韓）有字標的那幾款（games/nameLetterings.ts，依路徑查），名字本身也是那款風格的字（LocalName），跟各款首頁的標題同一份；
  * 沒有的照全站字型。泰文的名字是英文，就是那行原名。
  * 名字本身就是那行原名（英文版的 Time Auction）就不重複寫兩次，直接用那款的字當名字，跟各款首頁的做法一樣。
+ * 沒有自己的字的那幾款（Wall Go、平衡播棋、盲五子棋），名字底下一樣多一行英文官方名，用全站的字；
+ * 尼泊爾虎棋的字標是天城體、不是英文，英文名排在字標前面同一行（10/25 Zach：「在平台頁也補上英文」）。
  *
  * sub：底下那一行的大小（字標的高度、字型的字級，都用 em，跟著名字的字級走）
  */
@@ -23,7 +25,8 @@ export default function GameName({ game, locale, sub, swap }: {
 }) {
   const name = gameName(game, locale);
   const l = game.look?.lettering;
-  if (!l) return <>{name}</>;
+  const english = name !== game.name && <span aria-hidden="true" className={`font-bold ${sub.font}`}>{game.name}</span>;
+  if (!l) return <>{name}{english && <span className="mt-[0.25em] block">{english}</span>}</>;
   const same = l.spellsName && name === game.name;
   const local = letteringOf(game.playable ? NAME_LETTERINGS[game.playable] : undefined, locale, name);
   const title = local ? <><span className="sr-only">{name}</span><LocalName data={local} /></> : name;
@@ -32,9 +35,11 @@ export default function GameName({ game, locale, sub, swap }: {
       ? <span className={l.font}>{name}</span>
       : <>{title}<span aria-hidden="true" className={`mt-[0.25em] block ${l.font} ${sub.font}`}>{game.name}</span></>;
   }
-  return same
-    ? <><span className="sr-only">{name}</span><Mark src={l.mark} ratio={l.ratio} height={swap} /></>
-    : <>{title}<Mark src={l.mark} ratio={l.ratio} height={sub.mark} className="mt-[0.3em]" /></>;
+  if (same) return <><span className="sr-only">{name}</span><Mark src={l.mark} ratio={l.ratio} height={swap} /></>;
+  const mark = <Mark src={l.mark} ratio={l.ratio} height={sub.mark} className={english && !l.spellsName ? 'min-w-0' : 'mt-[0.3em]'} />;
+  return english && !l.spellsName
+    ? <>{title}<span className="mt-[0.3em] flex items-center gap-[0.35em]">{english}{mark}</span></>
+    : <>{title}{mark}</>;
 }
 
 /**
