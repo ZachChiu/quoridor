@@ -75,7 +75,7 @@ export const SEASONS: Season[] = [
         // 底色是 Wall Go 自己的頁面底色 #e8e1d7（10/25 Zach：為什麼要用藍底）；轉場也擴散這個顏色，跟虎羊棋擴散它的紙色一樣
         look: { card: 'bg-[#e8e1d7] text-tile-ink', wipe: '#e8e1d7', art: '/games/wall-go/card.svg', hero: '/games/wall-go/hero.svg', heroSquare: '/games/wall-go/hero-square.svg', cover: true, rules: routes.wallGo('/rules') } },
       // 中文用節目的「尼泊爾虎棋」（Zach 10/24：命名用 Netflix 版本）、韓文「바그찰」是節目 RULE 卡上的寫法（見 glossary）
-      { name: 'Bagh Chal', names: { 'zh-TW': '尼泊爾虎棋', 'zh-Hans': '尼泊尔虎棋', ja: 'バグチャル', ko: '바그찰' }, playable: routes.BAGH_CHAL,
+      { name: 'Bagh Chal', names: { 'zh-TW': '尼泊爾虎棋', 'zh-Hans': '尼泊尔虎棋', ko: '바그찰' }, playable: routes.BAGH_CHAL,
         look: { card: 'bg-[#e3a43c] text-tile-ink', wipe: '#f1e6cd', art: '/games/bagh-chal/key-art.webp', hero: '/games/bagh-chal/hero.webp', heroSquare: '/games/bagh-chal/hero-square.webp', cover: true, doors: true, rules: routes.baghChal('/rules') } },
       { name: 'Crooked Cops', names: { 'zh-TW': '腐敗警察', 'zh-Hans': '腐败警察' } },
       { name: 'Remove One', names: { 'zh-TW': '移除一個', 'zh-Hans': '移除一个' } },
@@ -120,10 +120,12 @@ export const SEASONS: Season[] = [
  * 日文、韓文的遊戲名（2026-10-25 查證，來源與信心見 glossary〈遊戲名〉）。
  * 不寫進上面各款那一行的 names：五款能玩的那幾行由各自的 feat/game-<id> 分支改，旁邊的行一動，依序合併就會衝突。
  * 韓文是節目原名，只收兩個以上來源一致的；只有 namu 一個來源的（보물섬、第 1 季大部分）先留英文。
+ * （日文寫在這裡還有一個原因：字型腳本把各行的字算進繁中字型，這裡的 ja／ko 區塊會被認成日韓、不切進去 —— 日韓用系統字型。）
  * 日文 Netflix 字幕看不到，收的是日本觀眾一致的寫法；タイムオークション、バランスマンカラ、ブラインド五目並べ 是中等信心（粉絲另有意譯派）。
  */
 const LOCAL_NAMES: Partial<Record<string, Record<string, string>>> = {
   ja: {
+    'Bagh Chal': 'バグチャル',
     'Time Auction': 'タイムオークション',
     'Balance Mancala': 'バランスマンカラ',
     "Knight's Tour": 'ナイトツアー',
