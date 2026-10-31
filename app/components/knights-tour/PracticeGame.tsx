@@ -16,6 +16,10 @@ import LeaveModal from './LeaveModal';
 import TourBoard from './TourBoard';
 import { finaleMs } from './motion';
 import { practiceKey, saveBest, useBestTimes } from './records';
+import { track } from '@/utils/analytics';
+
+/** GA：練習是一盤，開始＝第一步，結束＝走完（卡住可以悔棋，不算結束） */
+const GA = { game: 'knights-tour', mode: 'practice', players: 1 } as const;
 import { isClosed } from './shareCard';
 import { playJump, playKt } from './sounds';
 import { formatTime, shake, sizeLabel, squareName } from './ui';
@@ -87,10 +91,11 @@ export default function PracticeGame({ n, onMenu, onSize }: { n: number; onMenu:
     setNow(at);
     playJump(n, sq, kind === 'start');
     const start = startedAt ?? at;
-    if (startedAt === null) setStartedAt(at);
+    if (startedAt === null) { setStartedAt(at); track('game_start', GA); }
     if (isComplete(next)) {
       setEndedAt(at);
       const ms = at - start;
+      track('game_end', { ...GA, result: 'win', ended: 'natural', turns: next.path.length, duration_sec: Math.round(ms / 1000) });
       const closed = isClosed(next);
       playKt('complete', 0.3);
       if (closed) playKt('closed', 0.95);
@@ -229,7 +234,7 @@ export default function PracticeGame({ n, onMenu, onSize }: { n: number; onMenu:
 
       {/* 結算就是分享圖：一張銅版圖版（shareCard.ts）。關掉就停在走完的棋盤上，換大小在棋盤下面 */}
       <ShareResultModal isOpen={!!result?.open} onClose={() => setResult((r) => (r ? { ...r, open: false } : r))}
-        title={t.doneTitle} card={share} onRestart={restart} restartLabel={t.again}
+        title={t.doneTitle} card={share} onRestart={() => { track('game_restart', GA); restart(); }} restartLabel={t.again}
         classes={KT_SHARE} frameClassName="rounded-[2px]"
         srText={[
           fill(t.doneBody, { size, time: formatTime(result?.ms ?? 0) }),

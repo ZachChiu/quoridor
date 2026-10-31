@@ -13,8 +13,7 @@ const knightsTour = {
     // ナイトツアー 沒有好切的地方，放不下就整段縮小
     ja: { text: TEXT.ja.title, font: { src: `${GF}/notoserifjp/NotoSerifJP%5Bwght%5D.ttf`, axes: BOOK } },
     ko: { text: TEXT.ko.title, font: { src: `${GF}/notoserifkr/NotoSerifKR%5Bwght%5D.ttf`, axes: BOOK } },
-    // 平台上泰文照英文寫，只有首頁標題用得到
-    th: { text: TEXT.th.title, font: { src: `${GF}/notoserifthai/NotoSerifThai%5Bwdth,wght%5D.ttf`, axes: { ...BOOK, wdth: 100 } } },
+    // 泰文 2026-11-01 改成英文主標＋泰文副名（ทางเดินม้า），跟英文一樣用字型、不做字標
   },
 };
 
