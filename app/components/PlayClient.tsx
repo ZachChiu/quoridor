@@ -33,6 +33,7 @@ import FeedbackModal from "@/components/FeedbackModal";
 import BreakWallConfirmModal from "@/components/BreakWallConfirmModal";
 import SurrenderConfirmModal from "@/components/SurrenderConfirmModal";
 import LeaveConfirmModal from "@/components/LeaveConfirmModal";
+import RuleModal from "@/components/RuleModal";
 import { clearSavedGame, loadSavedGame, saveGame, savedGameKey } from "@/utils/savedGame";
 import { useIsoLayoutEffect } from "@/hook/useIsoLayoutEffect";
 
@@ -545,7 +546,7 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
     setNudged(true);
     setTimeout(() => setNudged(false), 15000);
     void sendNudge(roomId, myPlayerKey).then((ok) => {
-      if (ok) track('nudge_send', { players: (playersNum === 3 ? 3 : 2) as 2 | 3 });
+      if (ok) track('nudge_send', { game: 'wall-go', players: (playersNum === 3 ? 3 : 2) as 2 | 3 });
     });
   }, [roomId, myPlayerKey, playersNum]);
 
@@ -649,7 +650,7 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
   */
   const gaMode: GameModeParam = isOnline ? 'online' : aiDifficulty ? 'solo' : 'local';
   const gaBase = useMemo(
-    () => ({ mode: gaMode, players: (playersNum === 3 ? 3 : 2) as 2 | 3, difficulty: aiDifficulty ?? undefined }),
+    () => ({ game: 'wall-go' as const, mode: gaMode, players: (playersNum === 3 ? 3 : 2) as 2 | 3, difficulty: aiDifficulty ?? undefined }),
     [gaMode, playersNum, aiDifficulty],
   );
   const gaSeenRef = useRef<{ started: boolean; ended: boolean } | null>(null);
@@ -754,7 +755,7 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
         if (cancelled) return;
         if (!existing) {
           setError('noRoom');
-          track('online_error', { reason: 'noRoom' });
+          track('online_error', { game: 'wall-go', reason: 'noRoom' });
           setPhase('error');
           return;
         }
@@ -770,7 +771,7 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
           const next = slots.find(s => !existing.players[s]);
           if (!next) {
             setError('roomFull');
-            track('online_error', { reason: 'roomFull' });
+            track('online_error', { game: 'wall-go', reason: 'roomFull' });
             setPhase('error');
             return;
           }
@@ -839,7 +840,7 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
         if (cancelled) return;
         const info = describeOnlineError(e);
         setError('connectFail');
-        track('online_error', { reason: 'connectFail', fail_step: info.step });
+        track('online_error', { game: 'wall-go', reason: 'connectFail', fail_step: info.step });
         reportOnlineError('connectFail', info);
         setPhase('error');
       }
@@ -1338,7 +1339,7 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
             附上 WGF 就能在 replay 裡重現他當下的盤面 —— 等於每一則
             回饋都自帶重現步驟。這是 WGF 的又一次回收。
           */}
-          <FeedbackModal
+          <FeedbackModal game="wall-go"
             isOpen={feedbackOpen}
             onClose={() => setFeedbackOpen(false)}
             // 對局回饋的評分是必選（視窗沒選不給送），這裡的 null 只是型別上的可能
@@ -1398,6 +1399,10 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
           onClose={() => setShareModalOpen(false)}
         />
       )}
+
+      {/* 遊玩方式：只有對局頁打得開，所以掛在這裡、不掛在整站的 shell 上 ——
+          關著的 Modal 照樣排版，掛在每一頁就讓每一頁（各款遊戲的頁面也是）都下載全站的黑體（2026-10-25） */}
+      <RuleModal />
     </>
   );
 }

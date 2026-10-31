@@ -4,9 +4,10 @@ import { LuChevronLeft } from 'react-icons/lu';
 import PlatformLanguageMenu from '@/components/platform/PlatformLanguageMenu';
 import PlatformContact from '@/components/platform/PlatformContact';
 import GameCard from '@/components/platform/GameCard';
+import SelectGameTracker from '@/components/platform/SelectGameTracker';
 import PlatformMark from '@/components/PlatformMark';
 import { brandName } from '@/brand';
-import { playableFirst, seasonById } from '@/games/catalog';
+import { SEASON_OF, playableFirst, seasonById } from '@/games/catalog';
 import { getMessages } from '@/i18n';
 import { localePath, type Locale } from '@/i18n/locales';
 import { SEASON_NUMBERS, season as seasonPath, type SeasonNumber } from '@/i18n/routes';
@@ -72,7 +73,7 @@ export default function SeasonView({ locale, n }: { locale: Locale; n: SeasonNum
             {p.s3Empty}
           </div>
         ) : (
-          <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+          <ul data-select-location="season" className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
             {playableFirst(s.games).map((game) => (
               <li key={game.name}>
                 <GameCard game={game} locale={locale} playable={p.playable} guide={p.guide} width="w-full" />
@@ -86,6 +87,7 @@ export default function SeasonView({ locale, n }: { locale: Locale; n: SeasonNum
           <PlatformContact />
         </footer>
       </main>
+      <SelectGameTracker seasons={SEASON_OF} />
     </div>
   );
 }

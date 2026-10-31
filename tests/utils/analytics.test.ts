@@ -12,7 +12,7 @@ describe('track', () => {
   it('事件名稱原樣送出，undefined 的參數拿掉', () => {
     const gtag = vi.fn();
     vi.stubGlobal('window', { gtag });
-    track('game_start', { mode: 'local', players: 2, difficulty: undefined });
-    expect(gtag).toHaveBeenCalledWith('event', 'game_start', { mode: 'local', players: 2 });
+    track('game_start', { game: 'wall-go', mode: 'local', players: 2, difficulty: undefined });
+    expect(gtag).toHaveBeenCalledWith('event', 'game_start', { game: 'wall-go', mode: 'local', players: 2 });
   });
 });
