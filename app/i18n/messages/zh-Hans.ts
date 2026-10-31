@@ -53,6 +53,8 @@ const zhHans: Messages = {
     s1: '第 1 季',
     playable: '可以玩',
     guide: '规则整理中',
+    /** 還沒做的遊戲卡上的「想玩」（按了公開加一票） */
+    want: '想玩',
     seeAll: '看全部',
     allGames: '所有游戏',
     seasonShort: '第 {n} 季',
