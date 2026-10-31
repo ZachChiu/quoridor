@@ -35,7 +35,7 @@ const RuleModal: React.FC = () => {
 
   const close = () => {
     // 讀到第幾步就關掉 —— 看得出規則是在哪一步把人勸退的
-    track('tutorial_close', { step: step + 1, steps: STEPS.length, finished: last });
+    track('tutorial_close', { game: 'wall-go', step: step + 1, steps: STEPS.length, finished: last });
     setRuleModalState({ ...ruleModalState, isOpen: false });
   };
 

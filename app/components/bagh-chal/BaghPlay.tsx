@@ -24,12 +24,13 @@ import { BAGH_CORNER, BAGH_PRIMARY, BAGH_ROUND, BAGH_SECONDARY } from './styles'
 import BaghWordmark from './BaghWordmark';
 import { labelled } from './BaghUi';
 import { BAGH_CARD_IMAGES, drawBaghCard } from './shareCard';
+import { track, type GameModeParam } from '@/utils/analytics';
 
 export type BaghMode =
   | { kind: 'local' }
   | { kind: 'ai'; human: Side; difficulty: Difficulty }
   /** 連線：局面由房間推導（BaghOnline 持有），這裡只負責畫與把自己的那一手交出去 */
-  | { kind: 'online'; human: Side; game: BaghState; onMove: (m: Move) => void; newRoom: () => void };
+  | { kind: 'online'; human: Side; roomId: string; game: BaghState; onMove: (m: Move) => void; newRoom: () => void };
 
 const fmt = (s: string, n: number) => s.replace('{n}', String(n));
 
@@ -74,10 +75,59 @@ export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghM
   }, [aiTurn, mode, game]);
 
   const restart = () => { setGame(createGame()); setSelected(null); };
+
+  // GA（docs/platform-tracking.md）：跟 Wall Go 送同一套事件，帶 game。看狀態的轉變而不是按鈕 ——
+  // 開始＝下了第一手（連線也是：兩邊到齊後的第一手），結束＝分出勝負。
+  // 第一次觀察到的狀態不送：連線局重整時盤面是從房間重走出來的，那時「已經開始／已經結束」不是這次發生的事；
+  // 連線局同一間房在這個分頁裡也只送一次
+  const difficulty = mode.kind === 'ai' ? mode.difficulty : undefined;
+  const gaBase = useMemo(() => ({
+    game: 'bagh-chal' as const,
+    mode: (mode.kind === 'ai' ? 'solo' : mode.kind) as GameModeParam,
+    players: 2 as const,
+    difficulty,
+  }), [mode.kind, difficulty]);
+  const started = game.history.length > 0;
+  const ended = !!game.winner;
+  const gaSeen = useRef<{ started: boolean; ended: boolean } | null>(null);
+  const startedAt = useRef<number | null>(null);
+  useEffect(() => {
+    const prev = gaSeen.current;
+    gaSeen.current = { started, ended };
+    if (!prev) return;
+    const once = (what: string) => {
+      if (mode.kind !== 'online') return true;
+      const key = `ga:bagh:${mode.roomId}:${what}`;
+      try {
+        if (sessionStorage.getItem(key)) return false;
+        sessionStorage.setItem(key, '1');
+      } catch { /* 存取失敗時照送，寧可多一筆也不要整個壞掉 */ }
+      return true;
+    };
+    if (started && !prev.started && once('start')) {
+      startedAt.current = Date.now();
+      track('game_start', gaBase);
+    }
+    if (ended && game.winner && !prev.ended && once('end')) {
+      const w = game.winner;
+      track('game_end', {
+        ...gaBase,
+        // 跟電腦下、連線從這台裝置上的人看；本機兩人沒有「我」，只分有沒有和局
+        result: w === 'draw' ? 'tie' : mode.kind === 'local' ? 'decided' : w === mode.human ? 'win' : 'lose',
+        winner: w,
+        // 尼泊爾虎棋沒有投降
+        ended: 'natural',
+        turns: game.history.length,
+        duration_sec: startedAt.current ? Math.round((Date.now() - startedAt.current) / 1000) : undefined,
+      });
+    }
+    // 只在「開始／結束」翻轉時才需要重跑；其餘值是送出當下讀的
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [started, ended]);
   // 連線局沒有悔棋與重來（要兩個人都同意，先不做）；結束後「再來一局」是再開一間房、重新傳連結
   // 結算關掉之後停在終局的盤面上（記住是哪一局關的，重來就是新的一局）
   const [closedFor, setClosedFor] = useState<BaghState | null>(null);
-  const again = mode.kind === 'online' ? mode.newRoom : restart;
+  const again = () => { track('game_restart', gaBase); (mode.kind === 'online' ? mode.newRoom : restart)(); };
   const side = (s: Side) => (s === 'tiger' ? b.tiger : b.goat);
   const whoAmI = mode.kind === 'local' ? '' : mode.kind === 'online' ? b.youAre.replace('{side}', side(mode.human)) : labelled(locale, b.playAs, side(mode.human));
   // 自己是哪一邊（本機對戰沒有「自己」）：那張狀態卡多一圈同色的框，中間留一道縫（跟 Wall Go 的比分一樣），手機上就不必再寫一行「你要當：老虎」
@@ -304,7 +354,7 @@ export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghM
           secondary: 'bagh-line bg-[#f2e4c4] text-tile-ink hover:bg-[#ead8ad]',
           button: 'font-black', placeholder: 'bg-[#e3a43c]/30',
         }} />
-      <FeedbackModal isOpen={feedbackOpen} onClose={() => setFeedbackOpen(false)} theme={BAGH_CORNER} placeholder={b.feedbackPlaceholder}
+      <FeedbackModal game="bagh-chal" isOpen={feedbackOpen} onClose={() => setFeedbackOpen(false)} theme={BAGH_CORNER} placeholder={b.feedbackPlaceholder}
         // 對局回饋的評分是必選（視窗沒選不給送），這裡的 null 只是型別上的可能
         onSubmit={async (rating, message, contact) => rating === null ? undefined :
           sendFeedback({

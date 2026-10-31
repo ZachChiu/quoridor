@@ -5,6 +5,7 @@ import { LuX } from 'react-icons/lu';
 import Modal from './Modal';
 import { useGameText, useMessages } from '@/i18n/LocaleProvider';
 import { CARD_SIZE, renderCard, type CardLayout, type ShareAssets, type ShareDraw } from '@/utils/shareCard';
+import { track, type GameSlug } from '@/utils/analytics';
 
 /**
  * 各遊戲自己的結算：**結算畫面就是分享圖本身**，跟 Wall Go 的 ChampionModal 同一個做法
@@ -34,7 +35,7 @@ export type ShareCardOptions = {
   fileName: string;
   /** QR 掃了要去的站內路徑（已經套好語系），會加上 utm */
   homePath: string;
-  /** 那款遊戲的 id，放進 utm_campaign，GA 才分得出是哪一款的分享圖 */
+  /** 那款遊戲的 id（網址的 slug），放進 utm_campaign，GA 才分得出是哪一款的分享圖；share 事件的 game 也是它 */
   campaign: string;
   /** 畫之前要先載好的字型（CSS font 簡寫，例如 `900 40px "Grenze Gotisch"`）與要用到的字 */
   fonts?: { font: string; text: string }[];
@@ -106,12 +107,14 @@ export function useShareCard({ isOpen, draw, contentKey, fileName, homePath, cam
     a.click();
     a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 10_000);
+    track('share', { game: campaign as GameSlug, method: 'download', content_type: 'result_card', item_id: layout });
   };
 
   const shareFile = async (title: string) => {
     if (!ready) return;
     try {
       await navigator.share({ files: [ready.file], title });
+      track('share', { game: campaign as GameSlug, method: 'native', content_type: 'result_card', item_id: layout });
     } catch (err) {
       // 使用者在面板上取消不是錯誤；其他失敗（權限、App 內建瀏覽器）就退回存檔
       if (!(err instanceof DOMException && err.name === 'AbortError')) save();

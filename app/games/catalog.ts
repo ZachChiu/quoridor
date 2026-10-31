@@ -186,6 +186,11 @@ export const NEWEST: CatalogGame | undefined = [...PLAYABLE].sort((a, b) => (b.s
 export const HERO_DEFAULT: CatalogGame | undefined = PLAYABLE.find((g) => g.playable === routes.WALL_GO) ?? NEWEST;
 
 /** 一季裡能玩的排前面，其他照節目播出順序 */
+/** 能玩的遊戲（站內路徑）→ 第幾季。GA 的 select_game 要帶 season（SelectGameTracker） */
+export const SEASON_OF: Record<string, 1 | 2 | 3> = Object.fromEntries(
+  SEASONS.flatMap((s) => s.games.flatMap((g) => (g.playable ? [[g.playable, Number(s.id.slice(1)) as 1 | 2 | 3]] : []))),
+);
+
 export function playableFirst(games: CatalogGame[]): CatalogGame[] {
   return [...games].sort((a, b) => Number(!!b.playable) - Number(!!a.playable));
 }

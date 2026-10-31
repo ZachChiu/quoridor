@@ -341,6 +341,9 @@ GA 由 `app/shell.tsx` 的 `<GoogleAnalytics>` 載入（只有 `NEXT_PUBLIC_APP_
 事件由 `track()` 送。**一件事一個事件名稱，差異放參數** —— 不要再把變數塞進事件名稱
 （舊的 `start_local_game_2p` 那種），GA 的事件名稱有 500 種上限，而且報表無法加總。
 
+**平台上線後（`docs/platform-tracking.md`）**：跟對局有關的事件（下表 `mode_select` 到 `tutorial_close`）都帶 `game`（網址的 slug：`wall-go`、`bagh-chal`），
+型別上是必填（`analytics.ts` 的 `GameSlug`，新遊戲上線要加進去）；尼泊爾虎棋送同一套事件，不另開名稱。`feedback_send` 也帶 `game`（平台頁尾送的不帶）。
+
 | 事件 | 什麼時候 | 參數 |
 |---|---|---|
 | `mode_select` | 首頁磁磚或 `/solo` 頁選了模式（想玩） | mode、players、difficulty、entry |
@@ -354,11 +357,14 @@ GA 由 `app/shell.tsx` 的 `<GoogleAnalytics>` 載入（只有 `NEXT_PUBLIC_APP_
 | `nudge_send` | 連線時催輪到的人 | players |
 | `tutorial_close` | 關掉遊玩方式 | step、steps、finished |
 | `locale_switch` | 切語系 | from、to |
-| `contact_open` / `feedback_send` | 聯絡我們、送出回饋 | entry、rating |
+| `contact_open` / `feedback_send` | 聯絡我們、送出回饋 | entry、rating（feedback_send 另有 game） |
+| `select_game` | 平台首頁、季目錄點了能玩的遊戲卡（大卡的「開始玩」也算） | game、location（home_hero／home_grid／season／related）、season（1／2／3） |
 
 - `game_start` / `game_end` 看**狀態轉變**而不是按鈕；第一次觀察到的狀態不送（重整後從棋譜重建的「已開始／已結束」不是這次發生的），連線另用 sessionStorage 去重。連線局每位玩家各送一次，所以是「人次」不是「局數」。投降不另外送，會以 `game_end` 的 `ended: 'resign'` 出現。
 - **`page_view` 交給 GA 自己算**（首次載入由 config、站內換頁由加強型評估的「依瀏覽器記錄事件」）。不要再手動送 —— 以前的 `AnalyticsProvider` 就是這樣讓每次瀏覽都算兩次。
-- 參數要在 GA 後台「管理 → 自訂定義」註冊才看得到：維度 `mode`、`players`、`difficulty`、`entry`、`result`、`winner`、`ended`、`reason`、`fail_step`、`method`、`from`、`to`、`finished`；指標 `turns`、`duration_sec`、`step`、`rating`。
+  它要帶的 `page_type`（platform_home／season／game_home／rules／play）與 `game` 用 `gtag('set')` 設：`utils/pageMeta.ts` 的內嵌 script 在 GA 載入前包住 pushState／replaceState、聽 popstate，網址一變就照新網址 set（在 React effect 裡 set 會晚 GA 一步、帶到上一頁的值）。set 過的值這一頁之後的每個事件都會帶。
+- `select_game` 由 `SelectGameTracker` 在 document 上聽 click：能玩的卡本來就有 `data-game`，往上找 `data-select-location` 決定是哪一區。
+- 參數要在 GA 後台「管理 → 自訂定義」註冊才看得到：維度 `mode`、`players`、`difficulty`、`entry`、`result`、`winner`、`ended`、`reason`、`fail_step`、`method`、`from`、`to`、`finished`、`game`、`location`、`page_type`、`season`；指標 `turns`、`duration_sec`、`step`、`rating`。
   `share` 的 `content_type`、`item_id` 是 GA4 建議事件的標準參數，後台有沒有內建維度要上線後確認，沒有再註冊。
 - **參數名稱在維度與指標之間不能重複**：`step` 已經是 `tutorial_close` 的指標，所以連線失敗的步驟叫 `fail_step`。新增參數前先看這份清單。
 - **不能用 GA 保留給流量來源的名稱**：`source`、`medium`、`campaign`、`term`、`content`（還有 `gclid`、`utm_*` 這類）。GA4 會把它們當成這個工作階段的來源 —— 2026-10 `mode_select` 帶 `source=home`，Google 搜尋進來的工作階段被記成來源「home」（大腦從 BigQuery 查到：10/22 的 22 個工作階段有 8 個），所以改名 `entry`。`from` 也不要拿來當入口：它已經是 `locale_switch` 的「從哪個語系」。
