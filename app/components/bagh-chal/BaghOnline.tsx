@@ -13,6 +13,7 @@ import { applyMove, createGame, decodeMoves, encodeMoves, replay, type BaghState
 import type { BaghRoom } from '@/types/baghRoom';
 import { createBaghRoom, getBaghRoom, joinBaghRoom, subscribeBaghRoom, writeBaghMoves } from '@/utils/baghService';
 import { atStep, describeOnlineError, reportOnlineError } from '@/utils/onlineError';
+import { track } from '@/utils/analytics';
 import BaghPlay from './BaghPlay';
 import BaghFrame from './BaghFrame';
 import { GoatToken, InviteToken, TigerToken } from './tokens';
@@ -76,16 +77,17 @@ function Session({ locale, hash }: { locale: Locale; hash: string }) {
           const id = await atStep('create', createBaghRoom(target.create, seat));
           if (cancelled) return;
           history.replaceState(null, '', `${location.pathname}#roomId=${id}`);
+          track('room_created', { game: 'bagh-chal', players: 2 });
           setMe(target.create); setRoomId(id);
           return;
         }
         const existing = await atStep('getRoom', getBaghRoom(target.roomId));
         if (cancelled) return;
-        if (!existing) { setFailure('noRoom'); return; }
+        if (!existing) { track('online_error', { game: 'bagh-chal', reason: 'noRoom' }); setFailure('noRoom'); return; }
         const mine = (['tiger', 'goat'] as const).find((s) => existing.players?.[s]?.uid === uid);
         const open = (['tiger', 'goat'] as const).find((s) => !existing.players?.[s]);
         const side = mine ?? open;
-        if (!side) { setFailure('roomFull'); return; }
+        if (!side) { track('online_error', { game: 'bagh-chal', reason: 'roomFull' }); setFailure('roomFull'); return; }
         if (!mine) await atStep('join', joinBaghRoom(target.roomId, side, seat));
         if (cancelled) return;
         setMe(side); setRoomId(target.roomId);
@@ -93,7 +95,9 @@ function Session({ locale, hash }: { locale: Locale; hash: string }) {
         if (cancelled) return;
         console.error('[bagh-chal online]', err);
         const info = describeOnlineError(err);
-        reportOnlineError('create' in target ? 'createFail' : 'connectFail', info);
+        const reason = 'create' in target ? 'createFail' : 'connectFail';
+        track('online_error', { game: 'bagh-chal', reason, fail_step: info.step });
+        reportOnlineError(reason, info);
         setFailure('connectFail');
       }
     })();
@@ -117,7 +121,9 @@ function Session({ locale, hash }: { locale: Locale; hash: string }) {
     setGame(next);
     writeBaghMoves(roomId, encodeMoves(next.history), next.turn).catch((err) => {
       console.error('[bagh-chal online] 寫入失敗', err);
-      reportOnlineError('connectFail', describeOnlineError(err));
+      const info = describeOnlineError(err);
+      track('online_error', { game: 'bagh-chal', reason: 'connectFail', fail_step: info.step });
+      reportOnlineError('connectFail', info);
       setFailure('connectFail');
     });
   }, [roomId, game]);
@@ -147,7 +153,7 @@ function Session({ locale, hash }: { locale: Locale; hash: string }) {
   if (!room.players?.[other(me)]) {
     return <Waiting me={me} url={`${location.origin}${location.pathname}#roomId=${roomId}`} home={home} />;
   }
-  return <BaghPlay locale={locale} mode={{ kind: 'online', human: me, game, onMove, newRoom }} />;
+  return <BaghPlay locale={locale} mode={{ kind: 'online', human: me, roomId, game, onMove, newRoom }} />;
 }
 
 /**
@@ -189,6 +195,7 @@ function Waiting({ me, url, home }: { me: Side; url: string; home: string }) {
 
   const copy = async () => {
     try { await navigator.clipboard.writeText(url); } catch { return; }
+    track('share_room_link', { game: 'bagh-chal', method: 'copy' });
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -226,7 +233,7 @@ function Waiting({ me, url, home }: { me: Side; url: string; home: string }) {
             </button>
           </div>
           {canShare && (
-            <button type="button" onClick={() => share({ title: b.title, text: b.shareText, url })}
+            <button type="button" onClick={() => { track('share_room_link', { game: 'bagh-chal', method: 'native' }); void share({ title: b.title, text: b.shareText, url }); }}
               className={`${BAGH_PRIMARY} h-12 w-full px-4 text-base`}>
               <LuShare2 className="text-lg" aria-hidden="true" />{g.share.share}
             </button>
