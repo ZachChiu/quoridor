@@ -84,7 +84,7 @@ export const SEASONS: Season[] = [
         // 底色是 Wall Go 自己的頁面底色 #e8e1d7（10/25 Zach：為什麼要用藍底）；轉場也擴散這個顏色，跟虎羊棋擴散它的紙色一樣
         look: { card: 'bg-[#e8e1d7] text-tile-ink', wipe: '#e8e1d7', art: '/games/wall-go/card.svg', hero: '/games/wall-go/hero.svg', heroSquare: '/games/wall-go/hero-square.svg', cover: true, rules: routes.wallGo('/rules') } },
       // 中文用節目的「尼泊爾虎棋」（Zach 10/24：命名用 Netflix 版本）、韓文「바그찰」是節目 RULE 卡上的寫法（見 glossary）
-      { name: 'Bagh Chal', names: { 'zh-TW': '尼泊爾虎棋', 'zh-Hans': '尼泊尔虎棋', ko: '바그찰' }, playable: routes.BAGH_CHAL,
+      { name: 'Bagh Chal', names: { 'zh-TW': '尼泊爾虎棋', 'zh-Hans': '尼泊尔虎棋', ko: '바그찰' }, playable: routes.BAGH_CHAL, since: '2026-11-01',
         look: { card: 'bg-[#e3a43c] text-tile-ink', wipe: '#f1e6cd', art: '/games/bagh-chal/key-art.webp', hero: '/games/bagh-chal/hero.webp', heroSquare: '/games/bagh-chal/hero-square.webp', cover: true, doors: true, rules: routes.baghChal('/rules'),
           lettering: { mark: '/games/bagh-chal/wordmark.svg', ratio: 3140 / 679 } } },
       { name: 'Crooked Cops', names: { 'zh-TW': '腐敗警察', 'zh-Hans': '腐败警察' } },
