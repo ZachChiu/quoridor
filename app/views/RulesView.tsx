@@ -9,6 +9,7 @@ import { STEP_TEXT } from '@/i18n/content/steps';
 import { FAQ_TEXT } from '@/i18n/content/faq';
 import { getMessages } from '@/i18n';
 import { localePath, type Locale } from '@/i18n/locales';
+import { wallGo } from '@/i18n/routes';
 import { pageGraph, ldScript } from '@/i18n/jsonld';
 
 /**
@@ -45,7 +46,7 @@ export default function RulesView({ locale }: { locale: Locale }) {
   const t = getMessages(locale);
   const steps = STEP_TEXT[locale];
   const faq = FAQ_TEXT[locale];
-  const home = localePath(locale, '/');
+  const home = localePath(locale, wallGo());
 
   return (
     <div className="min-h-dvh font-[family-name:var(--font-app)]">
@@ -73,7 +74,7 @@ export default function RulesView({ locale }: { locale: Locale }) {
         </div>
       </header>
 
-      <div className="mx-auto max-w-[46rem] px-5 pb-[max(3rem,6dvh)] pt-8">
+      <div className="mx-auto max-w-[46rem] px-5 pb-[max(3rem,6svh)] pt-8">
         <header>
           <p className="text-sm font-bold text-ink-soft">{t.rules.kicker}</p>
           <h1 className="mt-1 text-[clamp(1.75rem,7vw,3rem)] font-black leading-[1.1] tracking-tight">

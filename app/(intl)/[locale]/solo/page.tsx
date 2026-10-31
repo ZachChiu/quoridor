@@ -1,20 +1,15 @@
-import type { Metadata } from 'next';
-import SoloView from '@/views/SoloView';
+import { Legacy, legacyMetadata } from '@/i18n/legacy';
 import { PREFIXED, toLocale } from '@/i18n/locales';
-import { localeMetadata } from '@/i18n/metadata';
 
+/** 舊網址 /{locale}/solo：搬到 /{locale}/wall-go/solo（見 app/i18n/legacy.tsx） */
 export function generateStaticParams() {
   return PREFIXED.map((locale) => ({ locale }));
 }
 
-export async function generateMetadata({
-  params,
-}: { params: Promise<{ locale: string }> }): Promise<Metadata> {
-  return localeMetadata(toLocale((await params).locale), '/solo');
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+  return legacyMetadata(toLocale((await params).locale), '/solo');
 }
 
-export default async function LocaleSolo({
-  params,
-}: { params: Promise<{ locale: string }> }) {
-  return <SoloView locale={toLocale((await params).locale)} />;
+export default async function Page({ params }: { params: Promise<{ locale: string }> }) {
+  return <Legacy locale={toLocale((await params).locale)} oldPath="/solo" />;
 }

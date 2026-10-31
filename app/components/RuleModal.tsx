@@ -1,5 +1,5 @@
 "use client"
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { GiPlayButton, GiRuleBook } from "react-icons/gi";
 import Modal from './Modal';
 import Button from './Button';
@@ -9,6 +9,7 @@ import { useRuleModal } from '@/contexts/RuleModalContext';
 import { useLocale, useMessages } from '@/i18n/LocaleProvider';
 import { STEP_TEXT } from '@/i18n/content/steps';
 import { track } from '@/utils/analytics';
+import { useSwipePager } from '@/hook/useSwipePager';
 
 /**
  * 逐步教學。
@@ -28,11 +29,13 @@ const RuleModal: React.FC = () => {
     setStep(Math.min(Math.max(n, 0), STEPS.length - 1));
   }, []);
   const isOpen = ruleModalState.isOpen;
+  // 掛在對局頁裡（PlayClient）：開著時離開對局，下次進來不該一進門就是打開的
+  useEffect(() => () => setRuleModalState((s) => (s.isOpen ? { ...s, isOpen: false } : s)), [setRuleModalState]);
   const last = step === STEPS.length - 1;
 
   const close = () => {
     // 讀到第幾步就關掉 —— 看得出規則是在哪一步把人勸退的
-    track('tutorial_close', { step: step + 1, steps: STEPS.length, finished: last });
+    track('tutorial_close', { game: 'wall-go', step: step + 1, steps: STEPS.length, finished: last });
     setRuleModalState({ ...ruleModalState, isOpen: false });
   };
 
@@ -48,61 +51,11 @@ const RuleModal: React.FC = () => {
     if (isOpen) setStep(0);
   }
 
-  // 左右方向鍵翻頁。Escape 關閉由 Modal 統一處理。
-  const onKeyDown = useCallback((e: KeyboardEvent) => {
-    if (e.key === 'ArrowRight') goTo(step + 1);
-    if (e.key === 'ArrowLeft') goTo(step - 1);
-  }, [goTo, step]);
-
-
   const next = useCallback(() => goTo(step + 1), [goTo, step]);
   const prev = useCallback(() => goTo(step - 1), [goTo, step]);
 
-  /*
-    真正的軌道式滑動：八頁橫排在一條軌道上，手指拖到哪裡軌道就跟到哪裡，
-    放開才吸附到最近的一頁。
-
-    先前只是「換頁時淡入並位移一點」—— 內容不跟手，滑到一半放開也沒有
-    回彈，手感上就不像可以滑的東西。
-
-    dragX 是目前的拖曳位移（px）。null 代表沒在拖，這時軌道走 transition
-    自己滑過去；拖曳中則關掉 transition，不然會延遲一拍。
-  */
-  const [dragX, setDragX] = useState<number | null>(null);
-  const startRef = useRef<{ x: number; y: number; locked: 'x' | 'y' | null } | null>(null);
-  const trackRef = useRef<HTMLDivElement>(null);
-
-  const onTouchStart = (e: React.TouchEvent) => {
-    if (e.touches.length !== 1) return;
-    startRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY, locked: null };
-  };
-  const onTouchMove = (e: React.TouchEvent) => {
-    const st = startRef.current;
-    if (!st || e.touches.length !== 1) return;
-    const dx = e.touches[0].clientX - st.x;
-    const dy = e.touches[0].clientY - st.y;
-    // 先決定這一次手勢是橫向還是縱向，之後不再改變 ——
-    // 不鎖的話，斜著滑會在捲動與翻頁之間來回跳。
-    if (!st.locked) {
-      if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
-      st.locked = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
-    }
-    if (st.locked !== 'x') return;
-    // 首尾再往外拉時阻尼掉三分之二，讓「沒有下一頁」這件事用手感表達
-    const atEdge = (dx > 0 && step === 0) || (dx < 0 && step === STEPS.length - 1);
-    setDragX(atEdge ? dx / 3 : dx);
-  };
-  const onTouchEnd = () => {
-    const st = startRef.current;
-    startRef.current = null;
-    if (!st || st.locked !== 'x' || dragX === null) { setDragX(null); return; }
-    const w = trackRef.current?.clientWidth ?? 1;
-    // 超過四分之一頁寬就翻頁，否則彈回
-    if (Math.abs(dragX) > w / 4) goTo(step + (dragX < 0 ? 1 : -1));
-    setDragX(null);
-  };
-
-  const dragging = dragX !== null;
+  // 軌道式滑動（手指拖到哪裡軌道就跟到哪裡，放開才吸附）與左右方向鍵：見 hook/useSwipePager.ts
+  const pager = useSwipePager(STEPS.length, step, goTo);
 
   return (
     <Modal
@@ -112,7 +65,7 @@ const RuleModal: React.FC = () => {
       kicker={`${step + 1} / ${STEPS.length}`}
       icon={GiRuleBook}
       band={{ className: 'bg-tile-forest', fg: 'text-tile-cream' }}
-      onKeyDown={onKeyDown}
+      onKeyDown={pager.onKeyDown}
       /*
         不要捲軸（Zach 說的）。放不下的時候縮的是盤面，不是讓內容捲：
         盤面寬度跟著可視高度走（見下方軌道裡的 clamp）。
@@ -147,26 +100,13 @@ const RuleModal: React.FC = () => {
         軌道。八頁並排，用 translateX 位移到當前頁。
         touch-pan-y 讓垂直捲動照常交給瀏覽器，只有水平歸我們處理。
       */}
-      <div
-        ref={trackRef}
-        className="touch-pan-y overflow-hidden"
-        onTouchStart={onTouchStart}
-        onTouchMove={onTouchMove}
-        onTouchEnd={onTouchEnd}
-        onTouchCancel={onTouchEnd}
-      >
-        <div
-          className="flex items-start"
-          style={{
-            transform: `translateX(calc(${-step * 100}% + ${dragX ?? 0}px))`,
-            transition: dragging ? 'none' : 'transform 320ms cubic-bezier(0.22, 1, 0.36, 1)',
-          }}
-        >
+      <div {...pager.viewport}>
+        <div className="flex items-start" style={pager.trackStyle}>
           {STEPS.map((st, i) => (
             <div key={i} className="w-full shrink-0 px-0.5 short:flex short:items-start short:gap-5">
               {/* 盤面寬度 = 可視高度扣掉色帶、文字、按鈕約 33rem，夾在 120–200px。
                   矮螢幕並排時改扣色帶與按鈕就好。 */}
-              <div className="mx-auto w-[clamp(6rem,calc(100dvh-33rem),12.5rem)] short:mx-0 short:w-[clamp(6rem,calc(100dvh-16rem),10rem)] short:shrink-0">
+              <div className="mx-auto w-[clamp(6rem,calc(100svh-33rem),12.5rem)] short:mx-0 short:w-[clamp(6rem,calc(100svh-16rem),10rem)] short:shrink-0">
                 <TutorialBoard {...st.board} />
               </div>
               {/* 標題搬進軌道裡 —— 留在色帶上的話，滑動時內容在移動、

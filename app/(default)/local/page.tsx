@@ -1,9 +1,8 @@
-import type { Metadata } from 'next';
-import { playMetadata } from '@/i18n/metadata';
-import LocalView from '@/views/LocalView';
+import { Legacy, legacyMetadata } from '@/i18n/legacy';
 
-export const metadata: Metadata = playMetadata('zh-TW', '/local');
+/** 舊網址 /local：搬到 /wall-go/local（見 app/i18n/legacy.tsx） */
+export const metadata = legacyMetadata('zh-TW', '/local');
 
-export default function LocalPage() {
-  return <LocalView locale="zh-TW" />;
+export default function Page() {
+  return <Legacy locale="zh-TW" oldPath="/local" />;
 }

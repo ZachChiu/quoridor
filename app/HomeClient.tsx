@@ -28,6 +28,7 @@ const wipeFrom = ({ rect, color, icon, iconSize, label, kicker, row, iconColor, 
 });
 import { useMessages, useLocale } from "@/i18n/LocaleProvider";
 import { localePath } from "@/i18n/locales";
+import { wallGo } from '@/i18n/routes';
 import { useGame } from "@/contexts/GameContext";
 import { useUser } from "@/contexts/UserContext";
 
@@ -59,8 +60,8 @@ export default function HomeClient() {
     clearSavedGame(savedGameKey(playersNum, null));
     // 人數寫在路由裡 —— 不寫的話重整就掉回兩人，而且靜態 HTML 也會先
     // 畫一次兩人盤（見 (default)/local/[players]/page.tsx）
-    navigate(localePath(locale, playersNum === 3 ? '/local/3' : '/local'), { wipe: wipeFrom(origin) });
-    track('mode_select', { mode: 'local', players: playersNum === 3 ? 3 : 2, entry: 'home' });
+    navigate(localePath(locale, wallGo(playersNum === 3 ? '/local/3' : '/local')), { wipe: wipeFrom(origin) });
+    track('mode_select', { game: 'wall-go', mode: 'local', players: playersNum === 3 ? 3 : 2, entry: 'home' });
   };
 
   const startSolo = (aiDifficulty: Difficulty, at: { x: number; y: number }) => {
@@ -69,8 +70,8 @@ export default function HomeClient() {
     clearSavedGame(savedGameKey(2, aiDifficulty));
     // 難度選單的按鈕是奶油底上的淡灰卡片，擴散用奶油色才接得上 ——
     // 用陶橘會變成「按了白鈕卻噴出橘色」，對不上自己按的東西。
-    navigate(localePath(locale, '/solo') + gameHash({ aiDifficulty }), { wipe: { ...at, color: 'rgb(var(--tile-cream))' } });
-    track('mode_select', { mode: 'solo', players: 2, difficulty: aiDifficulty, entry: 'home' });
+    navigate(localePath(locale, wallGo('/solo')) + gameHash({ aiDifficulty }), { wipe: { ...at, color: 'rgb(var(--tile-cream))' } });
+    track('mode_select', { game: 'wall-go', mode: 'solo', players: 2, difficulty: aiDifficulty, entry: 'home' });
   };
 
   // 滑過或 focus 到連線磁磚就先把 Firebase 載起來並匿名登入。
@@ -85,8 +86,8 @@ export default function HomeClient() {
     使用者以為沒按到。現在等待發生在寫著「連線中」的畫面上。
   */
   const startConnect = (playersNum: 2 | 3, origin: TileOrigin) => {
-    navigate(localePath(locale, '/online') + newRoomHash(playersNum), { wipe: wipeFrom(origin) });
-    track('mode_select', { mode: 'online', players: playersNum, entry: 'home' });
+    navigate(localePath(locale, wallGo('/online')) + newRoomHash(playersNum), { wipe: wipeFrom(origin) });
+    track('mode_select', { game: 'wall-go', mode: 'online', players: playersNum, entry: 'home' });
   };
 
   /*
@@ -111,13 +112,13 @@ export default function HomeClient() {
       {/* 有靜態目標的都給 href，渲染成真的連結 —— 首頁本來一條站內連結都沒有，
           爬蟲走不進 /rules（整站的 SEO 主力落地頁）。連線那兩塊沒有：
           房間要先建出來才知道網址。 */}
-      <GameTile icon={GiTabletopPlayers} tone="amber"  kicker={t.home.localKicker} label={t.home.twoPlayers} href={localePath(locale, '/local')} onClick={(o) => startLocal(2, o)} />
-      <GameTile icon={GiThreeFriends}    tone="purple" kicker={t.home.localKicker} label={t.home.threePlayers} href={localePath(locale, '/local/3')} onClick={(o) => startLocal(3, o)} />
+      <GameTile icon={GiTabletopPlayers} tone="amber"  kicker={t.home.localKicker} label={t.home.twoPlayers} href={localePath(locale, wallGo('/local'))} onClick={(o) => startLocal(2, o)} />
+      <GameTile icon={GiThreeFriends}    tone="purple" kicker={t.home.localKicker} label={t.home.threePlayers} href={localePath(locale, wallGo('/local/3'))} onClick={(o) => startLocal(3, o)} />
       <GameTile icon={GiWireframeGlobe}  tone="blue"   kicker={t.home.onlineKicker} label={t.home.twoPlayers} onClick={(o) => startConnect(2, o)} onPrefetch={prewarm} />
       <GameTile icon={GiMeshNetwork}     tone="red"    kicker={t.home.onlineKicker} label={t.home.threePlayers} onClick={(o) => startConnect(3, o)} onPrefetch={prewarm} />
       {/* 單人這塊按下去是開難度選單，但 /solo 本身站得住（自備選單），
           所以 href 照給 —— cmd 點開的是那一頁，爬蟲也走得過去。 */}
-      <GameTile icon={GiBrain} tone="orange" label={t.home.solo} wide href={localePath(locale, '/solo')} onClick={() => setSoloOpen(true)} />
+      <GameTile icon={GiBrain} tone="orange" label={t.home.solo} wide href={localePath(locale, wallGo('/solo'))} onClick={() => setSoloOpen(true)} />
       <GameTile
         icon={GiRuleBook}
         tone="forest"
@@ -129,8 +130,8 @@ export default function HomeClient() {
            使用者得試過才知道哪個是哪個。
            Modal 保留給遊戲中的「遊玩方式」按鈕：對局進行到一半時
            不該把人換頁換走。 */
-        href={localePath(locale, '/rules')}
-        onClick={(o) => navigate(localePath(locale, '/rules'), { wipe: wipeFrom(o) })}
+        href={localePath(locale, wallGo('/rules'))}
+        onClick={(o) => navigate(localePath(locale, wallGo('/rules')), { wipe: wipeFrom(o) })}
       />
       <DifficultyModal isOpen={soloOpen} onClose={() => setSoloOpen(false)} onPick={startSolo} />
     </div>

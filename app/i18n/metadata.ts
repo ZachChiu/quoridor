@@ -1,16 +1,26 @@
 import type { Metadata } from 'next';
 import { createHash } from 'node:crypto';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { getMessages, siteName } from './index';
+import { getMessages } from './index';
+import { PLAYABLE, gameName, seasonById } from '@/games/catalog';
+import { brandName } from '@/brand';
 import { LOCALES, DEFAULT_LOCALE, HREFLANG, OG_LOCALE, localePath, type Locale } from './locales';
 
 const SITE = process.env.SITE_URL || 'https://quoridorgame.com';
 
-/** 網址 → 分享圖的頁面代號。多一頁要記得同時加進 scripts/build-og-images.mjs 的 PAGES。 */
+/**
+ * 網址 → 分享圖的頁面代號。多一頁要記得同時加進 scripts/build-og-images.mjs 的 PAGES。
+ * `/` 是平台首頁（platform）；Wall Go 首頁搬到 `/wall-go` 後沿用代號 home，分享圖檔名不必改。
+ */
 const PAGE_KEY = {
-  '/': 'home', '/rules': 'rules', '/solo': 'solo',
-  '/local': 'local', '/online': 'online', '/replay': 'replay',
+  '/': 'platform',
+  // 季目錄頁先用平台首頁那張分享圖（圖上是節目名＋「遊戲線上玩」，三季都說得通）
+  '/season/1': 'platform', '/season/2': 'platform', '/season/3': 'platform',
+  '/wall-go': 'home', '/wall-go/rules': 'rules', '/wall-go/solo': 'solo',
+  '/wall-go/local': 'local', '/wall-go/online': 'online', '/wall-go/replay': 'replay',
+  // Bagh Chal 的子頁先共用遊戲首頁那張分享圖（圖上是遊戲名，子頁之間差別不大）
+  '/bagh-chal': 'bagh-chal', '/bagh-chal/rules': 'bagh-chal', '/bagh-chal/solo': 'bagh-chal', '/bagh-chal/local': 'bagh-chal', '/bagh-chal/online': 'bagh-chal',
 } as const;
 export type PagePath = keyof typeof PAGE_KEY;
 
@@ -41,8 +51,20 @@ function ogHash(file: string): string {
   return h;
 }
 export function ogImageUrl(locale: Locale, path: PagePath): string {
-  const file = `${PAGE_KEY[path]}-${locale}.png`;
+  return ogFileUrl(`${PAGE_KEY[path]}-${locale}.png`);
+}
+
+function ogFileUrl(file: string): string {
   return `${SITE}/og/${file}?v=${ogHash(file)}`;
+}
+
+/**
+ * 第二批五款的分享圖：`public/og/<遊戲>-<語系>.png`（那款的分支用 scripts/og-games/<遊戲>.mjs 產生），
+ * 規則頁、連線頁跟首頁同一張。還沒有的話用平台首頁那張（10/25 之前五款都是這樣）。
+ */
+function trialOgUrl(locale: Locale, path: string): string {
+  const file = `${path.split('/')[1]}-${locale}.png`;
+  return existsSync(join(process.cwd(), 'public', 'og', file)) ? ogFileUrl(file) : ogImageUrl(locale, '/');
 }
 
 function shareImage(locale: Locale, path: PagePath) {
@@ -54,22 +76,79 @@ function shareImage(locale: Locale, path: PagePath) {
   };
 }
 
+/**
+ * 平台首頁的描述，結尾列出現在能玩的遊戲（10/25 大腦：寫上線當天真的能玩的，每上一款就補上去）。
+ * 從 catalog 的 PLAYABLE 帶出來 —— 各款的分支打開自己那一行就自動列進來，不必五條分支都改同一句文案。
+ * **Wall Go 一定排第一個**：搬家前九成的搜尋點擊是找 Wall Go 的。名字寫當地叫法＋英文（牆壁圍棋 Wall Go）。
+ */
+export function platformDescription(locale: Locale): string {
+  const games = [...PLAYABLE].sort((a, b) => Number(b.name === 'Wall Go') - Number(a.name === 'Wall Go'));
+  const names = games.map((g) => {
+    const local = gameName(g, locale);
+    return local === g.name ? g.name : `${local} ${g.name}`;
+  });
+  return getMessages(locale).platform.metaDescription.replace('{games}', joinNames(locale, names));
+}
+
+/**
+ * 中日文用頓號、韓文用逗號；英文、泰文照 Intl 的列舉。泰文的連接詞 Intl 不留空格，跟英文名黏成「Wall GoและBagh Chal」，
+ * 所以前後補空格（連接詞不寫在程式碼裡：寫了字型子集會把泰文字算進繁中那份）
+ */
+function joinNames(locale: Locale, names: string[]): string {
+  if (locale === 'en') return new Intl.ListFormat('en', { type: 'conjunction' }).format(names);
+  if (locale === 'th') {
+    return new Intl.ListFormat('th', { type: 'conjunction' }).formatToParts(names)
+      .map((p) => (p.type === 'element' ? p.value : p.value.trim() ? ` ${p.value.trim()} ` : ', '))
+      .join('');
+  }
+  if (locale === 'ko') return names.join(', ');
+  return names.join('、');
+}
+
 function copy(locale: Locale, path: PagePath) {
   const t = getMessages(locale);
   switch (path) {
-    case '/rules':
+    case '/':
+      return { title: undefined, description: platformDescription(locale), ogTitle: t.platform.ogTitle, ogDescription: t.platform.ogDescription };
+    case '/season/1':
+    case '/season/2':
+    case '/season/3':
+      return seasonCopy(locale, path.slice(-1) as '1' | '2' | '3');
+    case '/bagh-chal':
+      return { title: t.baghChal.metaTitle, description: t.baghChal.metaDescription, ogTitle: t.baghChal.ogTitle, ogDescription: t.baghChal.ogDescription };
+    case '/bagh-chal/rules':
+      return { title: t.baghChal.rulesMetaTitle, description: t.baghChal.rulesMetaDescription, ogTitle: t.baghChal.rulesMetaTitle, ogDescription: t.baghChal.rulesMetaDescription };
+    case '/bagh-chal/solo':
+      return { title: `${t.baghChal.title} · ${t.baghChal.vsAi}`, description: t.baghChal.metaDescription, ogTitle: t.baghChal.ogTitle, ogDescription: t.baghChal.ogDescription };
+    case '/bagh-chal/online':
+      return { title: `${t.baghChal.title} · ${t.baghChal.onlineTitle}`, description: t.baghChal.metaDescription, ogTitle: t.baghChal.ogTitle, ogDescription: t.baghChal.ogDescription };
+    case '/bagh-chal/local':
+      return { title: `${t.baghChal.title} · ${t.baghChal.local}`, description: t.baghChal.metaDescription, ogTitle: t.baghChal.ogTitle, ogDescription: t.baghChal.ogDescription };
+    case '/wall-go/rules':
       return { title: t.rules.metaTitle, description: t.rules.metaDescription, ogTitle: t.rules.ogTitle, ogDescription: t.rules.ogDescription };
-    case '/solo':
+    case '/wall-go/solo':
       return { title: t.solo.metaTitle, description: t.solo.metaDescription, ogTitle: t.solo.ogTitle, ogDescription: t.solo.ogDescription };
-    case '/replay':
+    case '/wall-go/replay':
       return { title: t.replay.metaTitle, description: t.replay.metaDescription, ogTitle: t.replay.metaTitle, ogDescription: t.replay.metaDescription };
-    case '/local':
+    case '/wall-go/local':
       return { title: t.local.metaTitle, description: t.meta.description, ogTitle: t.local.metaTitle, ogDescription: t.meta.ogDescription };
-    case '/online':
+    case '/wall-go/online':
       return { title: t.online.metaTitle, description: t.meta.description, ogTitle: t.online.metaTitle, ogDescription: t.meta.ogDescription };
     default:
       return { title: undefined, description: t.meta.description, ogTitle: t.meta.ogTitle, ogDescription: t.meta.ogDescription };
   }
+}
+
+/** 季目錄頁的標題與描述：描述裡列出那一季的遊戲名（搜「魔鬼的計謀 第二季 遊戲」的人要找的就是這張清單） */
+function seasonCopy(locale: Locale, n: '1' | '2' | '3') {
+  const p = getMessages(locale).platform;
+  const s = seasonById(n);
+  const name = { s1: p.s1, s2: p.s2, s3: p.s3 }[s.id];
+  const title = p.seasonMetaTitle.replace('{season}', name);
+  const description = s.games.length
+    ? p.seasonMetaDescription.replace('{season}', name).replace('{n}', String(s.games.length)).replace('{names}', s.games.map((g) => gameName(g, locale)).join(p.listSep))
+    : p.seasonMetaDescriptionEmpty.replace('{season}', name);
+  return { title, description, ogTitle: title, ogDescription: description };
 }
 
 function openGraph(locale: Locale, path: PagePath) {
@@ -82,7 +161,7 @@ function openGraph(locale: Locale, path: PagePath) {
       url: SITE + localePath(locale, path),
       title: c.ogTitle,
       description: c.ogDescription,
-      siteName: siteName(locale),
+      siteName: brandName(locale),
       images: img.og,
     },
     twitter: {
@@ -92,6 +171,55 @@ function openGraph(locale: Locale, path: PagePath) {
       images: img.twitter,
     },
   };
+}
+
+/**
+ * 一款遊戲的 favicon 一組：public/icons/<id>.svg（或 <id>-32.png）、<id>.ico、<id>-192.png。
+ * 加到主畫面的圖示（apple）一律是平台的：從哪一款加，打開都是平台首頁（i18n/pwa.ts）。
+ * 頁面的 icons 會整組蓋掉 layout 的，所以這裡要再寫一次，不能省略
+ */
+function iconSet(id: string, svg = false): Metadata['icons'] {
+  return {
+    icon: [
+      svg ? { url: `/icons/${id}.svg`, type: 'image/svg+xml' } : { url: `/icons/${id}-32.png`, type: 'image/png', sizes: '32x32' },
+      { url: `/icons/${id}.ico`, sizes: '16x16 32x32' },
+      { url: `/icons/${id}-192.png`, type: 'image/png', sizes: '192x192' },
+    ],
+    shortcut: `/icons/${id}.ico`,
+    apple: '/apple-touch-icon.png',
+  };
+}
+
+/**
+ * 各遊戲自己的 favicon（2026-10-24 Zach：平台版包含虎羊棋，各頁 favicon 要放好）。
+ * 全站預設（shell.tsx 的 baseMetadata、/favicon.*）是平台的骰子惡魔（平面那版，16px 下立體那版糊成一團）；
+ * Wall Go 沿用原本那兩個人、尼泊爾虎棋是老虎圓牌。頁面的 icons 會整組蓋掉 layout 的，所以每款給完整一組。
+ * 第二批五款還沒有自己的，沿用平台的；各自的分支要換時把自己那行打開。一行一款、中間空一行：
+ * 各分支只改自己那行，依序合併才不會衝突（同 catalog.ts）。
+ */
+const GAME_ICONS: Record<string, Metadata['icons'] | undefined> = {
+  'wall-go': iconSet('wall-go', true),
+
+  'bagh-chal': iconSet('bagh-chal'),
+
+  'nine-mens-morris': undefined,
+
+  'time-auction': undefined,
+
+  'blind-gomoku': undefined,
+
+  'knights-tour': undefined,
+
+  'balance-mancala': undefined,
+};
+function gameIcons(path: string): Pick<Metadata, 'icons'> {
+  const icons = GAME_ICONS[path.split('/')[1]];
+  return icons ? { icons } : {};
+}
+
+/** Wall Go 以外的遊戲：根 layout 的標題格式是「… | 牆壁圍棋 Wall Go」，改接平台名 */
+function otherGameTitle(locale: Locale, path: PagePath, title: string | undefined): Metadata {
+  return path.startsWith('/bagh-chal') && title ? { title: { absolute: `${title} | ${brandName(locale)}` } } : {};
 }
 
 /**
@@ -117,8 +245,15 @@ export function localeMetadata(locale: Locale, path: PagePath): Metadata {
     description: c.description,
     alternates: { canonical: SITE + localePath(locale, path), languages },
     ...openGraph(locale, path),
-    // 首頁在各語系用自己的完整標題，不套 template
-    ...(path === '/' ? { title: { absolute: t.meta.titleDefault } } : {}),
+    // 首頁在各語系用自己的完整標題，不套 template：
+    // 平台首頁是「節目遊戲整理｜平台名」，Wall Go 首頁維持原本的標題
+    ...(path === '/' ? { title: { absolute: `${t.platform.metaTitle} | ${brandName(locale)}` } } : {}),
+    ...(path === '/wall-go' ? { title: { absolute: t.meta.titleDefault } } : {}),
+    // 季目錄頁同平台首頁：接平台名，不套 Wall Go 的標題格式
+    ...(path.startsWith('/season/') ? { title: { absolute: `${c.title} | ${brandName(locale)}` } } : {}),
+    // 其他遊戲不套 Wall Go 的標題格式（「… | 牆壁圍棋 Wall Go」），接平台名
+    ...otherGameTitle(locale, path, c.title),
+    ...gameIcons(path),
     ...(locale === DEFAULT_LOCALE ? {} : {}),
   };
 }
@@ -142,9 +277,37 @@ export function localeMetadata(locale: Locale, path: PagePath): Metadata {
  * nofollow 等於把站內連結切斷，而不索引本來就不需要連帶封鎖連結。
  */
 export function playMetadata(locale: Locale, path: PagePath): Metadata {
+  const title = copy(locale, path).title;
   return {
-    title: copy(locale, path).title,
+    title,
+    ...otherGameTitle(locale, path, title),
+    ...gameIcons(path),
     robots: { index: false, follow: true },
     ...openGraph(locale, path),
   };
 }
+
+/**
+ * 試做中的遊戲頁（第二批五款）：先不讓搜尋引擎收錄。分享圖用那款自己的（見 trialOgUrl），還沒做的用平台首頁那張。
+ * 標題與描述由各遊戲的文案表傳進來（不經過 messages/）。正式上線前改成 localeMetadata。
+ */
+export function trialGameMetadata(locale: Locale, path: string, title: string, description: string): Metadata {
+  const url = trialOgUrl(locale, path);
+  return {
+    title: { absolute: `${title} | ${brandName(locale)}` },
+    description,
+    ...gameIcons(path),
+    robots: { index: false, follow: true },
+    openGraph: {
+      type: 'website',
+      locale: OG_LOCALE[locale],
+      url: SITE + localePath(locale, path),
+      title,
+      description,
+      siteName: brandName(locale),
+      images: [{ url, ...OG_SIZE, alt: title }],
+    },
+    twitter: { card: 'summary_large_image', title, description, images: [url] },
+  };
+}
+

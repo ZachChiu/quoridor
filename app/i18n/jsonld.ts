@@ -1,7 +1,9 @@
 import { getMessages, siteName } from './index';
 import { FAQ_TEXT } from './content/faq';
 import { localePath, type Locale } from './locales';
-import { ogImageUrl, OG_SIZE } from './metadata';
+import { wallGo } from './routes';
+import { brandName } from '@/brand';
+import { ogImageUrl, OG_SIZE, platformDescription } from './metadata';
 
 const SITE = process.env.SITE_URL || 'https://quoridorgame.com';
 
@@ -37,7 +39,8 @@ const SITE = process.env.SITE_URL || 'https://quoridorgame.com';
  * 但我們沒有真實評分，編一個出來就是偽造評價 —— 違反規範，也不該做。
  */
 
-type PageKind = 'home' | 'rules' | 'solo';
+/** platform＝平台首頁（/），其餘是 Wall Go 的頁面（/wall-go/…） */
+type PageKind = 'platform' | 'home' | 'rules' | 'solo';
 
 const id = (fragment: string) => `${SITE}#${fragment}`;
 
@@ -60,7 +63,7 @@ function organizationNode(locale: Locale) {
   return {
     '@type': 'Organization',
     '@id': id('organization'),
-    name: siteName(locale),
+    name: brandName(locale),
     url: SITE,
     logo: { '@type': 'ImageObject', url: `${SITE}/icon-192.png`, width: 192, height: 192 },
   };
@@ -71,8 +74,7 @@ function websiteNode(locale: Locale) {
     '@type': 'WebSite',
     '@id': id('website'),
     url: SITE,
-    name: siteName(locale),
-    alternateName: 'Wall Go',
+    name: brandName(locale),
     publisher: { '@id': id('organization') },
     inLanguage: locale,
   };
@@ -86,7 +88,7 @@ function gameNode(locale: Locale) {
     '@id': id('game'),
     name: siteName(locale),
     alternateName: 'Wall Go',
-    url: SITE + localePath(locale, '/'),
+    url: SITE + localePath(locale, wallGo()),
     description: t.meta.ogDescription,
     inLanguage: locale,
     genre: ['Strategy', 'Board Game'],
@@ -98,7 +100,7 @@ function gameNode(locale: Locale) {
     offers: { '@type': 'Offer', price: '0', priceCurrency: 'TWD', availability: 'https://schema.org/InStock' },
     publisher: { '@id': id('organization') },
     isBasedOn: { '@id': id('series') },
-    image: ogImageUrl(locale, '/'),
+    image: ogImageUrl(locale, '/wall-go'),
   };
 }
 
@@ -108,7 +110,8 @@ function gameNode(locale: Locale) {
  */
 function breadcrumbNode(locale: Locale, pageUrl: string, trail: { name: string; path: string }[]) {
   const t = getMessages(locale);
-  const all = [{ name: t.crumb.home, path: '/' }, ...trail];
+  // 平台首頁 → Wall Go → 這一頁
+  const all = [{ name: t.crumb.home, path: '/' }, { name: siteName(locale), path: wallGo() }, ...trail];
   return {
     '@type': 'BreadcrumbList',
     '@id': `${pageUrl}#breadcrumb`,
@@ -131,10 +134,32 @@ function breadcrumbNode(locale: Locale, pageUrl: string, trail: { name: string; 
  */
 export function pageGraph(locale: Locale, kind: PageKind) {
   const t = getMessages(locale);
-  const path = kind === 'home' ? '/' : `/${kind}`;
+  const path = kind === 'platform' ? '/' : kind === 'home' ? wallGo() : wallGo(`/${kind}`);
   const pageUrl = SITE + localePath(locale, path);
 
   const base = [organizationNode(locale), websiteNode(locale), seriesNode(locale), gameNode(locale)];
+
+  if (kind === 'platform') {
+    // 平台首頁：節目遊戲的總覽。目前能玩的只有 Wall Go，用 hasPart 指過去
+    return {
+      '@context': 'https://schema.org',
+      '@graph': [
+        ...base,
+        {
+          '@type': 'CollectionPage',
+          '@id': `${pageUrl}#webpage`,
+          url: pageUrl,
+          name: `${t.platform.metaTitle} | ${brandName(locale)}`,
+          description: platformDescription(locale),
+          isPartOf: { '@id': id('website') },
+          about: { '@id': id('series') },
+          hasPart: { '@id': id('game') },
+          primaryImageOfPage: { '@type': 'ImageObject', url: ogImageUrl(locale, '/'), ...OG_SIZE },
+          inLanguage: locale,
+        },
+      ],
+    };
+  }
 
   if (kind === 'home') {
     return {
@@ -149,7 +174,7 @@ export function pageGraph(locale: Locale, kind: PageKind) {
           description: t.meta.description,
           isPartOf: { '@id': id('website') },
           about: { '@id': id('game') },
-          primaryImageOfPage: { '@type': 'ImageObject', url: ogImageUrl(locale, '/'), ...OG_SIZE },
+          primaryImageOfPage: { '@type': 'ImageObject', url: ogImageUrl(locale, '/wall-go'), ...OG_SIZE },
           inLanguage: locale,
         },
       ],

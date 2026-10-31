@@ -6,6 +6,7 @@ import { useGameText } from '@/i18n/LocaleProvider';
 import { useUser } from '@/contexts/UserContext';
 import { sendContact } from '@/utils/gameService';
 import { track } from '@/utils/analytics';
+import type { CornerTheme } from './cornerTheme';
 
 /**
  * 首頁右上角的「聯絡我們」，放在語言切換旁邊、同一個尺寸與樣式。
@@ -14,7 +15,11 @@ import { track } from '@/utils/analytics';
  * 打開的是同一個回饋視窗（variant="contact"），存進同一個 feedback，
  * 以 mode: 'contact' 區分，不附棋譜。
  */
-export default function ContactButton() {
+/**
+ * `theme`：那款遊戲的樣子（圓鈕＋彈窗，見 cornerTheme.ts）。沒給就是 Wall Go 的。
+ * `buttonClassName`：只換圓鈕（舊的寫法，各遊戲分支換成 theme 之前先留著）
+ */
+export default function ContactButton({ theme, buttonClassName }: { theme?: CornerTheme; buttonClassName?: string } = {}) {
   const g = useGameText();
   const { ensureUser } = useUser();
   const [open, setOpen] = useState(false);
@@ -26,14 +31,17 @@ export default function ContactButton() {
         onClick={() => { setOpen(true); track('contact_open', {}); }}
         aria-label={g.contact.button}
         aria-haspopup="dialog"
-        className="relative grid size-10 place-items-center rounded-full bg-tile-ink/[0.06] text-xl text-ink-soft transition after:absolute after:-inset-0.5 after:content-[''] hover:bg-tile-ink/[0.12] active:scale-95"
+        className={`relative grid size-10 place-items-center rounded-full text-xl transition after:absolute after:-inset-0.5 after:content-[''] active:scale-95 ${
+          theme?.button ?? buttonClassName ?? 'bg-tile-ink/[0.06] text-ink-soft hover:bg-tile-ink/[0.12]'
+        }`}
       >
         <LuMessageCircle aria-hidden="true" />
       </button>
-      <FeedbackModal
+      <FeedbackModal game="wall-go"
         isOpen={open}
         onClose={() => setOpen(false)}
         variant="contact"
+        theme={theme}
         onSubmit={async (rating, message, contact) =>
           sendContact({
             rating: rating ?? undefined,

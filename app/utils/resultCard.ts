@@ -59,7 +59,7 @@ export type ResultCardData = {
   };
   /** QR code 的格子（uqr 的 encode().data）。沒有就不畫 */
   qr?: boolean[][];
-  /** 站的圖示（public/icon-192.png，跟分頁上的 favicon 同一個），放在站名前面。沒載到就只寫站名 */
+  /** 站的圖示（public/icons/wall-go-192.png，跟分頁上的 favicon 同一個），放在站名前面。沒載到就只寫站名 */
   icon?: CanvasImageSource;
   /** CSS 的 font-family，跟頁面同一套（--font-app） */
   font: string;

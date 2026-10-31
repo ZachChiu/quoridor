@@ -14,6 +14,7 @@ npm run font:subset     # 依原始碼實際用字重建字型子集
 npm run font:check      # 只檢查子集有沒有落後（CI 用）
 npm run og:build        # 重建每頁每語系的分享圖至 public/og/（要連網）
 npm run og:check        # 只檢查文案有沒有落後（CI 用）
+npm run name:build      # 重建各款在地名字的字標（public/games/<遊戲>/name/，要連網；`-- <遊戲>` 只重建那款）
 npm start               # 以 serve 提供 /out 靜態檔案（next start 不支援 output: export）
 
 npm run release:preview       # 先看會打成什麼版號、併哪條分支
@@ -35,21 +36,34 @@ zh-TW 不加前綴（`app/(default)/`），en / ja / ko / zh-Hans / th 加前綴
 新增語系：`locales.ts` 加一行，`messages/` 一份，`content/` 三份檔各一個區塊，術語先寫進 `glossary.md`，再跑 `font:subset` 與 `og:build`。
 兩邊的 page 都是薄殼，畫面實作在 `app/views/`。
 
+**2026-10 平台化**：`/` 是《魔鬼的計謀》遊戲平台的首頁，Wall Go 全部搬進 `/wall-go/`（一款遊戲一個資料夾）。
+路徑集中在 `app/i18n/routes.ts`（`wallGo('/rules')`），**不要在元件裡寫死路徑字串**。平台名**骰子惡魔**（2026-10-25 定案，對應長角的藍骰子 logo）在 `app/brand.ts`：用 `brandName(locale)`，中文讀者看「骰子惡魔／骰子恶魔」、其他語系是「Dice Devil」。
+
 | 路由 | 說明 |
 |---|---|
-| `/` | 首頁（`HomeView` → `HomeClient`）— 選模式、建立連線房間 |
-| `/rules` | 規則頁，SEO 主力落地頁 |
-| `/solo#easy\|normal\|hard` | 單人對戰。難度放 hash，由 `SoloClient` 以 prop 交給 `PlayClient` |
-| `/local`、`/local/3` | 本機對戰，人數走路由（建置時就定了）。noindex |
-| `/online#roomId=…` | 連線對戰（`OnlineClient` → `PlayClient`，帶 `roomId`）。roomId 放 hash 而非 query。noindex |
-| `/online#new=2\|3` | 首頁連線磁磚的目的地：連線頁自己開房，開好後 `replaceState` 換成 `#roomId=…` |
-| `/match#roomId=…` | 舊網址，只做 client 端轉址到 `/online`（保留 hash）。只有 zh-TW 有 |
-| `/replay#wgf=…` | 棋譜回放。**開發者工具，不是給玩家的功能** —— 見下 |
+| `/` | 平台首頁（`PlatformView`）— Netflix 式深色外殼＋紅（`--brand-red`），推薦作品大區塊（預設放 catalog 的 `HERO_DEFAULT`：原本是最新上線的那款＝`since`，10/25 起暫時是 Wall Go —— 搬家前九成的搜尋點擊落在 `/`、找的是 Wall Go，Zach 照大腦的建議先放它，上線 4 週大腦驗收後再定何時換回；使用者真的點過哪款就換成那款，見 `components/platform/HeroPicker.tsx`；10/24）＋依季橫向捲動的遊戲卡（還沒做的卡角落是骰子惡魔的淡剪影；不畫捲軸，電腦版兩端是翻頁箭頭、滾輪照舊捲整頁，`components/platform/CardRow.tsx`）；遊戲清單在 `app/games/catalog.ts`（英文官方名，譯名查證後才補）；有自己的字的那幾款，卡片與大卡片的名字底下多一行用那款的字寫的原名（虎棋的天城體、九子棋的哥德字、時間拍賣的肥臉體字標、騎士巡遊的舊式襯線；`look.lettering`＋`components/platform/GameName.tsx`，10/25 Zach：「平台應該要可以讓他們呈現自己的字體」），名字本身就是那個英文名時直接換成那款的字；沒有自己的字的（Wall Go、平衡播棋、盲五子棋）一樣多一行英文官方名、用全站的字，尼泊爾虎棋的天城體字標前面同一行補英文（10/25 Zach：「在平台頁也補上英文」） |
+| `/season/1`、`/season/2`、`/season/3` | 季目錄頁（`SeasonView`，2026-10-25 Zach：「點進每一季可以看遊戲的目錄」）。平台首頁每一季的標題連過來（「看全部 ›」）；那一季的遊戲排成格子，能玩的排前面、其他照播出順序（10/25 Zach：「可以玩的遊戲要往上面排」）、上方一排三顆切換各季（只寫「第 N 季」，完整季名留給大標題；10/25 Zach 從三種排法挑的 A）。卡片跟首頁共用 `components/platform/GameCard.tsx`。會被索引，描述列出那一季的遊戲名；分享圖先共用平台那張 |
+| `/wall-go` | Wall Go 首頁（`HomeView` → `HomeClient`）— 選模式、建立連線房間 |
+| `/wall-go/rules` | 規則頁，SEO 主力落地頁 |
+| `/wall-go/solo#easy\|normal\|hard` | 單人對戰。難度放 hash，由 `SoloClient` 以 prop 交給 `PlayClient` |
+| `/wall-go/local`、`/wall-go/local/3` | 本機對戰，人數走路由（建置時就定了）。noindex |
+| `/wall-go/online#roomId=…` | 連線對戰（`OnlineClient` → `PlayClient`，帶 `roomId`）。roomId 放 hash 而非 query。noindex |
+| `/wall-go/online#new=2\|3` | Wall Go 首頁連線磁磚的目的地：連線頁自己開房，開好後 `replaceState` 換成 `#roomId=…` |
+| `/wall-go/replay#wgf=…` | 棋譜回放。**開發者工具，不是給玩家的功能** —— 見下 |
+| `/bagh-chal` | Bagh Chal 首頁（`BaghChalView` → `BaghHub`）。2026-10-20 起是自己的識別（試做中），**不沿用 Wall Go 的元件與視覺**：每一頁的背景是米提拉圖騰滿版鋪（`BaghFrame`＋`globals.css` 的 `.bagh-bg`：一塊用 image quilting 縫成上下左右無縫的圖塊 `pattern.avif／webp`，手機 520px、桌機 720px 重複鋪；先前四條飾帶拼的畫框接縫太明顯、一整幅 cover 虎羊太大。10/25 起鋪在頁面本身、跟著捲，不是 fixed 的一層 —— iOS 26 Safari 的狀態列、工具列底下只畫得出捲過去的內容；停在最上面時狀態列、工具列那兩條仍只有番紅花：狀態列 Safari 26 一律只塗 html 的底色（viewport-fit=cover 試過、沒用），工具列那條往下多鋪一截圖騰（`100lvh − 100svh`）也試過、沒接上，10/25 Zach「好像無解，改回原來」，兩個都拿掉了，紙色面板浮在上面，面板頂列放平台 logo 與聯絡／語言（`BaghHeader`，不疊在背景上）；首頁是天城體字標＋四個按鈕（老虎、羊、本機對戰、連線對戰）；彈窗用 `Modal` 的 `skin="bagh"`（上方一條飾帶、標題在紙色上，不要色帶）、按鈕是米提拉畫的畫框（10/24 Zach：「虎羊棋明明是圖騰風，按鈕也要那樣」—— 一律兩條線 `.bagh-line`（橄欖綠底上是 `.bagh-line-on`）、圓鈕是雙圈小圓牌 `.bagh-medal`，一律直角；兩條線中間夾一排三角的鋸齒框做過，同一天 Zach 說「按鈕不要有那個菱形外框」）、主要鈕與選中的選項是橄欖綠（黑色按鈕是 Wall Go 的風格）、按鈕樣式在 `bagh-chal/styles.ts`（不能放進 `'use client'` 檔：伺服器元件匯入會變成 client reference，className 會變成一段錯誤文字）、難度在 `BaghUi`；棋子與圖示是 AI 畫的米提拉圓牌（`bagh-chal/tokens.tsx`，用背景圖畫，不用 `<img>`＋filter —— iPhone 會漏畫）。木窗門轉場（`WipeOverlay` 的 `DOORS`）只留在從平台卡片進來的那一下；虎羊棋裡面換頁（首頁、規則、對局之間）不播轉場、直接換頁（2026-10-22 Zach）。盤面（10/24 Zach）：一開始只有線、沒有任何符號，選了棋子才在可以去的點開出米字小花；**老虎可以吃羊時不給任何提示**（不閃、不加框、不寫字，做過都被拿掉）；棋子有落下／滑過去／一口吞下的動畫與閒置互動（老虎逗羊，不是羊頂老虎），見 `bagh-chal/idleMotion.ts`。結算就是分享圖（`bagh-chal/shareCard.ts`，番紅花圖騰底＋紙色面板＋鋸齒框；共用的殼是 `components/ShareResultModal.tsx`）。中文名用節目的「尼泊爾虎棋」（10/24，見 glossary）；桌機首頁左邊是 AI 畫的整面印刷棋盤 `board-art.webp`（第一版；10/24 換成老虎追羊的概念圖 `chase.webp`，10/25 Zach 要回到第一版，chase.webp 刪掉了；飾帶與米字小花的顏色也以這張為準）。平台上的圖（大卡片 `hero.webp`、手機方圖 `hero-square.webp`、小卡片 `key-art.webp`）反過來是**遊戲裡真的棋盤與圓牌**擺一盤電腦對下出來的局面、放在圖騰底上（同一天 Zach：平台那張老虎追羊好看，但跟點進去看到的不一樣）。配色在 `bagh-chal/palette.ts`。程式在 `app/games/bagh-chal/`（規則與電腦對手）、`app/components/bagh-chal/`（畫面） |
+| `/bagh-chal/rules` | 規則頁，每步一張小棋盤（`BaghRulesSteps`，對局中的說明彈窗共用） |
+| `/bagh-chal/solo#tiger-normal`、`/bagh-chal/local` | 跟電腦下（hash 是邊＋難度，沒帶就在頁面上選）、兩人同一台。noindex |
+| `/bagh-chal/online#new=tiger\|goat`、`#roomId=…` | 邀請朋友。房間在 RTDB `baghRooms/`（跟 Wall Go 的 `rooms/` 分開，結構見 `types/baghRoom.ts`），存走法字串（`encodeMoves`），只有輪到的人能寫。noindex |
+| `/time-auction`、`/nine-mens-morris`、`/blind-gomoku`、`/balance-mancala`、`/knights-tour` | 第二批五款**試做**（2026-10-20）：每款一頁、選模式與對局都在那一頁（騎士巡邏的模式放 hash：`#show`、`#practice-N`）。規則在 `app/games/<id>/`、畫面在 `app/components/<id>/`、六語系文案在各自的 `app/games/<id>/text.ts`（不進 `messages/`，key 的縮排與順序見 `i18n/gameText.ts`）。metadata 用 `trialGameMetadata`：noindex、不進 sitemap、分享圖用那款自己的（`scripts/og-games/<id>.mjs`，還沒有的用平台那張）。沒有 GA 事件。**規則頁** `<遊戲>/rules`（10/25 Zach：「怎麼玩都沒有換新頁，最好跟 Wall Go 一樣圖配字」；`routes.ts` 的 `trialRules`，各款在自己的分支做）：一步一張圖配字，對局中的說明彈窗是同一份步驟、一次一步、可以左右滑（`hook/useSwipePager.ts`，Wall Go 的遊玩方式、虎棋的說明彈窗也用它）。平台大卡片上的介紹在各款的 `app/games/<id>/blurb.ts`（`games/blurbs.ts` 依路徑查）。**連線版**（10/24 Zach：有兩方互動的都補，騎士巡遊不用）各自在自己的分支上做：九子棋、盲眼五子棋、均衡曼卡拉共用 `turnRooms`（`hook/useTurnRoom.ts`，結構見 `types/turnRoom.ts`），時間拍賣是同時出價、另有自己的房間；網址 `<遊戲>/online#new=…`／`#roomId=…`（`routes.ts` 的 `trialOnline`）。**平台上一款一款開**（2026-10-22 Zach）：`feat/platform-bagh` 只上平台＋虎羊棋＋Wall Go，五款的卡片照「還沒做」的樣子；每款的視覺在自己的 `feat/game-<id>` 分支，那條分支把 `catalog.ts` 裡自己那一行換回 playable＋look |
+| 舊網址 `/rules`、`/solo`、`/local`、`/online`、`/replay`、`/match`（各語系） | CloudFront 301 到 `/wall-go/…`（`infra/cloudfront-redirects.js`，表要跟 `routes.ts` 的 `MOVED` 一致，`tests/infra/redirects.test.ts` 會比對）；舊路徑上另有瀏覽器端轉址當備援（`components/LegacyRedirect.tsx`），noindex、不進 sitemap |
 
 **`/replay` 是用來看玩家回饋的。** 每則回饋都附帶那一局的 WGF（`feedback/*/wgf`），
-在 Firebase Console 讀到回饋時，把棋譜貼到 `/replay#wgf=…` 就能一手一手重看玩家遇到的狀況。
+在 Firebase Console 讀到回饋時，把棋譜貼到 `/wall-go/replay#wgf=…` 就能一手一手重看玩家遇到的狀況。
 首頁右上角的「聯絡我們」也寫進同一個 `feedback/`，但 `mode: 'contact'`、**沒有 WGF**（不在對局裡）；
 它必填的是 `message`，評分選填。規則在 `database.rules.json` 依 `mode` 分流驗證，改表單欄位時兩邊要一起動。
+**每一則（回饋與聯絡我們）都帶 `page`**＝從哪一頁送的網址路徑（`gameService` 自動加，10/25 Zach 問「聯絡我們分得出是哪個來源嗎」）；
+其他遊戲的對局回饋沒有 WGF，走法放 `record`（尼泊爾虎棋是 `encodeMoves`，結算圖下面的「給點意見」，`ShareResultModal` 的 `onFeedback`）。
+這兩個欄位的規則**要先在正式資料庫發布、程式後上線**：多的欄位一律拒絕，順序反過來新程式的回饋會整筆送不出去。
 刻意**沒有任何 UI 入口**、不進 sitemap、noindex —— 這個站不做「個人棋譜」。
 不要替它補分享按鈕或入口；它沒被連到不是漏做，是設計。
 
@@ -123,9 +137,9 @@ nudge { by, at }          最近一次「催一下」
 - **累計思考時間**（同日，Zach：「不做限制時間，記他整場總共耗時多久」）：連線記在 `clock/`，起點 `turnAt` 是伺服器時間、減的時候用 `serverNow()`（加上 `.info/serverTimeOffset`），兩台裝置的時鐘差多少都不影響；本機／單人由這台裝置記、存 sessionStorage。對局中也看得到、輪到的人在走秒（10/23 Zach：「桌機版沒看到下棋時間的計時」）：桌機寫在「已佔領」底下、整排最下面是**對局時長**（各方加起來，輪到誰誰就在走秒，沒有空檔），手機掛在每塊比分外面（直式下方、橫式右邊），手機不寫整局；只有 `GameStatus` 每秒重畫（`utils/clock.ts` 的 `LiveClock`）。桌機那行寫「對局時長」（Zach 從「總時長／共／碼錶圖示／對局時長」挑的）。時間只在對局中看，結算圖上一個都不寫
 - **`clock`／`turnAt` 跟棋譜分開寫、而且先寫**：規則看的是「寫入前輪到誰」，棋譜一寫輪到的人就換了；分開寫是因為規則還沒發布時整包會被拒，那樣棋譜也送不出去
 - **本機測連線**：`NEXT_PUBLIC_FIREBASE_EMULATOR=1` 時 `firebase.ts` 改連 Firebase 模擬器（auth 9099、database 9000，要裝 Java）。在線狀態、斷線、規則只能真的開兩個瀏覽器（兩個身分）連一次才驗得到，不要拿正式資料庫試
-- 首頁右上角水平並排「聯絡我們」與語言切換（40px、離邊 10px）。標題上方有一塊直式才有、可收縮（flex-shrink）的留白：畫面夠高時把標題推到圓鈕下面，不夠高時自己縮掉，不會多出捲軸；640–680 高的舊手機再把標題縮到 6.5dvh。直排、拆到左上都試過，Zach 覺得不好看
-- `HomeClient.tsx` — 連線磁磚**按下去立刻**跳轉 `/online#new=2|3`，不在首頁等建房（手機沒有滑過磁磚的預熱，先前會有 2 秒多畫面不動）。滑過或 focus 磁磚時仍呼叫 `ensureUser()` 預熱登入
-- `app/(default)/online/OnlineClient.tsx` — 解析 hash（`parseOnlineHash`）：`#roomId=` 進房；`#new=` 就地開房（初始棋譜用 `toWgf(createGame(n))`），開好後 `replaceState` 換網址 —— 重新整理才不會再開一間；都不是就顯示「連結不完整」，不會退化成本機對戰
+- 首頁右上角水平並排「聯絡我們」與語言切換（40px、離邊 10px）。標題上方有一塊直式才有的留白（3.5rem，不縮）把標題推到圓鈕下面；**手機直式不硬塞進一個畫面**，矮手機就往下捲，磁磚寬度下限 18rem（10/25 Zach：先前留白會縮到 0、標題頂到圓鈕）。直排、拆到左上都試過，Zach 覺得不好看
+- `HomeClient.tsx` — 連線磁磚**按下去立刻**跳轉 `/wall-go/online#new=2|3`，不在首頁等建房（手機沒有滑過磁磚的預熱，先前會有 2 秒多畫面不動）。滑過或 focus 磁磚時仍呼叫 `ensureUser()` 預熱登入
+- `app/(default)/wall-go/online/OnlineClient.tsx` — 解析 hash（`parseOnlineHash`）：`#roomId=` 進房；`#new=` 就地開房（初始棋譜用 `toWgf(createGame(n))`），開好後 `replaceState` 換網址 —— 重新整理才不會再開一間；都不是就顯示「連結不完整」，不會退化成本機對戰
 
 ### WGF（Wall Go Format）棋譜
 
@@ -179,6 +193,30 @@ nudge { by, at }          最近一次「催一下」
   已知例外：森綠磁磚彩度 0.103，低於 0.125 下限。
 - **圖示**用 game-icons.net 的實心剪影（`react-icons/gi` 已內建，CC BY 3.0）。
   線條圖示在大尺寸色塊上會顯得單薄。署名放在遊玩方式 Modal 裡。
+- **貼紙風（粗黑框＋硬影子）試過、不用**：2026-10-20 先放在 Wall Go 首頁磁磚、再試在對局頁的按鈕與牆（磚牆），
+  Zach 都要復原（「Wall Go 決定不改」）。不要再加回來。
+- **這套視覺只管 Wall Go 與平台**：虎羊棋是印刷棋盤＋米提拉的自己一套（見路由表）。平台標誌是長角的藍骰子（`public/brand/die-mark.svg`，試套）；各遊戲頁左上那顆是同樣大小的灰色半透明單色版（`PlatformMark` 的 `mono`、`die-mark-gray.svg`，10/25 Zach 試看看），平台自己的頁面照舊是藍的。
+  **favicon 每款一組**（2026-10-24）：全站預設 `/favicon.*`、`/icon-*.png` 是平台的骰子惡魔平面版（16px 下立體版糊掉），Wall Go 那兩個人搬到 `public/icons/wall-go.*`、尼泊爾虎棋是老虎圓牌 `public/icons/bagh-chal*`，由 `i18n/metadata.ts` 的 `GAME_ICONS` 依路徑指定；結算分享圖站名前那顆也用那款自己的。第二批五款還沒有自己的，沿用平台的。
+  **加到主畫面的圖示（apple-touch-icon）例外，每一頁都是平台的**（10/25）：從哪一款加，打開都是平台首頁（見下一條），圖示跟著是平台。
+- **加到主畫面（PWA）**（2026-10-25 Zach：「PWA 也做上去，設定上一定要回根目錄，不管從哪一個遊戲註冊」）：設定檔一個語系一份 `/pwa/<語系>.json`（`app/pwa/[file]/route.ts`，內容在 `i18n/pwa.ts`），兩個 root layout 依語系掛 `<link rel="manifest">`。
+  start_url 是**那個語系的平台首頁**（繁中 `/`、英文 `/en/`…，英文頁加的人不該一打開是中文），帶 `?utm_source=pwa&utm_medium=homescreen`（大腦 10/25：GA 才分得出從主畫面打開的造訪；canonical 照舊是乾淨網址）、scope 整站、id 全部 `/`（同一個 App），名字是平台名。
+  副檔名用 `.json`（S3 猜得到 Content-Type）。**沒有 service worker**：Chrome 從選單安裝不需要（Android 108、桌機 112 起），離線快取換版後會拿到舊的 chunk 清單，這個站不做。
+- **第二批五款各有自己的世界**（2026-10-21）：找法跟虎羊棋一樣 —— 先找原件（公有領域／CC0 的館藏），
+  **顏色從原件取樣、不要自己調**（各自的 `palette.ts`／`theme.ts` 寫了出處與對比），**裝飾只有最外緣一圈**
+  （`.<縮寫>-frame`，border-image，彈窗裡不放花紋），按鈕照全站（主要深墨、次要淡墨、沒有框線），彈窗用 `panelClassName` 換成那款的紙色。
+  主視覺與平台卡片都是原件本身。每款在自己的 `feat/game-<id>` 分支（一款一款上線）；下面每款一段，**段與段之間留空行**，
+  各分支改的是自己那一段，依序合併才不會衝突（globals.css 底部的五個標記、catalog.ts 的寫法也是同一個道理）。
+
+  - 九子棋：試做中，視覺在 `feat/game-nine-mens-morris`。
+
+  - 盲眼五子棋：試做中，視覺在 `feat/game-blind-gomoku`。
+
+  - 騎士巡邏：試做中，視覺在 `feat/game-knights-tour`。
+
+  - 時間拍賣：試做中，視覺在 `feat/game-time-auction`。
+
+  - 均衡曼卡拉：試做中，視覺在 `feat/game-balance-mancala`。
+
 - **棋盤**：外圍那圈 9px 是「牆」不是裝飾邊框（規則裡棋盤外緣本身就算一道牆）。
   牆的位移一律 `calc(var(--board-gap) * -0.5)` —— 對齊的是格線中心而不是格子邊，
   兩者差半個格縫，寫死會漂掉。
@@ -210,22 +248,44 @@ nudge { by, at }          最近一次「催一下」
   先前腳本只抓到第一片（emoji），線上的中文字一直是系統字型而沒人發現（2026-09）。
   改文案後要跑 `npm run font:subset`（會下載原始字型到 `node_modules/.cache`），否則新字會**安靜地**掉到系統備援字體；
   CI 有 `font:check` 擋著。
+- **各款在地的名字也用那款風格的字**（2026-10-25 Zach：「我發現很多字體可能是不是比較偏英文／各語系有沒有辦法也找到一樣的字型」）：
+  英文名本來就是那款的字，中日韓泰的名字各挑一種同風格的對應（肥臉體 ↔ 粗宋、哥德手抄本 ↔ 楷書、舊式襯線 ↔ 宋體／明朝，同一款不同語系可以不同字），
+  `scripts/build-name-lettering.mjs` 用 harfbuzz 轉成向量圖（**不載網頁字型**），一款一份設定 `scripts/name-lettering/<遊戲>.mjs`（README 在那裡）。
+  名字切成幾段（中間點後面、空格），放得下排一行、放不下才在段與段之間換行（`components/LocalName.tsx`）—— 先前日文、韓文的標題會斷在字中間（モ／リス、모／리스）。
+  平台卡片與大卡片（`games/nameLetterings.ts` 依路徑查，平台替五款各放一個空的 `nameLettering.ts`、各款分支蓋掉自己的）、各款首頁標題用同一份；名字改了沒重建，測試會擋、畫面退回一般文字。
+- **有自己字的遊戲整頁用那套字**（2026-10-25 Zach：「我以為是一個遊戲內會統一字體／結果是標題跟內容不同字體」）：按鈕、說明、彈窗、分享圖都跟那個語系的標題同一套。
+  `scripts/build-game-fonts.mjs` 依 `scripts/game-fonts/<遊戲>.mjs`（README 在那裡）**只收那款畫面上的字**（那款的文案表、它叫到的共用文案），一款一語系切一份網頁字型，
+  產出 `app/components/<遊戲>/gameFont.css` 由那款的外框元件 import。換的只有 `--font-app`、而且在 `html:has(.<root>)` 上（分享圖從 html 讀 `--font-app`）；
+  全站那套黑體改叫 `--font-site`，`--font-app` 預設就是它，遊戲的字裡沒有的字掉回它。文案改了要跑 `font:subset`（兩支一起跑），`font:check` 會擋。
 - **蓋滿畫面的東西不要剛好等於畫面高度**。手機工具列會隨捲動展開／收起，`inset:0`、`100lvh`、`100dvh` 各在某個瀏覽器／狀態下露底（Safari 與 iPhone 上的 Chrome 各被咬過）。
   Modal 遮罩（`.cover-viewport`）上下各往外多蓋 `max(25vh, 12rem)`，fixed 超出畫面會被裁掉、不產生捲軸；手機控制盤用 `::after` 往下延伸同色底；
-  換頁轉場是 absolute（多蓋會撐長頁面），改由 JS 量 `innerHeight`／`visualViewport` 設高度。模擬器裡沒辦法用手指把工具列收起來，這類問題以「不依賴任何單位」的寫法處理，不要再換單位。
+  換頁轉場是 absolute，改由 JS 量 `innerHeight`／`visualViewport` 設高度，**上下再各多蓋 `max(25%, 192px)`**（`WipeOverlay` 的 `bleedOf`，2026-10-25）：
+  iOS 26 的 Safari 把頁面一路畫到狀態列與底下工具列的後面，scrollY／innerHeight 只算中間那段，只蓋那段的話木窗門關好了、上下還露著平台的季標題（Zach 回報）。
+  往下多蓋會撐長短的頁面，所以只在捲軸不佔版面時多蓋（手機都是；Windows 桌機會多冒一條捲軸，那裡也沒有蓋在頁面上的工具列）。
+  裡面的東西照看得到的那一段排：木窗門的雕花、色塊的起點、各款的 `Scene` 都用 `--bleed` 退回來，多出的那截只接同樣的底。模擬器裡沒辦法用手指把工具列收起來，這類問題以「不依賴任何單位」的寫法處理，不要再換單位。
+- **字、圖、棋盤、磁磚的大小不能跟著工具列變**（2026-10-25 Zach：Wall Go 首頁往下捲、工具列一收，大磁磚就變大變小）：
+  照畫面高度縮放的尺寸、字級、間距一律用 **`svh`**（工具列展開時的高度，不會變），**不用 `dvh`**（工具列收起來就變大）。
+  `dvh` 只留給「鋪滿畫面的底」（`min-h-dvh` 的頁面容器），而且容器裡的東西不能照容器高度算大小（`flex-1` 撐出來的棋盤那種）。
+  寬度方向不受工具列影響，`vw`／`dvw`／`cqw` 都可以。新增前 `git grep -n "[0-9]dvh"` 看一眼。
 - **iOS 26 Safari 的工具列顏色**取自「貼著畫面上下緣的 fixed 元素」（不看 theme-color、不管祖先的 opacity），而且反應慢半秒。
   所以關著的 Modal 遮罩要 `display:none`；換頁轉場（`WipeOverlay`）的根節點用 `absolute` 定位在目前的捲動位置而不是 `fixed` ——
   fixed 的話工具列會慢一拍染成磁磚色，畫面都換好了才變回來。上下各內縮 1px 沒有用，實測過。
+- **各款的進場**（從平台卡片點進去的那一下）：Wall Go 是磁磚脹開、虎羊棋是木窗門（`WipeOverlay` 的 doors）；其他有自己識別的遊戲各自一個（2026-10-22 Zach：「為啥每一個進場都跟 Wall Go 一樣」）。做法：在那款的資料夾放 `Entrance.tsx`（`Scene`＋`play`），在 `components/entrances.ts` 的表打開自己那一行，catalog 的 `look.entrance` 帶同一個 id。平台卡片閒置時先載好，沒載好就退回擴散色塊。進場一樣只動 transform／opacity。
+  `Scene` 被 WipeOverlay 包在「看得到的那一段」裡（跟多蓋之前一樣大），要蓋到狀態列、工具列底下那截，由各款自己用 `var(--bleed,0px)` 往外接同樣的底（各款分支 10/25 都補了：外框外面接一截紙、布條跟著布角一起出現）。
+- **轉場播放中擋住捲動**（`TransitionContext`：touchmove、wheel、捲動鍵）：遮罩是 absolute、定在點下去那一刻的捲動位置，一滑就露出底下的頁面（10/24 Zach）。不用 `useScrollLock` 的 fixed body —— 解鎖時會把舊頁的捲動位置還原到新頁上。
 - **換頁轉場用瀏覽器原生的 Web Animations API**（`element.animate()`），不用 JS 每格寫 style。transform 由合成執行緒（GPU）跑，換頁時 React 佔住主執行緒也不會凍住動畫 —— 先前用 anime.js，主執行緒卡住的 400ms 內畫面 0 格，手機上一直卡。圖示的反向縮放（色塊 s、圖示 1/s）事先取樣成關鍵影格（`components/wipeKeyframes.ts`，自適應取樣、誤差 <1% 由測試鎖住）。**不要再加回每格由 JS 驅動的動畫。**
 - **站內換頁的歷史紀錄要在點擊當下建立**（`TransitionContext.navigate` 先 `pushState` 複製目前紀錄，動畫播完才 `router.replace`）。WebKit（Safari 與 iPhone 上的 Chrome）會把「沒有使用者手勢時 JS 新增過紀錄」的那一頁在返回時跳過；動畫播完才 push 就沒有手勢了，從規則頁按返回會越過首頁。沒有手勢的 `replaceState` 不受影響（實測）。**驗證這類問題要用瀏覽器真正的返回（WebDriver `/back`），`history.back()` 不會跳過，測不出來。**
 - **換語言是整頁跳轉**，瀏覽器的 back-forward cache 會把離開時的畫面凍結起來；會在整頁跳轉前打開的東西（語言選單）要在點下去時關掉，並在 `pageshow`（persisted）時再關一次。
 - **Modal** 共用 `app/components/Modal.tsx`，掛載後一律用 portal 渲染到 `<body>`，層級固定 `z-[55]`（頁面元件最高 z-50、換頁轉場 z-[60]；不能與頁面同層級，站內換頁後新頁面會排到 portal 後面蓋過 Modal）：祖先只要有 `backdrop-filter`／`filter`／`transform`，裡面的 `fixed` 就會改成相對那個祖先（規則頁毛玻璃頂部列裡的語言選單就這樣被壓成一條）。關閉時務必保留 `inert` ——
   只用 `opacity-0` 不會把內容移出無障礙樹。
-- **分享圖**（og:image）**每頁每語系各一張**，共 36 張，由
+- **分享圖**（og:image）**每頁每語系各一張**，由
   `scripts/build-og-images.mjs` 產生到 `public/og/{page}-{locale}.png`，
   版面在 `scripts/og-design.mjs`。圖上只有節目名與標題、**不放描述句**（Zach 拔掉的）。
   改了標題相關文案（`metaTitle`、`titleLine1/2`、`showName`）要跑 `npm run og:build`，
-  CI 有 `og:check` 擋著。
+  CI 有 `og:check` 擋著（比對表一頁一份：`public/og/copy/<頁>.json`）。`npm run og:build -- <頁>…` 只重建那幾頁 —— 各款的分支只重建自己的，合併才不會撞。
+  2026-10-25：平台首頁是**七款卡片斜排的一面牆**（Zach：「可以放多個遊戲集結的感覺」；背景 `scripts/og-art/platform.jpg` 由同資料夾的 `collage.mjs` 在七款都合進來的 beta 上產生）、
+  尼泊爾虎棋換成虎棋自己的顏色＋平台那張真棋盤方圖（原本是舊版棋盤的 key-art.svg）、第二批五款各一份 `scripts/og-games/<id>.mjs`（格式見那裡的 README）。
+  有照片的圖轉成 256 色 PNG：直接輸出 400KB–1MB，WhatsApp 超過約 300KB 就不顯示預覽。
   **不要改用 Next 的 `opengraph-image.tsx`** —— 那個慣例產出的檔案沒有副檔名
   （`out/rules/opengraph-image-1mfdno`），`aws s3 sync` 推不出 Content-Type，
   抓取器拿到 `binary/octet-stream` 就不顯示圖。實測確認過。
@@ -241,6 +301,7 @@ nudge { by, at }          最近一次「催一下」
 - **瀏覽器自己的「確定要離開嗎？」（`beforeunload`）只在電腦版有用**：它只管整頁跳轉，站內換頁不觸發；iPhone 的 Safari 與 Chrome 完全不顯示。保留它給電腦版，但不能只靠它。
 - **房子鈕**：對局還沒結束就先開 `LeaveConfirmModal`。
 - **瀏覽器返回鍵**：對局頁第一次點擊時，在歷史紀錄最上面放一筆同網址的「守門」（`__wallgoGuard`）。按返回只是從守門退回真正那筆、頁面不換，`popstate` 裡攔下來問；離開就再退一步，不離開就把守門放回去。沒東西會丟（還沒下、已下完、連線還在等人）就自動替使用者再退一步。守門**必須在點擊當下 push**（WebKit 規則，見上方〈站內換頁〉那條），所以不等「有進度」才放。確認視窗開著時的點擊不放守門；重整後若停在守門上要先認出來。從房子鈕離開時用 `navigate(..., { replace: true })` 取代守門。
+- **其他遊戲共用 `hook/useLeaveGuard.ts`**（10/25 Zach：「遊戲玩到一半要退出離開都要有一個提示詢問」）：同一套房子鈕、返回鍵守門、電腦版 `beforeunload`，確認視窗由各款用自己的樣子畫（文案共用 `useGameText().leave`）。房子鈕呼叫 `request(離開要做的事)`，守門那筆會先退掉再走，回到選單後按一次返回就回得去；不必問、用 replaceState 換網址的換局（騎士巡遊換大小）走 `skip`，同樣先退掉守門。Wall Go 的 `PlayClient` 是原版，沒有改用它。
 - **重整接回**（本機、單人）：每一步把 WGF 寫進 sessionStorage（`utils/savedGame.ts`，只活在這個分頁），掛載時 `replay` 回來；分出勝負、重新開始、確認離開就清掉。從首頁磁磚或 `/solo` 選難度進來是新的一局（會清）。進行到一半的那一手不會保留。連線局本來就從 Firebase 接回。接回的那一下不送 GA 的 `game_start`。
 
 ## 單人對戰
@@ -280,6 +341,9 @@ GA 由 `app/shell.tsx` 的 `<GoogleAnalytics>` 載入（只有 `NEXT_PUBLIC_APP_
 事件由 `track()` 送。**一件事一個事件名稱，差異放參數** —— 不要再把變數塞進事件名稱
 （舊的 `start_local_game_2p` 那種），GA 的事件名稱有 500 種上限，而且報表無法加總。
 
+**平台上線後（`docs/platform-tracking.md`）**：跟對局有關的事件（下表 `mode_select` 到 `tutorial_close`）都帶 `game`（網址的 slug：`wall-go`、`bagh-chal`），
+型別上是必填（`analytics.ts` 的 `GameSlug`，新遊戲上線要加進去）；尼泊爾虎棋送同一套事件，不另開名稱。`feedback_send` 也帶 `game`（平台頁尾送的不帶）。
+
 | 事件 | 什麼時候 | 參數 |
 |---|---|---|
 | `mode_select` | 首頁磁磚或 `/solo` 頁選了模式（想玩） | mode、players、difficulty、entry |
@@ -293,11 +357,14 @@ GA 由 `app/shell.tsx` 的 `<GoogleAnalytics>` 載入（只有 `NEXT_PUBLIC_APP_
 | `nudge_send` | 連線時催輪到的人 | players |
 | `tutorial_close` | 關掉遊玩方式 | step、steps、finished |
 | `locale_switch` | 切語系 | from、to |
-| `contact_open` / `feedback_send` | 聯絡我們、送出回饋 | entry、rating |
+| `contact_open` / `feedback_send` | 聯絡我們、送出回饋 | entry、rating（feedback_send 另有 game） |
+| `select_game` | 平台首頁、季目錄點了能玩的遊戲卡（大卡的「開始玩」也算） | game、location（home_hero／home_grid／season／related）、season（1／2／3） |
 
 - `game_start` / `game_end` 看**狀態轉變**而不是按鈕；第一次觀察到的狀態不送（重整後從棋譜重建的「已開始／已結束」不是這次發生的），連線另用 sessionStorage 去重。連線局每位玩家各送一次，所以是「人次」不是「局數」。投降不另外送，會以 `game_end` 的 `ended: 'resign'` 出現。
 - **`page_view` 交給 GA 自己算**（首次載入由 config、站內換頁由加強型評估的「依瀏覽器記錄事件」）。不要再手動送 —— 以前的 `AnalyticsProvider` 就是這樣讓每次瀏覽都算兩次。
-- 參數要在 GA 後台「管理 → 自訂定義」註冊才看得到：維度 `mode`、`players`、`difficulty`、`entry`、`result`、`winner`、`ended`、`reason`、`fail_step`、`method`、`from`、`to`、`finished`；指標 `turns`、`duration_sec`、`step`、`rating`。
+  它要帶的 `page_type`（platform_home／season／game_home／rules／play）與 `game` 用 `gtag('set')` 設：`utils/pageMeta.ts` 的內嵌 script 在 GA 載入前包住 pushState／replaceState、聽 popstate，網址一變就照新網址 set（在 React effect 裡 set 會晚 GA 一步、帶到上一頁的值）。set 過的值這一頁之後的每個事件都會帶。
+- `select_game` 由 `SelectGameTracker` 在 document 上聽 click：能玩的卡本來就有 `data-game`，往上找 `data-select-location` 決定是哪一區。
+- 參數要在 GA 後台「管理 → 自訂定義」註冊才看得到：維度 `mode`、`players`、`difficulty`、`entry`、`result`、`winner`、`ended`、`reason`、`fail_step`、`method`、`from`、`to`、`finished`、`game`、`location`、`page_type`、`season`；指標 `turns`、`duration_sec`、`step`、`rating`。
   `share` 的 `content_type`、`item_id` 是 GA4 建議事件的標準參數，後台有沒有內建維度要上線後確認，沒有再註冊。
 - **參數名稱在維度與指標之間不能重複**：`step` 已經是 `tutorial_close` 的指標，所以連線失敗的步驟叫 `fail_step`。新增參數前先看這份清單。
 - **不能用 GA 保留給流量來源的名稱**：`source`、`medium`、`campaign`、`term`、`content`（還有 `gclid`、`utm_*` 這類）。GA4 會把它們當成這個工作階段的來源 —— 2026-10 `mode_select` 帶 `source=home`，Google 搜尋進來的工作階段被記成來源「home」（大腦從 BigQuery 查到：10/22 的 22 個工作階段有 8 個），所以改名 `entry`。`from` 也不要拿來當入口：它已經是 `locale_switch` 的「從哪個語系」。
@@ -341,7 +408,8 @@ GA 由 `app/shell.tsx` 的 `<GoogleAnalytics>` 載入（只有 `NEXT_PUBLIC_APP_
 
 ## 部署
 
-GitHub Actions（`.github/workflows/`）負責建置並將 `/out` 同步至 AWS S3。設定 `SITE_URL` 環境變數可覆蓋預設的 `https://quoridorgame.com` 以產生 sitemap。
+GitHub Actions（`.github/workflows/`）負責建置並將 `/out` 同步至 AWS S3。
+`aws s3 sync` 依副檔名猜 Content-Type：虎羊棋的背景是 `.avif`、各遊戲圖是 `.webp`，**第一次上線後要用 `curl -I` 確認 S3 回的是 `image/avif`／`image/webp`**（猜錯成 `binary/octet-stream` 時，帶 `nosniff` 的情況下瀏覽器不會畫；本機預覽的 `serve` 也不認得 `.avif`，要用 `--config` 加標頭）。設定 `SITE_URL` 環境變數可覆蓋預設的 `https://quoridorgame.com` 以產生 sitemap。
 
 ## 數據中心
 

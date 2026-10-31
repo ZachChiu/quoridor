@@ -1,9 +1,8 @@
-import type { Metadata } from 'next';
-import { playMetadata } from '@/i18n/metadata';
-import OnlineView from '@/views/OnlineView';
+import { Legacy, legacyMetadata } from '@/i18n/legacy';
 
-export const metadata: Metadata = playMetadata('zh-TW', '/online');
+/** 舊網址 /online：搬到 /wall-go/online（見 app/i18n/legacy.tsx） */
+export const metadata = legacyMetadata('zh-TW', '/online');
 
-export default function MatchPage() {
-  return <OnlineView locale="zh-TW" />;
+export default function Page() {
+  return <Legacy locale="zh-TW" oldPath="/online" />;
 }

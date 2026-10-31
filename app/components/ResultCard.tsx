@@ -5,6 +5,7 @@ import { type PlayerKey } from '@/config/players';
 import { useGameText, useLocale, useMessages } from '@/i18n/LocaleProvider';
 import { fmt } from '@/i18n/content/game';
 import { localePath } from '@/i18n/locales';
+import { wallGo } from '@/i18n/routes';
 import { CARD_SIZE, drawResultCard, type CardLayout, type ResultCardData } from '@/utils/resultCard';
 import { track } from '@/utils/analytics';
 
@@ -74,10 +75,10 @@ export function useResultCard(isOpen: boolean, input: ShareCardInput) {
     let cancelled = false;
     (async () => {
       // QR 的網址：首頁，帶 utm 讓 GA 認得出是從分享圖來的（首頁的 canonical 會指回乾淨的網址）
-      const url = `${SITE}${localePath(locale, '/')}?utm_source=result_card&utm_medium=share`;
+      const url = `${SITE}${localePath(locale, wallGo())}?utm_source=result_card&utm_medium=share`;
       // 站的圖示：載不到（離線、被擋）就不畫，不讓整張圖卡住
       const icon = new Image();
-      icon.src = '/icon-192.png';
+      icon.src = '/icons/wall-go-192.png';
       const [{ encode }] = await Promise.all([import('uqr'), icon.decode().catch(() => {})]);
       const qr = encode(url, { ecc: 'M', border: 0 }).data;
       // 字型跟頁面同一套。canvas 不會自己等字型下載完，先要求載入粗、中兩種字重
@@ -123,14 +124,14 @@ export function useResultCard(isOpen: boolean, input: ShareCardInput) {
     a.click();
     a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 10_000);
-    track('share', { method: 'download', content_type: 'result_card', item_id: layout });
+    track('share', { game: 'wall-go', method: 'download', content_type: 'result_card', item_id: layout });
   };
 
   const shareFile = async () => {
     if (!ready) return;
     try {
       await navigator.share({ files: [ready.file], title: g.share.shareTitle });
-      track('share', { method: 'native', content_type: 'result_card', item_id: layout });
+      track('share', { game: 'wall-go', method: 'native', content_type: 'result_card', item_id: layout });
     } catch (err) {
       // 使用者在面板上取消不是錯誤；其他失敗（權限、App 內建瀏覽器）就退回存檔
       if (!(err instanceof DOMException && err.name === 'AbortError')) save();

@@ -1,27 +1,15 @@
-import type { Metadata } from 'next';
-import { playMetadata } from '@/i18n/metadata';
-import LocalView from '@/views/LocalView';
+import { Legacy, legacyMetadata } from '@/i18n/legacy';
 import { PREFIXED, toLocale } from '@/i18n/locales';
 
-/**
- * 各語系的對局畫面。
- *
- * 不做這一層的話，/en 首頁按下磁磚會導到 zh-TW 的 /local ——
- * 英文使用者一進遊戲畫面整個介面就變回中文。
- * 這兩頁不需要被索引，但介面語言必須跟著走。
- */
+/** 舊網址 /{locale}/local：搬到 /{locale}/wall-go/local（見 app/i18n/legacy.tsx） */
 export function generateStaticParams() {
   return PREFIXED.map((locale) => ({ locale }));
 }
 
-export async function generateMetadata({
-  params,
-}: { params: Promise<{ locale: string }> }): Promise<Metadata> {
-  return playMetadata(toLocale((await params).locale), '/local');
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+  return legacyMetadata(toLocale((await params).locale), '/local');
 }
 
-export default async function Page({
-  params,
-}: { params: Promise<{ locale: string }> }) {
-  return <LocalView locale={toLocale((await params).locale)} />;
+export default async function Page({ params }: { params: Promise<{ locale: string }> }) {
+  return <Legacy locale={toLocale((await params).locale)} oldPath="/local" />;
 }

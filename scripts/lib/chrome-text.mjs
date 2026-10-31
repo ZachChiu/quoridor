@@ -25,7 +25,10 @@ export async function openChrome() {
   const port = 9400 + Math.floor(Math.random() * 400);
   const proc = spawn(CHROME, [
     `--remote-debugging-port=${port}`, `--user-data-dir=${dir}`, '--headless=new',
-    '--no-first-run', '--no-default-browser-check', '--disable-extensions', 'about:blank',
+    '--no-first-run', '--no-default-browser-check', '--disable-extensions',
+    // 雲端容器是 root，Chrome 在 root 底下不開沙箱就不肯啟動
+    ...(process.getuid?.() === 0 ? ['--no-sandbox'] : []),
+    'about:blank',
   ], { stdio: 'ignore' });
   let ver;
   for (let i = 0; i < 60 && !ver; i++) {
@@ -72,7 +75,16 @@ export async function openChrome() {
         #t { display: inline-block; font: ${weight} ${fontSize}px/1.08 X; color: ${color}; white-space: nowrap; padding: ${pad}px 2px; }
       </style></head><body><span id="t"></span></body></html>`;
       await s('Page.navigate', { url: 'data:text/html;base64,' + Buffer.from(html).toString('base64') });
-      await sleep(150);
+      // 等新頁面真的換上來（span 是空的）才填字：只睡固定時間的話，偶爾還在上一頁，
+      // 字填進舊頁面、截到的也是舊圖 —— 平台首頁的泰文圖兩行都變成同一行（2026-10）
+      for (let i = 0; i < 50; i++) {
+        const ready = await s('Runtime.evaluate', {
+          expression: `document.readyState === 'complete' && document.getElementById('t')?.textContent === ''`,
+          returnByValue: true,
+        });
+        if (ready.result.value) break;
+        await sleep(50);
+      }
       const r = await s('Runtime.evaluate', {
         expression: `(async () => { const t = document.getElementById('t'); t.textContent = ${JSON.stringify(text)};
           await document.fonts.ready; const b = t.getBoundingClientRect(); return [b.x, b.y, b.width, b.height]; })()`,

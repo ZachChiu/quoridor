@@ -29,6 +29,23 @@
     - nudge（同日）：在座、而且不是輪到的人才能催；15 秒冷卻由這裡擋（at 必須是伺服器的現在）
     - 房間多出來的欄位一律拒絕（$other）。新增欄位要先改這裡
 
+    ── Bagh Chal 的房間（baghRooms）──────────────────────────────────
+    跟 rooms 分開：欄位不同（座位就是老虎／羊、存走法字串而不是 WGF）。
+    - 建房：只能建不存在的房，而且自己要坐在其中一邊
+    - 座位：同 rooms，空位只能坐自己
+    - moves 與 turn：**只有輪到的人**能寫（看寫入前的 turn），走完一手兩個一起寫。
+      所以不能替對方走、也不能把回合搶過來。合不合規則由兩邊的程式重走一次檢查
+    - 沒有 status、winners：勝負全部由 moves 推導（目前沒有投降）
+
+    ── 輪流下的遊戲共用的房間（turnRooms，2026-10-24 加）────────────────
+    九子棋、盲眼五子棋、均衡曼卡拉共用（結構見 app/types/turnRoom.ts）。做法跟 baghRooms 一樣，只是座位不寫死：
+    - 座位鍵 s0..s7，而且不能超過這間房的 seats（建房時決定、之後不能改）
+    - 建房：只能建不存在的房，host 指的那個座位必須是自己
+    - game、seats、setup、host、createdAt 建房後不能改（只有建房那一次寫得進去）
+    - moves 與 turn：**只有輪到的人**能寫（看寫入前的 turn 指到的座位是不是自己），走完一手兩個一起寫
+    - 沒有 status、winner：勝負由 moves 推導
+    這段先發布、程式後上線沒關係：舊程式不會碰 turnRooms
+
     ── 回饋 ─────────────────────────────────────────────────────────
     只能新增、沒有人讀得到（裡面可能有選填的聯絡方式）；我從 Console 讀，
     Console 不受規則限制。uid 必須是本人、每個欄位有上限、多的欄位拒絕 ——
@@ -37,6 +54,9 @@
     兩種來源：對局結束的回饋（mode = local / online / ai，必有評分與棋譜），
     與首頁右上角的「聯絡我們」（mode = contact，不綁某一局：沒有棋譜、評分選填，
     但一定要有留言）。
+    對局回饋的棋譜：Wall Go 是 wgf，其他遊戲是 record（各款自己的走法格式），至少要有一個。
+    page（2026-10-25 加）是從哪一頁送的網址路徑，平台有好幾款之後才分得出是哪一款的留言。
+    **這段要先發布、帶 page／record 的程式後上線** —— 反過來的話新程式送的回饋會整筆被拒（多的欄位一律拒絕）
   */
   "rules": {
     ".read": false,
@@ -123,17 +143,85 @@
         "$other": { ".validate": false }
       }
     },
+    "baghRooms": {
+      "$roomId": {
+        ".read": "auth != null",
+        ".write": "auth != null && !data.exists() && (newData.child('players/tiger/uid').val() === auth.uid || newData.child('players/goat/uid').val() === auth.uid)",
+        "id": { ".validate": "newData.isString()" },
+        "createdAt": { ".validate": "newData.isNumber()" },
+        "players": {
+          "tiger": {
+            ".write": "auth != null && (!data.exists() ? newData.child('uid').val() === auth.uid : data.child('uid').val() === auth.uid)",
+            "uid": { ".validate": "newData.isString() && newData.val().length > 0" },
+            "displayName": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 40" },
+            "joinedAt": { ".validate": "newData.isNumber()" },
+            "$other": { ".validate": false }
+          },
+          "goat": {
+            ".write": "auth != null && (!data.exists() ? newData.child('uid').val() === auth.uid : data.child('uid').val() === auth.uid)",
+            "uid": { ".validate": "newData.isString() && newData.val().length > 0" },
+            "displayName": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 40" },
+            "joinedAt": { ".validate": "newData.isNumber()" },
+            "$other": { ".validate": false }
+          },
+          "$other": { ".validate": false }
+        },
+        "moves": {
+          ".write": "auth != null && ((data.parent().child('turn').val() === 'tiger' && data.parent().child('players/tiger/uid').val() === auth.uid) || (data.parent().child('turn').val() === 'goat' && data.parent().child('players/goat/uid').val() === auth.uid))",
+          ".validate": "newData.isString() && newData.val().length <= 4000"
+        },
+        "turn": {
+          ".write": "auth != null && ((data.parent().child('turn').val() === 'tiger' && data.parent().child('players/tiger/uid').val() === auth.uid) || (data.parent().child('turn').val() === 'goat' && data.parent().child('players/goat/uid').val() === auth.uid))",
+          ".validate": "newData.val() === 'tiger' || newData.val() === 'goat'"
+        },
+        "$other": { ".validate": false }
+      }
+    },
+    "turnRooms": {
+      "$roomId": {
+        ".read": "auth != null",
+        ".write": "auth != null && !data.exists() && newData.child('players/' + newData.child('host').val() + '/uid').val() === auth.uid",
+        ".validate": "newData.hasChildren(['id', 'game', 'seats', 'setup', 'host', 'createdAt', 'turn'])",
+        "id": { ".validate": "newData.isString() && newData.val() === $roomId" },
+        "game": { ".validate": "!data.exists() && (newData.val() === 'nine-mens-morris' || newData.val() === 'blind-gomoku' || newData.val() === 'balance-mancala')" },
+        "seats": { ".validate": "!data.exists() && newData.isNumber() && newData.val() >= 2 && newData.val() <= 8" },
+        "setup": { ".validate": "!data.exists() && newData.isString() && newData.val().length <= 200" },
+        "host": { ".validate": "!data.exists() && newData.isString() && newData.val().matches(/^s[0-7]$/)" },
+        "createdAt": { ".validate": "!data.exists() && newData.isNumber()" },
+        "players": {
+          "$seat": {
+            ".write": "auth != null && (!data.exists() ? newData.child('uid').val() === auth.uid : data.child('uid').val() === auth.uid)",
+            ".validate": "newData.hasChildren(['uid', 'displayName', 'joinedAt']) && ($seat === 's0' || $seat === 's1' || ($seat === 's2' && newData.parent().parent().child('seats').val() >= 3) || ($seat === 's3' && newData.parent().parent().child('seats').val() >= 4) || ($seat === 's4' && newData.parent().parent().child('seats').val() >= 5) || ($seat === 's5' && newData.parent().parent().child('seats').val() >= 6) || ($seat === 's6' && newData.parent().parent().child('seats').val() >= 7) || ($seat === 's7' && newData.parent().parent().child('seats').val() >= 8))",
+            "uid": { ".validate": "newData.isString() && newData.val().length > 0" },
+            "displayName": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 40" },
+            "joinedAt": { ".validate": "newData.isNumber()" },
+            "$other": { ".validate": false }
+          }
+        },
+        "moves": {
+          ".write": "auth != null && data.parent().child('players/' + data.parent().child('turn').val() + '/uid').val() === auth.uid",
+          ".validate": "newData.isString() && newData.val().length <= 20000"
+        },
+        "turn": {
+          ".write": "auth != null && data.parent().child('players/' + data.parent().child('turn').val() + '/uid').val() === auth.uid",
+          ".validate": "newData.isString() && newData.val().matches(/^s[0-7]$/) && newData.parent().child('players/' + newData.val()).exists() || (!data.exists() && newData.isString() && newData.val().matches(/^s[0-7]$/))"
+        },
+        "$other": { ".validate": false }
+      }
+    },
     "feedback": {
       ".read": false,
       "$entryId": {
         ".write": "auth != null && !data.exists()",
-        ".validate": "newData.hasChildren(['uid', 'createdAt', 'mode']) && (newData.child('mode').val() === 'contact' ? newData.hasChild('message') : newData.hasChildren(['rating', 'wgf']))",
+        ".validate": "newData.hasChildren(['uid', 'createdAt', 'mode']) && (newData.child('mode').val() === 'contact' ? newData.hasChild('message') : newData.hasChild('rating') && (newData.hasChild('wgf') || newData.hasChild('record')))",
         "uid": { ".validate": "newData.val() === auth.uid" },
         "createdAt": { ".validate": "newData.isNumber()" },
         "rating": { ".validate": "newData.val() === 1 || newData.val() === 2 || newData.val() === 3" },
         "message": { ".validate": "newData.isString() && newData.val().length <= 800" },
         "contact": { ".validate": "newData.isString() && newData.val().length <= 120" },
         "wgf": { ".validate": "newData.isString() && newData.val().length <= 20000" },
+        "record": { ".validate": "newData.isString() && newData.val().length <= 20000" },
+        "page": { ".validate": "newData.isString() && newData.val().length <= 100" },
         "mode": { ".validate": "newData.val() === 'local' || newData.val() === 'online' || newData.val() === 'ai' || newData.val() === 'contact'" },
         "playersNum": { ".validate": "newData.val() === 2 || newData.val() === 3" },
         "result": { ".validate": "newData.isString() && newData.val().length <= 40" },

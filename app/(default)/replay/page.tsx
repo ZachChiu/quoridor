@@ -1,9 +1,8 @@
-import type { Metadata } from 'next';
-import { playMetadata } from '@/i18n/metadata';
-import ReplayView from '@/views/ReplayView';
+import { Legacy, legacyMetadata } from '@/i18n/legacy';
 
-export const metadata: Metadata = playMetadata('zh-TW', '/replay');
+/** 舊網址 /replay：搬到 /wall-go/replay（見 app/i18n/legacy.tsx） */
+export const metadata = legacyMetadata('zh-TW', '/replay');
 
-export default function ReplayPage() {
-  return <ReplayView locale="zh-TW" />;
+export default function Page() {
+  return <Legacy locale="zh-TW" oldPath="/replay" />;
 }

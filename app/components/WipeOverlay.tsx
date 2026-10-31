@@ -3,6 +3,8 @@ import React, { useEffect, useRef } from 'react';
 import { useIsoLayoutEffect } from '@/hook/useIsoLayoutEffect';
 import { CSS_IN_OUT_CUBIC, inOutCubic, outCubic, scaleKeyframes } from './wipeKeyframes';
 import type { IconType } from 'react-icons';
+import Door from './Doors';
+import { entranceOf } from './entrances';
 
 export type WipePhase = 'cover' | 'uncover';
 
@@ -42,11 +44,32 @@ export type Wipe = {
    * 放在裡面的話會被那個只有幾十 px 的起點方框夾住，四個字斷成直排。
    */
   big?: boolean;
+  /**
+   * 離場的方式。預設 shrink：色塊縮回去、把圖示吃掉。
+   * fade：蓋滿之後整塊原地淡出。從平台進遊戲用這個 —— 平台與遊戲的風格差很多，
+   * 縮回卡片的位置會像「又回到平台」，淡出才是「打開之後就在遊戲裡了」（Zach 指定）。
+   */
+  exit?: 'shrink' | 'fade';
   /** big 大標底下的一行小字（連線開場的「你是藍方」） */
   sub?: string;
   iconColor?: string;
   fg?: string;
+  /**
+   * 換一種形式：
+   * - doors：兩扇紐瓦爾木窗門關上、換好頁再往外推開（虎羊棋，2026-10-20 Zach 指定）。見下方 DOORS。
+   * - scene：那款遊戲自己的進場（`scene` 是 components/entrances.ts 的 id），畫面與動畫都由它自己決定。
+   * 這兩種的 x／y／from／icon 都用不到。
+   */
+  kind?: 'doors' | 'scene';
+  /** kind 為 scene 時，進場的 id（同 catalog 的 look.entrance） */
+  scene?: string;
 };
+
+/** 木窗門：只用在從平台卡片進虎羊棋的那一下（WipeLink doors）。虎羊棋裡面換頁不播轉場（2026-10-22 Zach） */
+export const DOORS: Wipe = { x: 0, y: 0, color: '#f1e6cd', kind: 'doors' };
+
+/** 門的開闔角度：轉過 90° 之後背面朝外，backface-visibility 讓它消失 */
+const DOOR_OPEN = 100;
 
 interface Props {
   phase: WipePhase;
@@ -56,6 +79,34 @@ interface Props {
 
 /** 沒有 `from` 時的預設圓直徑。 */
 const BASE = 80;
+
+/** 捲軸佔不佔版面（量一次就記住）。手機、macOS 預設是浮在上面的，不佔 */
+let overlayScrollbars: boolean | undefined;
+
+/**
+ * 轉場層上下各往外多蓋幾 px。
+ *
+ * iOS 26 的 Safari 把頁面一路畫到狀態列與底下工具列的後面（毛玻璃底下看得到），
+ * 但 scrollY／innerHeight 只算中間那一段 —— 只蓋那一段的話，木窗門關好了，
+ * 狀態列底下還露著平台的季標題、工具列底下是舊頁面（10/25 Zach 回報）。
+ * 那兩條有多高量不到，所以照 Modal 遮罩（`.cover-viewport`）的做法多蓋一大截。
+ *
+ * 這層是 absolute，往下多蓋會把短的頁面撐長。播放中頁面不能捲（TransitionContext），
+ * 撐長的那一截捲不到；但捲軸會佔版面的瀏覽器（Windows 的桌機）會多冒出一條捲軸、
+ * 版面跳一下 —— 那些瀏覽器也沒有蓋在頁面上的工具列，所以只在捲軸不佔版面時多蓋。
+ * 上下一樣多，畫面正中央才會落在轉場層的正中央（木窗門的透視、大標都以它為準）。
+ */
+function bleedOf(): number {
+  if (typeof window === 'undefined') return 0;
+  if (overlayScrollbars === undefined) {
+    const probe = document.createElement('div');
+    probe.style.cssText = 'position:absolute;top:-300px;width:100px;height:100px;overflow:scroll;visibility:hidden';
+    document.body.appendChild(probe);
+    overlayScrollbars = probe.offsetWidth === probe.clientWidth;
+    probe.remove();
+  }
+  return overlayScrollbars ? Math.round(Math.max(window.innerHeight * 0.25, 192)) : 0;
+}
 
 const boxOf = (wipe: Wipe) => ({
   width: wipe.from?.width ?? BASE,
@@ -79,12 +130,14 @@ const boxOf = (wipe: Wipe) => ({
  *  →  s ≥ √( (2dx/w)² + (2dy/h)² )
  *
  * 正方形起點時會退化成 `2·hypot(dx,dy)/w`，也就是圓要碰到對角。
+ *
+ * 上下多蓋的那一截（bleedOf）也要蓋到，所以 dy 加上它。
  */
 function coverScale(wipe: Wipe): number {
   if (typeof window === 'undefined') return 40;
   const { width, height } = boxOf(wipe);
   const dx = Math.max(wipe.x, window.innerWidth - wipe.x);
-  const dy = Math.max(wipe.y, window.innerHeight - wipe.y);
+  const dy = Math.max(wipe.y, window.innerHeight - wipe.y) + bleedOf();
   return Math.hypot((2 * dx) / width, (2 * dy) / height) * 1.04;
 }
 
@@ -122,17 +175,56 @@ const WipeOverlay: React.FC<Props> = ({ phase, wipe, onDone }) => {
       高度也用量的，不用 CSS 單位：工具列收起來時 dvh 在 iPhone 的 Chrome 上
       不會跟著變大（Zach 回報 Modal 遮罩露底，同一個原因）。innerHeight 與
       visualViewport 是瀏覽器「現在」回報的可視高度，取大的那個。
-      不能像 Modal 遮罩那樣往外多蓋 —— 這層是 absolute，多蓋會把頁面撐長。
+      上下再各多蓋 bleed（見 bleedOf）。裡面的東西照「看得到的那一段」排版的，
+      用 --bleed 退回來（木窗門的雕花、各款進場的 Scene、色塊的起點）。
     */
     const h = Math.max(window.innerHeight, window.visualViewport?.height ?? 0);
-    root.style.top = `${window.scrollY}px`;
+    const bleed = bleedOf();
+    root.style.top = `${window.scrollY - bleed}px`;
     root.style.bottom = 'auto';
-    root.style.height = `${Math.ceil(h)}px`;
+    root.style.height = `${Math.ceil(h) + 2 * bleed}px`;
+    root.style.setProperty('--bleed', `${bleed}px`);
   }, [phase, wipe]);
 
   useEffect(() => {
     const root = rootRef.current;
     if (!root) return;
+
+    /*
+      木窗門：左門的鉸鍊在左緣、右門在右緣，rotateY 轉開（往畫面裡推，像從屋裡推開窗）。
+      一樣交給 element.animate()，transform 與 opacity 都在合成執行緒跑。
+      關門用 in-out（像被帶上），開門用 out（推開後慢慢停住）；門越轉開越暗，看得出深度。
+    */
+    if (wipe.kind === 'doors') {
+      const doors = Array.from(root.querySelectorAll<HTMLElement>('[data-door]'));
+      if (!doors.length || typeof doors[0].animate !== 'function') { doneRef.current(); return; }
+      const anims: Animation[] = [];
+      for (const el of doors) {
+        const open = `rotateY(${el.dataset.door === 'left' ? DOOR_OPEN : -DOOR_OPEN}deg)`;
+        const shut = 'rotateY(0deg)';
+        const o: KeyframeAnimationOptions = phase === 'cover'
+          ? { duration: 560, easing: 'cubic-bezier(0.55, 0, 0.45, 1)', fill: 'both' }
+          : { duration: 780, delay: 90, easing: 'cubic-bezier(0.3, 0, 0.15, 1)', fill: 'both' };
+        anims.push(el.animate(phase === 'cover' ? [{ transform: open }, { transform: shut }] : [{ transform: shut }, { transform: open }], o));
+        const shade = el.querySelector('[data-shade]');
+        if (shade) anims.push(shade.animate(phase === 'cover' ? [{ opacity: 0.7 }, { opacity: 0 }] : [{ opacity: 0 }, { opacity: 0.7 }], o));
+      }
+      let cancelled = false;
+      Promise.all(anims.map((a) => a.finished)).then(() => { if (!cancelled) doneRef.current(); }).catch(() => {});
+      return () => { cancelled = true; anims.forEach((a) => a.cancel()); };
+    }
+
+    // 那款遊戲自己的進場：畫面在 render 時已經由它的 Scene 畫好，這裡只播它給的動畫
+    if (wipe.kind === 'scene') {
+      const scene = wipe.scene ? entranceOf(wipe.scene) : undefined;
+      if (!scene || typeof root.animate !== 'function') { doneRef.current(); return; }
+      const anims = scene.play(root, phase);
+      if (!anims.length) { doneRef.current(); return; }
+      let cancelled = false;
+      Promise.all(anims.map((a) => a.finished)).then(() => { if (!cancelled) doneRef.current(); }).catch(() => {});
+      return () => { cancelled = true; anims.forEach((a) => a.cancel()); };
+    }
+
     const shape = root.querySelector<HTMLElement>('[data-shape]');
     if (!shape || typeof shape.animate !== 'function') { doneRef.current(); return; }
     const face = root.querySelector<HTMLElement>('[data-face]');
@@ -169,6 +261,10 @@ const WipeOverlay: React.FC<Props> = ({ phase, wipe, onDone }) => {
       run(face, k.face, opts(540, 60));
       // 大標在色塊快蓋滿時才淡入 —— 早了會疊在還看得見的舊畫面上
       run(big, [{ opacity: 0 }, { opacity: 1 }], opts(260, 360, CSS_IN_OUT_CUBIC));
+    } else if (wipe.exit === 'fade') {
+      // 色塊維持蓋滿（render 時已經是 scale(s)），整塊淡出；字一起淡掉
+      run(shape, [{ opacity: 1 }, { opacity: 0 }], opts(520, 80, CSS_IN_OUT_CUBIC));
+      run(big, [{ opacity: 1 }, { opacity: 0 }], opts(180, 0, CSS_IN_OUT_CUBIC));
     } else {
       /*
         一段連續的縮小，不拆段。
@@ -203,14 +299,58 @@ const WipeOverlay: React.FC<Props> = ({ phase, wipe, onDone }) => {
     };
   }, [phase, wipe]);
 
+  if (wipe.kind === 'doors') {
+    return (
+      <div
+        ref={rootRef}
+        className="cover-viewport z-[60] overflow-hidden"
+        // 透視放在容器上：兩扇門共用同一個消失點（畫面中央），轉開時才像同一扇窗
+        style={{ position: 'absolute', perspective: '1600px' }}
+        aria-hidden="true"
+      >
+        {(['left', 'right'] as const).map((side) => (
+          <div
+            key={side}
+            data-door={side}
+            className={`absolute inset-y-0 w-1/2 ${side === 'left' ? 'left-0' : 'right-0'}`}
+            style={{
+              transformOrigin: side === 'left' ? 'left center' : 'right center',
+              backfaceVisibility: 'hidden',
+              willChange: 'transform',
+              // 初始值在 render 就給對：關門前是開著的、開門前是關著的（同上方色塊的理由）
+              transform: phase === 'cover' ? `rotateY(${side === 'left' ? DOOR_OPEN : -DOOR_OPEN}deg)` : 'rotateY(0deg)',
+            }}
+          >
+            <Door side={side} />
+            <div data-shade className="absolute inset-0 bg-black" style={{ opacity: phase === 'cover' ? 0.7 : 0 }} />
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (wipe.kind === 'scene') {
+    const Scene = wipe.scene ? entranceOf(wipe.scene)?.Scene : undefined;
+    return (
+      <div ref={rootRef} className="cover-viewport z-[60] overflow-hidden" style={{ position: 'absolute' }} aria-hidden="true">
+        {/* Scene 照看得到的那一段排版（跟多蓋之前一樣大）；要蓋到上下多出來的那截，由各款自己用 --bleed 往外長 */}
+        {Scene && (
+          <div className="absolute inset-x-0 inset-y-[var(--bleed,0px)]">
+            <Scene phase={phase} />
+          </div>
+        )}
+      </div>
+    );
+  }
+
   const box = boxOf(wipe);
   const s = coverScale(wipe);
   const Icon = wipe.icon;
 
-  /** 起點方塊在畫面上的位置與尺寸。圖示層是它的子元素，用 inset-0 貼齊。 */
+  /** 起點方塊在畫面上的位置與尺寸。圖示層是它的子元素，用 inset-0 貼齊。轉場層上緣比畫面高 --bleed，往下補回來 */
   const seat: React.CSSProperties = {
     left: wipe.x - box.width / 2,
-    top: wipe.y - box.height / 2,
+    top: `calc(var(--bleed, 0px) + ${wipe.y - box.height / 2}px)`,
     width: box.width,
     height: box.height,
   };

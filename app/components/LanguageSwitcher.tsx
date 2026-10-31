@@ -1,12 +1,9 @@
 'use client';
-import { useEffect, useState } from 'react';
-import { flushSync } from 'react-dom';
-import { usePathname } from 'next/navigation';
 import { LuGlobe, LuCheck } from 'react-icons/lu';
 import Modal from './Modal';
-import { LOCALES, LOCALE_NAME, localeFromPath, localePath, stripLocale } from '@/i18n/locales';
 import { useMessages } from '@/i18n/LocaleProvider';
-import { track } from '@/utils/analytics';
+import { useLanguageSwitch } from '@/hook/useLanguageSwitch';
+import type { CornerTheme } from './cornerTheme';
 
 /**
  * 語言切換。
@@ -39,27 +36,14 @@ import { track } from '@/utils/analytics';
  * 一個只在正式站對、開發時看起來像壞掉的動畫不值得留著。換語言一次
  * 造訪頂多做一次，整頁重載本來就正常。
  */
-export default function LanguageSwitcher({ onDark = false }: { onDark?: boolean } = {}) {
-  const pathname = usePathname() ?? '/';
-  const current = localeFromPath(pathname);
-  const bare = stripLocale(pathname);
+/**
+ * `theme`：那款遊戲的樣子（圓鈕＋彈窗，見 cornerTheme.ts）。沒給就是 Wall Go 的。
+ * `buttonClassName`：只換圓鈕（舊的寫法，各遊戲分支換成 theme 之前先留著）
+ */
+export default function LanguageSwitcher({ onDark = false, theme, buttonClassName }: { onDark?: boolean; theme?: CornerTheme; buttonClassName?: string } = {}) {
   const t = useMessages();
-  const [open, setOpen] = useState(false);
-
-  /*
-    換語言是整頁跳轉，而瀏覽器會把離開的那一頁連同當下的畫面整個凍結起來
-    （back-forward cache，Safari 特別積極）。按上一頁回來時不重新載入，
-    直接解凍 —— 於是選單還開著，而且停在剛才選的語言上（Zach 回報：
-    從規則頁按上一頁跑出日文首頁加語言選單）。
-
-    兩道保險：點下去的當下就同步關掉（flushSync，確保凍結前已經畫成關的），
-    以及從快取還原時（pageshow 帶 persisted）再關一次。
-  */
-  useEffect(() => {
-    const onShow = (e: PageTransitionEvent) => { if (e.persisted) setOpen(false); };
-    window.addEventListener('pageshow', onShow);
-    return () => window.removeEventListener('pageshow', onShow);
-  }, []);
+  // 停在同一頁換、bfcache 還原時關掉選單、已經是這個語言就只關掉：行為與平台共用（見 useLanguageSwitch）
+  const { open, setOpen, items } = useLanguageSwitch();
 
   return (
     <>
@@ -69,9 +53,9 @@ export default function LanguageSwitcher({ onDark = false }: { onDark?: boolean 
         aria-label={t.nav.language}
         aria-haspopup="dialog"
         className={`relative grid size-10 place-items-center rounded-full text-xl transition after:absolute after:-inset-0.5 after:content-[''] active:scale-95 ${
-          onDark
+          theme?.button ?? buttonClassName ?? (onDark
             ? 'bg-tile-cream/[0.16] text-tile-cream hover:bg-tile-cream/[0.26]'
-            : 'bg-tile-ink/[0.06] text-ink-soft hover:bg-tile-ink/[0.12]'
+            : 'bg-tile-ink/[0.06] text-ink-soft hover:bg-tile-ink/[0.12]')
         }`}
       >
         <LuGlobe aria-hidden="true" />
@@ -82,47 +66,26 @@ export default function LanguageSwitcher({ onDark = false }: { onDark?: boolean 
         onClose={() => setOpen(false)}
         title={t.nav.language}
         icon={LuGlobe}
-        band={{ className: 'bg-tile-blue', fg: 'text-tile-cream' }}
+        band={theme?.band ?? { className: 'bg-tile-blue', fg: 'text-tile-cream' }}
+        panelClassName={theme?.panelClassName}
+        skin={theme?.skin}
       >
         <ul className="flex flex-col gap-2">
-          {LOCALES.map((l) => {
+          {items.map((it) => {
             const row = 'flex items-center justify-between rounded-xl px-4 py-3.5 text-base font-black transition';
-            // 已經在這個語言了：連結留著給爬蟲，但按下去只是關掉 ——
-            // 讓它重新載入同一頁，使用者會以為自己按錯了。
-            if (l === current) {
-              return (
-                <li key={l}>
-                  <a
-                    href={localePath(l, bare)}
-                    hrefLang={l}
-                    aria-current="true"
-                    onClick={(e) => {
-                      if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
-                      e.preventDefault();
-                      setOpen(false);
-                    }}
-                    className={`${row} bg-tile-ink text-tile-cream`}
-                  >
-                    {LOCALE_NAME[l]}
-                    <LuCheck aria-hidden="true" />
-                  </a>
-                </li>
-              );
-            }
             return (
-              <li key={l}>
-                {/* 真的 a、真的整頁重載：<html lang> 因此一定是對的 */}
+              <li key={it.locale}>
+                {/* 真的 a、真的整頁重載：<html lang> 因此一定是對的。
+                    已經在這個語言了：連結留著給爬蟲，但按下去只是關掉（見 useLanguageSwitch） */}
                 <a
-                  href={localePath(l, bare)}
-                  hrefLang={l}
-                  // gtag 預設走 sendBeacon，整頁跳走也送得出去
-                  onClick={() => {
-                    track('locale_switch', { from: current, to: l });
-                    flushSync(() => setOpen(false));
-                  }}
-                  className={`${row} bg-primary-50 text-tile-ink hover:brightness-95`}
+                  href={it.href}
+                  hrefLang={it.locale}
+                  aria-current={it.current ? 'true' : undefined}
+                  onClick={it.onClick}
+                  className={`${row} ${it.current ? (theme?.primary ?? 'bg-tile-ink text-tile-cream') : (theme?.secondary ?? 'bg-primary-50 text-tile-ink hover:brightness-95')}`}
                 >
-                  {LOCALE_NAME[l]}
+                  {it.name}
+                  {it.current && <LuCheck aria-hidden="true" />}
                 </a>
               </li>
             );

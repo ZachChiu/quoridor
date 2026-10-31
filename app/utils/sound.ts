@@ -10,6 +10,7 @@
  * - 分頁在背景時 AudioContext 照樣會響 —— 「輪到你了」的提示音就是為了這個。
  */
 
+/** Wall Go 的音效。其他遊戲各有自己的一套，寫在自己的資料夾、用 playSynth 合成（見檔尾） */
 export type Sfx = 'turn' | 'remind' | 'place' | 'wall' | 'nudge' | 'start' | 'win' | 'lose';
 export type SoundPrefs = { sfx: boolean };
 
@@ -78,13 +79,14 @@ function ready(): AudioContext | null {
 
 // ─── 合成用的小零件 ────────────────────────────────────────────────────────────
 
-/** 一個有起音與衰減的音。type 決定音色：sine 圓、triangle 像木琴 */
-function tone(at: number, freq: number, dur: number, vol: number, type: OscillatorType = 'sine') {
+/** 一個有起音與衰減的音。type 決定音色：sine 圓、triangle 像木琴。給了 to 就在前七成的時間裡滑到那個音高 */
+function tone(at: number, freq: number, dur: number, vol: number, type: OscillatorType = 'sine', to?: number) {
   const c = ctx!;
   const o = c.createOscillator();
   const g = c.createGain();
   o.type = type;
   o.frequency.setValueAtTime(freq, at);
+  if (to) o.frequency.exponentialRampToValueAtTime(to, at + dur * 0.7);
   g.gain.setValueAtTime(0, at);
   g.gain.linearRampToValueAtTime(vol, at + 0.008);
   g.gain.exponentialRampToValueAtTime(0.0001, at + dur);
@@ -93,24 +95,30 @@ function tone(at: number, freq: number, dur: number, vol: number, type: Oscillat
   o.stop(at + dur + 0.05);
 }
 
-/** 一小段濾過的雜音：木頭、石頭碰撞的「喀」 */
-function knock(at: number, center: number, dur: number, vol: number) {
+/**
+ * 一小段濾過的雜音。filter／freq／q 決定是什麼東西碰到什麼：bandpass 中頻是木頭的「篤」、highpass 是石子的「喀」、
+ * lowpass 是悶的「咚」。shape 越大衰減越快（越短促）。
+ */
+function noise(at: number, dur: number, vol: number, filter: BiquadFilterType, freq: number, q = 1.4, shape = 3) {
   const c = ctx!;
   const len = Math.ceil(c.sampleRate * dur);
   const buf = c.createBuffer(1, len, c.sampleRate);
   const ch = buf.getChannelData(0);
-  for (let i = 0; i < len; i++) ch[i] = (Math.random() * 2 - 1) * (1 - i / len) ** 3;
+  for (let i = 0; i < len; i++) ch[i] = (Math.random() * 2 - 1) * (1 - i / len) ** shape;
   const src = c.createBufferSource();
   src.buffer = buf;
-  const bp = c.createBiquadFilter();
-  bp.type = 'bandpass';
-  bp.frequency.value = center;
-  bp.Q.value = 1.4;
+  const f = c.createBiquadFilter();
+  f.type = filter;
+  f.frequency.value = freq;
+  f.Q.value = q;
   const g = c.createGain();
   g.gain.value = vol;
-  src.connect(bp).connect(g).connect(master!);
+  src.connect(f).connect(g).connect(master!);
   src.start(at);
 }
+
+/** 木頭、石頭碰撞的「喀」 */
+const knock = (at: number, center: number, dur: number, vol: number) => noise(at, dur, vol, 'bandpass', center);
 
 const NOTE = (n: number) => 440 * 2 ** ((n - 69) / 12); // MIDI → Hz
 
@@ -159,6 +167,31 @@ export function playSfx(name: Sfx) {
       tone(t + 0.18, NOTE(64), 0.8, 0.15, 'sine');
       break;
   }
+}
+
+// ─── 各遊戲自己的一套 ─────────────────────────────────────────────────────────
+
+/** playSynth 交給各遊戲的零件。at 一律是 AudioContext 的時間，從 t 開始算 */
+export type Synth = {
+  /** 現在（稍微往後一點，讓排程來得及） */
+  t: number;
+  tone: typeof tone;
+  noise: typeof noise;
+  knock: typeof knock;
+  /** MIDI 音符編號 → Hz（60 = 中央 C） */
+  note: typeof NOTE;
+};
+
+/**
+ * 各遊戲自己的音效（Zach 10/24：每一款都要有自己的聲音，不是一款做好推到其他款）。
+ * 合成的內容寫在那款自己的資料夾（例如 components/bagh-chal/sounds.ts），這裡只負責開關、解鎖與零件 ——
+ * 每款各改各的檔案，分支依序合併才不會都擠在這一個檔案裡衝突。
+ */
+export function playSynth(fn: (s: Synth) => void) {
+  if (!getSoundPrefs().sfx) return;
+  const c = ready();
+  if (!c) return;
+  fn({ t: c.currentTime + 0.01, tone, noise, knock, note: NOTE });
 }
 
 /** 被催的時候手機震一下。跟著音效開關走 —— 關了聲音就是不想被打擾（大腦 10/23） */

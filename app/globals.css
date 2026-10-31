@@ -48,22 +48,24 @@
   font-display: swap;
 }
 
-/* 依 <html lang> 換字型（lang 由 Shell 依語系給，見 i18n/locales 的 HTML_LANG）。 */
+/* 依 <html lang> 換字型（lang 由 Shell 依語系給，見 i18n/locales 的 HTML_LANG）。
+   --font-site 是全站這一套；畫面實際用的是 --font-app，預設就是 --font-site ——
+   有自己字的遊戲在自己的頁面上把 --font-app 換掉、--font-site 留著當備援（scripts/build-game-fonts.mjs）。 */
 :root:lang(zh-Hans) {
-  --font-app: 'Noto Sans SC Subset', system-ui, -apple-system, 'PingFang SC',
+  --font-site: 'Noto Sans SC Subset', system-ui, -apple-system, 'PingFang SC',
     'Microsoft YaHei', sans-serif;
 }
 /* 泰文字型裡沒有的符號（✓ · …）與英數，由繁中子集補上 */
 :root:lang(th) {
-  --font-app: 'Noto Sans Thai Subset', 'Noto Sans TC Subset', system-ui, -apple-system,
+  --font-site: 'Noto Sans Thai Subset', 'Noto Sans TC Subset', system-ui, -apple-system,
     'Thonburi', 'Leelawadee UI', sans-serif;
 }
 :root:lang(ja) {
-  --font-app: system-ui, -apple-system, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN',
+  --font-site: system-ui, -apple-system, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN',
     'Noto Sans JP', 'Yu Gothic', 'Meiryo', sans-serif;
 }
 :root:lang(ko) {
-  --font-app: system-ui, -apple-system, 'Apple SD Gothic Neo', 'Noto Sans KR',
+  --font-site: system-ui, -apple-system, 'Apple SD Gothic Neo', 'Noto Sans KR',
     'Malgun Gothic', sans-serif;
 }
 
@@ -71,8 +73,9 @@
 :root {
   /* 色票取自參考稿的實際取樣值：厚描邊 + 飽和色塊 + 奶油底的平面風格。
      所有顏色都走 CSS 變數，換色只需要改這一段。 */
-  --font-app: 'Noto Sans TC Subset', system-ui, -apple-system, 'PingFang TC',
+  --font-site: 'Noto Sans TC Subset', system-ui, -apple-system, 'PingFang TC',
     'Microsoft JhengHei', sans-serif;
+  --font-app: var(--font-site);
 
   --background: #e8e1d7;
   --foreground: #1a1613;
@@ -143,6 +146,15 @@
   --tile-forest: 0 105 68;    /* #006944 米白 6.3:1 */
   --tile-ink: 20 16 16;
   --tile-cream: 250 247 240;
+  /* 平台（/）的強調色：Netflix 式的紅（Zach 指定）。只用在平台外殼，各遊戲保留自己的配色。
+     深墨底上 3.9:1 —— 紅字只給大字（平台名），小字一律紅底白字（4.8:1）。 */
+  --brand-red: 226 31 38;
+  /* 平台外殼的三層深色。全部用同一個墨色會糊成一片黑（Zach：平台的元件偏黑），
+     所以底、卡片、浮起來的東西（對話框裡的列、按鈕）各亮一階，都帶一點暖色跟奶油底同家族。 */
+  --plat-bg: 28 24 22;       /* #1c1816 頁面底 */
+  --plat-surface: 46 40 37;  /* #2e2825 卡片、對話框 */
+  --plat-raised: 66 58 54;   /* #423a36 對話框裡的選中列、外框按鈕的底 */
+  --plat-muted: 196 187 175; /* #c4bbaf 次要文字：在 surface 上 8.6:1 */
 
   /* 棋盤外框（#3a322c）。外框是「棋盤邊緣那道牆」，所以是深色。 */
   --board-line: 58 50 44;
@@ -168,6 +180,15 @@
   --primary-700: #df6c3f;
   --primary-800: #b8542f;
   --primary-900: #8e3f24;
+}
+
+/* 平台首頁「規則整理中」卡片角落的骰子惡魔剪影（顏色由 bg-* 給；點數在圖裡是挖空的） */
+/* 平台首頁一排排橫向捲動的卡片：不畫捲軸（Chrome 桌機、Windows 的白色粗捲軸在深色底上很突兀；電腦版改用兩端的箭頭，見 CardRow） */
+.plat-row { scrollbar-width: none; }
+.plat-row::-webkit-scrollbar { display: none; }
+.plat-soon-mark {
+  -webkit-mask: url(/brand/die-mark-mono.svg) center / contain no-repeat;
+  mask: url(/brand/die-mark-mono.svg) center / contain no-repeat;
 }
 
 /* 不提供深色模式：這是一套明確走淺色（奶油底 + 飽和色塊）的設計，
@@ -456,11 +477,19 @@ body {
    那時改扣 12rem，並且版面轉成左右並排（標題在左、磁磚在右），
    把橫式多出來的寬度用掉。
 
-   限定 max-height: 600px 才套，桌機（同樣是 landscape）不受影響。 */
-.home-grid { max-width: min(380px, calc(100dvh - 22rem)); }
+   限定 max-height: 600px 才套，桌機（同樣是 landscape）不受影響。
+
+   直式另有下限 18rem：矮手機上不再為了塞進一個畫面把磁磚縮小，放不下就往下捲（2026-10-25 Zach）。
+
+   高度一律用 svh（工具列展開時的高度，不會變）不用 dvh：手機往下捲、工具列收起來時 dvh 會變大，
+   磁磚跟著脹大縮小（2026-10-25 Zach 回報）。 */
+.home-grid { max-width: min(380px, calc(100svh - 22rem)); }
+@media (orientation: portrait) {
+  .home-grid { max-width: min(380px, max(18rem, calc(100svh - 22rem))); }
+}
 
 @media (orientation: landscape) and (max-height: 600px) {
-  .home-grid { max-width: min(320px, calc(100dvh - 12rem)); }
+  .home-grid { max-width: min(320px, calc(100svh - 12rem)); }
   .home-main {
     flex-direction: row;
     align-items: center;
@@ -479,6 +508,56 @@ body {
     正方形是這套視覺的一部分，該讓的是內容不是形狀。
   */
   .home-grid .tile-icon { font-size: 1.75rem; }
-  .home-grid button { padding: 0.5rem; gap: 0.25rem; }
-  .home-grid button span { font-size: 0.75rem; line-height: 1.15; }
+  /* 磁磚有 href 時是 <a>（給爬蟲走得進去），沒有時是 <button>，兩種都要縮。
+     先前只寫 button，改成連結之後橫式手機上那幾塊就沒縮到 */
+  .home-grid :is(a, button) { padding: 0.5rem; gap: 0.25rem; }
+  .home-grid :is(a, button) span { font-size: 0.75rem; line-height: 1.15; }
 }
+
+/* 平台首頁是深色外殼：整頁底色跟著換，捲到底或回彈時才不會露出奶油色。
+   :has 在 Safari 15.4+／Chrome 105+，更舊的瀏覽器只是邊緣露一點奶油色，不影響使用。 */
+html:has(.platform-root), body:has(.platform-root) { background: rgb(var(--plat-bg)); }
+/* 虎羊棋的整頁畫框是番紅花底（BaghFrame），同一個理由 */
+html:has(.bagh-root), body:has(.bagh-root) { background: #e3a43c; }
+/* 虎羊棋的背景：米提拉圖騰滿版鋪，鋪在頁面本身（BaghFrame 的根節點），跟著頁面捲 ——
+   iOS 26 Safari 的狀態列與工具列底下只畫得出捲過去的內容（fixed 的層、背景圖都不會），先前那層 fixed 的圖騰在那兩條只剩番紅花色塊。
+   圖塊是把一整幅 AI 圖騰用 image quilting 縫成上下左右都無縫的一塊（在接縫帶裡找差異最小的切線拼接），
+   所以可以縮小重複鋪、看不出接縫。先前試過四條飾帶拼的畫框（接縫明顯）、一整幅 cover（虎羊太大），Zach 都要改。
+   圖塊的顏色用 Lab 空間的色彩轉移對齊到 board-art.webp 外圈的飾帶（原圖偏亮、偏檸檬黃，Zach 要跟那張一致），接近白色的地方保留色相。
+   手機每塊 520px、桌機 720px；支援 image-set type() 的瀏覽器載 AVIF，其他退回 webp。底色是圖還沒載入時的番紅花。 */
+.bagh-bg { background: #e3a43c url('/games/bagh-chal/pattern.webp') 0 0 / 520px auto repeat; }
+/* 虎羊棋連線中／等對方：圓牌輪流輕輕浮起來 */
+@keyframes bagh-bob { 0%, 100% { translate: 0 0; } 50% { translate: 0 -10px; } }
+/* 虎羊棋：選了棋子，可以去的點開出米字小花 */
+@keyframes bagh-bloom { from { scale: 0.3; rotate: -90deg; opacity: 0; } to { scale: 1; rotate: 0deg; opacity: 1; } }
+@media (min-width: 1024px) { .bagh-bg { background-size: 720px auto; } }
+@supports (background-image: image-set(url('/x.avif') type('image/avif'))) {
+  .bagh-bg { background-image: image-set(url('/games/bagh-chal/pattern.avif') type('image/avif'), url('/games/bagh-chal/pattern.webp') type('image/webp')); }
+}
+
+/* 虎羊棋的按鈕：米提拉畫的邊框（Zach 10/24：「虎羊棋明明是圖騰風，感覺按鈕也可以變那樣才對」）。
+   米提拉畫的畫框是兩條線中間夾一排圖樣。先做過卡片與主要鈕兩條線夾一排三角（鋸齒）、圓鈕雙圈中間一圈三角，
+   同一天 Zach 說「按鈕不要有那個菱形外框」，所以一律只留兩條線：卡片、主要鈕、次要鈕都一樣，圓鈕是雙圈的小圓牌。
+   分享圖的鋸齒框不是按鈕，留著（shareCard.ts）。
+   米提拉的畫框是方的，所以這些鈕一律直角（border-image 也畫不出圓角）。
+   用 stretch 不用 round：round 把邊切成一段段重複，段與段之間會露出一條細縫；線本來就是均勻的，拉長不會變形。
+   顏色是 palette.ts 的深褐；橄欖綠底的主要鈕與選中的選項換成紙色線。 */
+.bagh-line, .bagh-line-on { border: 8px solid transparent; border-radius: 0 !important; }
+.bagh-line { border-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'%3E%3Crect x='0.6' y='0.6' width='22.8' height='22.8' fill='none' stroke='%234a2616' stroke-width='1.2'/%3E%3Crect x='7.4' y='7.4' width='9.2' height='9.2' fill='none' stroke='%234a2616' stroke-width='1.2'/%3E%3C/svg%3E") 8 stretch; }
+.bagh-line-on { border-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'%3E%3Crect x='0.6' y='0.6' width='22.8' height='22.8' fill='none' stroke='%23fbf4e1' stroke-width='1.2'/%3E%3Crect x='7.4' y='7.4' width='9.2' height='9.2' fill='none' stroke='%23fbf4e1' stroke-width='1.2'/%3E%3C/svg%3E") 8 stretch; }
+.bagh-medal { background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='88' height='88'%3E%3Ccircle cx='44.0' cy='44.0' r='42.0' fill='%23fbf4e1' stroke='%234a2616' stroke-width='2.5'/%3E%3Ccircle cx='44.0' cy='44.0' r='36.0' fill='none' stroke='%234a2616' stroke-width='1.5'/%3E%3C/svg%3E") center / 100% 100% no-repeat; }
+.bagh-medal:hover { filter: brightness(0.96); }
+
+/* ── 第二批五款各自的視覺 ───────────────────────────────────────────────────
+   每款在自己的 feat/game-<id> 分支，CSS 接在下面自己那行標記底下。
+   標記之間刻意隔一行空白：分支依序合併時改的是不同地方，git 才不會衝突（CLAUDE.md〈視覺〉）。 */
+
+/* ▸ 九子棋（feat/game-nine-mens-morris） */
+
+/* ▸ 盲眼五子棋（feat/game-blind-gomoku） */
+
+/* ▸ 騎士巡邏（feat/game-knights-tour） */
+
+/* ▸ 時間拍賣（feat/game-time-auction） */
+
+/* ▸ 均衡曼卡拉（feat/game-balance-mancala） */

@@ -5,9 +5,12 @@ import { GameProvider } from "./contexts/GameContext";
 import { RuleModalProvider } from "./contexts/RuleModalContext";
 import { TransitionProvider } from "./contexts/TransitionContext";
 import { UserProvider } from "./contexts/UserContext";
-import RuleModal from "./components/RuleModal";
 import { LocaleProvider } from "./i18n/LocaleProvider";
-import { HTML_LANG, type Locale } from "./i18n/locales";
+import { HTML_LANG, PREFIXED, type Locale } from "./i18n/locales";
+import { PLAYABLE } from "./games/catalog";
+import { pageMetaScript } from "./utils/pageMeta";
+
+const PAGE_META = pageMetaScript(PREFIXED, PLAYABLE.map((g) => g.playable!.slice(1)));
 /**
  * 站台外殼：<html> 與所有 provider。
  *
@@ -23,13 +26,18 @@ export function Shell({ locale, children }: { locale: Locale; children: React.Re
   return (
     <html lang={HTML_LANG[locale]}>
       <body className="select-none antialiased">
+        {/* page_view 帶 page_type／game：要在 GA 載入前先包住 history，見 utils/pageMeta.ts */}
+        {process.env.NEXT_PUBLIC_APP_ENV === "production" && (
+          <script dangerouslySetInnerHTML={{ __html: PAGE_META }} />
+        )}
         {/*
           LocaleProvider 必須包在**最外層**。
 
-          原本它在各個 view 裡面，但 RuleModal 是掛在這個 shell 上的
+          原本它在各個 view 裡面，但 RuleModal 當時是掛在這個 shell 上的
           （它從任何頁面都能打開），於是它落在 provider 外面、永遠讀到
           預設語系 —— /ja 的首頁裡混著「遊玩方式」「下一步」就是這麼來的。
           放這裡之後，所有 client component 不論掛在哪一層都拿得到語系。
+          （RuleModal 2026-10-25 搬進 PlayClient：只有對局頁打得開它。）
         */}
         <LocaleProvider locale={locale}>
         <UserProvider>
@@ -37,7 +45,6 @@ export function Shell({ locale, children }: { locale: Locale; children: React.Re
             <TransitionProvider>
               <GameProvider>
                 {children}
-                <RuleModal />
               </GameProvider>
             </TransitionProvider>
           </RuleModalProvider>
@@ -69,6 +76,7 @@ export function Shell({ locale, children }: { locale: Locale; children: React.Re
 export const baseMetadata: Metadata = {
   metadataBase: new URL(process.env.SITE_URL || 'https://quoridorgame.com'),
   icons: {
+    // 全站預設是平台的骰子惡魔（/ 是平台首頁）；各遊戲的頁面在 i18n/metadata.ts 的 GAME_ICONS 換成自己的。
     // SVG 優先（可無限縮放、檔案最小），.ico 是舊瀏覽器與「直接抓 /favicon.ico」
     // 那類行為的保底。兩者同一份設計，換版時要一起換。
     icon: [

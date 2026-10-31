@@ -78,26 +78,26 @@ describe('readGameHash：伺服器端不能炸', () => {
 describe('roomShareUrl', () => {
   const ORIGIN = 'https://quoridorgame.com';
 
-  it('指向 /online 而不是舊的 /match 相容層', () => {
+  it('指向 /wall-go/online 而不是舊的 /match、/online（舊網址只剩轉址）', () => {
     expect(roomShareUrl(ORIGIN, 'zh-TW', 'r')).not.toContain('/match');
     expect(roomShareUrl(ORIGIN, 'ja', 'r')).not.toContain('/match');
   });
 
   it('zh-TW 不加前綴', () => {
     expect(roomShareUrl(ORIGIN, 'zh-TW', 'abc123')).toBe(
-      'https://quoridorgame.com/online#roomId=abc123'
+      'https://quoridorgame.com/wall-go/online#roomId=abc123'
     );
   });
 
   it('其他語系帶著自己的前綴 —— 朋友點進來不會落在中文站', () => {
     expect(roomShareUrl(ORIGIN, 'ja', 'abc123')).toBe(
-      'https://quoridorgame.com/ja/online#roomId=abc123'
+      'https://quoridorgame.com/ja/wall-go/online#roomId=abc123'
     );
     expect(roomShareUrl(ORIGIN, 'ko', 'abc123')).toBe(
-      'https://quoridorgame.com/ko/online#roomId=abc123'
+      'https://quoridorgame.com/ko/wall-go/online#roomId=abc123'
     );
     expect(roomShareUrl(ORIGIN, 'en', 'abc123')).toBe(
-      'https://quoridorgame.com/en/online#roomId=abc123'
+      'https://quoridorgame.com/en/wall-go/online#roomId=abc123'
     );
   });
 

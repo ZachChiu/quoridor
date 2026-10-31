@@ -1,7 +1,7 @@
 'use client'
-import React, { useEffect, useRef, useState } from 'react';
+import React from 'react';
 import { createPortal } from 'react-dom';
-import { useScrollLock } from '@/hook/useScrollLock';
+import { useDialog } from '@/hook/useDialog';
 import { useMessages } from '@/i18n/LocaleProvider';
 import { GiCancel } from 'react-icons/gi';
 import type { IconType } from 'react-icons';
@@ -36,6 +36,11 @@ interface Props {
   /** 內容區額外的 class */
   bodyClassName?: string;
   /**
+   * 外觀。預設是 Wall Go／平台的奶油底面板；bagh 是虎羊棋的紙色面板、橄欖綠框、
+   * 標題列上方一條老虎追羊的飾帶（虎羊棋整套視覺不沿用 Wall Go，見 CLAUDE.md 路由表）。
+   */
+  skin?: 'default' | 'bagh';
+  /**
    * 不要面板的外觀（色帶、紙色底、內距、底部按鈕列）：內容自己就是整個對話框。
    * 結算用 —— 分享圖本身就是對話框（Zach 10/23）。title 仍然當作對話框的名稱給螢幕報讀。
    */
@@ -44,71 +49,15 @@ interface Props {
   backdropClassName?: string;
 }
 
-const FOCUSABLE = 'a[href],button:not([disabled]),input,select,textarea,[tabindex]:not([tabindex="-1"])';
-
 const Modal: React.FC<Props> = ({
-  isOpen, onClose, title, icon: Icon, kicker, band, children, footer, onKeyDown, panelClassName = '', bodyClassName = '',
+  isOpen, onClose, title, icon: Icon, kicker, band, children, footer, onKeyDown, panelClassName = '', bodyClassName = '', skin = 'default',
   bare = false, backdropClassName = 'bg-black/50',
 }) => {
-  const panelRef = useRef<HTMLDivElement>(null);
-  const restoreRef = useRef<HTMLElement | null>(null);
-
-  // Modal 打開時鎖住背景捲動 —— 手機上不鎖的話，滑動會穿透到後面的頁面。
-  useScrollLock(isOpen);
+  const bagh = skin === 'bagh';
+  // 捲動鎖、Esc、焦點鎖、portal 時機：跟平台的 PlatformDialog 共用（見 useDialog）
+  const { panelRef, portalReady } = useDialog(isOpen, onClose, onKeyDown);
   const t = useMessages();
 
-  /*
-    一律傳送到 <body> 底下渲染（portal）。
-
-    fixed 定位只在「沒有祖先建立新的包含區塊」時才相對於視窗。只要某個祖先有
-    backdrop-filter、filter、transform 之類的屬性，fixed 就改成相對那個祖先 ——
-    規則頁的頂部列是毛玻璃（backdrop-blur），語言選單放在它裡面，
-    整個 Modal 就被塞進那一條 60px 高的列裡（Zach 回報）。
-    傳送到 body 之後，不管 Modal 被寫在哪個元件裡都不受祖先影響。
-
-    第一次 render 仍然就地輸出，掛載後才換到 body：靜態 HTML 沒有 document，
-    而且 hydration 時兩邊的結構必須一致。Modal 在那時都是關著的，換位置看不出來。
-  */
-  const [portalReady, setPortalReady] = useState(false);
-  // eslint-disable-next-line react-hooks/set-state-in-effect -- 只在掛載時切一次，hydration 之後才有 document.body
-  useEffect(() => setPortalReady(true), []);
-
-  useEffect(() => {
-    if (!isOpen) return;
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') { onClose(); return; }
-      // 焦點鎖在對話框內。沒有這段的話 Tab 會跑到背後的棋盤上，
-      // 使用者會在一個看不見的畫面裡操作。
-      if (e.key === 'Tab' && panelRef.current) {
-        const items = [...panelRef.current.querySelectorAll<HTMLElement>(FOCUSABLE)]
-          .filter((el) => el.offsetParent !== null);
-        if (!items.length) return;
-        const first = items[0];
-        const last = items[items.length - 1];
-        const active = document.activeElement;
-        if (e.shiftKey && (active === first || !panelRef.current.contains(active))) {
-          e.preventDefault(); last.focus();
-        } else if (!e.shiftKey && active === last) {
-          e.preventDefault(); first.focus();
-        }
-        return;
-      }
-      onKeyDown?.(e);
-    };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  });
-
-  // 開啟時把焦點移進來，關閉時還給原本那顆按鈕。
-  useEffect(() => {
-    if (isOpen) {
-      restoreRef.current = document.activeElement as HTMLElement | null;
-      panelRef.current?.focus();
-    } else {
-      restoreRef.current?.focus?.();
-      restoreRef.current = null;
-    }
-  }, [isOpen]);
 
   /*
     層級：頁面上的東西最高到 z-50（對局頁左上的按鈕、回放頁的控制列），
@@ -160,18 +109,25 @@ const Modal: React.FC<Props> = ({
         ref={panelRef}
         tabIndex={-1}
         // 最高就是可視高度；放不下時色帶與按鈕固定，只有中間的內容捲動
-        className={`relative flex max-h-full w-full max-w-md flex-col overflow-hidden rounded-2xl bg-primary font-[family-name:var(--font-app)] outline-none ${panelClassName}`}
+        className={`relative flex max-h-full w-full max-w-md flex-col overflow-hidden font-[family-name:var(--font-app)] outline-none ${
+          bagh ? 'rounded-[18px] border-[3px] border-[#5b6620] bg-[#fbf4e1]' : 'rounded-2xl bg-primary'
+        } ${panelClassName}`}
       >
+        {bagh && (
+          <div aria-hidden="true" className="h-11 shrink-0 border-b-[3px] border-[#5b6620] bg-[url('/games/bagh-chal/frieze.webp')] bg-[length:auto_100%] bg-center [background-repeat:round_no-repeat]" />
+        )}
         {/* 色帶做成滿版（面板 overflow-hidden 負責切圓角），
-            留白會讓它退化成一條「有底色的標題」，力道差很多。 */}
+            留白會讓它退化成一條「有底色的標題」，力道差很多。
+            虎羊棋（bagh）不要色帶：上面已經有一條飾帶，再疊一條色塊會變成兩條重的橫帶（Zach：整體不太搭）。
+            標題直接放在紙色上。標題下原本有一小條 band 色的短線，也拿掉了（Zach：每一頁不要有這個）—— bagh 不用 band。 */}
         <div
-          className={`flex shrink-0 items-start justify-between gap-3 px-6 py-5 ${band.className ?? ''} ${band.fg}`}
-          style={band.style}
+          className={`flex shrink-0 items-start justify-between gap-3 px-6 ${bagh ? 'pb-1 pt-5 text-tile-ink' : `py-5 ${band.className ?? ''} ${band.fg}`}`}
+          style={bagh ? undefined : band.style}
         >
           <div className="flex items-center gap-3">
             {Icon && <Icon className="shrink-0 text-4xl" aria-hidden="true" />}
             <div>
-              {kicker && <p className="text-xs font-bold tracking-widest opacity-80">{kicker}</p>}
+              {kicker && <p className={`text-xs font-bold tracking-widest ${bagh ? 'text-ink-soft' : 'opacity-80'}`}>{kicker}</p>}
               <h2 className="text-2xl font-black leading-tight">{title}</h2>
             </div>
           </div>
@@ -180,9 +136,15 @@ const Modal: React.FC<Props> = ({
             aria-label={t.ui.close}
             onClick={onClose}
             // p-2 只有 40px，差一點到觸控目標的 44px。
-            className="-mr-2 -mt-1 shrink-0 rounded-full p-2.5 text-2xl opacity-70 transition hover:opacity-100"
+            className={bagh
+              ? '-mr-1 shrink-0 rounded-full bg-[#f2e4c4] p-2 text-tile-ink transition hover:bg-[#ead8ad]'
+              : '-mr-2 -mt-1 shrink-0 rounded-full p-2.5 text-2xl opacity-70 transition hover:opacity-100'}
           >
-            <GiCancel />
+            {bagh ? (
+              <svg viewBox="0 0 24 24" className="size-5" aria-hidden="true">
+                <path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+              </svg>
+            ) : <GiCancel />}
           </button>
         </div>
 
