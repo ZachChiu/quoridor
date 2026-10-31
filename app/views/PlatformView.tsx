@@ -7,10 +7,11 @@ import PlatformContact from '@/components/platform/PlatformContact';
 import HeroPicker from '@/components/platform/HeroPicker';
 import CardRow from '@/components/platform/CardRow';
 import GameCard from '@/components/platform/GameCard';
+import SelectGameTracker from '@/components/platform/SelectGameTracker';
 import GameName from '@/components/platform/GameName';
 import { brandName } from '@/brand';
 import PlatformMark from '@/components/PlatformMark';
-import { HERO_DEFAULT, PLAYABLE, SEASONS, playableFirst, type CatalogGame } from '@/games/catalog';
+import { HERO_DEFAULT, PLAYABLE, SEASONS, SEASON_OF, playableFirst, type CatalogGame } from '@/games/catalog';
 import { getMessages } from '@/i18n';
 import { localePath, type Locale } from '@/i18n/locales';
 import { BAGH_CHAL, WALL_GO, season as seasonPath, type SeasonNumber } from '@/i18n/routes';
@@ -52,14 +53,14 @@ export default function PlatformView({ locale }: { locale: Locale }) {
         {/* 推薦作品：預設是 HERO_DEFAULT（現在是 Wall Go，見 catalog；原本是最新上線的那款），使用者點過哪一款就換成那一款（10/24 Zach）。
             每一款能玩的都有一張在 HTML 裡，外層的 data-hero-pick 決定露出哪張；換的那段在 HeroPicker。
             suppressHydrationWarning：data-hero-pick 會在 hydrate 之前被內嵌 script 換掉 */}
-        <div data-hero-pick={HERO_DEFAULT?.playable} suppressHydrationWarning>
+        <div data-hero-pick={HERO_DEFAULT?.playable} data-select-location="home_hero" suppressHydrationWarning>
           <style dangerouslySetInnerHTML={{ __html: PLAYABLE.map((g) => `[data-hero-pick="${g.playable}"]>[data-slide]:not([data-slide="${g.playable}"]){display:none}`).join('') }} />
           {PLAYABLE.map((game) => <GameHero key={game.name} game={game} locale={locale} />)}
           <HeroPicker />
         </div>
 
         {/* 現在就能玩：已經做成線上版的遊戲集中一排（各季那幾排裡也有，Netflix 的排與排本來就會重複） */}
-        <section id="play-now" className="flex flex-col gap-3">
+        <section id="play-now" data-select-location="home_grid" className="flex flex-col gap-3">
           <h2 className="text-[21px] font-black">{p.heroBadge}</h2>
           <CardRow>
             {PLAYABLE.map((game) => (
@@ -71,7 +72,7 @@ export default function PlatformView({ locale }: { locale: Locale }) {
         </section>
 
         {SEASONS.map((season) => (
-          <section key={season.id} id={`season-${season.id.slice(1)}`} className="flex flex-col gap-3">
+          <section key={season.id} id={`season-${season.id.slice(1)}`} data-select-location="home_grid" className="flex flex-col gap-3">
             {/* 標題連到這一季的目錄頁（10/25 Zach：每一季一個目錄頁）。「看全部」一直看得到 —— 手機沒有 hover */}
             <h2 className="flex flex-wrap items-center gap-2.5 text-[21px] font-black">
               <Link href={localePath(locale, seasonPath(season.id.slice(1) as SeasonNumber))} className="group flex flex-wrap items-center gap-x-2.5 gap-y-1">
@@ -108,6 +109,8 @@ export default function PlatformView({ locale }: { locale: Locale }) {
       </main>
 
       <script {...ldScript(pageGraph(locale, 'platform'))} />
+      {/* 點了哪一區的哪張卡（GA 的 select_game）：上面幾區的 data-select-location */}
+      <SelectGameTracker seasons={SEASON_OF} />
     </div>
   );
 }

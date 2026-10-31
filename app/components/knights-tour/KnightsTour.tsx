@@ -5,6 +5,7 @@ import KnightsTourMenu from './KnightsTourMenu';
 import { modeHash, parseMode } from './mode';
 import PracticeGame from './PracticeGame';
 import ShowGame from './ShowGame';
+import { track } from '@/utils/analytics';
 
 /**
  * /knights-tour：選模式與對局都在這一頁，模式放在 hash —— `#show`、`#practice-8`，沒有就是選單。
@@ -55,5 +56,7 @@ export default function KnightsTour({ locale }: { locale: Locale }) {
   if (mode.kind === 'practice') {
     return <PracticeGame key={mode.n} n={mode.n} onMenu={backToMenu} onSize={(n) => go(practice(n), true)} />;
   }
-  return <KnightsTourMenu locale={locale} onShow={() => enter(modeHash({ kind: 'show' }))} onPractice={(n) => enter(practice(n))} />;
+  return <KnightsTourMenu locale={locale}
+    onShow={() => { track('mode_select', { game: 'knights-tour', mode: 'show', players: 1, entry: 'home' }); enter(modeHash({ kind: 'show' })); }}
+    onPractice={(n) => { track('mode_select', { game: 'knights-tour', mode: 'practice', players: 1, entry: 'home' }); enter(practice(n)); }} />;
 }

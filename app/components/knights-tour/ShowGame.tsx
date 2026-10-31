@@ -17,6 +17,10 @@ import LeaveModal from './LeaveModal';
 import TourBoard from './TourBoard';
 import { finaleMs } from './motion';
 import { saveBest, useBestTimes } from './records';
+import { track } from '@/utils/analytics';
+
+/** GA：節目挑戰是一整輪（三關），開始＝第一關下了第一步，結束＝三關全破或時間到 */
+const GA = { game: 'knights-tour', mode: 'show', players: 1 } as const;
 import { isClosed } from './shareCard';
 import { playJump, playKt } from './sounds';
 import { formatTime, shake, sizeLabel, squareName } from './ui';
@@ -80,6 +84,8 @@ export default function ShowGame({ onMenu, onPractice }: {
     if (kind === 'start' && !canStartFrom(n, sq) && armed !== sq) { setArmed(sq); setNote('badStart'); shake(el); playKt('wrong'); return; }
     const at = Date.now();
     const next = showTap(run, sq, at);
+    if (run.startedAt === null && next.startedAt !== null) track('game_start', GA);
+    if (next.status === 'won') track('game_end', { ...GA, result: 'win', ended: 'natural', turns: next.tour.path.length, duration_sec: Math.round(showElapsed(next, at) / 1000) });
     setArmed(null);
     setNote(null);
     setNow(at);
@@ -102,8 +108,13 @@ export default function ShowGame({ onMenu, onPractice }: {
   // 時間到：往下的那一聲（計時器每一跳都可能是那一刻，所以看狀態的變化，不在點擊裡）
   const lastStatus = useRef(status);
   useEffect(() => {
-    if (status === 'timeUp' && lastStatus.current !== 'timeUp') playKt('stuck');
+    if (status === 'timeUp' && lastStatus.current !== 'timeUp') {
+      playKt('stuck');
+      track('game_end', { ...GA, result: 'lose', ended: 'natural', turns: tour.path.length, duration_sec: Math.round(showElapsed(run, run.endedAt ?? Date.now()) / 1000) });
+    }
     lastStatus.current = status;
+    // 只在狀態翻轉時跑；run 是送出當下讀的
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status]);
 
   const act = (f: (r: ShowRun, at: number) => ShowRun) => () => {
@@ -117,6 +128,7 @@ export default function ShowGame({ onMenu, onPractice }: {
   };
   const again = () => {
     window.clearTimeout(finaleTimer.current);
+    if (run.startedAt !== null) track('game_restart', GA);
     if (tour.path.length || run.level) playKt('clear');
     setRun(startShow());
     setNow(0);

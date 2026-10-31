@@ -4,7 +4,7 @@ import { GiChatBubble } from 'react-icons/gi';
 import Modal from './Modal';
 import { InviteToken } from './bagh-chal/tokens';
 import Button from './Button';
-import { track } from '@/utils/analytics';
+import { track, type GameSlug } from '@/utils/analytics';
 import { useGameText, useMessages } from '@/i18n/LocaleProvider';
 import { DEFAULT_CORNER, type CornerTheme } from './cornerTheme';
 
@@ -30,6 +30,8 @@ type Props = {
   theme?: CornerTheme;
   /** 留言框的範例句。預設是 Wall Go 的（講三人局），其他遊戲的對局回饋要換成自己的 */
   placeholder?: string;
+  /** 哪一款遊戲的回饋（GA 的 game 參數）。Wall Go 首頁的聯絡我們也算 Wall Go */
+  game: GameSlug;
 };
 
 /*
@@ -42,7 +44,7 @@ const FACES: { value: 1 | 2 | 3; emoji: string }[] = [
   { value: 3, emoji: '🤩' },
 ];
 
-const FeedbackModal: React.FC<Props> = ({ isOpen, onClose, onSubmit, variant = 'game', theme, placeholder }) => {
+const FeedbackModal: React.FC<Props> = ({ isOpen, onClose, onSubmit, variant = 'game', theme, placeholder, game }) => {
   const g = useGameText();
   const t = useMessages();
   const closeLabel = t.ui.close;
@@ -75,7 +77,7 @@ const FeedbackModal: React.FC<Props> = ({ isOpen, onClose, onSubmit, variant = '
   const submit = async () => {
     if (!canSend || state === 'sending') return;
     setState('sending');
-    track('feedback_send', { entry: isContact ? 'contact' : 'game', rating: rating ?? undefined });
+    track('feedback_send', { game, entry: isContact ? 'contact' : 'game', rating: rating ?? undefined });
     try {
       await onSubmit(rating, message.trim(), contact.trim());
       setState('sent');

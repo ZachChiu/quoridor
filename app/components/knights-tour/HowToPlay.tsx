@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { GiRuleBook } from 'react-icons/gi';
 import Modal from '@/components/Modal';
 import { useMessages } from '@/i18n/LocaleProvider';
@@ -8,6 +8,7 @@ import { useStep, useSwipePager } from '@/hook/useSwipePager';
 import { TEXT, type KnightsText } from '@/games/knights-tour/text';
 import { FIGS, RuleFigure } from './RulesSteps';
 import { BAND_CHALK, MODAL_PANEL } from './styles';
+import { track } from '@/utils/analytics';
 
 /**
  * 對局中的說明彈窗（節目挑戰與練習模式共用）：跟規則頁同一份步驟（RulesSteps.tsx），一次一步。
@@ -29,6 +30,13 @@ export default function HowToPlay({ open, onClose }: { open: boolean; onClose: (
     if (open) goTo(0);
   }
   const last = i === FIGS.length - 1;
+  // 關掉時讀到第幾步（GA 的 tutorial_close，同 Wall Go 的遊玩方式）：按完成、按 ×、點遮罩都算
+  const seen = useRef(i);
+  useEffect(() => { seen.current = i; }, [i]);
+  useEffect(() => {
+    if (!open) return;
+    return () => track('tutorial_close', { game: 'knights-tour', step: seen.current + 1, steps: FIGS.length, finished: seen.current === FIGS.length - 1 });
+  }, [open]);
 
   return (
     <Modal isOpen={open} onClose={onClose} title={t.rules} kicker={t.title} icon={GiRuleBook}
