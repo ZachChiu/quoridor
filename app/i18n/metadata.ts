@@ -208,7 +208,7 @@ const GAME_ICONS: Record<string, Metadata['icons'] | undefined> = {
 
   'blind-gomoku': undefined,
 
-  'knights-tour': undefined,
+  'knights-tour': iconSet('knights-tour', true),
 
   'balance-mancala': undefined,
 };

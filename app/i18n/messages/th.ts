@@ -50,7 +50,7 @@ const th: Messages = {
     rules: 'วิธีเล่น',
     s3: 'ซีซัน 3 Dead Again',
     s3Badge: '10 พ.ย.',
-    s3Empty: 'เมื่อออกอากาศแล้ว เราจะเพิ่มเกมของซีซันนี้ทุกสัปดาห์',
+    s3Empty: 'เร็วๆ นี้',
     s2: 'ซีซัน 2 Death Room',
     s1: 'ซีซัน 1',
     playable: 'เล่นได้',

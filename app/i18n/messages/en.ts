@@ -42,7 +42,7 @@ const en: Messages = {
     rules: 'Rules',
     s3: 'Season 3: Dead Again',
     s3Badge: 'Nov 10',
-    s3Empty: "We'll add this season's games every week once it airs",
+    s3Empty: 'Coming soon',
     s2: 'Season 2: Death Room',
     s1: 'Season 1',
     playable: 'Playable',

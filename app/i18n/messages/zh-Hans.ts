@@ -48,7 +48,7 @@ const zhHans: Messages = {
     rules: '规则与玩法',
     s3: '第 3 季《Dead Again》',
     s3Badge: '11/10 上线',
-    s3Empty: '播出后每周更新这一季的游戏',
+    s3Empty: '敬请期待',
     s2: '第 2 季《死亡密室》',
     s1: '第 1 季',
     playable: '可以玩',

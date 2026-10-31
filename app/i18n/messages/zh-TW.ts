@@ -53,7 +53,7 @@ const zhTW = {
     rules: '規則與玩法',
     s3: '第 3 季《Dead Again》',
     s3Badge: '11/10 上線',
-    s3Empty: '播出後每週更新這一季的遊戲',
+    s3Empty: '敬請期待',
     s2: '第 2 季《死亡密室》',
     s1: '第 1 季',
     playable: '可以玩',
