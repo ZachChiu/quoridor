@@ -126,8 +126,14 @@ export function pluckPlan({ at, side, slot, board, viewport }: {
   ];
 
   const rel = (p: XY) => px({ x: p.x - P.x, y: p.y - P.y });
+  // 開頭那段（原本是手伸過來的時間）：替身自己在原地掙一下、被拔起來之前晃兩晃（11/1 起畫面上不畫手）
+  const tug = (offset: number, y: number, deg: number): Keyframe => ({ offset, translate: px({ x: 0, y: -y * man }), rotate: `${deg}deg`, scale: '1', opacity: 1, easing: 'ease-in-out' });
   const piece: Keyframe[] = [
     { offset: 0, translate: '0px 0px', rotate: '0deg', scale: '1', opacity: 1 },
+    tug(A.reach * 0.55, 0, 0),
+    tug(A.reach * 0.75, 0.05, -6),
+    tug(A.reach * 0.95, 0.02, 5),
+    tug((A.reach + A.grip) / 2, 0.06, -3),
     ...path.map(({ offset, at, easing }, i) => ({ offset, translate: rel(at), rotate: `${pose[i].rotate}deg`, scale: `${pose[i].scale}`, opacity: 1, easing })),
     { offset: A.release, translate: rel(S), rotate: `${turn}deg`, scale: `${k}`, opacity: 1 },
     { offset: A.release, translate: rel(S), rotate: `${turn}deg`, scale: `${k}`, opacity: 0 },
