@@ -41,7 +41,7 @@ const ja: Messages = {
     rules: 'ルール',
     s3: 'シーズン3『Dead Again』',
     s3Badge: '11/10 配信',
-    s3Empty: '配信が始まったら毎週ゲームを追加します',
+    s3Empty: 'お楽しみに',
     s2: 'シーズン2',
     s1: 'シーズン1',
     playable: 'プレイ可',
