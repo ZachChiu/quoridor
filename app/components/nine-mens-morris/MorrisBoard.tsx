@@ -7,9 +7,8 @@ import {
   gx, gy, trayTurn, trayX,
 } from './art';
 import { playIdle } from './idleMotion';
-import { MorrisHand } from './MorrisHand';
 import { NMM } from './palette';
-import { PLUCK_AT, PLUCK_MS, handFrom, handSleeve, pluckPlan } from './pluck';
+import { PLUCK_AT, PLUCK_MS, pluckPlan } from './pluck';
 
 /**
  * 九子棋的棋盤與棋子，照首頁那幅《遊戲之書》（1283）插圖（Zach 10/24：「棋盤可以跟視覺圖一樣」、「棋子有點醜」）：
@@ -29,7 +28,7 @@ import { PLUCK_AT, PLUCK_MS, handFrom, handSleeve, pluckPlan } from './pluck';
  *
  * 動作（剛好多一手才播，悔棋、重來、重整接回都不播）：放子從上面落下、走子沿線滑過去、飛子劃一道弧、
  * 連成一線時粉筆畫出來、三顆依序跳一下。等的那一方偶爾自己動（idleMotion.ts）。
- * 拿子是一隻插圖畫風的手從畫面外伸進來、捏起那顆、放到下方（pluck.ts、MorrisHand.tsx），什麼時候播由 MorrisPlay 決定（pluck）。
+ * 拿子是那顆晃兩下、被拔起來飛到下方躺好（pluck.ts；原本有一隻手來捏，11/1 起不畫），什麼時候播由 MorrisPlay 決定（pluck）。
  */
 
 const reducedMotion = () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -313,22 +312,20 @@ export function MorrisBoard({ board, targets, movable, removable, selected, last
     ], { duration: 480, delay: 560 + i * 100, easing: 'ease-in-out' }));
   }, [plies, last, mills]);
 
-  // 拿子：一隻手從畫面外伸進來，捏起盤上那顆（替身）、放到下方那一格，再縮回去（pluck.ts）。
+  // 拿子：盤上那顆（替身）晃兩下、被拔起來，飛到下方那一格躺下（pluck.ts）。
+  // 原本有一隻插圖畫風的手伸進來捏走它（MorrisHand.tsx），11/1 Zach：「我不要那隻手…目前有點醜」，先不畫，動畫留著。
   // 只動 transform／opacity，全部是 element.animate()；局面一變（悔棋、重來）就整段取消
   useLayoutEffect(() => {
     const root = rootRef.current;
     if (!pluck || !root) return;
-    const hand = root.querySelector<HTMLElement>('[data-hand]');
     const carried = root.querySelector<HTMLElement>('[data-carried]');
-    if (!hand || !carried) { onPluckRef.current('done'); return; }
+    if (!carried) { onPluckRef.current('done'); return; }
     const slot = root.querySelector<HTMLElement>(`[data-tray="${pluck.side}"][data-slot="${pluck.slot}"]`);
     const r = root.getBoundingClientRect();
     const plan = pluckPlan({ ...pluck, board: { left: r.left, width: r.width }, viewport: document.documentElement.clientWidth });
     const opts: KeyframeAnimationOptions = { duration: PLUCK_MS, fill: 'forwards' };
     const anims = [
-      hand.animate(plan.hand, opts),
       carried.animate(plan.piece, opts),
-      ...[...hand.querySelectorAll<SVGGElement>('[data-finger]')].map((f) => f.animate(f.dataset.finger === 'index' ? plan.index : plan.thumb, opts)),
       ...(slot ? [slot.animate(plan.tray, { duration: PLUCK_MS })] : []),
     ];
     const timers = [
@@ -382,11 +379,6 @@ export function MorrisBoard({ board, targets, movable, removable, selected, last
             <PieceGlyph side={pluck.side} className="size-full" />
           </span>
         </span>
-      )}
-      {pluck && (
-        <div data-hand="" aria-hidden="true" className="pointer-events-none absolute inset-0 z-20">
-          <MorrisHand from={handFrom(pluck.side)} sleeve={handSleeve(pluck.side)} />
-        </div>
       )}
     </div>
   );
