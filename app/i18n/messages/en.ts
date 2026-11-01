@@ -107,6 +107,8 @@ const en: Messages = {
     winTigerBody: 'The tigers captured five goats.',
     winGoatBody: 'The goats trapped every tiger.',
     drawBody: 'Too many moves without a result.',
+    /** 連線對戰投降（2026-11-01） */
+    resignBody: 'The {side} resigned.',
     again: 'Play again',
     feedbackPlaceholder: 'e.g. a tiger could jump but I couldn’t tap it, or the computer felt too strong or too weak',
     invite: 'Invite a friend',

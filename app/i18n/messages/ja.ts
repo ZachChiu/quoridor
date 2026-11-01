@@ -106,6 +106,8 @@ const ja: Messages = {
     winTigerBody: 'トラがヤギを5頭捕まえました。',
     winGoatBody: 'ヤギがトラを全部動けなくしました。',
     drawBody: '手数が多すぎて決着がつきませんでした。',
+    /** 連線對戰投降（2026-11-01） */
+    resignBody: '{side}が投了しました。',
     again: 'もう一局',
     feedbackPlaceholder: '例：トラが跳べるはずなのに押せない、コンピューターが強すぎる・弱すぎる',
     invite: '友だちを招待',

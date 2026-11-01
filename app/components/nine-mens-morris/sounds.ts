@@ -16,7 +16,7 @@ import { playSynth, type Synth } from '@/utils/sound';
  *
  * 撥弦＝三角波快起音、指數衰減，加一個高八度的正弦泛音，像弦被指甲撥到。
  */
-export type MorrisSound = 'place' | 'move' | 'fly' | 'select' | 'mill' | 'remove' | 'pluck' | 'lay' | 'turn' | 'win' | 'lose' | 'draw';
+export type MorrisSound = 'place' | 'move' | 'fly' | 'select' | 'mill' | 'remove' | 'pluck' | 'lay' | 'turn' | 'win' | 'lose' | 'draw' | 'nudge';
 
 /** 骨頭碰木頭 */
 function clack(s: Synth, at: number, vol = 1) {
@@ -66,6 +66,8 @@ export function playMorris(name: MorrisSound) {
       case 'turn': [69, 74].forEach((n, i) => pluck(s, t + i * 0.12, n, 0.7, 0.7)); break;
       case 'win': [62, 65, 69, 74].forEach((n, i) => pluck(s, t + i * 0.13, n, 1, i === 3 ? 1.6 : 0.8)); break;
       case 'lose': [69, 65, 64, 62].forEach((n, i) => pluck(s, t + i * 0.22, n, 0.8, i === 3 ? 1.4 : 0.8)); break;
+      // 被催：指節在木頭棋盤邊上敲兩下（連線，2026-11-01）
+      case 'nudge': [0, 0.16].forEach((dt) => { s.knock(t + dt, 380, 0.1, 1.3); clack(s, t + dt, 0.5); }); break;
       case 'draw': [62, 69].forEach((n, i) => pluck(s, t + i * 0.2, n, 0.8, 1.2)); break;
     }
   });
