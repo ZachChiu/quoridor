@@ -65,6 +65,9 @@ export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghM
   const [selected, setSelected] = useState<Point | null>(null);
   const [helpOpen, setHelpOpen] = useState(false);
   const [resignOpen, setResignOpen] = useState(false);
+  /** 本機、跟電腦下的投降（11/1 Zach）：投降的那一邊；局面的 winner 直接蓋成對方 */
+  const [localResigned, setLocalResigned] = useState<Side | null>(null);
+  const resignedSide = mode.kind === 'online' ? mode.resigned : localResigned;
   const boardRef = useRef<HTMLDivElement>(null);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const { ensureUser } = useUser();
@@ -85,7 +88,16 @@ export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghM
     return () => window.clearTimeout(id);
   }, [aiTurn, mode, game]);
 
-  const restart = () => { setGame(createGame()); setSelected(null); };
+  const restart = () => { setGame(createGame()); setSelected(null); setLocalResigned(null); };
+  // 投降：本機是輪到的那方、跟電腦下是自己；連線寫進房間
+  const resign = () => {
+    if (mode.kind === 'online') { mode.resign(); return; }
+    if (game.winner) return;
+    const loser = mode.kind === 'ai' ? mode.human : game.turn;
+    setLocalResigned(loser);
+    setGame({ ...game, winner: loser === 'tiger' ? 'goat' : 'tiger' });
+    setSelected(null);
+  };
 
   // GA（docs/platform-tracking.md）：跟 Wall Go 送同一套事件，帶 game。看狀態的轉變而不是按鈕 ——
   // 開始＝下了第一手（連線也是：兩邊到齊後的第一手），結束＝分出勝負。
@@ -127,7 +139,7 @@ export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghM
         result: w === 'draw' ? 'tie' : mode.kind === 'local' ? 'decided' : w === mode.human ? 'win' : 'lose',
         winner: w,
         // 連線可以投降（2026-11-01）
-        ended: mode.kind === 'online' && mode.resigned ? 'resign' : 'natural',
+        ended: resignedSide ? 'resign' : 'natural',
         turns: game.history.length,
         duration_sec: startedAt.current ? Math.round((Date.now() - startedAt.current) / 1000) : undefined,
       });
@@ -162,10 +174,9 @@ export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghM
     }
   }, [game, mode]);
   // 投降沒有多一手，上面的音效不會響：這裡補勝負的聲音
-  const resignedSide = mode.kind === 'online' ? mode.resigned : null;
   useEffect(() => {
-    if (!resignedSide || mode.kind !== 'online') return;
-    playBagh(resignedSide === mode.human ? 'lose' : 'win');
+    if (!resignedSide) return;
+    playBagh(mode.kind === 'local' || resignedSide !== mode.human ? 'win' : 'lose');
     // eslint-disable-next-line react-hooks/exhaustive-deps -- 只在投降那一下響
   }, [resignedSide]);
   // 被催（連線）：棋盤抖一下、拍手鼓（震動在 useRoomSignals）
@@ -344,11 +355,12 @@ export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghM
           <button type="button" onClick={() => setResignOpen(true)} className={wide}><LuFlag aria-hidden="true" />{g.surrender.label}</button>
         </div>
       )}
-      {/* 手機：悔棋、重來放在棋盤下面（連線局沒有） */}
+      {/* 手機：悔棋、重來、投降放在棋盤下面（連線局沒有悔棋、重來） */}
       {!online && (
-        <div className="grid w-full max-w-[520px] grid-cols-2 gap-2.5 pt-1 lg:hidden">
+        <div className="grid w-full max-w-[520px] grid-cols-3 gap-2.5 pt-1 lg:hidden">
           <button type="button" onClick={doUndo} disabled={!canUndo} className={wide}><LuUndo2 aria-hidden="true" />{b.undo}</button>
           <button type="button" onClick={restart} className={wide}><LuRotateCcw aria-hidden="true" />{b.restart}</button>
+          <button type="button" onClick={() => setResignOpen(true)} disabled={!!game.winner} className={wide}><LuFlag aria-hidden="true" />{g.surrender.label}</button>
         </div>
       )}
 
@@ -369,10 +381,8 @@ export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghM
             <button type="button" onClick={restart} className={wide}><LuRotateCcw aria-hidden="true" />{b.restart}</button>
           </>}
           <button type="button" onClick={() => setHelpOpen(true)} className={wide}><LuCircleHelp aria-hidden="true" />{b.rulesHeading}</button>
-          {/* 連線局不放「回首頁選玩法」，放投降（11/1 Zach）；分出勝負之後換回來 */}
-          {mode.kind === 'online' && !game.winner
-            ? <button type="button" onClick={() => setResignOpen(true)} className={wide}><LuFlag aria-hidden="true" />{g.surrender.label}</button>
-            : <button type="button" onClick={home} className={wide}><LuHouse aria-hidden="true" />{b.menu}</button>}
+          {/* 投降：本機、跟電腦下、連線都有（11/1 Zach）。不放「回首頁選玩法」—— 左上的房子就是，不用兩顆做同一件事 */}
+          <button type="button" onClick={() => setResignOpen(true)} disabled={!!game.winner} className={wide}><LuFlag aria-hidden="true" />{g.surrender.label}</button>
           {mode.kind === 'online' && !game.winner && (
             <button type="button" onClick={mode.nudge} disabled={!mode.canNudge || mode.nudged} className={`${wide} col-span-2`}>
               <LuBellRing aria-hidden="true" />{mode.nudged ? g.nudge.sent : g.nudge.button}
@@ -390,16 +400,15 @@ export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghM
         <p className="text-sm leading-relaxed">{online ? g.leave.bodyOnline : g.leave.body}</p>
       </Modal>
 
-      {mode.kind === 'online' && (
-        <Modal skin="bagh" isOpen={resignOpen && !game.winner} onClose={() => setResignOpen(false)} title={g.surrender.heading} kicker={g.surrender.kicker}
-          band={{ className: 'bg-[#4a2616]', fg: 'text-tile-cream' }}
-          footer={<>
-            <button type="button" onClick={() => setResignOpen(false)} className={`${BAGH_SECONDARY} h-12 flex-1`}>{g.surrender.cancel}</button>
-            <button type="button" onClick={() => { setResignOpen(false); mode.resign(); }} className={`${BAGH_PRIMARY} h-12 flex-1`}>{g.surrender.confirm}</button>
-          </>}>
-          <p className="text-sm leading-relaxed">{g.surrender.body}</p>
-        </Modal>
-      )}
+      {/* 投降確認。本機是輪到的那方（小標寫哪一方），跟電腦下是自己 */}
+      <Modal skin="bagh" isOpen={resignOpen && !game.winner} onClose={() => setResignOpen(false)} title={g.surrender.heading} kicker={mode.kind === 'local' ? side(game.turn) : g.surrender.kicker}
+        band={{ className: 'bg-[#4a2616]', fg: 'text-tile-cream' }}
+        footer={<>
+          <button type="button" onClick={() => setResignOpen(false)} className={`${BAGH_SECONDARY} h-12 flex-1`}>{g.surrender.cancel}</button>
+          <button type="button" onClick={() => { setResignOpen(false); resign(); }} className={`${BAGH_PRIMARY} h-12 flex-1`}>{g.surrender.confirm}</button>
+        </>}>
+        <p className="text-sm leading-relaxed">{g.surrender.body}</p>
+      </Modal>
 
       <Modal skin="bagh" isOpen={helpOpen} onClose={() => setHelpOpen(false)} title={b.rulesHeading} kicker={b.name}
         icon={RulesToken} band={{ className: 'bg-[#5b6620]', fg: 'text-tile-cream' }}>
@@ -426,7 +435,7 @@ export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghM
             mode: mode.kind === 'online' ? 'online' : mode.kind === 'ai' ? 'ai' : 'local',
             playersNum: 2,
             result: result.title.slice(0, 40),
-            ended: !game.winner ? 'unfinished' : mode.kind === 'online' && mode.resigned ? 'resign' : 'natural',
+            ended: !game.winner ? 'unfinished' : resignedSide ? 'resign' : 'natural',
             ua: typeof navigator !== 'undefined' ? navigator.userAgent.slice(0, 400) : '',
             viewport: typeof window !== 'undefined' ? `${window.innerWidth}x${window.innerHeight}@${window.devicePixelRatio}` : '',
           }, await ensureUser())} />
