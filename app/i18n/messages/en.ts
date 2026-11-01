@@ -71,17 +71,15 @@ const en: Messages = {
     subtitle: 'Tigers and Goats',
     name: 'Bagh Chal',
     tagline: '4 tigers against 20 goats',
-    /** 首頁棋盤下面的介紹（docs/platform-keywords.md）：是什麼、怎麼贏、幾個技巧，完整規則在規則頁、不重複 */
+    /** 首頁棋盤下面的介紹（docs/platform-keywords.md）：是什麼、幾個技巧（規則頁步驟底下） */
     aboutHeading: "What is Bagh Chal?",
     aboutWhat: "Bagh Chal (“moving tigers” in Nepali) is a traditional board game from Nepal — the classic tigers and goats game. It’s played on the points of a 5×5 grid: one player has 4 tigers, the other has 20 goats. The tigers start in the four corners and can step along a line or jump over a neighboring goat to capture it. The goats enter the board one at a time and can only move once all 20 are placed.",
-    aboutWin: "How to win: the tigers win by capturing 5 goats; the goats win by trapping every tiger so none can move.",
     aboutTipsTitle: "Tips for your first Bagh Chal game",
     aboutTips: [
       "Goats: take the edges and corners first. A tiger needs an empty point behind a goat to jump it, and behind an edge goat there’s only the edge of the board.",
       "Goats: keep them packed together and never leave a gap behind a goat.",
       "Tigers: spread out. Four tigers bunched together block each other’s moves.",
     ],
-    aboutMore: "How to play: full rules",
     local: 'Local play',
     vsAi: 'Play the AI',
     playAs: 'Play as',
