@@ -51,8 +51,11 @@ export default function GameCard({ game, locale, playable, guide, want, width = 
     <div className={`${CARD} ${width} flex flex-col justify-end bg-plat-surface p-3.5`}>
       {/* 左上角「想玩」（11/1 Zach）；flex-1 把名字推回底下 */}
       <div className="relative flex flex-1 flex-col"><WantButton wantKey={wantKey(game.name)} label={want} name={name} /></div>
-      {/* 角落是平台的骰子惡魔（Zach 10/24：規則整理中的空白卡要換上骰子惡魔）：卡片同色系的淡剪影、點數挖空，跟左上的 logo 同一個形 */}
-      <span aria-hidden="true" className="plat-soon-mark absolute -right-4 -top-1 size-[124px] rotate-12 bg-plat-raised" />
+      {/*
+        角落是平台的骰子惡魔（Zach 10/24：規則整理中的空白卡要換上骰子惡魔）：卡片同色系的淡剪影、點數挖空，跟左上的 logo 同一個形。
+        大小跟著卡片寬度（11/1 Zach：季目錄頁一排兩張時太擠，從 100／110／120px 挑了 120）：首頁 240px 的卡片照舊 124px
+      */}
+      <span aria-hidden="true" className="plat-soon-mark absolute -top-1 right-[max(-16px,-9cqw)] size-[min(124px,70cqw)] rotate-12 bg-plat-raised" />
       <span className="relative text-base font-black leading-tight">{name}</span>
       <span className="relative text-xs font-bold text-plat-muted">{guide}</span>
     </div>
