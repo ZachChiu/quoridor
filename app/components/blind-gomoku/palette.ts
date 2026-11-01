@@ -25,7 +25,7 @@ export const GMK = {
  */
 export const GMK_BAND = {
   // 標題那塊一律留小標＋標題的高度、貼底：語言（沒有小標）跟聯絡我們的標題落在同一個高度（11/1 Zach，同九子棋）
-  className: '[&>div:first-child]:min-h-12 [&>div:first-child]:items-end',
+  className: '!items-end [&>div:first-child]:min-h-12 [&>div:first-child]:items-end',
   style: {
     background:
       'linear-gradient(135deg, transparent 33px, #f2e4c9 33px, #f2e4c9 35px, transparent 35px), linear-gradient(135deg, #be3479 34px, #046161 34px)',
