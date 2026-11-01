@@ -1,7 +1,8 @@
 'use client';
 import { useState } from 'react';
 import Link from 'next/link';
-import { GiChessKnight, GiStopwatch } from 'react-icons/gi';
+import { GiStopwatch } from 'react-icons/gi';
+import KnightSvg from './KnightSvg';
 import { LuChevronRight } from 'react-icons/lu';
 import LocalName, { letteringOf } from '@/components/LocalName';
 import PlatformCorner from '@/components/PlatformCorner';
@@ -81,7 +82,8 @@ export default function KnightsTourMenu({ locale, onShow, onPractice }: {
             <LuChevronRight aria-hidden="true" className="shrink-0 text-xl opacity-70" />
           </a>
           <button type="button" onClick={() => setSizeOpen(true)} className={`${card} kt-plate`}>
-            <GiChessKnight aria-hidden="true" className="shrink-0 text-3xl" />
+            {/* 對局裡那隻銅版畫騎士（11/1 Zach） */}
+            <KnightSvg className="size-9 shrink-0" />
             <span className="min-w-0 flex-1">
               <span className="block text-lg font-black leading-tight">{t.practiceMode}</span>
               <span className="kt-serif mt-0.5 block text-sm opacity-75">{t.practiceKicker}</span>

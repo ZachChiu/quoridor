@@ -49,6 +49,8 @@ export type KnightsText = {
   timeUpTitle: string;
   timeUpBody: string;
   again: string;
+  /** 結算關掉之後，再叫出來 */
+  viewResult: string;
   toPractice: string;
   undo: string;
   hint: string;
@@ -126,6 +128,7 @@ export const TEXT = {
     timeUpTitle: '時間到',
     timeUpBody: '60 分鐘用完了，這次走到第 {i} 關（{size}）。',
     again: '再挑戰一次',
+    viewResult: '看結果',
     toPractice: '去練習',
     undo: '悔一步',
     hint: '提示',
@@ -202,6 +205,7 @@ export const TEXT = {
     timeUpTitle: "Time's up",
     timeUpBody: 'The 60 minutes ran out on level {i} ({size}).',
     again: 'Try again',
+    viewResult: 'See result',
     toPractice: 'Practice',
     undo: 'Undo',
     hint: 'Hint',
@@ -279,6 +283,7 @@ export const TEXT = {
     timeUpTitle: '時間切れ',
     timeUpBody: '60分を使い切りました。第{i}ステージ（{size}）まで進みました。',
     again: 'もう一度挑戦',
+    viewResult: '結果を見る',
     toPractice: '練習する',
     undo: '一手戻す',
     hint: 'ヒント',
@@ -356,6 +361,7 @@ export const TEXT = {
     timeUpTitle: '시간 종료',
     timeUpBody: '60분을 다 썼어요. 이번에는 {i}단계({size})까지 갔어요.',
     again: '다시 도전',
+    viewResult: '결과 보기',
     toPractice: '연습하기',
     undo: '무르기',
     hint: '힌트',
@@ -433,6 +439,7 @@ export const TEXT = {
     timeUpTitle: '时间到',
     timeUpBody: '60 分钟用完了，这次走到第 {i} 关（{size}）。',
     again: '再挑战一次',
+    viewResult: '看结果',
     toPractice: '去练习',
     undo: '悔一步',
     hint: '提示',
@@ -511,6 +518,7 @@ export const TEXT = {
     timeUpTitle: 'หมดเวลา',
     timeUpBody: 'ใช้เวลาครบ 60 นาทีแล้ว รอบนี้ไปถึงด่านที่ {i} ({size})',
     again: 'ท้าทายอีกครั้ง',
+    viewResult: 'ดูผลลัพธ์',
     toPractice: 'ไปฝึก',
     undo: 'ย้อนตา',
     hint: 'คำใบ้',
