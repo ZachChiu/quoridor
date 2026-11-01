@@ -120,7 +120,7 @@ const Modal: React.FC<Props> = ({
             虎羊棋（bagh）不要色帶：上面已經有一條飾帶，再疊一條色塊會變成兩條重的橫帶（Zach：整體不太搭）。
             標題直接放在紙色上。標題下原本有一小條 band 色的短線，也拿掉了（Zach：每一頁不要有這個）—— bagh 不用 band。 */}
         <div
-          className={`flex shrink-0 items-start justify-between gap-3 px-6 ${bagh ? '!items-end pb-1 pt-5 text-tile-ink [&>div:first-child]:min-h-12 [&>div:first-child]:items-end' : `py-5 ${band.className ?? ''} ${band.fg}`}`}
+          className={`flex shrink-0 items-start justify-between gap-3 px-6 ${bagh ? '!items-end pb-1 pt-5 text-tile-ink [&>div:first-child]:min-h-12 [&>div:first-child]:items-end [&_h2]:leading-9' : `py-5 ${band.className ?? ''} ${band.fg}`}`}
           style={bagh ? undefined : band.style}
         >
           <div className="flex items-center gap-3">
