@@ -1,8 +1,7 @@
 'use client';
 import React, { useState } from 'react';
-import { GiChatBubble } from 'react-icons/gi';
+import { LuMessageCircle } from 'react-icons/lu';
 import Modal from './Modal';
-import { InviteToken } from './bagh-chal/tokens';
 import Button from './Button';
 import { track, type GameSlug } from '@/utils/analytics';
 import { useGameText, useMessages } from '@/i18n/LocaleProvider';
@@ -62,9 +61,8 @@ const FeedbackModal: React.FC<Props> = ({ isOpen, onClose, onSubmit, variant = '
   }
 
   const isContact = variant === 'contact';
-  // 各遊戲打開的是那款自己的樣子（Zach 10/24）；虎羊棋的圖示是蠟封信圓牌
+  // 各遊戲打開的是那款自己的樣子（Zach 10/24）；左上的圖示每款都跟外面「聯絡我們」的圓鈕一樣（11/1，虎羊棋原本是蠟封信圓牌）
   const th = theme ?? DEFAULT_CORNER;
-  const bagh = th.skin === 'bagh';
   const soft = th.soft ?? 'text-ink-soft';
   // 對局回饋要選評分；聯絡我們評分選填，但至少要寫點什麼
   const canSend = isContact ? message.trim().length > 0 : rating !== null;
@@ -96,7 +94,8 @@ const FeedbackModal: React.FC<Props> = ({ isOpen, onClose, onSubmit, variant = '
       onClose={onClose}
       title={state === 'sent' ? g.feedback.sent : copy.heading}
       kicker={copy.kicker}
-      icon={bagh ? InviteToken : GiChatBubble}
+      // 跟外面「聯絡我們」那顆圓鈕同一個圖示（11/1 Zach：彈窗左上的實心對話框跟按鈕不一樣）
+      icon={LuMessageCircle}
       band={th.band}
       footer={
         state === 'sent' ? (
