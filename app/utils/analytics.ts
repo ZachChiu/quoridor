@@ -28,7 +28,7 @@ type Players = 1 | 2 | 3;
  * 哪一款遊戲：網址的 slug（/wall-go/ → wall-go）。平台上線後同一個 GA 資源有好幾款，
  * 跟對局有關的事件都一定要帶（docs/platform-tracking.md）。新遊戲上線時加在這裡，漏帶就編譯不過。
  */
-export type GameSlug = 'wall-go' | 'bagh-chal' | 'knights-tour';
+export type GameSlug = 'wall-go' | 'bagh-chal' | 'knights-tour' | 'nine-mens-morris';
 type G = { game: GameSlug };
 
 /** 平台首頁、季目錄頁點了哪裡的遊戲卡 */

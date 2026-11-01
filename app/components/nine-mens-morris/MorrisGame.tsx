@@ -4,6 +4,7 @@ import { useIsoLayoutEffect } from '@/hook/useIsoLayoutEffect';
 import type { Locale } from '@/i18n/locales';
 import MorrisPlay from './MorrisPlay';
 import MorrisSetup from './MorrisSetup';
+import { track } from '@/utils/analytics';
 import { SESSION_KEY, clearSession, loadSession, type Session } from './session';
 
 /*
@@ -65,6 +66,9 @@ export default function MorrisGame({ locale }: { locale: Locale }) {
     <>
       {booting && hydrating && <script dangerouslySetInnerHTML={{ __html: HIDE_SETUP }} />}
       <MorrisSetup locale={locale} onStart={(mode, showRules) => {
+        track('mode_select', mode.kind === 'ai'
+          ? { game: 'nine-mens-morris', mode: 'solo', players: 2, difficulty: mode.difficulty, entry: 'home' }
+          : { game: 'nine-mens-morris', mode: 'local', players: 2, entry: 'home' });
         history.pushState(history.state, '', location.pathname + location.search + PLAY_HASH);
         setState({ session: { mode, showRules, moves: '' }, booting: false });
       }} />
