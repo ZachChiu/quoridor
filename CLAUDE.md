@@ -370,7 +370,7 @@ GA 由 `app/shell.tsx` 的 `<GoogleAnalytics>` 載入（只有 `NEXT_PUBLIC_APP_
 - **`page_view` 交給 GA 自己算**（首次載入由 config、站內換頁由加強型評估的「依瀏覽器記錄事件」）。不要再手動送 —— 以前的 `AnalyticsProvider` 就是這樣讓每次瀏覽都算兩次。
   它要帶的 `page_type`（platform_home／season／game_home／rules／play）與 `game` 用 `gtag('set')` 設：`utils/pageMeta.ts` 的內嵌 script 在 GA 載入前包住 pushState／replaceState、聽 popstate，網址一變就照新網址 set（在 React effect 裡 set 會晚 GA 一步、帶到上一頁的值）。set 過的值這一頁之後的每個事件都會帶。
 - `select_game` 由 `SelectGameTracker` 在 document 上聽 click：能玩的卡本來就有 `data-game`，往上找 `data-select-location` 決定是哪一區。
-- 參數要在 GA 後台「管理 → 自訂定義」註冊才看得到：維度 `mode`、`players`、`difficulty`、`entry`、`result`、`winner`、`ended`、`reason`、`fail_step`、`method`、`from`、`to`、`finished`、`game`、`location`、`page_type`、`season`；指標 `turns`、`duration_sec`、`step`、`rating`。
+- 參數要在 GA 後台「管理 → 自訂定義」註冊才看得到：維度 `mode`、`players`、`difficulty`、`entry`、`result`、`winner`、`ended`、`reason`、`fail_step`、`method`、`from`、`to`、`finished`、`game`、`location`、`page_type`、`season`、`board_size`（騎士巡遊的棋盤大小，11/1 已註冊）；指標 `turns`、`duration_sec`、`step`、`rating`。
   `share` 的 `content_type`、`item_id` 是 GA4 建議事件的標準參數，後台有沒有內建維度要上線後確認，沒有再註冊。
 - **參數名稱在維度與指標之間不能重複**：`step` 已經是 `tutorial_close` 的指標，所以連線失敗的步驟叫 `fail_step`。新增參數前先看這份清單。
 - **不能用 GA 保留給流量來源的名稱**：`source`、`medium`、`campaign`、`term`、`content`（還有 `gclid`、`utm_*` 這類）。GA4 會把它們當成這個工作階段的來源 —— 2026-10 `mode_select` 帶 `source=home`，Google 搜尋進來的工作階段被記成來源「home」（大腦從 BigQuery 查到：10/22 的 22 個工作階段有 8 個），所以改名 `entry`。`from` 也不要拿來當入口：它已經是 `locale_switch` 的「從哪個語系」。

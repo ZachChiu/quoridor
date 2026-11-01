@@ -91,11 +91,11 @@ export default function PracticeGame({ n, onMenu, onSize }: { n: number; onMenu:
     setNow(at);
     playJump(n, sq, kind === 'start');
     const start = startedAt ?? at;
-    if (startedAt === null) { setStartedAt(at); track('game_start', GA); }
+    if (startedAt === null) { setStartedAt(at); track('game_start', { ...GA, board_size: n }); }
     if (isComplete(next)) {
       setEndedAt(at);
       const ms = at - start;
-      track('game_end', { ...GA, result: 'win', ended: 'natural', turns: next.path.length, duration_sec: Math.round(ms / 1000) });
+      track('game_end', { ...GA, board_size: n, result: 'win', ended: 'natural', turns: next.path.length, duration_sec: Math.round(ms / 1000) });
       const closed = isClosed(next);
       playKt('complete', 0.3);
       if (closed) playKt('closed', 0.95);
@@ -242,7 +242,7 @@ export default function PracticeGame({ n, onMenu, onSize }: { n: number; onMenu:
 
       {/* 結算就是分享圖：一張銅版圖版（shareCard.ts）。關掉就停在走完的棋盤上，換大小在棋盤下面 */}
       <ShareResultModal isOpen={!!result?.open} onClose={() => setResult((r) => (r ? { ...r, open: false } : r))}
-        title={t.doneTitle} card={share} onRestart={() => { track('game_restart', GA); restart(); }} restartLabel={t.again}
+        title={t.doneTitle} card={share} onRestart={() => { track('game_restart', { ...GA, board_size: n }); restart(); }} restartLabel={t.again}
         classes={KT_SHARE} frameClassName="rounded-[2px]"
         srText={[
           fill(t.doneBody, { size, time: formatTime(result?.ms ?? 0) }),
