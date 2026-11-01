@@ -5,6 +5,9 @@ import { useRouter } from 'next/navigation';
 import { LuCheck, LuCopy, LuShare2 } from 'react-icons/lu';
 import { useWebShare, share } from '@/hook/useWebShare';
 import { parseRoomHash, useHashSession, useTurnRoom, type TurnRoomFailure } from '@/hook/useTurnRoom';
+import { useRoomSignals } from '@/hook/useRoomSignals';
+import { seatIndex, seatKey, type SeatKey } from '@/types/turnRoom';
+import { writeResigned } from '@/utils/roomSignals';
 import { useGameText } from '@/i18n/LocaleProvider';
 import { fill, useTextTable } from '@/i18n/gameText';
 import { localePath, type Locale } from '@/i18n/locales';
@@ -65,10 +68,29 @@ function Session({ locale, hash }: { locale: Locale; hash: string }) {
   const home = localePath(locale, BLIND_GOMOKU);
   const toHome = useCallback(() => router.push(home), [router, home]);
 
+  // 在線狀態、催一下、投降（照九子棋，11/1 Zach：「也要參考其他遊戲的功能」）：人到齊、還沒分出勝負時才回報。
+  // 投降寫進房間的 resigned，GomokuPlay 把它蓋在重走出來的局面上（對方勝），之後誰都不能再走
+  const roomPath = room ? `turnRooms/${room.id}` : null;
+  const resignedKey = room?.resigned;
+  const resigned: Side | null = resignedKey ? sideOfSeat(seatIndex(resignedKey)) : null;
+  const signals = useRoomSignals({
+    roomPath, me: me === null ? null : seatKey(me), presence: room?.presence, nudge: room?.nudge,
+    turn: room?.turn ?? null, active: !!ok && !ok.game.winner && !resigned && open.length === 0,
+  });
+  const resign = useCallback(() => { if (roomPath && me !== null) void writeResigned(roomPath, seatKey(me)); }, [roomPath, me]);
+  const sideOfKey = (k: string | null): Side | null => (k ? sideOfSeat(seatIndex(k as SeatKey)) : null);
+
   if (failure) return <Failure failure={failure} home={home} />;
   if (!room || !side || !ok || !inviteUrl) return <Connecting />;
   if (open.length) return <Waiting side={side} blind={ok.blind} url={inviteUrl} home={home} />;
-  return <GomokuPlay mode={{ opponent: 'online', blind: ok.blind, side, game: ok.game, onMove, newRoom }} onMenu={toHome} />;
+  return (
+    <GomokuPlay onMenu={toHome} mode={{
+      opponent: 'online', blind: ok.blind, side, game: ok.game, onMove, newRoom, resigned, resign,
+      away: sideOfKey(signals.away[0] ?? null), selfOffline: signals.selfOffline,
+      canNudge: signals.canNudge, nudged: signals.nudged, shake: signals.shake, nudgeFrom: sideOfKey(signals.nudgeFrom),
+      nudge: () => signals.sendNudge(),
+    }} />
+  );
 }
 
 /**

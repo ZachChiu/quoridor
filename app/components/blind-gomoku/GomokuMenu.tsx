@@ -18,6 +18,7 @@ import { TEXT } from '@/games/blind-gomoku/text';
 import { ColorFace, KEY_HEX, SideFace } from './Stone';
 import GomokuFrame from './GomokuFrame';
 import { MENU_CLASS, type GomokuMode } from './modeHash';
+import { HOME_GRID } from './deskLayout';
 import { GMK_BAND, GMK_CORNER, GMK_PANEL } from './palette';
 
 /**
@@ -71,27 +72,28 @@ export default function GomokuMenu({ locale, onStart }: { locale: Locale; onStar
   };
 
   return (
-    <GomokuFrame className={`${MENU_CLASS} items-center px-4 pb-5 pt-14 lg:flex-row lg:items-end lg:justify-center lg:gap-12 lg:px-10 lg:py-16`}>
+    <GomokuFrame className={`${MENU_CLASS} items-center px-4 pb-5 pt-14 lg:px-10 lg:py-16 ${HOME_GRID.frame}`}>
       {/* 右上角的聯絡、語言：圓鈕與打開的彈窗都是這款自己的布（GMK_CORNER），不是 Wall Go 的奶油底＋深墨 */}
       <PlatformCorner locale={locale} theme={GMK_CORNER} offset="calc(var(--gmk-frame, 26px) + 6px)" />
 
-      {/* 桌機：左欄跟包袱巾一樣寬（先前 520px 欄裡只放 26rem 的圖，右邊空一截、兩欄看起來不對稱，11/1 Zach），
-          右欄的底對齊圖的底（同九子棋） */}
-      <header className="flex w-full max-w-[440px] flex-col items-center text-center lg:w-[26rem] lg:max-w-none lg:items-start lg:text-left">
-        <p className="text-xs font-black tracking-wide text-ink-soft">{t.tags}</p>
-        <h1 className="mt-1.5 text-[clamp(2rem,6svh,3.5rem)] font-black leading-[1.02] tracking-tight">{t.title}</h1>
-        <p className="mt-1 text-base font-black text-ink-soft lg:text-lg">{t.subtitle}</p>
-        <p className="mt-2 text-sm font-bold lg:text-base">{t.tagline}</p>
+      {/* 桌機排法見 deskLayout.ts（A／B 兩種給 Zach 挑）：header 與 nav 在桌機拆成格線裡的幾塊（lg:contents），手機照舊一欄 */}
+      <header className="flex w-full max-w-[440px] flex-col items-center text-center lg:contents">
+        <div className="flex flex-col items-center lg:items-start lg:self-end lg:text-left lg:[grid-area:title]">
+          <p className="text-xs font-black tracking-wide text-ink-soft">{t.tags}</p>
+          <h1 className="mt-1.5 text-[clamp(2rem,6svh,3.5rem)] font-black leading-[1.02] tracking-tight">{t.title}</h1>
+          <p className="mt-1 text-base font-black text-ink-soft lg:text-lg">{t.subtitle}</p>
+          <p className="mt-2 text-sm font-bold lg:text-base">{t.tagline}</p>
+        </div>
         {/* 主視覺：那塊包袱巾本身；只有它跟著畫面高度縮 */}
         {/* 出處：19 世紀朝鮮拼布包袱巾（조각보），芝加哥藝術博物館，公有領域。畫面上不寫出處（Zach 10/24：插圖不要說明） */}
-        <div className="mt-3 flex flex-col items-center gap-1 lg:items-start">
+        <div className="mt-3 flex flex-col items-center gap-1 lg:mt-0 lg:items-start lg:self-center lg:[grid-area:art]">
           {/* eslint-disable-next-line @next/next/no-img-element -- 靜態匯出，不需要 next/image */}
           <img src="/games/blind-gomoku/pojagi.webp" alt="" aria-hidden="true" width={750} height={746}
             className="h-[min(14rem,24svh)] w-auto rounded-sm lg:h-auto lg:w-full" />
         </div>
       </header>
 
-      <nav aria-label={t.title} className="mt-4 flex w-full max-w-[440px] shrink-0 flex-col gap-2.5 lg:mt-0 lg:w-[400px]">
+      <nav aria-label={t.title} className={`mt-4 flex w-full max-w-[440px] shrink-0 flex-col gap-2.5 lg:mt-0 lg:w-[400px] lg:[grid-area:menu] ${HOME_GRID.nav}`}>
         <ModeRow primary icon={GiBlindfold} title={t.blindAi} desc={t.blindAiDesc} onClick={() => setLevelFor(true)} />
         <ModeRow icon={GiRobotGolem} title={t.classicAi} desc={t.classicAiDesc} onClick={() => setLevelFor(false)} />
         <div className="gmk-patch is-ramie flex min-h-[60px] w-full items-center gap-3 py-2.5 pl-4 pr-2.5">
@@ -106,11 +108,11 @@ export default function GomokuMenu({ locale, onStart }: { locale: Locale; onStar
           </span>
         </div>
         <ModeRow icon={GiPaperPlane} title={t.online} desc={t.onlineDesc} onClick={() => setInviteOpen(true)} />
-        {/* 怎麼玩：規則頁（一步一張圖配字，10/25 Zach：怎麼玩要換成新頁）；這款裡面換頁不播轉場，用一般的 Link */}
-        <Link href={localePath(locale, trialRules(BLIND_GOMOKU))} className="gmk-thread self-center px-3 py-2 text-sm text-ink-soft">
-          {t.howTo}
-        </Link>
       </nav>
+      {/* 怎麼玩：規則頁（一步一張圖配字，10/25 Zach：怎麼玩要換成新頁）；這款裡面換頁不播轉場，用一般的 Link */}
+      <Link href={localePath(locale, trialRules(BLIND_GOMOKU))} className="gmk-thread mt-2.5 self-center px-3 py-2 text-sm text-ink-soft lg:mt-2 lg:self-start lg:justify-self-center lg:[grid-area:link]">
+        {t.howTo}
+      </Link>
 
       <Modal isOpen={levelFor !== null} onClose={() => setLevelFor(null)} title={t.pickLevel}
         kicker={shownFor ? t.blindAi : t.classicAi} icon={shownFor ? GiBlindfold : GiRobotGolem}

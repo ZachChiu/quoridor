@@ -16,6 +16,7 @@ import { COLORS, type Side, type StoneColor } from '@/games/blind-gomoku/engine'
  *   （伽倻琴按弦的농현，聽起來才不像電子琴）；再疊兩倍、三倍頻的正弦當泛音，衰減比基音快。
  * - **選顏色**：只撥那根弦、不落子，小聲而短 —— 先聽到這個顏色是哪個音。
  * - **翻開（揭曉黑白）**：從最低刮到最高（G3 到 G5 共 11 根弦，散在 0.85 秒內），伽倻琴的刮奏，像把包袱巾一口氣攤開。
+ * - **被催**（連線）：最高的兩根弦連撥兩下、再一聲布上的輕拍，像有人扯你的袖子。
  * - **贏**：上行四聲 D4 G4 A4 D5，最後一聲長、尾巴往下彎一點；**輸**：下行 A4 G4 E4 D4，輕；
  *   **和局**：D4 與 A4 同時撥兩次，不上不下。
  */
@@ -78,5 +79,14 @@ export function playEnd(kind: 'win' | 'lose' | 'draw') {
     } else {
       for (const dt of [0, 0.32]) { pluck(s, t + dt, 62, 0.3, 0.8); pluck(s, t + dt, 69, 0.26, 0.8); }
     }
+  });
+}
+
+/** 被催：最高兩根弦連撥兩下＋布上一聲輕拍 */
+export function playNudge() {
+  playSynth((s) => {
+    const { t } = s;
+    for (const dt of [0, 0.16]) { pluck(s, t + dt, 76, 0.34, 0.35); pluck(s, t + dt + 0.05, 74, 0.26, 0.3); }
+    cloth(s, t + 0.36, 0.6);
   });
 }

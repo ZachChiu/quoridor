@@ -652,6 +652,9 @@ html:has(.gmk-root), body:has(.gmk-root) { background: #e4d6bb; }
     linear-gradient(135deg, transparent calc(var(--corner) - 1px), #f2e4c9 calc(var(--corner) - 1px), #f2e4c9 calc(var(--corner) + 1px), transparent calc(var(--corner) + 1px)),
     linear-gradient(135deg, #be3479 var(--corner), #046161 var(--corner));
 }
+/* 連線：對方斷線（滿 3 秒）那塊反灰，正中蓋一層半透明的灰＋斷掉的 Wi‑Fi（同九子棋、虎棋，11/1 Zach：純灰色遮罩、不要按鈕感） */
+.gmk-away > :not(.gmk-away-cover) { filter: grayscale(1); opacity: 0.75; }
+.gmk-away-cover { position: absolute; inset: 0; display: grid; place-items: center; border-radius: inherit; background: rgb(119 114 108 / 0.78); color: #f2e4c9; font-size: var(--away-size, 1.6rem); }
 /* 連結：底下一道平針縫 */
 .gmk-thread { font-weight: 900; text-decoration: underline dashed rgb(42 37 37 / 0.55); text-decoration-thickness: 2px; text-underline-offset: 6px; }
 /* 連線頁（GomokuOnline）：平針縫一直往前縫（連線中、等朋友；虛線一段 8，走兩段剛好接回原位），空著的那塊布上淡淡的子輕輕浮著 */
