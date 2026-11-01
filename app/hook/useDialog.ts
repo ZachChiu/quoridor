@@ -2,6 +2,36 @@
 import { useEffect, useRef, useState } from 'react';
 import { useScrollLock } from './useScrollLock';
 
+/*
+  開著對話框時，頁面本身的底色也跟著遮罩一起變暗（11/1 Zach 回報：手機上彈窗打開，最下面一條沒有變暗）。
+  iPhone 上工具列收起來時、頁面拉過頭時露出來的那條，畫的是 html 的底色（WebKit 的 under-page 底色），
+  不是頁面上的東西 —— fixed 的遮罩再怎麼往外多蓋（.cover-viewport）也蓋不到。所以開著時把 html／body 的底色
+  換成「原本的底色疊上遮罩那層黑」，關掉時還原。好幾個對話框疊著開時只在第一個開、最後一個關時動。
+*/
+let dimmed = 0;
+let restoreRoot: (() => void) | null = null;
+
+function dimRoot(backdrop: HTMLElement | null) {
+  if (dimmed++ > 0 || !backdrop) return;
+  const alpha = /rgba?\([^)]*?,\s*([\d.]+)\)/.exec(getComputedStyle(backdrop).backgroundColor)?.[1];
+  const root = document.documentElement;
+  const base = /rgba?\((\d+),\s*(\d+),\s*(\d+)/.exec(getComputedStyle(root).backgroundColor);
+  if (!alpha || !base) return;
+  const keep = 1 - Number(alpha);
+  const color = `rgb(${base.slice(1).map((v) => Math.round(Number(v) * keep)).join(',')})`;
+  const prev = [root.style.backgroundColor, document.body.style.backgroundColor];
+  root.style.backgroundColor = color;
+  document.body.style.backgroundColor = color;
+  restoreRoot = () => { root.style.backgroundColor = prev[0]; document.body.style.backgroundColor = prev[1]; };
+}
+
+function undimRoot() {
+  if (--dimmed > 0) return;
+  dimmed = 0;
+  restoreRoot?.();
+  restoreRoot = null;
+}
+
 const FOCUSABLE = 'a[href],button:not([disabled]),input,select,textarea,[tabindex]:not([tabindex="-1"])';
 
 /**
@@ -13,6 +43,8 @@ const FOCUSABLE = 'a[href],button:not([disabled]),input,select,textarea,[tabinde
  */
 export function useDialog(isOpen: boolean, onClose: () => void, onKeyDown?: (e: KeyboardEvent) => void) {
   const panelRef = useRef<HTMLDivElement>(null);
+  /** 遮罩那層：讀它的透明度，把頁面底色調成一樣暗（dimRoot） */
+  const backdropRef = useRef<HTMLDivElement>(null);
   const restoreRef = useRef<HTMLElement | null>(null);
 
   // 打開時鎖住背景捲動 —— 手機上不鎖的話，滑動會穿透到後面的頁面。
@@ -71,5 +103,11 @@ export function useDialog(isOpen: boolean, onClose: () => void, onKeyDown?: (e: 
     }
   }, [isOpen]);
 
-  return { panelRef, portalReady };
+  useEffect(() => {
+    if (!isOpen) return;
+    dimRoot(backdropRef.current);
+    return undimRoot;
+  }, [isOpen]);
+
+  return { panelRef, backdropRef, portalReady };
 }

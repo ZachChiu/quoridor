@@ -55,7 +55,7 @@ const Modal: React.FC<Props> = ({
 }) => {
   const bagh = skin === 'bagh';
   // 捲動鎖、Esc、焦點鎖、portal 時機：跟平台的 PlatformDialog 共用（見 useDialog）
-  const { panelRef, portalReady } = useDialog(isOpen, onClose, onKeyDown);
+  const { panelRef, backdropRef, portalReady } = useDialog(isOpen, onClose, onKeyDown);
   const t = useMessages();
 
 
@@ -98,7 +98,7 @@ const Modal: React.FC<Props> = ({
         （Zach 回報「Safari 上下變灰色」，模擬器上量到）。開著的時候變暗是對的，
         跟整個畫面一起被遮住。
       */}
-      <div className={`cover-viewport ${backdropClassName} ${isOpen ? '' : 'hidden'}`} onClick={onClose}></div>
+      <div ref={backdropRef} className={`cover-viewport ${backdropClassName} ${isOpen ? '' : 'hidden'}`} onClick={onClose}></div>
 
       {bare ? (
         <div ref={panelRef} tabIndex={-1} className={`relative flex max-h-full flex-col font-[family-name:var(--font-app)] outline-none ${panelClassName}`}>

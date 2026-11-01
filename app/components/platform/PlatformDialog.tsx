@@ -21,7 +21,7 @@ export default function PlatformDialog({ isOpen, onClose, title, children }: {
   title: string;
   children: React.ReactNode;
 }) {
-  const { panelRef, portalReady } = useDialog(isOpen, onClose);
+  const { panelRef, backdropRef, portalReady } = useDialog(isOpen, onClose);
   const t = useMessages();
 
   const node = (
@@ -34,7 +34,7 @@ export default function PlatformDialog({ isOpen, onClose, title, children }: {
       aria-label={title}
       {...(isOpen ? {} : { inert: true, 'aria-hidden': true })}
     >
-      <div className={`cover-viewport bg-black/70 ${isOpen ? '' : 'hidden'}`} onClick={onClose}></div>
+      <div ref={backdropRef} className={`cover-viewport bg-black/70 ${isOpen ? '' : 'hidden'}`} onClick={onClose}></div>
       <div
         ref={panelRef}
         tabIndex={-1}
