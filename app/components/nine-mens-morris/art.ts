@@ -4,7 +4,7 @@ import type { Side } from '@/games/nine-mens-morris/engine';
  * 九子棋的棋盤與棋子的形狀，對局的棋盤（MorrisBoard，SVG）與結算分享圖（shareCard，canvas）共用同一份。
  *
  * 照首頁那幅《遊戲之書》（1283）插圖裡的棋盤（Zach 10/24：「棋盤可以跟視覺圖一樣」）：
- * - 線不是墨線，是**嵌在木頭裡的木條** —— 淺金色的條、兩側深色的邊；交叉處直接接在一起
+ * - 線不是墨線，是**嵌在木頭裡的木條** —— 金色的條、兩側各一道細墨線；交叉處直接接在一起（畫法見下方 BOARD_ART）
  * - 棋盤邊上一圈同樣的木條；下方比左右多留一段空木頭（插圖裡放三顆骰子的地方），這裡拿來放被拿掉的子
  * - 棋子是側面看的鐘形小人（圓頭、細頸、喇叭狀的身體），**腳底**站在交叉點上
  *
@@ -27,9 +27,6 @@ export const gy = (i: number) => gx(i) + GRID_DROP;
 
 /** 棋盤邊那一圈木條，離邊多遠 */
 export const FRAME_INSET = 1.7;
-
-/** 木條：深色的邊（整條的寬）與中間的淺金色（顏色見 palette.ts 的 strip／stripEdge） */
-export const STRIP = { edge: 2.7, core: 1.3 };
 
 /** 點的按鈕的大小；站著的棋子比按鈕小一點（左右各內縮 4%），白方的墨線框才不會互相碰到 */
 export const MAN_BOX = 13.5;
@@ -67,7 +64,15 @@ export const MAN_PARTS = [
   'M36 37h28a3.8 3.8 0 0 1 0 7.6H36a3.8 3.8 0 0 1 0-7.6Z',
   'M64.5 24a14.5 14.5 0 1 1-29 0a14.5 14.5 0 1 1 29 0Z',
 ];
-/** 白方那圈墨線的寬（描邊寫兩倍，因為一半會被填色蓋掉） */
-export const MAN_OUTLINE = 10;
+
+/**
+ * 手抄本畫法的棋盤與棋子（2026-11 Zach 從四種質感裡挑的「手抄本平塗棋盤＋筆觸小人」）：
+ * 由 scripts/build-nmm-art.mjs 用上面的幾何烘成圖，對局、規則小圖、分享圖貼同一組（改了上面的幾何要重跑）。
+ * 棋子圖比小人的方框四邊各多 PIECE_PAD（抖動的墨線會超出方框一點）。
+ */
+const ART_DIR = '/games/nine-mens-morris/art';
+export const BOARD_ART = `${ART_DIR}/board.webp`;
+export const PIECE_ART: Record<Side, string> = { black: `${ART_DIR}/man-black.webp`, white: `${ART_DIR}/man-white.webp` };
+export const PIECE_PAD = 6;
 /** 頭的中心：上一手的子在頭上點一個反色的小點；拿子時手指捏的也是這裡 */
 export const MAN_HEAD = { x: 50, y: 24 };
