@@ -21,7 +21,6 @@ import MorrisFrame from './MorrisFrame';
 import { MORRIS_BAND, MORRIS_CORNER, MORRIS_PANEL } from './ui';
 import MorrisWordmark from './MorrisWordmark';
 import { track } from '@/utils/analytics';
-import StyleTrial from './StyleTrial';
 import type { MorrisMode } from './session';
 
 /** 主視覺：阿方索十世《遊戲之書》（1283）裡擲骰子的九子棋那頁（公有領域，Wikimedia Commons） */
@@ -77,7 +76,6 @@ export default function MorrisSetup({ locale, onStart }: { locale: Locale; onSta
   return (
     <MorrisFrame className="nmm-setup items-center px-4 pb-6 pt-[3.75rem] lg:justify-center lg:py-10">
       <PlatformCorner locale={locale} theme={MORRIS_CORNER} offset="calc(var(--nmm-frame, 12px) + 6px)" />
-      <StyleTrial />
       <main className="nmm-main flex w-full max-w-[440px] flex-col gap-4 lg:max-w-[980px] lg:flex-row lg:items-center lg:gap-12">
         <header className="nmm-head flex flex-col items-center text-center lg:flex-1 lg:items-start lg:text-left">
           <p className="text-xs font-bold tracking-wide text-[#eee0c4]/80 [@media(max-height:700px)]:hidden">{t.tags}</p>
