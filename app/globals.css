@@ -659,3 +659,27 @@ html:has(.kt-root), body:has(.kt-root) { background: #edddc7; }
 /* ▸ 時間拍賣（feat/game-time-auction） */
 
 /* ▸ 均衡曼卡拉（feat/game-balance-mancala） */
+
+/* 九子棋選單的大按鈕：字放在拱中間最高的地方置中，首字留左、箭頭留右，左右對稱；節目規則左邊補一個朱紅的 ¶ 對稱右邊的蠟封
+   （11/1 Zach 在 beta 切換 A 只留字／B 首字在上／C 左右對稱後選 C）。
+   前面加 html 壓過元件上的 text-left、px-4。首字做過「頂端也是拱」「貼著左上角、上緣順著拱滑下去」，11/1 Zach 都要改回原本的方塊 */
+html .nmm-row, html .nmm-ai-head { position: relative; justify-content: center; text-align: center; padding-inline: 3.25rem; }
+html .nmm-row .nmm-initial, html .nmm-ai-head .nmm-initial { position: absolute; left: 1rem; top: 50%; translate: 0 -42%; }
+html .nmm-ai-head .nmm-initial { left: 0; }
+html .nmm-chev { position: absolute; right: 1.4rem; top: 50%; translate: 0 -42%; }
+html .nmm-row-text { flex: 0 1 auto; }
+html .nmm-row .nmm-seal { position: absolute; right: 1rem; top: 50%; translate: 0 -42%; }
+html .nmm-row:not(:has(.nmm-initial))::before { content: '¶'; position: absolute; left: 1.55rem; top: 50%; translate: 0 -42%; color: #c54915; font-size: 1.5rem; font-weight: 900; }
+
+/* 九子棋首頁的桌機版面：標題、標語一列一列排在左邊，插圖與右邊整排按鈕在同一列、下緣切齊
+   （插圖的底＝最後一張按鈕的底，「怎麼玩」掛在按鈕下面不算）。11/1 Zach：原本兩欄各自置中，左圖右按鈕一高一低；
+   從「上下都對齊」「下緣對齊」「標題置中＋左右等寬」裡選了下緣對齊、標題留左、左右不要一樣寬。
+   前面加 html 壓過元件上 lg:flex-row 那些 Tailwind 的類別 */
+@media (min-width: 1024px) {
+  html .nmm-main { display: grid; grid-template-columns: minmax(0, 1fr) 400px; grid-template-rows: auto auto auto auto; column-gap: 3rem; row-gap: 0; align-items: end; align-content: center; }
+  html .nmm-head { display: contents; }
+  html .nmm-head > :not(.nmm-art) { grid-column: 1; }
+  html .nmm-art { grid-column: 1; grid-row: 4; margin-top: 0.75rem; }
+  html .nmm-modes { grid-column: 2; grid-row: 4; position: relative; justify-content: flex-end; }
+  html .nmm-modes > a:last-child { position: absolute; top: 100%; left: 50%; translate: -50% 0; margin-top: 0.5rem; }
+}
