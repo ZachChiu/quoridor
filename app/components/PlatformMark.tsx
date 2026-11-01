@@ -16,16 +16,27 @@
  * 滑過、按下去、鍵盤 focus 時變回藍色（同一天 Zach：「HOVER 或點下去要變回正常顏色」）：
  * 藍色那張疊在灰色上面、平常透明，外面那顆連結要帶 `group`。滑過只給滑鼠（fine:），手指點過會一直停在 :hover；
  * 按下去那一下不淡入、直接換，手指按著的時間很短。
+ *
+ * 閃電（11/1 Zach 挑的「打雷」）：平常不亮、每 3.6 秒亮兩下，樣式在 globals.css 的 .die-bolt-*。
  */
 export default function PlatformMark({ className = '', mono = false }: { className?: string; mono?: boolean }) {
   if (!mono) {
-    // eslint-disable-next-line @next/next/no-img-element -- 靜態匯出、SVG，不需要 next/image
-    return <img src="/brand/die-mark.svg" alt="" aria-hidden="true" width={40} height={40} className={`size-10 shrink-0 ${className}`} />;
+    return (
+      <span aria-hidden="true" className={`relative block size-10 shrink-0 ${className}`}>
+        <span className="die-bolt-glow" />
+        {/* eslint-disable-next-line @next/next/no-img-element -- 靜態匯出、SVG，不需要 next/image */}
+        <img src="/brand/die-mark.svg" alt="" width={40} height={40} className="die-bolt-blue relative size-10" />
+      </span>
+    );
   }
   return (
     <span aria-hidden="true" className={`relative block size-10 shrink-0 ${className}`}>
+      <span className="die-bolt-glow" />
       {/* eslint-disable-next-line @next/next/no-img-element -- 同上 */}
       <img src="/brand/die-mark-gray.svg" alt="" width={40} height={40} className="absolute inset-0 size-10 opacity-50" />
+      {/* 閃電那一下換成藍的（globals.css 的 .die-bolt-flash），跟下面滑過變藍那層分開 */}
+      {/* eslint-disable-next-line @next/next/no-img-element -- 同上 */}
+      <img src="/brand/die-mark.svg" alt="" width={40} height={40} className="die-bolt-flash absolute inset-0 size-10" />
       {/* eslint-disable-next-line @next/next/no-img-element -- 同上 */}
       <img src="/brand/die-mark.svg" alt="" width={40} height={40}
         className="absolute inset-0 size-10 opacity-0 transition-opacity duration-150 group-focus-visible:opacity-100 group-active:opacity-100 group-active:duration-0 fine:group-hover:opacity-100" />

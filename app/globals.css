@@ -548,6 +548,34 @@ html:has(.bagh-root), body:has(.bagh-root) { background: #e3a43c; }
 .bagh-medal { background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='88' height='88'%3E%3Ccircle cx='44.0' cy='44.0' r='42.0' fill='%23fbf4e1' stroke='%234a2616' stroke-width='2.5'/%3E%3Ccircle cx='44.0' cy='44.0' r='36.0' fill='none' stroke='%234a2616' stroke-width='1.5'/%3E%3C/svg%3E") center / 100% 100% no-repeat; }
 .bagh-medal:hover { filter: brightness(0.96); }
 
+/*
+  平台標誌（骰子惡魔）的閃電（11/1 Zach：「骰子惡魔在左上角時，多一個閃電的那種頻率的亮藍燈」，從霓虹／打雷／點數通電三種挑了打雷）：
+  平常不亮，每 3.6 秒「啪啪」亮兩下就暗回去 —— 一直亮會跟各款自己的配色搶。光暈是一層放射狀的藍（.die-bolt-glow），
+  藍骰子本身同時提亮；遊戲頁的灰骰子閃的那一下換成藍色那張（.die-bolt-flash，另一層，不動滑過時變藍的那層）。
+  只動 opacity／filter；減少動態效果時不閃。
+*/
+.die-bolt-glow {
+  position: absolute; inset: -45%; border-radius: 9999px; pointer-events: none; opacity: 0;
+  background: radial-gradient(circle, rgb(147 197 253) 0%, rgb(59 130 246 / 0.8) 28%, rgb(37 99 235 / 0.3) 50%, transparent 70%);
+  animation: die-bolt 3.6s infinite;
+}
+.die-bolt-blue { animation: die-bolt-blue 3.6s infinite; }
+.die-bolt-flash { opacity: 0; animation: die-bolt 3.6s infinite; }
+@keyframes die-bolt {
+  0%, 55% { opacity: 0; } 57% { opacity: 1; } 60% { opacity: 0.1; } 63% { opacity: 1; } 66% { opacity: 0.6; } 74%, 100% { opacity: 0; }
+}
+@keyframes die-bolt-blue {
+  0%, 55%, 74%, 100% { filter: none; }
+  57% { filter: brightness(1.45) drop-shadow(0 0 8px rgb(191 219 254)); }
+  60% { filter: none; }
+  63% { filter: brightness(1.4) drop-shadow(0 0 8px rgb(191 219 254)); }
+  66% { filter: brightness(1.15); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .die-bolt-glow, .die-bolt-flash { animation: none; opacity: 0; }
+  .die-bolt-blue { animation: none; }
+}
+
 /* ── 第二批五款各自的視覺 ───────────────────────────────────────────────────
    每款在自己的 feat/game-<id> 分支，CSS 接在下面自己那行標記底下。
    標記之間刻意隔一行空白：分支依序合併時改的是不同地方，git 才不會衝突（CLAUDE.md〈視覺〉）。 */
