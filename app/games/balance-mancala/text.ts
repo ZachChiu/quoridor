@@ -66,6 +66,10 @@ export type BalanceMancalaText = {
   cancel: string;
   gain: string;
   gainDetail: string;
+  previewLand: string;
+  previewFinal: string;
+  previewHover: string;
+  previewTie: string;
   pickColour: string;
   endsWarn: string;
   endsWarnLocal: string;
@@ -163,6 +167,10 @@ export const TEXT: TextTable<BalanceMancalaText> = {
     cancel: '取消',
     gain: '{owner} +{points} {colour}',
     gainDetail: '{colour} {from} → {to}　最終分 {f1} → {f2}',
+    previewLand: '最後一顆落在{cell}',
+    previewFinal: '最終分 {f1} → {f2}',
+    previewHover: '點一下，再決定順序',
+    previewTie: '同分：選要記哪一色',
     pickColour: '同分，選要記哪一色',
     endsWarn: '這一手會讓遊戲立刻結束：你是第 {rank} 名',
     endsWarnLocal: '這一手會讓遊戲立刻結束：{name} 第一',
@@ -260,6 +268,10 @@ export const TEXT: TextTable<BalanceMancalaText> = {
     cancel: 'Cancel',
     gain: '{owner} +{points} {colour}',
     gainDetail: '{colour} {from} → {to} · final {f1} → {f2}',
+    previewLand: 'Last piece lands on the {cell}',
+    previewFinal: 'Final {f1} → {f2}',
+    previewHover: 'Click to choose the order',
+    previewTie: 'Tie: pick a colour',
     pickColour: 'Tie — pick the colour',
     endsWarn: 'This ends the game now: you finish #{rank}',
     endsWarnLocal: 'This ends the game now: {name} wins',
@@ -357,6 +369,10 @@ export const TEXT: TextTable<BalanceMancalaText> = {
     cancel: 'キャンセル',
     gain: '{owner} +{points} {colour}',
     gainDetail: '{colour} {from} → {to}・最終 {f1} → {f2}',
+    previewLand: '最後の駒は{cell}へ',
+    previewFinal: '最終 {f1} → {f2}',
+    previewHover: 'クリックして順番を決める',
+    previewTie: '同点：色を選ぶ',
     pickColour: '同点：記録する色を選ぶ',
     endsWarn: 'この手でゲーム終了：あなたは {rank} 位',
     endsWarnLocal: 'この手でゲーム終了：{name} が1位',
@@ -454,6 +470,10 @@ export const TEXT: TextTable<BalanceMancalaText> = {
     cancel: '취소',
     gain: '{owner} +{points} {colour}',
     gainDetail: '{colour} {from} → {to} · 최종 {f1} → {f2}',
+    previewLand: '마지막 말은 {cell}에',
+    previewFinal: '최종 {f1} → {f2}',
+    previewHover: '클릭해서 순서 정하기',
+    previewTie: '동점: 색을 고르세요',
     pickColour: '동점: 점수를 넣을 색 선택',
     endsWarn: '이 수로 게임이 바로 끝납니다: 나는 {rank}위',
     endsWarnLocal: '이 수로 게임이 바로 끝납니다: {name} 1위',
@@ -551,6 +571,10 @@ export const TEXT: TextTable<BalanceMancalaText> = {
     cancel: '取消',
     gain: '{owner} +{points} {colour}',
     gainDetail: '{colour} {from} → {to}　最终分 {f1} → {f2}',
+    previewLand: '最后一颗落在{cell}',
+    previewFinal: '最终分 {f1} → {f2}',
+    previewHover: '点一下，再决定顺序',
+    previewTie: '同分：选要记哪一色',
     pickColour: '同分，选要记哪一色',
     endsWarn: '这一手会让游戏立刻结束：你是第 {rank} 名',
     endsWarnLocal: '这一手会让游戏立刻结束：{name} 第一',
@@ -648,6 +672,10 @@ export const TEXT: TextTable<BalanceMancalaText> = {
     cancel: 'ยกเลิก',
     gain: '{owner} +{points} {colour}',
     gainDetail: '{colour} {from} → {to} · คะแนนสุดท้าย {f1} → {f2}',
+    previewLand: 'หมากตัวสุดท้ายตกที่{cell}',
+    previewFinal: 'คะแนนสุดท้าย {f1} → {f2}',
+    previewHover: 'คลิกเพื่อเลือกลำดับ',
+    previewTie: 'เสมอ: เลือกสี',
     pickColour: 'เสมอกัน เลือกสีที่จะได้แต้ม',
     endsWarn: 'ตานี้จะจบเกมทันที: คุณได้อันดับ {rank}',
     endsWarnLocal: 'ตานี้จะจบเกมทันที: {name} ชนะ',
