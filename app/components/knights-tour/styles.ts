@@ -20,7 +20,8 @@ export const MODAL_PANEL = '!rounded-[2px] !bg-[#edddc7] shadow-[inset_0_0_0_1.5
  * 標題那塊一律留「小標＋標題」的高度、貼底：沒有小標的（語言）跟有小標的（聯絡我們）標題落在同一個高度，
  * 左邊的圖示、右邊的 × 也一起貼底（× 留在上面會跟標題差一截，11/1 Zach：「不要因為上面的小標導致整體視覺不一致」，做法同九子棋的 MORRIS_BAND）
  */
-const TITLE_SLOT = '!items-end [&>div:first-child]:min-h-12 [&>div:first-child]:items-end';
+// 標題的行高＝圖示的 36px、× 往下挪 4px（× 是 44px）：三個的中線才在同一條，貼底對齊時字不會比圖示低一點
+const TITLE_SLOT = '!items-end [&>button]:-mb-1 [&>div:first-child]:min-h-12 [&>div:first-child]:items-end [&_h2]:leading-9';
 export const BAND_CHALK = { className: `mx-6 !px-0 border-b-[3px] border-double border-[#834d36] bg-transparent ${TITLE_SLOT}`, fg: 'text-[#834d36]' };
 export const BAND_INK = { className: `mx-6 !px-0 border-b-[3px] border-double border-[#322e2a]/70 bg-transparent ${TITLE_SLOT}`, fg: 'text-[#322e2a]' };
 

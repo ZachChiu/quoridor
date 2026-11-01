@@ -8,7 +8,7 @@ import type { CornerTheme } from '@/components/cornerTheme';
  * 沒有小標（語言）的標題跟有小標（聯絡我們）的落在同一個高度：標題那塊一律有小標＋標題的高度、標題貼底（11/1 Zach：語言偏高）
  */
 export const MORRIS_BAND = {
-  className: "mx-6 !px-0 pt-7 border-b-2 border-[#c54915]/45 bg-transparent [&_h2]:before:mr-1.5 [&_h2]:before:text-[#c54915] [&_h2]:before:content-['¶'] [&>div:first-child]:flex-1 [&>div:first-child]:justify-center [&>div:first-child]:pl-9 [&>div:first-child]:text-center !items-end [&>div:first-child]:min-h-12 [&>div:first-child]:items-end [&>div:first-child>svg]:hidden",
+  className: "mx-6 !px-0 pt-7 border-b-2 border-[#c54915]/45 bg-transparent [&_h2]:before:mr-1.5 [&_h2]:before:text-[#c54915] [&_h2]:before:content-['¶'] [&>div:first-child]:flex-1 [&>div:first-child]:justify-center [&>div:first-child]:pl-9 [&>div:first-child]:text-center !items-end [&>button]:-mb-1 [&>div:first-child]:min-h-12 [&>div:first-child]:items-end [&_h2]:leading-9 [&>div:first-child>svg]:hidden",
   fg: 'text-[#1e120a]',
 };
 /** 彈窗：拱頂的羊皮紙頁 */

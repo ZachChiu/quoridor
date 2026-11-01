@@ -1,5 +1,5 @@
 'use client';
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { GiBrain, GiScrollUnfurled, GiTabletopPlayers } from 'react-icons/gi';
@@ -21,7 +21,6 @@ import MorrisFrame from './MorrisFrame';
 import { MORRIS_BAND, MORRIS_CORNER, MORRIS_PANEL } from './ui';
 import MorrisWordmark from './MorrisWordmark';
 import { track } from '@/utils/analytics';
-import { useArchClip } from './archClip';
 import type { MorrisMode } from './session';
 
 /** 主視覺：阿方索十世《遊戲之書》（1283）裡擲骰子的九子棋那頁（公有領域，Wikimedia Commons） */
@@ -67,8 +66,6 @@ export default function MorrisSetup({ locale, onStart }: { locale: Locale; onSta
   // 九子棋裡面換頁不播轉場（直接 router.push），開好房間後網址會換成 #roomId=…
   const invite = (s: Side) => { setInviteOpen(false); track('mode_select', { game: 'nine-mens-morris', mode: 'online', players: 2, entry: 'home' }); router.push(localePath(locale, trialOnline(NINE_MENS_MORRIS)) + newRoomHash(s, showRules)); };
   const levels = [m.solo.level1, m.solo.level2, m.solo.level3];
-  const mainRef = useRef<HTMLElement>(null);
-  useArchClip(mainRef);
 
   const row = 'nmm-row nmm-arch is-small flex w-full items-center gap-3 px-4 pb-3 pt-4 text-left';
   // 標題本來就是英文名（英文、泰文）就讓字標當標題，不重複寫兩次
@@ -79,7 +76,7 @@ export default function MorrisSetup({ locale, onStart }: { locale: Locale; onSta
   return (
     <MorrisFrame className="nmm-setup items-center px-4 pb-6 pt-[3.75rem] lg:justify-center lg:py-10">
       <PlatformCorner locale={locale} theme={MORRIS_CORNER} offset="calc(var(--nmm-frame, 12px) + 6px)" />
-      <main ref={mainRef} className="nmm-main flex w-full max-w-[440px] flex-col gap-4 lg:max-w-[980px] lg:flex-row lg:items-center lg:gap-12">
+      <main className="nmm-main flex w-full max-w-[440px] flex-col gap-4 lg:max-w-[980px] lg:flex-row lg:items-center lg:gap-12">
         <header className="nmm-head flex flex-col items-center text-center lg:flex-1 lg:items-start lg:text-left">
           <p className="text-xs font-bold tracking-wide text-[#eee0c4]/80 [@media(max-height:700px)]:hidden">{t.tags}</p>
           {latinTitle ? (
