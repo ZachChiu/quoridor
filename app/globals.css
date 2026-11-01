@@ -699,9 +699,10 @@ html[data-nmm-btn='c'] .nmm-row:not(:has(.nmm-initial))::before { content: '¶';
 /* 九子棋連線：對方斷線（滿 3 秒）那張狀態卡反灰，正中間蓋一個斷掉的 Wi‑Fi（2026-11-01 Zach） */
 .nmm-arch.is-away { box-shadow: inset 0 0 0 1.5px rgb(238 224 196 / 0.25); background: rgb(238 224 196 / 0.08); }
 .nmm-arch.is-away > :not(.nmm-away-cover) { filter: grayscale(1); opacity: 0.4; }
-.nmm-away-cover { position: absolute; inset: 0; display: grid; place-items: center; border-radius: inherit; background: rgb(30 18 10 / 0.45); color: #eee0c4; font-size: 1.6rem; }
+.nmm-away-cover { position: absolute; inset: 0; display: grid; place-items: center; border-radius: inherit; background: #77726c; color: #eee0c4; font-size: 2.1rem; }
 
-/* 尼泊爾虎棋連線：對方斷線（滿 3 秒）那張狀態卡反灰，正中間蓋一個斷掉的 Wi‑Fi（2026-11-01 Zach） */
+/* 尼泊爾虎棋連線：對方斷線（滿 3 秒）那張狀態卡反灰，正中間蓋一個斷掉的 Wi‑Fi（2026-11-01 Zach）。
+   灰跟 Wall Go 的同一個 #77726c、不透明（半透明的深色看起來不像灰、底下的字也透出來），圖示放大 */
 .bagh-away { background: rgb(74 38 22 / 0.07) !important; color: var(--ink-soft, #6b5a48) !important; }
 .bagh-away > :not(.bagh-away-cover) { filter: grayscale(1); opacity: 0.4; }
-.bagh-away-cover { position: absolute; inset: 0; display: grid; place-items: center; border-radius: inherit; background: rgb(74 38 22 / 0.5); color: #fbf4e1; font-size: 1.6rem; }
+.bagh-away-cover { position: absolute; inset: 0; display: grid; place-items: center; border-radius: inherit; background: #77726c; color: #fbf4e1; font-size: 2.1rem; }
