@@ -56,7 +56,9 @@ export async function setWant(key: string, uid: string, on: boolean): Promise<bo
     });
     rememberWanted(key, on);
     return true;
-  } catch {
+  } catch (error) {
+    // 被規則擋下、沒網路：照樣退回，但留一行在 console，才查得到是哪一種
+    console.warn('[want] write failed', error);
     return false;
   }
 }
