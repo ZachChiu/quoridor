@@ -76,7 +76,7 @@ export default function SeasonView({ locale, n }: { locale: Locale; n: SeasonNum
           <ul data-select-location="season" className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
             {playableFirst(s.games).map((game) => (
               <li key={game.name}>
-                <GameCard game={game} locale={locale} playable={p.playable} guide={p.guide} width="w-full" />
+                <GameCard game={game} locale={locale} playable={p.playable} guide={p.guide} want={p.want} width="w-full" />
               </li>
             ))}
           </ul>

@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
-import { GiRuleBook } from 'react-icons/gi';
+import { LuCircleHelp } from 'react-icons/lu';
 import Modal from '@/components/Modal';
 import { useMessages } from '@/i18n/LocaleProvider';
 import { useTextTable } from '@/i18n/gameText';
@@ -39,7 +39,7 @@ export default function HowToPlay({ open, onClose }: { open: boolean; onClose: (
   }, [open]);
 
   return (
-    <Modal isOpen={open} onClose={onClose} title={t.rules} kicker={t.title} icon={GiRuleBook}
+    <Modal isOpen={open} onClose={onClose} title={t.rules} kicker={t.title} icon={LuCircleHelp}
       band={BAND_CHALK} panelClassName={`${MODAL_PANEL} short:max-w-2xl`} onKeyDown={pager.onKeyDown}
       bodyClassName="short:py-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       footer={

@@ -49,6 +49,8 @@ export default function PlatformView({ locale }: { locale: Locale }) {
 
       <main className="mx-auto flex max-w-[1360px] flex-col gap-9 px-4 pb-14">
         <h1 className="sr-only">{p.heading}</h1>
+        {/* 看得到的一句介紹，小字、不搶推薦作品（docs/platform-keywords.md）。gap-9 太開，往下吃掉一截 */}
+        <p className="-mb-5 text-sm font-bold text-plat-muted">{p.lead}</p>
 
         {/* 推薦作品：預設是 HERO_DEFAULT（現在是 Wall Go，見 catalog；原本是最新上線的那款），使用者點過哪一款就換成那一款（10/24 Zach）。
             每一款能玩的都有一張在 HTML 裡，外層的 data-hero-pick 決定露出哪張；換的那段在 HeroPicker。
@@ -65,7 +67,7 @@ export default function PlatformView({ locale }: { locale: Locale }) {
           <CardRow>
             {PLAYABLE.map((game) => (
               <li key={game.name} className="shrink-0">
-                <GameCard game={game} locale={locale} playable={p.playable} guide={p.guide} />
+                <GameCard game={game} locale={locale} playable={p.playable} guide={p.guide} want={p.want} />
               </li>
             ))}
           </CardRow>
@@ -94,7 +96,7 @@ export default function PlatformView({ locale }: { locale: Locale }) {
               <CardRow>
                 {playableFirst(season.games).map((game) => (
                   <li key={game.name} className="shrink-0">
-                    <GameCard game={game} locale={locale} playable={p.playable} guide={p.guide} />
+                    <GameCard game={game} locale={locale} playable={p.playable} guide={p.guide} want={p.want} />
                   </li>
                 ))}
               </CardRow>

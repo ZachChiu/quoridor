@@ -27,11 +27,13 @@ const en: Messages = {
     rules: 'How to play',
   },
   platform: {
-    metaTitle: "Wall Go & The Devil's Plan Games: Play Online",
-    metaDescription: "Every game from Netflix's Korean reality show The Devil's Plan: season 1, season 2 (Death Room) and the upcoming season 3. Play the ones we've built right in your browser, free, no download or sign-up — now playing: {games}.",
+    metaTitle: "The Devil's Plan Games: Wall Go & Bagh Chal, Online Strategy Board Games",
+    metaDescription: "Free online strategy board games from Netflix's Korean reality show The Devil's Plan: season 1, season 2 (Death Room) and the upcoming season 3. Play the ones we've built right in your browser, free, no download or sign-up — now playing: {games}.",
     ogTitle: "The Devil's Plan Games: Rules & Play Online",
     ogDescription: 'Every game from the show — play the ones we have built. Free, no download, no sign-up.',
     heading: "The Devil's Plan games",
+    /** h1（sr-only）底下看得到的一句：線上桌遊這組詞（docs/platform-keywords.md，11/1 大腦筋） */
+    lead: "Free online strategy board games — no download, no sign-up. Play a friend or the AI.",
     ogLines: ["The Devil's Plan", 'games online'],
     heroBadge: 'Play now',
     heroMeta: 'Season 2: Death Room · 2–3 players · No download',
@@ -47,6 +49,8 @@ const en: Messages = {
     s1: 'Season 1',
     playable: 'Playable',
     guide: 'Rules coming',
+    /** 還沒做的遊戲卡上的「想玩」（按了公開加一票） */
+    want: 'Want to play',
     seeAll: 'See all',
     allGames: 'All games',
     seasonShort: 'Season {n}',
@@ -67,6 +71,17 @@ const en: Messages = {
     subtitle: 'Tigers and Goats',
     name: 'Bagh Chal',
     tagline: '4 tigers against 20 goats',
+    /** 首頁棋盤下面的介紹（docs/platform-keywords.md）：是什麼、怎麼贏、幾個技巧，完整規則在規則頁、不重複 */
+    aboutHeading: "What is Bagh Chal?",
+    aboutWhat: "Bagh Chal (“moving tigers” in Nepali) is a traditional board game from Nepal — the classic tigers and goats game. It’s played on the points of a 5×5 grid: one player has 4 tigers, the other has 20 goats. The tigers start in the four corners and can step along a line or jump over a neighboring goat to capture it. The goats enter the board one at a time and can only move once all 20 are placed.",
+    aboutWin: "How to win: the tigers win by capturing 5 goats; the goats win by trapping every tiger so none can move.",
+    aboutTipsTitle: "Tips for your first Bagh Chal game",
+    aboutTips: [
+      "Goats: take the edges and corners first. A tiger needs an empty point behind a goat to jump it, and behind an edge goat there’s only the edge of the board.",
+      "Goats: keep them packed together and never leave a gap behind a goat.",
+      "Tigers: spread out. Four tigers bunched together block each other’s moves.",
+    ],
+    aboutMore: "How to play: full rules",
     local: 'Local play',
     vsAi: 'Play the AI',
     playAs: 'Play as',
