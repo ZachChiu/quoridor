@@ -92,12 +92,14 @@ export function useDialog(isOpen: boolean, onClose: () => void, onKeyDown?: (e: 
     const el = backdropRef.current;
     if (!isOpen || !el) return;
     placeBackdrop(el);
-    // 轉向、工具列伸縮時重量（捲動已鎖住，scrollY 不會變）
+    // 轉向、工具列伸縮時重量；頁面萬一還是捲了（捲動鎖擋不到的情況），遮罩也跟著過去
     const onResize = () => placeBackdrop(el);
     window.addEventListener('resize', onResize);
+    window.addEventListener('scroll', onResize, { passive: true });
     window.visualViewport?.addEventListener('resize', onResize);
     return () => {
       window.removeEventListener('resize', onResize);
+      window.removeEventListener('scroll', onResize);
       window.visualViewport?.removeEventListener('resize', onResize);
     };
   }, [isOpen, portalReady]);
