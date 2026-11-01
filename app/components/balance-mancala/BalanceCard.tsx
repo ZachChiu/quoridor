@@ -82,8 +82,8 @@ export default function BalanceCard({ t, seat, name, scores, gain }: {
             <p className="text-xs font-bold leading-snug">{t.balanceEven}</p>
           ) : (
             <>
-              <p className="text-xs font-bold leading-tight"><span className="text-ink-soft">{t.balanceLow}</span>　{t.colourShort[lowC]} {lo} × 2 = {2 * lo}</p>
-              <p className="text-xs font-bold leading-tight"><span className="text-ink-soft">{t.balanceHigh}</span>　{t.colourShort[highC]} {hi}</p>
+              <p className="text-xs font-bold leading-tight"><span className="text-ink-soft">{t.low}</span>　{t.colourShort[lowC]} {lo} × 2 = {2 * lo}</p>
+              <p className="text-xs font-bold leading-tight"><span className="text-ink-soft">{t.high}</span>　{t.colourShort[highC]} {hi} → −{hi}</p>
             </>
           )}
           <p className="flex items-baseline gap-2 font-black leading-none">

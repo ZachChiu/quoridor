@@ -76,8 +76,6 @@ export type BalanceMancalaText = {
   final: string;
   formula: string;
   balanceTitle: string;
-  balanceLow: string;
-  balanceHigh: string;
   balanceNeed: string;
   balanceEven: string;
   balanceNear: string;
@@ -183,8 +181,6 @@ export const TEXT: TextTable<BalanceMancalaText> = {
     final: '最終',
     formula: '最終分＝2×最低−最高',
     balanceTitle: '{name}的三色',
-    balanceLow: '最低 ×2',
-    balanceHigh: '最高 −',
     balanceNeed: '下一分最好記到：{colours}',
     balanceEven: '三色一樣多：加哪一色都會先拉開差距',
     balanceNear: '{colour}快到 30，到了遊戲立刻結束',
@@ -290,8 +286,6 @@ export const TEXT: TextTable<BalanceMancalaText> = {
     final: 'Final',
     formula: 'Final = 2 × lowest − highest',
     balanceTitle: '{name}: three colours',
-    balanceLow: 'Lowest ×2',
-    balanceHigh: 'Highest −',
     balanceNeed: 'Best place for your next points: {colours}',
     balanceEven: 'All three are even: any points will open a gap first',
     balanceNear: '{colour} is close to 30 — reaching it ends the game',
@@ -397,8 +391,6 @@ export const TEXT: TextTable<BalanceMancalaText> = {
     final: '最終',
     formula: '最終スコア＝2×最低−最高',
     balanceTitle: '{name}の三色',
-    balanceLow: '最低 ×2',
-    balanceHigh: '最高 −',
     balanceNeed: '次の得点は {colours} がいい',
     balanceEven: '三色とも同じ：どの色に入れても差がつく',
     balanceNear: '{colour}が30に近い。届くとすぐ終了',
@@ -504,8 +496,6 @@ export const TEXT: TextTable<BalanceMancalaText> = {
     final: '최종',
     formula: '최종 점수 = 2 × 최저 − 최고',
     balanceTitle: '{name}의 세 색',
-    balanceLow: '최저 ×2',
-    balanceHigh: '최고 −',
     balanceNeed: '다음 점수는 {colours}에 넣는 게 좋아요',
     balanceEven: '세 색이 같아요: 어느 색에 넣어도 먼저 차이가 생겨요',
     balanceNear: '{colour}이(가) 30에 가까워요. 닿으면 바로 끝나요',
@@ -611,8 +601,6 @@ export const TEXT: TextTable<BalanceMancalaText> = {
     final: '最终',
     formula: '最终分＝2×最低−最高',
     balanceTitle: '{name}的三色',
-    balanceLow: '最低 ×2',
-    balanceHigh: '最高 −',
     balanceNeed: '下一分最好记到：{colours}',
     balanceEven: '三色一样多：加哪一色都会先拉开差距',
     balanceNear: '{colour}快到 30，到了游戏立刻结束',
@@ -718,8 +706,6 @@ export const TEXT: TextTable<BalanceMancalaText> = {
     final: 'สุดท้าย',
     formula: 'คะแนนสุดท้าย = 2 × ต่ำสุด − สูงสุด',
     balanceTitle: 'สามสีของ{name}',
-    balanceLow: 'ต่ำสุด ×2',
-    balanceHigh: 'สูงสุด −',
     balanceNeed: 'แต้มต่อไปควรลง: {colours}',
     balanceEven: 'สามสีเท่ากัน: ลงสีไหนก็จะเกิดช่องว่างก่อน',
     balanceNear: '{colour}ใกล้ 30 แล้ว ถึงเมื่อไรเกมจบทันที',
