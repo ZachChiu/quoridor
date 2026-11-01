@@ -26,7 +26,7 @@ export default function WantButton({ wantKey: key, label, name }: { wantKey: str
     setBusy(true);
     setWanted(on);
     setCount((n) => (n === null ? n : Math.max(0, n + (on ? 1 : -1))));
-    const ok = await ensureUser().then((uid) => setWant(key, uid, on), () => false);
+    const ok = await ensureUser().then((uid) => setWant(key, uid, on), (error) => { console.warn('[want] sign-in failed', error); return false; });
     if (!ok) {
       setWanted(!on);
       setCount((n) => (n === null ? n : Math.max(0, n + (on ? -1 : 1))));
