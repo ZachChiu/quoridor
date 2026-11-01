@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { PLAYER_ON, playerVar, type PlayerKey } from "@/config/players";
 import type { Player } from "@/types/chessboard";
 import { useGameText } from '@/i18n/LocaleProvider';
-import { GiUnplugged } from 'react-icons/gi';
+import { LuWifiOff } from 'react-icons/lu';
 import { clockOf, fmtClock, type LiveClock } from '@/utils/clock';
 
 interface Props {
@@ -86,6 +86,7 @@ export default React.memo(function GameStatus({ me, isLock, currentPlayer, uniqT
     >
       {players.map((p) => {
         const active = !isLock && currentPlayer === p;
+        const gone = away?.includes(p) ?? false;
         return (
           <div
             key={p}
@@ -99,6 +100,8 @@ export default React.memo(function GameStatus({ me, isLock, currentPlayer, uniqT
             style={{
               backgroundColor: playerVar(p),
               ...(p === me ? { outline: `3px solid ${playerVar(p)}`, outlineOffset: '3px' } : null),
+              // 斷線：整塊去色（字、數字照樣看得到，11/1 Zach：灰到把資訊全蓋住不行）
+              ...(gone ? { filter: 'grayscale(1)' } : null),
             }}
           >
             <span className="flex flex-col coarse:hidden">
@@ -115,9 +118,11 @@ export default React.memo(function GameStatus({ me, isLock, currentPlayer, uniqT
               </span>
             )}
             {p === me && <span className="sr-only">{g.status.you}</span>}
-            {away?.includes(p) && (
-              <span className="absolute -right-2 -top-2 grid size-6 place-items-center rounded-full bg-tile-ink text-[13px] text-tile-cream ring ring-primary-50">
-                <GiUnplugged aria-hidden="true" />
+            {/* 斷線：整塊去色（外層的 filter），蓋一層半透明的灰、正中一個 Wi‑Fi 斷掉的圖示（11/1 Zach：角落那顆拔插頭的小圓不夠明顯；
+                一路調過實心灰（把分數全蓋住）、淡墨、圓章（像多一顆按鈕），最後是「純灰色遮罩」） */}
+            {gone && (
+              <span className="absolute inset-0 z-10 grid place-items-center rounded-[inherit] bg-[#77726c]/[0.78] text-[26px] text-tile-cream coarse:text-xl">
+                <LuWifiOff aria-hidden="true" />
                 <span className="sr-only">{g.status.away}</span>
               </span>
             )}
