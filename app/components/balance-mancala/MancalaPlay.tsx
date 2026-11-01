@@ -25,6 +25,7 @@ import { MCL_CARD_IMAGES, drawMancalaCard, type MancalaCardData } from './shareC
 import MancalaFrame from './MancalaFrame';
 import MancalaRing, { LAND, type RingMark, type RingTrail } from './MancalaRing';
 import ScorePanel from './ScorePanel';
+import BalanceCard from './BalanceCard';
 import OrderEditor from './OrderEditor';
 import { RulesStepsPaged } from './MancalaRulesSteps';
 import PieceDisc from './PieceDisc';
@@ -467,6 +468,19 @@ export default function MancalaPlay({ locale, setup, onHome, onAgain, online = n
       colourShort={t.colourShort} finalLabel={t.final} mine={me} />
   );
 
+  // 三色的天平：跟 AI 玩是你、連線是自己、本機對戰是輪到的真人（AI 的回合停在座位順序上前一個真人）
+  const who = self ?? (() => {
+    for (let k = 0; k < setup.seats; k++) {
+      const seat = (actor - k + setup.seats) % setup.seats;
+      if (isHuman(seat)) return seat;
+    }
+    return actor;
+  })();
+  const balanceGain = shown && shown.owner === who && shown.colour !== null ? { colour: shown.colour, points: shown.points } : null;
+  const balanceCard = !over ? (
+    <BalanceCard t={t} seat={who} name={names[who]} scores={game.scores[who]} gain={balanceGain} />
+  ) : null;
+
   const statusBlock = (
     <div className="flex min-h-11 flex-col items-center justify-center text-center lg:items-start lg:text-left" aria-live="polite">
       <p className="text-sm font-black">{status}</p>
@@ -524,6 +538,7 @@ export default function MancalaPlay({ locale, setup, onHome, onAgain, online = n
             onLast={(o) => openEditor(pick.from, o)} onSlot={onSlot} onColour={(c) => setPick({ ...pick, colour: c })}
             onSuggest={() => openEditor(pick.from)} onCancel={() => setPick(null)} onSow={onSow} />
         )}
+        {balanceCard}
         <div className={pick ? 'hidden lg:block' : ''}>{scorePanel}</div>
         <div className="hidden grid-cols-2 gap-2 lg:grid">
           <button type="button" onClick={() => setHelpOpen(true)} className={wide}><LuCircleHelp aria-hidden="true" />{t.howTo}</button>
