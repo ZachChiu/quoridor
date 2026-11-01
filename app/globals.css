@@ -895,17 +895,18 @@ html[data-nmm-btn='c'] .nmm-chev { position: absolute; right: 1.4rem; top: 50%; 
 html[data-nmm-btn='c'] .nmm-row-text { flex: 0 1 auto; }
 html[data-nmm-btn='c'] .nmm-row .nmm-seal { position: absolute; right: 1rem; top: 50%; translate: 0 -42%; }
 html[data-nmm-btn='c'] .nmm-row:not(:has(.nmm-initial))::before { content: '¶'; position: absolute; left: 1.55rem; top: 50%; translate: 0 -42%; color: #c54915; font-size: 1.5rem; font-weight: 900; }
-/* 版面（只有桌機）：標題、標語一列一列排，插圖與右邊整排按鈕在同一列、上下切齊（插圖跟著按鈕的高度縮放） */
+/* 版面（只有桌機）：標題、標語一列一列排，插圖與右邊整排按鈕在同一列、下緣切齊（插圖的底＝最後一張按鈕的底，「怎麼玩」掛在按鈕下面不算；11/1 Zach 偏好下緣對齊） */
 @media (min-width: 1024px) {
-  html[data-nmm-layout] .nmm-main { display: grid; grid-template-columns: minmax(0, 1fr) 400px; grid-template-rows: auto auto auto auto; column-gap: 3rem; row-gap: 0; align-items: stretch; align-content: center; }
+  html[data-nmm-layout] .nmm-main { display: grid; grid-template-columns: minmax(0, 1fr) 400px; grid-template-rows: auto auto auto auto; column-gap: 3rem; row-gap: 0; align-items: end; align-content: center; }
   html[data-nmm-layout] .nmm-head { display: contents; }
   html[data-nmm-layout] .nmm-head > :not(.nmm-art) { grid-column: 1; }
-  html[data-nmm-layout] .nmm-art { grid-column: 1; grid-row: 4; position: relative; margin-top: 0.75rem; min-height: 0; }
-  html[data-nmm-layout] .nmm-art img { position: absolute; inset: 0 auto 0 0; height: 100%; width: auto; max-width: 100%; object-fit: contain; }
-  html[data-nmm-layout] .nmm-modes { grid-column: 2; grid-row: 4; margin-top: 0.75rem; justify-content: flex-start; }
-  /* 標題置中：標題那幾列橫跨兩欄、置中；插圖靠右貼著按鈕 */
+  html[data-nmm-layout] .nmm-art { grid-column: 1; grid-row: 4; margin-top: 0.75rem; }
+  html[data-nmm-layout] .nmm-modes { grid-column: 2; grid-row: 4; position: relative; justify-content: flex-end; }
+  html[data-nmm-layout] .nmm-modes > a:last-child { position: absolute; top: 100%; left: 50%; translate: -50% 0; margin-top: 0.5rem; }
+  /* 標題置中＋等寬：標題那幾列橫跨兩欄、置中；左右兩欄一樣寬，置中的標題底下才不會一邊重 */
+  html[data-nmm-layout='top'] .nmm-main { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
   html[data-nmm-layout='top'] .nmm-head > :not(.nmm-art) { grid-column: 1 / -1; justify-self: center; text-align: center; align-items: center; }
   html[data-nmm-layout='top'] .nmm-head h1 > * { justify-content: center; margin-inline: auto; }
-  html[data-nmm-layout='top'] .nmm-art img { inset: 0 0 0 auto; }
+  html[data-nmm-layout='top'] .nmm-modes { width: 100%; }
   html[data-nmm-layout='top'] .nmm-art, html[data-nmm-layout='top'] .nmm-modes { margin-top: 1.75rem; }
 }

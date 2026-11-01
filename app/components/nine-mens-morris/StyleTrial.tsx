@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
  * 存在 localStorage，重新整理、換語言都還是同一種。
  */
 const BTN = [['', '現在'], ['a', 'A 只留字'], ['b', 'B 首字在上'], ['c', 'C 左右對稱']] as const;
-const LAYOUT = [['', '現在'], ['c', '上下對齊'], ['top', '標題置中']] as const;
+const LAYOUT = [['', '現在'], ['bottom', '下緣對齊'], ['top', '標題置中＋等寬']] as const;
 const KEYS = { btn: 'nmm-trial-btn', layout: 'nmm-trial-layout' } as const;
 
 function read(key: string) { try { return localStorage.getItem(key) ?? ''; } catch { return ''; } }
