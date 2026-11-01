@@ -21,6 +21,7 @@ import MorrisFrame from './MorrisFrame';
 import { MORRIS_BAND, MORRIS_CORNER, MORRIS_PANEL } from './ui';
 import MorrisWordmark from './MorrisWordmark';
 import { track } from '@/utils/analytics';
+import StyleTrial from './StyleTrial';
 import type { MorrisMode } from './session';
 
 /** 主視覺：阿方索十世《遊戲之書》（1283）裡擲骰子的九子棋那頁（公有領域，Wikimedia Commons） */
@@ -67,7 +68,7 @@ export default function MorrisSetup({ locale, onStart }: { locale: Locale; onSta
   const invite = (s: Side) => { setInviteOpen(false); track('mode_select', { game: 'nine-mens-morris', mode: 'online', players: 2, entry: 'home' }); router.push(localePath(locale, trialOnline(NINE_MENS_MORRIS)) + newRoomHash(s, showRules)); };
   const levels = [m.solo.level1, m.solo.level2, m.solo.level3];
 
-  const row = 'nmm-arch is-small flex w-full items-center gap-3 px-4 pb-3 pt-4 text-left';
+  const row = 'nmm-row nmm-arch is-small flex w-full items-center gap-3 px-4 pb-3 pt-4 text-left';
   // 標題本來就是英文名（英文、泰文）就讓字標當標題，不重複寫兩次
   const latinTitle = /^[ -~’]+$/.test(t.title);
   // 中日韓的標題用同一種風格的字（楷書、古風明朝、宋體）寫成的字標，平台卡片用的是同一份
@@ -76,8 +77,9 @@ export default function MorrisSetup({ locale, onStart }: { locale: Locale; onSta
   return (
     <MorrisFrame className="nmm-setup items-center px-4 pb-6 pt-[3.75rem] lg:justify-center lg:py-10">
       <PlatformCorner locale={locale} theme={MORRIS_CORNER} offset="calc(var(--nmm-frame, 12px) + 6px)" />
-      <main className="flex w-full max-w-[440px] flex-col gap-4 lg:max-w-[980px] lg:flex-row lg:items-center lg:gap-12">
-        <header className="flex flex-col items-center text-center lg:flex-1 lg:items-start lg:text-left">
+      <StyleTrial />
+      <main className="nmm-main flex w-full max-w-[440px] flex-col gap-4 lg:max-w-[980px] lg:flex-row lg:items-center lg:gap-12">
+        <header className="nmm-head flex flex-col items-center text-center lg:flex-1 lg:items-start lg:text-left">
           <p className="text-xs font-bold tracking-wide text-[#eee0c4]/80 [@media(max-height:700px)]:hidden">{t.tags}</p>
           {latinTitle ? (
             <h1 className="mt-1.5 w-full">
@@ -102,17 +104,17 @@ export default function MorrisSetup({ locale, onStart }: { locale: Locale; onSta
           <p className="mt-2 text-sm font-bold text-[#eee0c4]/90 lg:text-base">{t.tagline}</p>
           {/* 主視覺：《遊戲之書》的插圖本身（插圖自己畫了框，不再另外加框）；只有它會跟著畫面高度縮 */}
           {/* 出處：阿方索十世《遊戲之書》（1283），公有領域。畫面上不寫出處（Zach 10/24：插圖不要說明） */}
-          <div className="mt-3 flex w-full flex-col items-center gap-1 lg:items-start">
+          <div className="nmm-art mt-3 flex w-full flex-col items-center gap-1 lg:items-start">
             {/* eslint-disable-next-line @next/next/no-img-element -- 靜態匯出，不需要 next/image */}
             <img src={ART} alt="" aria-hidden="true" width={898} height={638}
               className="h-[clamp(7.5rem,calc(100svh-44.5rem),min(15rem,26svh))] w-auto max-w-full rounded-sm object-contain lg:h-auto lg:w-full" />
           </div>
         </header>
 
-        <div className="flex flex-col gap-3 lg:w-[400px] lg:justify-center">
+        <div className="nmm-modes flex flex-col gap-3 lg:w-[400px] lg:justify-center">
           {/* 主要模式：一塊拱頂的羊皮紙，前面朱紅的首字；先後手直接是兩個朱紅的小拱，按下去再選難度 */}
-          <div className="nmm-arch px-4 pb-4 pt-7">
-            <div className="flex items-center gap-3">
+          <div className="nmm-arch nmm-ai px-4 pb-4 pt-7">
+            <div className="nmm-ai-head flex items-center gap-3">
               <span className="nmm-initial" aria-hidden="true"><GiBrain /></span>
               <div className="min-w-0">
                 <p className="text-lg font-black leading-tight">{t.vsAi}</p>
@@ -132,24 +134,24 @@ export default function MorrisSetup({ locale, onStart }: { locale: Locale; onSta
 
           <button type="button" onClick={() => onStart({ kind: 'local' }, showRules)} className={`${row} active:scale-[0.99]`}>
             <span className="nmm-initial is-blue" aria-hidden="true"><GiTabletopPlayers /></span>
-            <span className="min-w-0 flex-1">
+            <span className="nmm-row-text min-w-0 flex-1">
               <span className="block text-base font-black">{t.local}</span>
               <span className="block text-xs font-bold text-ink-soft">{t.localNote}</span>
             </span>
-            <LuChevronRight aria-hidden="true" className="shrink-0 text-xl text-ink-soft" />
+            <LuChevronRight aria-hidden="true" className="nmm-chev shrink-0 text-xl text-ink-soft" />
           </button>
 
           <button type="button" onClick={() => setInviteOpen(true)} className={`${row} active:scale-[0.99]`}>
             <span className="nmm-initial" aria-hidden="true"><GiScrollUnfurled /></span>
-            <span className="min-w-0 flex-1">
+            <span className="nmm-row-text min-w-0 flex-1">
               <span className="block text-base font-black">{t.invite}</span>
               <span className="block text-xs font-bold text-ink-soft">{t.inviteNote}</span>
             </span>
-            <LuChevronRight aria-hidden="true" className="shrink-0 text-xl text-ink-soft" />
+            <LuChevronRight aria-hidden="true" className="nmm-chev shrink-0 text-xl text-ink-soft" />
           </button>
 
           <button type="button" role="switch" aria-checked={showRules} onClick={() => setShowRules(!showRules)} className={row}>
-            <span className="min-w-0 flex-1">
+            <span className="nmm-row-text min-w-0 flex-1">
               <span className="block text-base font-black">{t.showRules}</span>
               <span className="block text-xs font-bold text-ink-soft">{t.showRulesNote}</span>
             </span>

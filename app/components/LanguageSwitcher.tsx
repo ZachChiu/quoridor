@@ -72,7 +72,7 @@ export default function LanguageSwitcher({ onDark = false, theme, buttonClassNam
       >
         <ul className="flex flex-col gap-2">
           {items.map((it) => {
-            const row = 'flex items-center justify-between rounded-xl px-4 py-3.5 text-base font-black transition';
+            const row = `flex items-center ${theme?.centerRows ? 'justify-center' : 'justify-between'} rounded-xl px-4 py-3.5 text-base font-black transition`;
             return (
               <li key={it.locale}>
                 {/* 真的 a、真的整頁重載：<html lang> 因此一定是對的。
@@ -85,7 +85,7 @@ export default function LanguageSwitcher({ onDark = false, theme, buttonClassNam
                   className={`${row} ${it.current ? (theme?.primary ?? 'bg-tile-ink text-tile-cream') : (theme?.secondary ?? 'bg-primary-50 text-tile-ink hover:brightness-95')}`}
                 >
                   {it.name}
-                  {it.current && <LuCheck aria-hidden="true" />}
+                  {it.current && !theme?.centerRows && <LuCheck aria-hidden="true" />}
                 </a>
               </li>
             );
