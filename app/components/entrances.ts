@@ -28,7 +28,7 @@ export type EntranceScene = {
 const LOADERS: Record<string, () => Promise<{ default: EntranceScene }>> = {
   // 時間拍賣（feat/game-time-auction 打開這一行）
 
-  // 九子棋（feat/game-nine-mens-morris 打開這一行）
+  'nine-mens-morris': () => import('./nine-mens-morris/Entrance'),
 
   // 盲眼五子棋（feat/game-blind-gomoku 打開這一行）
 
