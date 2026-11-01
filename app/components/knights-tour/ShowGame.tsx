@@ -84,8 +84,8 @@ export default function ShowGame({ onMenu, onPractice }: {
     if (kind === 'start' && !canStartFrom(n, sq) && armed !== sq) { setArmed(sq); setNote('badStart'); shake(el); playKt('wrong'); return; }
     const at = Date.now();
     const next = showTap(run, sq, at);
-    if (run.startedAt === null && next.startedAt !== null) track('game_start', GA);
-    if (next.status === 'won') track('game_end', { ...GA, result: 'win', ended: 'natural', turns: next.tour.path.length, duration_sec: Math.round(showElapsed(next, at) / 1000) });
+    if (run.startedAt === null && next.startedAt !== null) track('game_start', { ...GA, board_size: next.tour.n });
+    if (next.status === 'won') track('game_end', { ...GA, board_size: next.tour.n, result: 'win', ended: 'natural', turns: next.tour.path.length, duration_sec: Math.round(showElapsed(next, at) / 1000) });
     setArmed(null);
     setNote(null);
     setNow(at);
@@ -110,7 +110,7 @@ export default function ShowGame({ onMenu, onPractice }: {
   useEffect(() => {
     if (status === 'timeUp' && lastStatus.current !== 'timeUp') {
       playKt('stuck');
-      track('game_end', { ...GA, result: 'lose', ended: 'natural', turns: tour.path.length, duration_sec: Math.round(showElapsed(run, run.endedAt ?? Date.now()) / 1000) });
+      track('game_end', { ...GA, board_size: n, result: 'lose', ended: 'natural', turns: tour.path.length, duration_sec: Math.round(showElapsed(run, run.endedAt ?? Date.now()) / 1000) });
     }
     lastStatus.current = status;
     // 只在狀態翻轉時跑；run 是送出當下讀的
@@ -128,7 +128,7 @@ export default function ShowGame({ onMenu, onPractice }: {
   };
   const again = () => {
     window.clearTimeout(finaleTimer.current);
-    if (run.startedAt !== null) track('game_restart', GA);
+    if (run.startedAt !== null) track('game_restart', { ...GA, board_size: n });
     if (tour.path.length || run.level) playKt('clear');
     setRun(startShow());
     setNow(0);

@@ -34,16 +34,22 @@ type G = { game: GameSlug };
 /** 平台首頁、季目錄頁點了哪裡的遊戲卡 */
 export type SelectLocation = 'home_hero' | 'home_grid' | 'season' | 'related';
 
+/**
+ * 棋盤大小 n（n×n 送 n）。只有騎士巡遊帶（2026-11-01 大腦筋派工，docs/knights-tour-board-size-ga.md）：
+ * 節目挑戰 game_start 是 6、game_end 贏是 8、輸是時間到那一關、game_restart 是重來時那一關；練習是選的那個大小
+ */
+type BoardSize = number;
+
 type Events = {
   /** 首頁（或 /solo 頁）選了一個模式。是「想玩」，不是「開始玩」 */
-  mode_select: G & { mode: GameModeParam; players: Players; difficulty?: Difficulty; entry: 'home' | 'solo_page' };
+  mode_select: G & { mode: GameModeParam; players: Players; difficulty?: Difficulty; entry: 'home' | 'solo_page'; board_size?: BoardSize };
   /** 連線房開好了（還沒有人加入） */
   room_created: G & { players: 2 | 3 };
   /**
    * 這一局真的開始了：本機／單人是擺下第一顆棋，連線是人到齊、開始擺棋。
    * 分母用這個，完成率＝game_end ÷ game_start。
    */
-  game_start: G & { mode: GameModeParam; players: Players; difficulty?: Difficulty };
+  game_start: G & { mode: GameModeParam; players: Players; difficulty?: Difficulty; board_size?: BoardSize };
   /**
    * 這一局結束了。
    * result：單人與連線從「這台裝置上的玩家」的角度看（win／lose／tie）；
@@ -51,7 +57,7 @@ type Events = {
    * Wall Go 是 A／B／C（多人同勝用 / 接起來），尼泊爾虎棋是 tiger／goat／draw。
    */
   game_end: G & {
-    mode: GameModeParam; players: Players; difficulty?: Difficulty;
+    mode: GameModeParam; players: Players; difficulty?: Difficulty; board_size?: BoardSize;
     result: 'win' | 'lose' | 'tie' | 'decided';
     /** 一個人解題的遊戲沒有勝方，不帶 */
     winner?: string;
@@ -60,7 +66,7 @@ type Events = {
     duration_sec?: number;
   };
   /** 結束畫面按「再來一局」 */
-  game_restart: G & { mode: GameModeParam; players: Players; difficulty?: Difficulty };
+  game_restart: G & { mode: GameModeParam; players: Players; difficulty?: Difficulty; board_size?: BoardSize };
   /** 連線對戰失敗 */
   /**
    * fail_step 不叫 step：step 已經是 tutorial_close 的「看到第幾步」，在 GA 註冊成指標，

@@ -58,5 +58,5 @@ export default function KnightsTour({ locale }: { locale: Locale }) {
   }
   return <KnightsTourMenu locale={locale}
     onShow={() => { track('mode_select', { game: 'knights-tour', mode: 'show', players: 1, entry: 'home' }); enter(modeHash({ kind: 'show' })); }}
-    onPractice={(n) => { track('mode_select', { game: 'knights-tour', mode: 'practice', players: 1, entry: 'home' }); enter(practice(n)); }} />;
+    onPractice={(n) => { track('mode_select', { game: 'knights-tour', mode: 'practice', players: 1, entry: 'home', board_size: n }); enter(practice(n)); }} />;
 }
