@@ -39,7 +39,7 @@ const zhHans: Messages = {
     ogDescription: '节目里的每一款游戏，能玩的直接开玩。免下载、免注册。',
     heading: '《魔鬼的计谋》游戏',
     /** h1（sr-only）底下看得到的一句：線上桌遊這組詞（docs/platform-keywords.md，11/1 大腦筋） */
-    lead: "免下载、免注册的线上桌游，手机就能跟朋友对战，也能一个人跟电脑下。",
+    lead: "免下载、免注册的线上桌游，手机就能跟朋友对战，也能跟 AI 下。",
     ogLines: ['《魔鬼的计谋》', '游戏在线玩'],
     heroBadge: '现在就能玩',
     heroMeta: '第 2 季《死亡密室》·2–3 人·免下载',

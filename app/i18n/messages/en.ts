@@ -33,7 +33,7 @@ const en: Messages = {
     ogDescription: 'Every game from the show — play the ones we have built. Free, no download, no sign-up.',
     heading: "The Devil's Plan games",
     /** h1（sr-only）底下看得到的一句：線上桌遊這組詞（docs/platform-keywords.md，11/1 大腦筋） */
-    lead: "Free online strategy board games — no download, no sign-up. Play a friend or the computer.",
+    lead: "Free online strategy board games — no download, no sign-up. Play a friend or the AI.",
     ogLines: ["The Devil's Plan", 'games online'],
     heroBadge: 'Play now',
     heroMeta: 'Season 2: Death Room · 2–3 players · No download',
