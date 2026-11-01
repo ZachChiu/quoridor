@@ -662,15 +662,19 @@ html:has(.kt-root), body:has(.kt-root) { background: #edddc7; }
 
 /* 九子棋選單的大按鈕：字放在拱中間最高的地方置中，首字留左、箭頭留右，左右對稱；節目規則左邊補一個朱紅的 ¶ 對稱右邊的蠟封
    （11/1 Zach 在 beta 切換 A 只留字／B 首字在上／C 左右對稱後選 C）。
-   首字頂端也是拱（跟按鈕同一個弧），貼在拱的左上角才不會像被卡住（11/1 Zach）。前面加 html 壓過元件上的 text-left、px-4 */
+   首字的上緣順著按鈕的拱往下滑（archClip.ts 量出來裁的），不會頂到拱的朱紅線（11/1 Zach）。前面加 html 壓過元件上的 text-left、px-4 */
 html .nmm-row, html .nmm-ai-head { position: relative; justify-content: center; text-align: center; padding-inline: 3.25rem; }
 html .nmm-row .nmm-initial, html .nmm-ai-head .nmm-initial { position: absolute; left: 1rem; top: 50%; translate: 0 -42%; }
 html .nmm-ai-head .nmm-initial { left: 0; }
+/* 首字貼著按鈕的左上角：左邊、上面、下面都離外緣同一段（7px，朱紅線在 5px），上緣再由 archClip.ts 裁成順著拱往下滑的弧 */
+html .nmm-row .nmm-initial { left: 7px; top: 7px; bottom: 7px; height: auto; translate: none; border-radius: 0 0 3px 3px; }
+html .nmm-ai { position: relative; }
+html .nmm-ai-head { position: static; }
+html .nmm-ai-head .nmm-initial { left: 7px; top: 7px; bottom: auto; height: calc(1.75rem + 2.75rem); translate: none; border-radius: 0 0 3px 3px; }
 html .nmm-chev { position: absolute; right: 1.4rem; top: 50%; translate: 0 -42%; }
 html .nmm-row-text { flex: 0 1 auto; }
 html .nmm-row .nmm-seal { position: absolute; right: 1rem; top: 50%; translate: 0 -42%; }
 html .nmm-row:not(:has(.nmm-initial))::before { content: '¶'; position: absolute; left: 1.55rem; top: 50%; translate: 0 -42%; color: #c54915; font-size: 1.5rem; font-weight: 900; }
-html .nmm-row .nmm-initial, html .nmm-ai-head .nmm-initial { border-radius: 50% 50% 3px 3px / 0.95rem 0.95rem 3px 3px; }
 
 /* 九子棋首頁的桌機版面：標題、標語一列一列排在左邊，插圖與右邊整排按鈕在同一列、下緣切齊
    （插圖的底＝最後一張按鈕的底，「怎麼玩」掛在按鈕下面不算）。11/1 Zach：原本兩欄各自置中，左圖右按鈕一高一低；
