@@ -59,7 +59,6 @@ export type BlindGomokuText = {
   place: string;
   restart: string;
   undo: string;
-  menu: string;
   rules: string;
   youAreBlack: string;
   revealing: string;
@@ -72,6 +71,11 @@ export type BlindGomokuText = {
   winBodyAi: string;
   winBodySide: string;
   drawBody: string;
+  /** 投降的結算；{side} 是 black／white 那兩個字 */
+  resignBody: string;
+  /** 桌機右欄兩方底下的小字：對電腦時哪一方是自己、哪一方是電腦（連線只給讀屏） */
+  you: string;
+  ai: string;
   revealBody: string;
   again: string;
   black: string;
@@ -152,7 +156,6 @@ export const TEXT: TextTable<BlindGomokuText> = {
     place: '下子',
     restart: '重來',
     undo: '悔棋',
-    menu: '換模式',
     rules: '怎麼玩',
     youAreBlack: '你執黑先下',
     revealing: '翻開棋子…',
@@ -165,6 +168,9 @@ export const TEXT: TextTable<BlindGomokuText> = {
     winBodyAi: 'AI 在第 {n} 手連成五子。',
     winBodySide: '{side}在第 {n} 手連成五子。',
     drawBody: '棋盤下滿了，沒有人連成五子。',
+    resignBody: '{side}投降了。',
+    you: '你',
+    ai: 'AI',
     revealBody: '棋子全部翻開了：底面的黑白就是答案。',
     again: '再來一局',
     black: '黑方',
@@ -240,7 +246,6 @@ export const TEXT: TextTable<BlindGomokuText> = {
     place: 'Place',
     restart: 'Restart',
     undo: 'Undo',
-    menu: 'Change mode',
     rules: 'How to play',
     youAreBlack: 'You play black and move first',
     revealing: 'Revealing…',
@@ -253,6 +258,9 @@ export const TEXT: TextTable<BlindGomokuText> = {
     winBodyAi: 'The AI made five in a row on move {n}.',
     winBodySide: '{side} made five in a row on move {n}.',
     drawBody: 'The board is full and nobody made five in a row.',
+    resignBody: '{side} resigned.',
+    you: 'You',
+    ai: 'AI',
     revealBody: 'Every stone is flipped: the black and white underneath tell the story.',
     again: 'Play again',
     black: 'Black',
@@ -328,7 +336,6 @@ export const TEXT: TextTable<BlindGomokuText> = {
     place: '打つ',
     restart: 'やり直す',
     undo: '待った',
-    menu: 'モード変更',
     rules: '遊び方',
     youAreBlack: 'あなたは黒（先手）',
     revealing: '石をめくっています…',
@@ -341,6 +348,9 @@ export const TEXT: TextTable<BlindGomokuText> = {
     winBodyAi: 'AIが{n}手目で五つ並べました。',
     winBodySide: '{side}が{n}手目で五つ並べました。',
     drawBody: '盤が埋まり、誰も五つ並べられませんでした。',
+    resignBody: '{side}が投了しました。',
+    you: 'あなた',
+    ai: 'AI',
     revealBody: 'すべての石をめくりました。底の黒白が答えです。',
     again: 'もう一局',
     black: '黒',
@@ -416,7 +426,6 @@ export const TEXT: TextTable<BlindGomokuText> = {
     place: '두기',
     restart: '다시 시작',
     undo: '무르기',
-    menu: '모드 변경',
     rules: '게임 방법',
     youAreBlack: '당신은 흑(선공)',
     revealing: '돌을 뒤집는 중…',
@@ -429,6 +438,9 @@ export const TEXT: TextTable<BlindGomokuText> = {
     winBodyAi: 'AI가 {n}수째에 오목을 완성했어요.',
     winBodySide: '{side}이 {n}수째에 오목을 완성했어요.',
     drawBody: '판이 다 찼지만 아무도 오목을 만들지 못했어요.',
+    resignBody: '{side}이 기권했어요.',
+    you: '나',
+    ai: 'AI',
     revealBody: '모든 돌을 뒤집었어요. 밑면의 흑백이 정답이에요.',
     again: '한 판 더',
     black: '흑',
@@ -504,7 +516,6 @@ export const TEXT: TextTable<BlindGomokuText> = {
     place: '落子',
     restart: '重来',
     undo: '悔棋',
-    menu: '换模式',
     rules: '怎么玩',
     youAreBlack: '你执黑先下',
     revealing: '翻开棋子…',
@@ -517,6 +528,9 @@ export const TEXT: TextTable<BlindGomokuText> = {
     winBodyAi: 'AI 在第 {n} 手连成五子。',
     winBodySide: '{side}在第 {n} 手连成五子。',
     drawBody: '棋盘下满了，没有人连成五子。',
+    resignBody: '{side}认输了。',
+    you: '你',
+    ai: 'AI',
     revealBody: '棋子全部翻开了：底面的黑白就是答案。',
     again: '再来一局',
     black: '黑方',
@@ -592,7 +606,6 @@ export const TEXT: TextTable<BlindGomokuText> = {
     place: 'วาง',
     restart: 'เริ่มใหม่',
     undo: 'ย้อน',
-    menu: 'เปลี่ยนโหมด',
     rules: 'วิธีเล่น',
     youAreBlack: 'คุณเป็นฝ่ายดำ เดินก่อน',
     revealing: 'กำลังพลิกหมาก…',
@@ -605,6 +618,9 @@ export const TEXT: TextTable<BlindGomokuText> = {
     winBodyAi: 'AI เรียงครบห้าในตาที่ {n}',
     winBodySide: '{side}เรียงครบห้าในตาที่ {n}',
     drawBody: 'กระดานเต็มแล้ว แต่ไม่มีใครเรียงครบห้า',
+    resignBody: '{side}ยอมแพ้',
+    you: 'คุณ',
+    ai: 'AI',
     revealBody: 'พลิกหมากทุกตัวแล้ว ดำขาวใต้หมากคือคำตอบ',
     again: 'เล่นอีกครั้ง',
     black: 'ฝ่ายดำ',

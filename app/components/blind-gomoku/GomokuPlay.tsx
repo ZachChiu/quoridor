@@ -1,7 +1,7 @@
 'use client';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { GiExitDoor, GiRuleBook } from 'react-icons/gi';
-import { LuCircleHelp, LuHouse, LuRotateCcw, LuUndo2, LuVolume2, LuVolumeX } from 'react-icons/lu';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { GiExitDoor, GiRuleBook, GiTatteredBanner } from 'react-icons/gi';
+import { LuBellRing, LuCircleHelp, LuFlag, LuHouse, LuRotateCcw, LuUndo2, LuVolume2, LuVolumeX, LuWifiOff } from 'react-icons/lu';
 import Modal from '@/components/Modal';
 import { ShareResultModal, useShareCard } from '@/components/ShareResultModal';
 import { useGameText, useLocale, useMessages } from '@/i18n/LocaleProvider';
@@ -10,6 +10,7 @@ import { localePath } from '@/i18n/locales';
 import { BLIND_GOMOKU } from '@/i18n/routes';
 import { useSound } from '@/hook/useSound';
 import { useLeaveGuard } from '@/hook/useLeaveGuard';
+import { shakeElement } from '@/hook/useRoomSignals';
 import { TEXT } from '@/games/blind-gomoku/text';
 import {
   COLORS, applyMove, createGame, isLegal, lastColor, other, play, pointName, undo,
@@ -22,7 +23,8 @@ import { SideFace, colorName } from './Stone';
 import { GMK_BAND, GMK_PANEL } from './palette';
 import GomokuFrame from './GomokuFrame';
 import { useGomokuAi } from './useGomokuAi';
-import { colorString, playEnd, playPick, playReveal, playStone, stringOf } from './sounds';
+import { PLAY_GRID } from './deskLayout';
+import { colorString, playEnd, playNudge, playPick, playReveal, playStone, stringOf } from './sounds';
 import { drawGomokuCard } from './shareCard';
 import type { GomokuMode } from './modeHash';
 
@@ -38,6 +40,13 @@ export type OnlineMode = {
   game: GomokuState;
   onMove: (m: Move) => void;
   newRoom: () => void;
+  /** 在線狀態、催一下、投降（GomokuOnline 的 useRoomSignals，同九子棋）：away＝斷線滿 3 秒的對方 */
+  away: Side | null; selfOffline: boolean;
+  canNudge: boolean; nudged: boolean; nudge: () => void;
+  /** 被催：數字變了就抖一下棋盤、撥兩下弦；nudgeFrom 是誰催的 */
+  shake: number; nudgeFrom: Side | null;
+  /** 房間裡投降的那一方；resign 寫進房間 */
+  resigned: Side | null; resign: () => void;
 };
 
 /**
@@ -63,7 +72,13 @@ export default function GomokuPlay({ mode, onMenu }: { mode: GomokuMode | Online
   const { prefs: soundPrefs, setPrefs: setSoundPrefs } = useSound();
   const [localGame, setGame] = useState<GomokuState>(createGame);
   const online = mode.opponent === 'online' ? mode : null;
-  const game = online ? online.game : localGame;
+  /** 本機、對電腦的投降（連線的在房間裡）：局面直接蓋上勝方，之後誰都不能再走 */
+  const [localResigned, setLocalResigned] = useState<Side | null>(null);
+  const resignedSide = online ? online.resigned : localResigned;
+  const played = online ? online.game : localGame;
+  const game = useMemo(() => (resignedSide && !played.winner ? { ...played, winner: other(resignedSide), line: null } : played), [played, resignedSide]);
+  const [resignOpen, setResignOpen] = useState(false);
+  const boardRef = useRef<HTMLDivElement>(null);
   const [color, setColor] = useState<StoneColor>(COLORS[0]);
   const [aim, setAim] = useState<Point | null>(null);
   /** 盲棋結算：子翻到黑白那面了 */
@@ -123,6 +138,14 @@ export default function GomokuPlay({ mode, onMenu }: { mode: GomokuMode | Online
     if (stone) playStone(stringOf(stone, blind));
   }, [game, blind]);
 
+  // 被催（連線）：棋盤抖一下、撥兩下最高的弦（震動在 useRoomSignals）
+  const shake = online ? online.shake : 0;
+  useEffect(() => {
+    if (!shake) return;
+    shakeElement(boardRef.current);
+    playNudge();
+  }, [shake]);
+
   const pickColor = (c: StoneColor) => { setColor(c); playPick(colorString(c)); };
 
   const place = useCallback((p: Point) => {
@@ -136,6 +159,7 @@ export default function GomokuPlay({ mode, onMenu }: { mode: GomokuMode | Online
   const restart = () => {
     cancel();
     setGame(createGame());
+    setLocalResigned(null);
     setAim(null);
     setFlipped(false);
     setSettled(false);
@@ -147,21 +171,36 @@ export default function GomokuPlay({ mode, onMenu }: { mode: GomokuMode | Online
   const undoSteps = vsAi ? 2 : 1;
   const canUndo = !blind && !online && canPlay && game.moves.length >= undoSteps;
   const doUndo = () => { setGame(undo(game, undoSteps)); setAim(null); };
+  // 投降：本機是輪到的那方、對電腦是自己（黑）、連線寫進房間
+  const resign = () => {
+    if (game.winner) return;
+    if (online) { online.resign(); return; }
+    cancel();
+    setLocalResigned(vsAi ? 'black' : game.turn);
+    setAim(null);
+  };
 
   // 連線的字跟兩人同機一樣寫黑方／白方，不寫「你」「對方」（太直白，Zach 對 Wall Go 選過用記號不用字）：
   // 自己是哪一方由狀態底下那兩塊小布標出來（見 seats）
   const resultTitle = game.winner === 'draw' ? t.draw
     : vsAi ? (game.winner === 'black' ? t.youWin : t.youLose)
     : game.winner === 'black' ? t.blackWins : t.whiteWins;
-  const resultBody = game.winner === 'draw' ? t.drawBody
+  const resultBody = resignedSide && game.winner !== 'draw' ? fill(t.resignBody, { side: resignedSide === 'black' ? t.black : t.white })
+    : game.winner === 'draw' ? t.drawBody
     : vsAi ? fill(game.winner === 'black' ? t.winBodyYou : t.winBodyAi, { n: game.moves.length })
     : fill(t.winBodySide, { side: game.winner === 'black' ? t.black : t.white, n: game.moves.length });
   const status = game.winner ? (settled || !blind ? resultTitle : t.revealing)
     : aiTurn ? t.thinking
     : vsAi ? t.yourTurn
     : game.turn === 'black' ? t.blackTurn : t.whiteTurn;
+  // 連線的提示（跟 Wall Go、九子棋同一套文案）：自己斷線最要緊，再來是對方斷線、被催
+  const away = online && !game.winner ? online.away : null;
+  const notice = !online || game.winner ? ''
+    : online.selfOffline ? g.play.reconnecting
+    : away ? fill(g.play.away, { who: away === 'black' ? t.black : t.white })
+    : online.nudgeFrom ? fill(g.nudge.received, { who: online.nudgeFrom === 'black' ? t.black : t.white }) : '';
   const hint = game.winner ? (settled && blind ? t.revealBody : '')
-    : online ? ''
+    : online ? notice
     : blind ? (vsAi ? t.aiCopies : t.localBlindHint)
     : vsAi ? t.youAreBlack : '';
   const moveNo = fill(t.moveN, { n: game.winner ? game.moves.length : game.moves.length + 1 });
@@ -218,18 +257,45 @@ export default function GomokuPlay({ mode, onMenu }: { mode: GomokuMode | Online
   const ink = 'gmk-patch is-pieced flex h-12 items-center justify-center gap-2 text-sm font-black active:scale-[0.98] disabled:opacity-35';
 
   // 連線：黑方、白方兩塊小布，自己那塊的縫線是實線的黑絲（跟選色盤選中的那格、等人畫面自己那塊布同一個記號）；
-  // 讀屏另外念一句「你執黑先下」
+  // 讀屏另外念一句「你執黑先下」。對方斷線（滿 3 秒）那塊蓋一層灰、正中一個斷掉的 Wi‑Fi（同九子棋、虎棋）
+  const sideName = (s: Side) => (s === 'black' ? t.black : t.white);
+  const awayCover = (
+    <span className="gmk-away-cover" role="img" aria-label={g.status.away}><LuWifiOff aria-hidden="true" /></span>
+  );
   const seats = online && (
-    <div className="mt-1.5 flex gap-1.5">
+    <div className="mt-1.5 flex gap-1.5 lg:hidden">
       {(['black', 'white'] as const).map((s) => (
-        <span key={s} aria-hidden="true"
-          className={`gmk-patch flex items-center gap-1.5 py-1 pl-1.5 pr-2.5 text-xs font-black ![outline-offset:-3px] ${
+        <span key={s} aria-hidden={away !== s}
+          className={`gmk-patch relative flex items-center gap-1.5 py-1 pl-1.5 pr-2.5 text-xs font-black ![outline-offset:-3px] ${
             s === online.side ? '![outline-color:#2a2525] ![outline-style:solid] ![outline-width:1.5px]' : 'is-ramie text-ink-soft'
-          }`}>
-          <SideFace side={s} className="size-3.5" />{s === 'black' ? t.black : t.white}
+          } ${away === s ? 'gmk-away [--away-size:1rem]' : ''}`}>
+          <SideFace side={s} className="size-3.5" />{sideName(s)}
+          {away === s && awayCover}
         </span>
       ))}
       <span className="sr-only">{online.side === 'black' ? t.youAreBlack : t.youAreWhite}</span>
+    </div>
+  );
+
+  // 桌機右欄的兩方（同九子棋、虎棋的兩張狀態卡）：輪到的那方是白絲布、另一方淡下去；連線時自己那塊多一圈黑絲實線
+  const turnSide = game.winner ? (game.winner === 'draw' ? null : game.winner) : game.turn;
+  const sideCards = (
+    <div className="grid grid-cols-2 gap-2.5">
+      {(['black', 'white'] as const).map((s) => (
+        <div key={s}
+          className={`gmk-patch relative flex items-center gap-2.5 px-3 py-2.5 ![outline-offset:-4px] ${turnSide === s ? '' : 'is-ramie [&>:not(.gmk-away-cover)]:opacity-45'} ${
+            online && s === online.side ? '![outline-color:#2a2525] ![outline-style:solid] ![outline-width:1.5px]' : ''
+          } ${away === s ? 'gmk-away' : ''}`}>
+          <SideFace side={s} className="size-6 shrink-0" />
+          <span className="min-w-0">
+            <span className="block text-sm font-black leading-tight">{sideName(s)}</span>
+            <span className="block text-xs font-bold leading-tight text-ink-soft">
+              {vsAi ? (s === 'black' ? t.you : t.ai) : online && s === online.side ? <span className="sr-only">{t.you}</span> : ' '}
+            </span>
+          </span>
+          {away === s && awayCover}
+        </div>
+      ))}
     </div>
   );
 
@@ -256,20 +322,37 @@ export default function GomokuPlay({ mode, onMenu }: { mode: GomokuMode | Online
       {soundPrefs.sfx ? <LuVolume2 aria-hidden="true" /> : <LuVolumeX aria-hidden="true" />}
     </button>
   );
-  const afterGame = (
-    <div className="grid grid-cols-2 gap-2.5">
-      <button type="button" onClick={toMenu} className={wide}>{t.menu}</button>
-      <button type="button" onClick={again} className={ink}>{t.again}</button>
-    </div>
+  // 左上的房子就是回這款的首頁（選模式那個畫面），不另外放「換模式」（11/1 Zach：有首頁按鈕，選模式就重複了）
+  const homeButton = (
+    <button type="button" onClick={toMenu} aria-label={g.play.home} className={round}><LuHouse aria-hidden="true" /></button>
   );
+  const undoButton = !blind && !online && (
+    <button type="button" onClick={doUndo} disabled={!canUndo} className={wide}><LuUndo2 aria-hidden="true" />{t.undo}</button>
+  );
+  const resignButton = (
+    <button type="button" onClick={() => setResignOpen(true)} disabled={!!game.winner} className={wide}><LuFlag aria-hidden="true" />{g.surrender.label}</button>
+  );
+  const nudgeButton = online && (
+    <button type="button" onClick={online.nudge} disabled={!online.canNudge || online.nudged} className={wide}>
+      <LuBellRing aria-hidden="true" />{online.nudged ? g.nudge.sent : g.nudge.button}
+    </button>
+  );
+  // 桌機的操作：一般模式四顆（悔棋、重來、怎麼玩、投降）兩兩一排；盲棋沒有悔棋、連線沒有悔棋與重來但多催一下，剛好三顆排一排
+  const deskActions = [
+    undoButton,
+    !online && <button key="restart" type="button" onClick={restart} className={wide}><LuRotateCcw aria-hidden="true" />{t.restart}</button>,
+    <button key="help" type="button" onClick={() => setHelpOpen(true)} className={wide}><LuCircleHelp aria-hidden="true" />{t.rules}</button>,
+    resignButton,
+    nudgeButton,
+  ].filter(Boolean);
 
   return (
-    <GomokuFrame className="items-center px-4 pb-5 pt-3 lg:flex-row lg:items-center lg:justify-center lg:gap-12 lg:py-8">
+    <GomokuFrame className="items-center px-4 pb-5 pt-3 lg:flex-row lg:items-center lg:justify-center lg:py-8">
       {/* 手機的上方一排 */}
       <div className="flex w-full max-w-[520px] items-center justify-between gap-1.5 lg:hidden">
-        {/* 左邊：換模式、聲音（跟 Wall Go 一樣聲音在左上）；右邊：說明、重來。兩邊一樣寬，標題才在正中間 */}
+        {/* 左邊：首頁、聲音（跟 Wall Go 一樣聲音在左上）；右邊：說明、重來。兩邊一樣寬，標題才在正中間 */}
         <div className="flex shrink-0 gap-1">
-          <button type="button" onClick={toMenu} aria-label={t.menu} className={round}><LuHouse aria-hidden="true" /></button>
+          {homeButton}
           {soundButton}
         </div>
         <div className="min-w-0 text-center">
@@ -286,71 +369,96 @@ export default function GomokuPlay({ mode, onMenu }: { mode: GomokuMode | Online
       </div>
       <div className="mt-2 w-full max-w-[520px] lg:hidden">{statusBlock}</div>
 
-      {/* 棋盤：手機在剩下的高度裡置中；寬度同時受高度限制，矮的手機也放得下下面的選色盤 */}
-      <div className="flex w-full max-w-[min(520px,calc(100svh-17rem))] flex-1 items-center py-2 lg:max-w-[min(640px,calc(100svh-4rem))] lg:flex-none lg:py-0">
-        <GomokuBoard
-          board={game.board}
-          moves={game.moves}
-          blind={blind}
-          revealed={flipped}
-          aim={canPlay ? aim : null}
-          ghost={(p) => <Ghost blind={blind} color={color} side={game.turn} p={p} />}
-          glow={blind && !flipped}
-          lastMark={!blind && !game.winner}
-          line={settled ? game.line : null}
-          idle={!blind && !game.winner ? other(game.turn) : null}
-          interactive={canPlay}
-          label={t.board}
-          describe={describe}
-          onAim={setAim}
-          onPlace={place}
-        />
-      </div>
+      {/* 桌機：棋盤與右欄並排（排法見 deskLayout.ts）；手機這一層是 contents，不影響手機的上下排 */}
+      <div className={PLAY_GRID.row}>
+        {/* 棋盤：手機在剩下的高度裡置中；寬度同時受高度限制，矮的手機也放得下下面的選色盤 */}
+        <div ref={boardRef} className="flex w-full max-w-[min(520px,calc(100svh-17rem))] flex-1 items-center py-2 lg:w-[min(640px,calc(100svh-4rem))] lg:max-w-none lg:flex-none lg:py-0">
+          <GomokuBoard
+            board={game.board}
+            moves={game.moves}
+            blind={blind}
+            revealed={flipped}
+            aim={canPlay ? aim : null}
+            ghost={(p) => <Ghost blind={blind} color={color} side={game.turn} p={p} />}
+            glow={blind && !flipped}
+            lastMark={!blind && !game.winner}
+            line={settled ? game.line : null}
+            idle={!blind && !game.winner ? other(game.turn) : null}
+            interactive={canPlay}
+            label={t.board}
+            describe={describe}
+            onAim={setAim}
+            onPlace={place}
+          />
+        </div>
 
-      {/* 手機的下方：選色盤、悔棋（一般模式）與「下子」；結束後換成換模式／再來一局 */}
-      <div className="flex w-full max-w-[520px] flex-col gap-2.5 lg:hidden">
-        {ended ? afterGame : (
-          <>
-            {picker}
-            {/* 盲棋沒有悔棋：滑鼠的畫面上這一排是空的，整排藏起來 */}
-            <div className={`gap-2.5 ${blind || online ? 'hidden coarse:flex' : 'flex'}`}>
-              {!blind && !online && (
-                <button type="button" onClick={doUndo} disabled={!canUndo} className={`${wide} flex-1 coarse:flex-none coarse:px-5`}>
-                  <LuUndo2 aria-hidden="true" />{t.undo}
+        {/* 手機的下方：選色盤，再一排悔棋（一般模式）／催一下（連線）、投降與「下子」；結束後換成再來一局 */}
+        <div className="flex w-full max-w-[520px] flex-col gap-2.5 lg:hidden">
+          {ended ? (
+            <button type="button" onClick={again} className={ink}>{t.again}</button>
+          ) : (
+            <>
+              {picker}
+              <div className="flex gap-2.5 [&>*]:flex-1">
+                {undoButton}
+                {nudgeButton}
+                {resignButton}
+                <button type="button" onClick={() => aim !== null && place(aim)} disabled={!canPlay || aim === null || !!game.board[aim]}
+                  className={`${ink} hidden coarse:flex`}>
+                  {t.place}
                 </button>
-              )}
-              <button type="button" onClick={() => aim !== null && place(aim)} disabled={!canPlay || aim === null || !!game.board[aim]}
-                className={`${ink} hidden flex-1 coarse:flex`}>
-                {t.place}
-              </button>
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* 桌機的右邊一欄：房子＋標題＋聲音、兩方、狀態、選色盤、操作 */}
+        <aside className={`hidden w-[340px] shrink-0 flex-col gap-5 lg:flex ${PLAY_GRID.aside}`}>
+          <div className="flex flex-col gap-5">
+            <div className="flex items-center gap-3">
+              {homeButton}
+              <div className="min-w-0 flex-1">
+                <h1 className="truncate text-3xl font-black leading-none">{t.title}</h1>
+                <p className="mt-1.5 truncate text-sm font-bold text-ink-soft">{modeLabel}</p>
+              </div>
+              {soundButton}
             </div>
-          </>
-        )}
+            {sideCards}
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0" aria-live="polite">
+                <p className="text-base font-black leading-tight">{status}</p>
+                {hint && <p className="mt-0.5 text-xs font-bold leading-snug text-ink-soft">{hint}</p>}
+              </div>
+              <span className="gmk-patch is-ramie flex shrink-0 items-center gap-1.5 py-1.5 pl-2 pr-3 text-xs font-black tabular-nums">{moveNo}</span>
+            </div>
+            {!ended && picker && (
+              <div className="flex flex-col gap-2">
+                <p className="text-xs font-black text-ink-soft">{t.pickColor}</p>
+                {picker}
+              </div>
+            )}
+          </div>
+          {ended ? (
+            <div className="grid grid-cols-2 gap-2.5">
+              <button type="button" onClick={() => setHelpOpen(true)} className={wide}><LuCircleHelp aria-hidden="true" />{t.rules}</button>
+              <button type="button" onClick={again} className={ink}>{t.again}</button>
+            </div>
+          ) : (
+            <div className={`grid gap-2.5 ${deskActions.length === 3 ? 'grid-cols-3' : 'grid-cols-2'}`}>{deskActions}</div>
+          )}
+        </aside>
       </div>
 
-      {/* 桌機的右邊一欄 */}
-      <aside className="hidden w-[340px] shrink-0 flex-col gap-5 lg:flex">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <h1 className="text-4xl font-black leading-none">{t.title}</h1>
-            <p className="mt-1.5 text-sm font-bold text-ink-soft">{modeLabel}</p>
-          </div>
-          {soundButton}
-        </div>
-        {statusBlock}
-        {ended ? afterGame : picker && (
-          <div className="flex flex-col gap-2">
-            <p className="text-xs font-black text-ink-soft">{t.pickColor}</p>
-            {picker}
-          </div>
-        )}
-        <div className="grid grid-cols-2 gap-2.5">
-          {!blind && !online && <button type="button" onClick={doUndo} disabled={!canUndo} className={wide}><LuUndo2 aria-hidden="true" />{t.undo}</button>}
-          {!online && <button type="button" onClick={restart} className={wide}><LuRotateCcw aria-hidden="true" />{t.restart}</button>}
-          <button type="button" onClick={() => setHelpOpen(true)} className={wide}><LuCircleHelp aria-hidden="true" />{t.rules}</button>
-          <button type="button" onClick={toMenu} className={wide}><LuHouse aria-hidden="true" />{t.menu}</button>
-        </div>
-      </aside>
+      {/* 投降確認。本機是輪到的那方投降（小標寫哪一方），對電腦是自己；連線寫進房間 */}
+      <Modal isOpen={resignOpen && !game.winner} onClose={() => setResignOpen(false)} title={g.surrender.heading}
+        kicker={mode.opponent === 'local' ? sideName(game.turn) : g.surrender.kicker}
+        icon={GiTatteredBanner} band={GMK_BAND} panelClassName={GMK_PANEL}
+        footer={<>
+          <button type="button" onClick={() => setResignOpen(false)} className={`${wide} flex-1`}>{g.surrender.cancel}</button>
+          <button type="button" onClick={() => { setResignOpen(false); resign(); }} className={`${ink} flex-1`}>{g.surrender.confirm}</button>
+        </>}>
+        <p className="text-sm leading-relaxed">{g.surrender.body}</p>
+      </Modal>
 
       <Modal isOpen={leave.open} onClose={leave.cancel} title={g.leave.heading} kicker={g.leave.kicker}
         icon={GiExitDoor} band={GMK_BAND} panelClassName={GMK_PANEL}
@@ -367,7 +475,7 @@ export default function GomokuPlay({ mode, onMenu }: { mode: GomokuMode | Online
         <RulesStepsPaged open={helpOpen} steps={t.steps} prev={ui.prev} next={ui.next} done={ui.close} onDone={() => setHelpOpen(false)} />
       </Modal>
 
-      {/* 結算就是分享圖。關掉還留在棋盤上，可以看翻開後的盤面；下面換成換模式／再來一局（連線是再開一間房）。
+      {/* 結算就是分享圖。關掉還留在棋盤上，可以看翻開後的盤面；下面換成再來一局（連線是再開一間房；回首頁用左上的房子）。
           暗遮罩上的按鈕也是這款的布：再來一局是拼起來的青綠布、分享是白絲布。只留 9:16，比例切換不會出現（toggle 那幾個 class 留著，之後加回比例時用） */}
       <ShareResultModal isOpen={resultOpen} onClose={() => setResultOpen(false)} title={resultTitle} card={share}
         onRestart={again} restartLabel={t.again}
