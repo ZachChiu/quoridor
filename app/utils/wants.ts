@@ -46,19 +46,30 @@ export function wantCounts(): Promise<Record<string, number> | null> {
   return countsPromise;
 }
 
-/** 按想玩／收回。成功回傳 true；規則擋下（或沒網路）回傳 false，裝置上的紀錄不動 */
+/**
+ * 按想玩／收回。成功回傳 true；規則擋下（或沒網路）回傳 false，裝置上的紀錄不動。
+ *
+ * 人數寫的是讀到的數字 ±1，不用 ServerValue.increment：increment 在 Console 的規則模擬工具裡會過，
+ * 但正式資料庫上 wantVoters 那條規則比對 wantCounts 的新值時看到的還不是算好的數字，整筆被拒（11/1 在 beta 實測）。
+ * 剛好有別人同時按、讀到的數字過期了，規則一樣會擋（新值必須是舊值 ±1），重讀再試，最多三次。
+ */
 export async function setWant(key: string, uid: string, on: boolean): Promise<boolean> {
-  try {
-    const [{ ref, update, increment }, db] = await Promise.all([import('firebase/database'), getFirebaseDb()]);
-    await update(ref(db), {
-      [`wantCounts/${key}`]: increment(on ? 1 : -1),
-      [`wantVoters/${key}/${uid}`]: on ? true : null,
-    });
-    rememberWanted(key, on);
-    return true;
-  } catch (error) {
-    // 被規則擋下、沒網路：照樣退回，但留一行在 console，才查得到是哪一種
-    console.warn('[want] write failed', error);
-    return false;
+  const [{ ref, get, update }, db] = await Promise.all([import('firebase/database'), getFirebaseDb()]);
+  let lastError: unknown;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const current = ((await get(ref(db, `wantCounts/${key}`))).val() as number | null) ?? 0;
+      await update(ref(db), {
+        [`wantCounts/${key}`]: current + (on ? 1 : -1),
+        [`wantVoters/${key}/${uid}`]: on ? true : null,
+      });
+      rememberWanted(key, on);
+      return true;
+    } catch (error) {
+      lastError = error;
+    }
   }
+  // 被規則擋下、沒網路：照樣退回，但留一行在 console，才查得到是哪一種
+  console.warn('[want] write failed', lastError);
+  return false;
 }
