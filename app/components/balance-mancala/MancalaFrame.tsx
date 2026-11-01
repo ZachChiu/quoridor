@@ -1,5 +1,6 @@
 import type React from 'react';
 import { CLOTH, INK } from './palette';
+import SkinSwitch from './SkinSwitch';
 
 /**
  * 均衡曼卡拉的整頁畫框：整頁是一塊阿坎（今迦納）的 Adinkra 印花布 —— 布色的底，最外緣一圈蓋了印的布邊（.mcl-frame）。
@@ -18,6 +19,7 @@ export default function MancalaFrame({ className = '', children }: { className?:
   return (
     <div className="mcl-root flex min-h-dvh flex-col font-[family-name:var(--font-app)]" style={{ background: CLOTH, color: INK }}>
       <div className={`mcl-frame flex flex-1 flex-col ${className}`}>{children}</div>
+      <SkinSwitch />
     </div>
   );
 }

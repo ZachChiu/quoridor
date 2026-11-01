@@ -17,13 +17,17 @@ import { CELL_COLOUR, DEVIL, letterOf, type Colour, type Seat } from '@/games/ba
  * 每顆子另外印座位字母（不只靠顏色）。座位色是功能色、不是識別色，沒有跟著換。
  * 子的外圈留一道亮布色的縫，疊在任何盤子上都分得開。
  */
-export const CLOTH = '#ebd2cb';
-export const CLOTH_LIGHT = '#fef2ec';
-export const INK = '#201211';
-export const INK_SOFT = '#5e4b3f';
-export const BRASS = '#af9b71';
-export const BRASS_DEEP = '#856f4c';
-export const WOOD = '#362522';
+/** 原本的十六進位值（分享圖的 Canvas 用：Canvas 讀不懂 CSS 變數） */
+export const HEX = { CLOTH: '#ebd2cb', CLOTH_LIGHT: '#fef2ec', INK: '#201211', INK_SOFT: '#5e4b3f', BRASS: '#af9b71', BRASS_DEEP: '#856f4c', WOOD: '#362522' };
+/* 試做三種皮（skins.ts）：畫面上一律用 CSS 變數，預設值在 globals.css 的 html:has(.mcl-root) */
+export const CLOTH = 'var(--mcl-cloth)';
+export const CLOTH_LIGHT = 'var(--mcl-cloth-light)';
+export const INK = 'var(--mcl-ink)';
+export const INK_SOFT = 'var(--mcl-ink-soft)';
+export const BRASS = 'var(--mcl-brass)';
+export const BRASS_DEEP = 'var(--mcl-brass-deep)';
+export const WOOD = 'var(--mcl-wood)';
+export const DEVIL_BG = 'var(--mcl-devil)';
 /** 座位色上的米白字（SEAT_LOOK）：全站的 tile-cream，跟 fgClass 一致 */
 const CREAM = '#faf7f0';
 
@@ -61,5 +65,5 @@ export { letterOf };
  * 彈窗：一塊切角的印花布 —— 標題是木頭色的字，底下兩道梳子畫的線（布上隔開方格的那種），不用色帶。
  * 介面零件本身在 globals.css 的 .mcl-*（黃銅牌、印花布條、寶螺殼印章）。
  */
-export const MCL_PANEL = '!rounded-none !bg-[#fef2ec] [clip-path:polygon(10px_0,calc(100%-10px)_0,100%_10px,100%_calc(100%-10px),calc(100%-10px)_100%,10px_100%,0_calc(100%-10px),0_10px)]';
-export const MCL_BAND = { className: 'mx-6 !px-0 bg-transparent border-b-[4px] border-double border-[#201211]/55', fg: 'text-[#362522]' };
+export const MCL_PANEL = '!rounded-none !bg-[var(--mcl-cloth-light)] [clip-path:polygon(10px_0,calc(100%-10px)_0,100%_10px,100%_calc(100%-10px),calc(100%-10px)_100%,10px_100%,0_calc(100%-10px),0_10px)]';
+export const MCL_BAND = { className: 'mx-6 !px-0 bg-transparent border-b-[4px] border-double border-[rgb(var(--mcl-ink-rgb)/0.55)]', fg: 'text-[var(--mcl-wood)]' };

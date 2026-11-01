@@ -2,7 +2,9 @@
 import { useEffect, useLayoutEffect, useRef, type CSSProperties, type ReactNode } from 'react';
 import { GiAngelWings, GiImpLaugh } from 'react-icons/gi';
 import { CELLS, ANGEL, DEVIL, CELL_COLOUR, type Colour, type Seat } from '@/games/balance-mancala/engine';
-import { BRASS, CLOTH_LIGHT, DISH_BG, INK, WOOD } from './palette';
+import { BRASS, CLOTH_LIGHT, DEVIL_BG, DISH_BG, INK, WOOD } from './palette';
+import { useMclSkin } from './skins';
+import { PitArt } from './skinArt';
 import PieceDisc from './PieceDisc';
 import { playIdle } from './idleMotion';
 
@@ -41,6 +43,46 @@ const stopScripted = (root: HTMLElement) => root.querySelectorAll('[data-seat]')
 
 /** 盤面上的得分標記：誰、+幾分、記到哪一色（還沒選色時 colour 是 null） */
 export type RingMark = { cell: number; owner: Seat; points: number; colour: Colour | null; faded?: boolean };
+
+/** 一手的路線（預覽用）：從哪一格拿起來、每一顆依序落在哪一格 */
+export type RingTrail = { from: number; path: number[] };
+
+/** 路線畫在盤子內側那一圈（盤子內緣 29.5 與中央 23 之間），不壓到子 */
+const RT = 27.2;
+
+/**
+ * 路線：從拿起來的那一格（起點一顆小黃銅點）沿著盤面順時針畫一條黃銅線到最後一顆，每一格標上第幾顆落在這裡、
+ * 最後一顆是實心的黃銅（終點不畫箭頭，方向由起點與盤面上原本的小箭頭講）。
+ * 一次拿 14 顆以上會繞回原格：線繞一整圈，數字疊在同一格（很少見，不另外處理）。
+ */
+function Trail({ trail }: { trail: RingTrail }) {
+  const steps = trail.path.length;
+  const a0 = -90 + (trail.from * 360) / CELLS;
+  const span = (steps * 360) / CELLS;
+  const pts: string[] = [];
+  for (let d = 0; d <= span; d += 3) {
+    const a = ((a0 + d) * Math.PI) / 180;
+    pts.push(`${fx(50 + RT * Math.cos(a))},${fx(50 + RT * Math.sin(a))}`);
+  }
+  const start = (a0 * Math.PI) / 180;
+  return (
+    <g>
+      <polyline points={pts.join(' ')} fill="none" stroke={BRASS} strokeWidth={1.1} strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx={fx(50 + RT * Math.cos(start))} cy={fx(50 + RT * Math.sin(start))} r={1.1} fill={BRASS} />
+      {trail.path.map((cell, i) => {
+        const a = rad(cell);
+        const last = i === steps - 1;
+        const x = fx(50 + RT * Math.cos(a)), y = fx(50 + RT * Math.sin(a));
+        return (
+          <g key={i}>
+            <circle cx={x} cy={y} r={last ? 2.6 : 2.1} fill={last ? BRASS : CLOTH_LIGHT} stroke={BRASS} strokeWidth={0.5} />
+            <text x={x} y={y} dy="0.36em" textAnchor="middle" fontSize={last ? 2.9 : 2.5} fontWeight={900} fill={INK}>{i + 1}</text>
+          </g>
+        );
+      })}
+    </g>
+  );
+}
 
 /** 坑裡最新那顆子的進場：pop＝開局放子（從上面落下）、land＝播種時飛過來落地（延遲 delay 毫秒，等飛行的那顆到） */
 type Drop = { kind: 'pop' | 'land'; key: number; delay: number } | null;
@@ -92,7 +134,7 @@ function CellPieces({ owners, incoming, drop }: { owners: Seat[]; incoming: bool
 
 export default function MancalaRing({
   board, colourShort, highLabel, lowLabel, ariaOf, selectable, dimOthers, selected, incoming, emptied, dropped, dropKey = 0, mark, onPick, center,
-  flight = null, hopMs = 0, scoop = null, weigh = null, markDelay = 0, idleActor = null,
+  flight = null, hopMs = 0, scoop = null, weigh = null, markDelay = 0, idleActor = null, trail = null, onHover,
 }: {
   board: Seat[][];
   colourShort: string[];
@@ -127,7 +169,12 @@ export default function MancalaRing({
   markDelay?: number;
   /** 閒置動作：輪到的座位（他的子不動）；null＝整個停掉（播種、排序預覽、結束） */
   idleActor?: Seat | null;
+  /** 預覽一手的路線（選了起點、或滑鼠停在能選的格子上）；有路線時盤面內側的子數讓位 */
+  trail?: RingTrail | null;
+  /** 滑鼠移進／移出格子（只有滑鼠，手指沒有 hover） */
+  onHover?: (cell: number | null) => void;
 }) {
+  const skin = useMclSkin();
   const rootRef = useRef<HTMLDivElement>(null);
   const flyRef = useRef<HTMLSpanElement>(null);
   const land = Math.round(hopMs * LAND);
@@ -185,6 +232,7 @@ export default function MancalaRing({
               transform={`translate(${fx(50 + R * Math.cos(a))} ${fx(50 + R * Math.sin(a))}) rotate(${fx(deg)})`} />
           );
         })}
+        {trail && <Trail trail={trail} />}
       </svg>
 
       {center && (
@@ -196,7 +244,7 @@ export default function MancalaRing({
       {board.map((owners, cell) => {
         const colour = CELL_COLOUR[cell];
         // 惡魔格是印花的墨（比木頭更深）、天使格是亮布色；兩格都靠黃銅外緣跟木頭分開
-        const bg = colour !== null ? DISH_BG[colour] : cell === DEVIL ? INK : CLOTH_LIGHT;
+        const bg = colour !== null ? DISH_BG[colour] : cell === DEVIL ? DEVIL_BG : CLOTH_LIGHT;
         const canPick = selectable?.has(cell) ?? false;
         const dim = dimOthers && selectable !== null && !canPick && selected !== cell;
         const isSel = selected === cell;
@@ -208,6 +256,8 @@ export default function MancalaRing({
               type="button"
               data-cell={cell}
               onClick={() => onPick(cell)}
+              onPointerEnter={onHover ? (e) => { if (e.pointerType === 'mouse') onHover(cell); } : undefined}
+              onPointerLeave={onHover ? (e) => { if (e.pointerType === 'mouse') onHover(null); } : undefined}
               aria-label={ariaOf(cell)}
               aria-pressed={isSel || undefined}
               className="absolute grid place-items-center rounded-full transition-[opacity,transform] duration-200"
@@ -220,8 +270,9 @@ export default function MancalaRing({
                 outline, outlineOffset: '0.5cqw',
               }}
             >
-              {cell === DEVIL && <GiImpLaugh aria-hidden="true" className="absolute size-[62%]" style={{ color: BRASS, opacity: owners.length ? 0.35 : 0.9 }} />}
-              {cell === ANGEL && <GiAngelWings aria-hidden="true" className="absolute size-[66%]" style={{ color: WOOD, opacity: owners.length ? 0.18 : 0.55 }} />}
+              {skin !== 'adinkra' && (cell === DEVIL || cell === ANGEL) && <PitArt skin={skin} cell={cell === DEVIL ? 'devil' : 'angel'} faded={owners.length > 0} />}
+              {skin === 'adinkra' && cell === DEVIL && <GiImpLaugh aria-hidden="true" className="absolute size-[62%]" style={{ color: BRASS, opacity: owners.length ? 0.35 : 0.9 }} />}
+              {skin === 'adinkra' && cell === ANGEL && <GiAngelWings aria-hidden="true" className="absolute size-[66%]" style={{ color: WOOD, opacity: owners.length ? 0.18 : 0.55 }} />}
               <CellPieces owners={owners} incoming={!!incoming?.has(cell)}
                 drop={dropped === cell ? { kind: flight && hopMs ? 'land' : 'pop', key: dropKey, delay: land } : null} />
               {/* 不能選的格子蓋一層木頭色調暗。不用 opacity：半透明的格子會透出底下那圈軌道線 */}
@@ -235,7 +286,7 @@ export default function MancalaRing({
             </span>
 
             {/* 內側：子數（得分標記出現時讓位） */}
-            {!showMark && owners.length > 0 && (
+            {!showMark && !trail && owners.length > 0 && (
               <span aria-hidden="true" className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 font-black leading-none"
                 style={{ ...pos(cell, R - D / 2 - 3), fontSize: '2.8cqw', color: CLOTH_LIGHT, opacity: 0.7 }}>
                 {owners.length}

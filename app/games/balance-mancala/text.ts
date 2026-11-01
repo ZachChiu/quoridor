@@ -61,16 +61,33 @@ export type BalanceMancalaText = {
   whoLast: string;
   order: string;
   swapHint: string;
+  whoLastHint: string;
+  orderToggle: string;
+  orderHide: string;
+  coachSetup: string;
+  coachTurn: string;
+  coachPick: string;
+  coachBalance: string;
+  coachGot: string;
+  coachOff: string;
   suggest: string;
   sow: string;
   cancel: string;
   gain: string;
   gainDetail: string;
+  previewLand: string;
+  previewFinal: string;
+  previewHover: string;
+  previewTie: string;
   pickColour: string;
   endsWarn: string;
   endsWarnLocal: string;
   final: string;
   formula: string;
+  balanceTitle: string;
+  balanceNeed: string;
+  balanceEven: string;
+  balanceNear: string;
   gameOver: string;
   youWin: string;
   winner: string;
@@ -94,6 +111,7 @@ export type BalanceMancalaText = {
   leave: string;
   stay: string;
   rulesHeading: string;
+  goal: string;
   rules: string[];
   /** 每一步的小標（規則頁與對局中的說明彈窗，跟 rules 同索引，一條一張圖） */
   ruleTitles: string[];
@@ -158,16 +176,33 @@ export const TEXT: TextTable<BalanceMancalaText> = {
     whoLast: '最後一顆給誰？',
     order: '落下順序',
     swapHint: '點兩顆子交換位置',
+    whoLastHint: '誰的子最後落下，誰就得分。選一個結果：',
+    orderToggle: '自己排落下順序',
+    orderHide: '收起順序',
+    coachSetup: '先放子。之後只能從「有你的子」的格子出手，分散一點，選擇比較多。',
+    coachTurn: '點一格有 {seat} 的格子：整格的子（別人的也算）都拿起來，順時針一格放一顆。',
+    coachPick: '盤面上的線是這一手的路線。最後一顆是誰的，誰就得分，記在落點那格的顏色。選好再按「播下去」。',
+    coachBalance: '分數不是越多越好：最終分＝2×最低−最高，三色要平均。「你的三色」那塊會告訴你下一分該記到哪。',
+    coachGot: '知道了',
+    coachOff: '不用教了',
     suggest: '建議排法',
     sow: '播下去',
     cancel: '取消',
     gain: '{owner} +{points} {colour}',
     gainDetail: '{colour} {from} → {to}　最終分 {f1} → {f2}',
+    previewLand: '最後一顆落在{cell}',
+    previewFinal: '最終分 {f1} → {f2}',
+    previewHover: '點一下，再決定順序',
+    previewTie: '同分：選要記哪一色',
     pickColour: '同分，選要記哪一色',
     endsWarn: '這一手會讓遊戲立刻結束：你是第 {rank} 名',
     endsWarnLocal: '這一手會讓遊戲立刻結束：{name} 第一',
     final: '最終',
     formula: '最終分＝2×最低−最高',
+    balanceTitle: '{name}的三色',
+    balanceNeed: '下一分最好記到：{colours}',
+    balanceEven: '三色一樣多：加哪一色都會先拉開差距',
+    balanceNear: '{colour}快到 30，到了遊戲立刻結束',
     gameOver: '遊戲結束',
     youWin: '你贏了！',
     winner: '{name} 獲勝',
@@ -189,6 +224,7 @@ export const TEXT: TextTable<BalanceMancalaText> = {
     leave: '放棄',
     stay: '繼續玩',
     rulesHeading: '怎麼玩',
+    goal: '目標：讓自己的紅、藍、綠三色一樣高。最後算分＝2×最低−最高 —— 分數多但不平均，反而會輸。',
     rules: [
       '14 格繞成一圈，順時針走。頂端是惡魔格、底端是天使格，其餘 12 個盤子是紅、藍、綠。',
       '開局輪流放子，一次一顆，每格最多 2 顆。',
@@ -255,16 +291,33 @@ export const TEXT: TextTable<BalanceMancalaText> = {
     whoLast: 'Whose piece lands last?',
     order: 'Drop order',
     swapHint: 'Tap two pieces to swap',
+    whoLastHint: 'Whoever\'s piece lands last scores. Pick an outcome:',
+    orderToggle: 'Set the order yourself',
+    orderHide: 'Hide the order',
+    coachSetup: 'Place your pieces first. Later you can only move from cells that hold one of yours, so spreading out gives you more options.',
+    coachTurn: 'Tap a cell with an {seat}: every piece in it (other players\' too) is picked up and sown clockwise, one per cell.',
+    coachPick: 'The line on the board is this move\'s path. Whoever owns the last piece scores, in the colour of the cell it lands on. Choose, then press Sow.',
+    coachBalance: 'More points isn\'t always better: final = 2 × lowest − highest, so keep the three even. The three-colour panel tells you where your next points should go.',
+    coachGot: 'Got it',
+    coachOff: 'No more tips',
     suggest: 'Suggest',
     sow: 'Sow',
     cancel: 'Cancel',
     gain: '{owner} +{points} {colour}',
     gainDetail: '{colour} {from} → {to} · final {f1} → {f2}',
+    previewLand: 'Last piece lands on the {cell}',
+    previewFinal: 'Final {f1} → {f2}',
+    previewHover: 'Click to choose the order',
+    previewTie: 'Tie: pick a colour',
     pickColour: 'Tie — pick the colour',
     endsWarn: 'This ends the game now: you finish #{rank}',
     endsWarnLocal: 'This ends the game now: {name} wins',
     final: 'Final',
     formula: 'Final = 2 × lowest − highest',
+    balanceTitle: '{name}: three colours',
+    balanceNeed: 'Best place for your next points: {colours}',
+    balanceEven: 'All three are even: any points will open a gap first',
+    balanceNear: '{colour} is close to 30 — reaching it ends the game',
     gameOver: 'Game over',
     youWin: 'You win!',
     winner: '{name} wins',
@@ -286,6 +339,7 @@ export const TEXT: TextTable<BalanceMancalaText> = {
     leave: 'Quit',
     stay: 'Keep playing',
     rulesHeading: 'How to play',
+    goal: 'Goal: keep your red, blue and green scores even. Final score = 2 × lowest − highest — lots of points that are lopsided will lose.',
     rules: [
       '14 cells form a ring, played clockwise. The Devil is at the top, the Angel at the bottom; the other 12 dishes are red, blue and green.',
       'Setup: take turns placing one piece at a time, at most 2 per cell.',
@@ -352,16 +406,33 @@ export const TEXT: TextTable<BalanceMancalaText> = {
     whoLast: '最後の駒は誰？',
     order: '置く順番',
     swapHint: '駒を2つタップして入れ替え',
+    whoLastHint: '最後に落ちた駒の持ち主が得点。結果を選ぶ：',
+    orderToggle: '順番を自分で決める',
+    orderHide: '順番を閉じる',
+    coachSetup: 'まず駒を置く。あとで動かせるのは自分の駒があるマスだけなので、散らすと選択肢が増える。',
+    coachTurn: '{seat} があるマスをタップ：中の駒（他人の駒も）を全部取り、時計回りに1マス1個ずつ置く。',
+    coachPick: '盤上の線がこの手の道筋。最後の駒の持ち主が、落ちたマスの色で得点。選んだら「まく」。',
+    coachBalance: '点は多ければいいわけじゃない：最終＝2×最低−最高、三色をそろえる。「三色」の欄が次に入れるべき色を教えてくれる。',
+    coachGot: 'わかった',
+    coachOff: 'もう教えなくていい',
     suggest: 'おすすめ',
     sow: 'まく',
     cancel: 'キャンセル',
     gain: '{owner} +{points} {colour}',
     gainDetail: '{colour} {from} → {to}・最終 {f1} → {f2}',
+    previewLand: '最後の駒は{cell}へ',
+    previewFinal: '最終 {f1} → {f2}',
+    previewHover: 'クリックして順番を決める',
+    previewTie: '同点：色を選ぶ',
     pickColour: '同点：記録する色を選ぶ',
     endsWarn: 'この手でゲーム終了：あなたは {rank} 位',
     endsWarnLocal: 'この手でゲーム終了：{name} が1位',
     final: '最終',
     formula: '最終スコア＝2×最低−最高',
+    balanceTitle: '{name}の三色',
+    balanceNeed: '次の得点は {colours} がいい',
+    balanceEven: '三色とも同じ：どの色に入れても差がつく',
+    balanceNear: '{colour}が30に近い。届くとすぐ終了',
     gameOver: 'ゲーム終了',
     youWin: 'あなたの勝ち！',
     winner: '{name} の勝ち',
@@ -383,6 +454,7 @@ export const TEXT: TextTable<BalanceMancalaText> = {
     leave: 'やめる',
     stay: '続ける',
     rulesHeading: '遊び方',
+    goal: '目標：自分の赤・青・緑をそろえること。最終スコア＝2×最低−最高。点が多くても偏っていれば負ける。',
     rules: [
       '14マスが輪になっていて、時計回りに進みます。上が悪魔マス、下が天使マス、残り12個の皿は赤・青・緑です。',
       '最初に、1個ずつ順番に駒を置きます。1マス2個まで。',
@@ -449,16 +521,33 @@ export const TEXT: TextTable<BalanceMancalaText> = {
     whoLast: '마지막 말은 누구?',
     order: '놓는 순서',
     swapHint: '말 두 개를 눌러 순서 바꾸기',
+    whoLastHint: '마지막에 떨어진 말의 주인이 득점. 결과를 고르세요:',
+    orderToggle: '순서 직접 정하기',
+    orderHide: '순서 접기',
+    coachSetup: '먼저 말을 놓으세요. 나중에는 내 말이 있는 칸에서만 움직일 수 있으니 흩어 놓으면 선택지가 많아져요.',
+    coachTurn: '{seat}가 있는 칸을 누르세요: 칸 안의 말(다른 사람 것도)을 모두 집어 시계 방향으로 한 칸에 하나씩 놓아요.',
+    coachPick: '판 위의 선이 이번 수의 경로예요. 마지막 말의 주인이 떨어진 칸의 색으로 득점해요. 고른 뒤 \'뿌리기\'를 누르세요.',
+    coachBalance: '점수가 많다고 좋은 게 아니에요: 최종 = 2 × 최저 − 최고, 세 색을 고르게. \'세 색\' 칸이 다음 점수를 어디에 넣을지 알려 줘요.',
+    coachGot: '알겠어요',
+    coachOff: '그만 알려 줘요',
     suggest: '추천 순서',
     sow: '놓기',
     cancel: '취소',
     gain: '{owner} +{points} {colour}',
     gainDetail: '{colour} {from} → {to} · 최종 {f1} → {f2}',
+    previewLand: '마지막 말은 {cell}에',
+    previewFinal: '최종 {f1} → {f2}',
+    previewHover: '클릭해서 순서 정하기',
+    previewTie: '동점: 색을 고르세요',
     pickColour: '동점: 점수를 넣을 색 선택',
     endsWarn: '이 수로 게임이 바로 끝납니다: 나는 {rank}위',
     endsWarnLocal: '이 수로 게임이 바로 끝납니다: {name} 1위',
     final: '최종',
     formula: '최종 점수 = 2 × 최저 − 최고',
+    balanceTitle: '{name}의 세 색',
+    balanceNeed: '다음 점수는 {colours}에 넣는 게 좋아요',
+    balanceEven: '세 색이 같아요: 어느 색에 넣어도 먼저 차이가 생겨요',
+    balanceNear: '{colour}이(가) 30에 가까워요. 닿으면 바로 끝나요',
     gameOver: '게임 종료',
     youWin: '승리!',
     winner: '{name} 승리',
@@ -480,6 +569,7 @@ export const TEXT: TextTable<BalanceMancalaText> = {
     leave: '그만두기',
     stay: '계속하기',
     rulesHeading: '게임 방법',
+    goal: '목표: 내 빨강·파랑·초록 점수를 고르게. 최종 점수 = 2 × 최저 − 최고 — 점수가 많아도 치우치면 져요.',
     rules: [
       '14칸이 원을 이루고 시계 방향으로 진행합니다. 위쪽은 악마 칸, 아래쪽은 천사 칸이고, 나머지 12개 접시는 빨강·파랑·초록입니다.',
       '처음에 돌아가며 한 개씩 말을 놓습니다. 한 칸에 최대 2개.',
@@ -546,16 +636,33 @@ export const TEXT: TextTable<BalanceMancalaText> = {
     whoLast: '最后一颗给谁？',
     order: '落子顺序',
     swapHint: '点两颗棋子交换位置',
+    whoLastHint: '谁的棋子最后落下，谁就得分。选一个结果：',
+    orderToggle: '自己排落下顺序',
+    orderHide: '收起顺序',
+    coachSetup: '先摆子。之后只能从“有你的棋子”的格子出手，分散一点，选择比较多。',
+    coachTurn: '点一格有 {seat} 的格子：整格的棋子（别人的也算）都拿起来，顺时针一格放一颗。',
+    coachPick: '盘面上的线是这一手的路线。最后一颗是谁的，谁就得分，记在落点那格的颜色。选好再按“播下去”。',
+    coachBalance: '分数不是越多越好：最终分＝2×最低−最高，三色要平均。“你的三色”那块会告诉你下一分该记到哪。',
+    coachGot: '知道了',
+    coachOff: '不用教了',
     suggest: '推荐排法',
     sow: '播下去',
     cancel: '取消',
     gain: '{owner} +{points} {colour}',
     gainDetail: '{colour} {from} → {to}　最终分 {f1} → {f2}',
+    previewLand: '最后一颗落在{cell}',
+    previewFinal: '最终分 {f1} → {f2}',
+    previewHover: '点一下，再决定顺序',
+    previewTie: '同分：选要记哪一色',
     pickColour: '同分，选要记哪一色',
     endsWarn: '这一手会让游戏立刻结束：你是第 {rank} 名',
     endsWarnLocal: '这一手会让游戏立刻结束：{name} 第一',
     final: '最终',
     formula: '最终分＝2×最低−最高',
+    balanceTitle: '{name}的三色',
+    balanceNeed: '下一分最好记到：{colours}',
+    balanceEven: '三色一样多：加哪一色都会先拉开差距',
+    balanceNear: '{colour}快到 30，到了游戏立刻结束',
     gameOver: '游戏结束',
     youWin: '你赢了！',
     winner: '{name} 获胜',
@@ -577,6 +684,7 @@ export const TEXT: TextTable<BalanceMancalaText> = {
     leave: '放弃',
     stay: '继续玩',
     rulesHeading: '怎么玩',
+    goal: '目标：让自己的红、蓝、绿三色一样高。最后算分＝2×最低−最高 —— 分数多但不平均，反而会输。',
     rules: [
       '14 格围成一圈，顺时针走。顶端是恶魔格、底端是天使格，其余 12 个盘子是红、蓝、绿。',
       '开局轮流摆子，一次一颗，每格最多 2 颗。',
@@ -643,16 +751,33 @@ export const TEXT: TextTable<BalanceMancalaText> = {
     whoLast: 'หมากตัวสุดท้ายเป็นของใคร?',
     order: 'ลำดับการวาง',
     swapHint: 'แตะหมากสองตัวเพื่อสลับ',
+    whoLastHint: 'หมากของใครตกตัวสุดท้าย คนนั้นได้แต้ม เลือกผลลัพธ์:',
+    orderToggle: 'จัดลำดับเอง',
+    orderHide: 'ซ่อนลำดับ',
+    coachSetup: 'วางหมากก่อน ต่อไปเดินได้เฉพาะช่องที่มีหมากของคุณ วางกระจายไว้จะมีทางเลือกมากขึ้น',
+    coachTurn: 'แตะช่องที่มี {seat}: หยิบหมากทั้งหมดในช่อง (ของคนอื่นด้วย) แล้วหว่านตามเข็มนาฬิกา ช่องละตัว',
+    coachPick: 'เส้นบนกระดานคือเส้นทางของตานี้ หมากตัวสุดท้ายเป็นของใคร คนนั้นได้แต้มเป็นสีของช่องที่ตก เลือกแล้วกด หว่าน',
+    coachBalance: 'แต้มเยอะไม่ได้ดีเสมอ: คะแนนสุดท้าย = 2 × ต่ำสุด − สูงสุด ต้องให้สามสีเท่า ๆ กัน ช่อง สามสี จะบอกว่าแต้มต่อไปควรลงสีไหน',
+    coachGot: 'เข้าใจแล้ว',
+    coachOff: 'ไม่ต้องสอนแล้ว',
     suggest: 'ลำดับแนะนำ',
     sow: 'หว่าน',
     cancel: 'ยกเลิก',
     gain: '{owner} +{points} {colour}',
     gainDetail: '{colour} {from} → {to} · คะแนนสุดท้าย {f1} → {f2}',
+    previewLand: 'หมากตัวสุดท้ายตกที่{cell}',
+    previewFinal: 'คะแนนสุดท้าย {f1} → {f2}',
+    previewHover: 'คลิกเพื่อเลือกลำดับ',
+    previewTie: 'เสมอ: เลือกสี',
     pickColour: 'เสมอกัน เลือกสีที่จะได้แต้ม',
     endsWarn: 'ตานี้จะจบเกมทันที: คุณได้อันดับ {rank}',
     endsWarnLocal: 'ตานี้จะจบเกมทันที: {name} ชนะ',
     final: 'สุดท้าย',
     formula: 'คะแนนสุดท้าย = 2 × ต่ำสุด − สูงสุด',
+    balanceTitle: 'สามสีของ{name}',
+    balanceNeed: 'แต้มต่อไปควรลง: {colours}',
+    balanceEven: 'สามสีเท่ากัน: ลงสีไหนก็จะเกิดช่องว่างก่อน',
+    balanceNear: '{colour}ใกล้ 30 แล้ว ถึงเมื่อไรเกมจบทันที',
     gameOver: 'จบเกม',
     youWin: 'คุณชนะ!',
     winner: '{name} ชนะ',
@@ -674,6 +799,7 @@ export const TEXT: TextTable<BalanceMancalaText> = {
     leave: 'เลิกเล่น',
     stay: 'เล่นต่อ',
     rulesHeading: 'วิธีเล่น',
+    goal: 'เป้าหมาย: ให้แต้มแดง น้ำเงิน เขียวของคุณเท่า ๆ กัน คะแนนสุดท้าย = 2 × ต่ำสุด − สูงสุด แต้มเยอะแต่ไม่สมดุลก็แพ้ได้',
     rules: [
       'มี 14 ช่องเรียงเป็นวง เดินตามเข็มนาฬิกา ด้านบนคือช่องปีศาจ ด้านล่างคือช่องเทวดา อีก 12 ช่องเป็นจานสีแดง ฟ้า และเขียว',
       'เริ่มเกม: ผลัดกันวางหมากทีละตัว ช่องละไม่เกิน 2 ตัว',

@@ -13,20 +13,23 @@ import { localePath, type Locale } from '@/i18n/locales';
 import { BALANCE_MANCALA } from '@/i18n/routes';
 import { TEXT } from '@/games/balance-mancala/text';
 import {
-  createGame, place, applyMove, sow, sourcesOf, legalPlacements, standings, isLegalMove, letterOf, isSpecial, ANGEL, DEFAULT_PIECES,
+  createGame, place, applyMove, sow, sourcesOf, legalPlacements, standings, isLegalMove, letterOf, isSpecial, finalScore, ANGEL, DEFAULT_PIECES,
   type Colour, type MancalaState, type Move, type Seat, type Sow,
 } from '@/games/balance-mancala/engine';
 import { chooseMove, choosePlacement, personalityOf, suggestColour, suggestMove } from '@/games/balance-mancala/ai';
 import { humanSeatsOf, type MatchSetup } from './match';
 import { beforeLast, catchUp } from './online';
-import { BRASS, MCL_BAND, MCL_PANEL, WOOD, cellName } from './palette';
+import { useMclSkin } from './skins';
+import { BoardFace } from './skinArt';
+import { BRASS, DISH_BG, INK, MCL_BAND, MCL_PANEL, WOOD, CLOTH_LIGHT, cellName } from './palette';
 import { MCL_ROUND, MCL_SHARE, MCL_WIDE } from './styles';
 import { playMancala } from './sounds';
 import { MCL_CARD_IMAGES, drawMancalaCard, type MancalaCardData } from './shareCard';
 import MancalaFrame from './MancalaFrame';
-import MancalaRing, { LAND, type RingMark } from './MancalaRing';
+import MancalaRing, { LAND, type RingMark, type RingTrail } from './MancalaRing';
 import ScorePanel from './ScorePanel';
-import OrderEditor from './OrderEditor';
+import BalanceCard from './BalanceCard';
+import OrderEditor, { type Outcome } from './OrderEditor';
 import { RulesStepsPaged } from './MancalaRulesSteps';
 import PieceDisc from './PieceDisc';
 
@@ -48,6 +51,25 @@ export type OnlineSeat = {
   /** 自己走完一手（放子或播種）：整個新局面交給房間 */
   send: (next: MancalaState) => void;
 };
+
+/**
+ * 第一局的教學（Zach 11/1：「要想辦法讓大家好懂」）：照局面一次跳一句，做到了就換下一句（點了格子就不再講怎麼點）。
+ * 四句都看過、或按「不用教了」，記在 localStorage，之後不再出現（讀不到就照樣教，不會出錯）。
+ */
+type CoachTip = 'setup' | 'turn' | 'pick' | 'balance';
+const COACH_KEY = 'mcl-coach-done';
+const coachListeners = new Set<() => void>();
+function readCoachDone(): boolean {
+  try { return window.localStorage.getItem(COACH_KEY) === '1'; } catch { return false; }
+}
+function writeCoachDone() {
+  try { window.localStorage.setItem(COACH_KEY, '1'); } catch { /* 私密視窗：這一頁裡照樣關掉 */ }
+  coachDoneMemo = true;
+  coachListeners.forEach((cb) => cb());
+}
+let coachDoneMemo: boolean | null = null;
+const subscribeCoach = (cb: () => void) => { coachListeners.add(cb); return () => { coachListeners.delete(cb); }; };
+const coachSnapshot = () => (coachDoneMemo ??= readCoachDone());
 
 const motionQuery = '(prefers-reduced-motion: reduce)';
 function subscribeMotion(cb: () => void) {
@@ -83,6 +105,7 @@ export default function MancalaPlay({ locale, setup, onHome, onAgain, online = n
   online?: OnlineSeat | null;
 }) {
   const t = useTextTable(TEXT);
+  const skin = useMclSkin();
   const gt = useGameText();
   const msgs = useMessages();
   const { prefs: soundPrefs, setPrefs: setSoundPrefs } = useSound();
@@ -97,6 +120,16 @@ export default function MancalaPlay({ locale, setup, onHome, onAgain, online = n
   const [game, setGame] = useState<MancalaState>(() => online?.state ?? createGame({ seats: setup.seats, pieces: DEFAULT_PIECES }));
   const [anim, setAnim] = useState<Anim | null>(null);
   const [pick, setPick] = useState<Pick | null>(null);
+  // 滑鼠停在哪一格（電腦版）：能選的格子先畫出建議排法的路線與結果，不必點進去才知道
+  const [hover, setHover] = useState<number | null>(null);
+  const coachDone = useSyncExternalStore(subscribeCoach, coachSnapshot, () => true);
+  const [coachSeen, setCoachSeen] = useState<CoachTip[]>([]);
+  const seeTip = useCallback((tip: CoachTip) => setCoachSeen((xs) => {
+    if (xs.includes(tip)) return xs;
+    const next = [...xs, tip];
+    if (next.length === 4) writeCoachDone();
+    return next;
+  }), []);
   const [helpOpen, setHelpOpen] = useState(false);
   const [endClosed, setEndClosed] = useState(false);
   const reduced = useSyncExternalStore(subscribeMotion, () => window.matchMedia(motionQuery).matches, () => false);
@@ -232,6 +265,26 @@ export default function MancalaPlay({ locale, setup, onHome, onAgain, online = n
     [myTurn, game],
   );
 
+  // 滑鼠停著的那一格：用建議排法預覽（每次換格才算一次；建議排法裡有隨機排法，同一格停著不會一直變）
+  const hoverSow = useMemo(() => {
+    if (hover === null || pick || game.phase !== 'play' || !selectable?.has(hover)) return null;
+    const m = suggestMove(game, hover);
+    return m ? sow(game, m.from, m.order, m.colour) : null;
+  }, [hover, pick, game, selectable]);
+  const shown = preview ?? hoverSow;
+
+  // 排序編輯器的結果卡：起點格裡每一位主人當最後一顆時（建議排法），誰 +幾分、最終分怎麼變。換起點格才重算
+  const pickFrom = pick?.from ?? null;
+  const outcomes = useMemo((): Outcome[] | undefined => {
+    if (pickFrom === null || game.phase !== 'play') return undefined;
+    return [...new Set(game.board[pickFrom])].flatMap((o) => {
+      const m = suggestMove(game, pickFrom, o);
+      if (!m) return [];
+      const r = sow(game, m.from, m.order, m.colour);
+      return [{ owner: r.owner, points: r.points, colour: r.colour, f1: finalScore(game.scores[r.owner]), f2: finalScore(r.scores[r.owner]) }];
+    });
+  }, [game, pickFrom]);
+
   const openEditor = (from: number, last?: Seat) => {
     const m = suggestMove(game, from, last) ?? { from, order: game.board[from].slice() };
     setPick({ from, order: m.order, colour: m.colour, sel: null });
@@ -247,6 +300,7 @@ export default function MancalaPlay({ locale, setup, onHome, onAgain, online = n
       return;
     }
     if (pick?.from === cell) { setPick(null); return; }
+    seeTip('turn');
     openEditor(cell);
   };
 
@@ -265,6 +319,7 @@ export default function MancalaPlay({ locale, setup, onHome, onAgain, online = n
     if (!pick || !preview) return;
     const move: Move = preview.options.length > 1 ? { from: pick.from, order: pick.order, colour: pick.colour } : { from: pick.from, order: pick.order };
     if (!isLegalMove(game, move)) return;
+    seeTip('pick');
     setPick(null);
     startSow(game, move);
     // 連線：動畫還在播，房間先寫好（其他人不必等這一手播完才收到）
@@ -274,7 +329,7 @@ export default function MancalaPlay({ locale, setup, onHome, onAgain, online = n
   // 盤面要畫哪一個局面：動畫中的半途、排序預覽（播完的樣子）、或現在的局面
   const view = useMemo((): {
     board: Seat[][]; incoming?: Set<number>; emptied?: number; dropped?: number | null; dropKey?: number; mark: RingMark | null;
-    flight?: { from: number; to: number; seat: Seat } | null; weigh?: number | null;
+    flight?: { from: number; to: number; seat: Seat } | null; weigh?: number | null; trail?: RingTrail | null;
   } => {
     const markOf = (r: Sow, faded: boolean): RingMark => ({ cell: r.cell, owner: r.owner, points: r.points, colour: r.colour, faded });
     if (anim) {
@@ -289,11 +344,14 @@ export default function MancalaPlay({ locale, setup, onHome, onAgain, online = n
         mark: done ? markOf(anim.sow, false) : null, weigh: done ? anim.sow.cell : null,
       };
     }
-    if (pick && preview) return { board: preview.board, incoming: new Set(preview.path), emptied: pick.from, mark: markOf(preview, false) };
+    // 預覽：盤面畫播完的樣子，加上路線（第幾顆落在哪）；誰得幾分寫在盤面中央（不壓在格子的子上）
+    if (pick && preview) return { board: preview.board, incoming: new Set(preview.path), emptied: pick.from, mark: null, trail: { from: pick.from, path: preview.path } };
+    // 滑鼠停著：盤面不動，只畫路線
+    if (hoverSow) return { board: game.board, mark: null, trail: { from: hoverSow.from, path: hoverSow.path } };
     // 開局放子：剛放的那一顆從上面落下（沒有來源格，不飛）
     const placed = game.moves.length === 0 ? game.placements[game.placements.length - 1] ?? null : null;
     return { board: game.board, dropped: placed, dropKey: game.placements.length, mark: game.last ? markOf(game.last, true) : null };
-  }, [anim, pick, preview, game]);
+  }, [anim, pick, preview, hoverSow, game]);
 
   // 一顆種子跳一格的時間；0＝不飛（不在播種、或減少動態效果）
   const hopMs = anim && !reduced ? (quick(anim.by) ? TIMING.hopHuman : TIMING.hop) : 0;
@@ -394,7 +452,33 @@ export default function MancalaPlay({ locale, setup, onHome, onAgain, online = n
     </button>
   );
 
-  const center = over ? (
+  // 預覽的結果（盤面中央）：最後一顆落在哪、誰 +幾分、記哪一色、那個人的最終分怎麼變
+  const previewCenter = shown ? (() => {
+    const before = game.scores[shown.owner];
+    const after = shown.scores[shown.owner];
+    return (
+      <>
+        <p className="font-bold leading-tight opacity-80" style={{ fontSize: '2.7cqw' }}>
+          {fill(t.previewLand, { cell: cellName(shown.cell, t) })}
+        </p>
+        <div className="mt-[1.6cqw] flex items-center" style={{ gap: '1.4cqw' }}>
+          <PieceDisc seat={shown.owner} size="8cqw" />
+          <span className="font-black leading-none" style={{ fontSize: '7cqw' }}>+{shown.points}</span>
+          <span className="grid place-items-center rounded-full font-black leading-none"
+            style={{ minWidth: '7cqw', height: '7cqw', padding: '0 1.2cqw', fontSize: '3.4cqw', background: shown.colour !== null ? DISH_BG[shown.colour] : CLOTH_LIGHT, color: shown.colour !== null ? CLOTH_LIGHT : INK }}>
+            {shown.colour !== null ? t.colourShort[shown.colour] : '?'}
+          </span>
+        </div>
+        <p className="mt-[1.4cqw] max-w-full truncate font-black leading-tight" style={{ fontSize: '3.2cqw' }}>{names[shown.owner]}</p>
+        <p className="mt-[0.6cqw] font-bold leading-tight opacity-80" style={{ fontSize: '2.7cqw' }}>
+          {shown.colour !== null ? fill(t.previewFinal, { f1: finalScore(before), f2: finalScore(after) }) : t.previewTie}
+        </p>
+        {!preview && <p className="mt-[1.2cqw] font-bold leading-tight" style={{ fontSize: '2.5cqw', color: BRASS }}>{t.previewHover}</p>}
+      </>
+    );
+  })() : null;
+
+  const center = previewCenter && !anim ? previewCenter : over ? (
     <>
       <GiLaurelCrown aria-hidden="true" style={{ color: BRASS, width: '11cqw', height: '11cqw' }} />
       <p className="mt-[1cqw] font-black leading-tight" style={{ fontSize: '3.6cqw' }}>{t.over}</p>
@@ -419,6 +503,41 @@ export default function MancalaPlay({ locale, setup, onHome, onAgain, online = n
       gain={preview ? { owner: preview.owner, colour: preview.colour, points: preview.points } : null}
       colourShort={t.colourShort} finalLabel={t.final} mine={me} />
   );
+
+  // 三色的天平：跟 AI 玩是你、連線是自己、本機對戰是輪到的真人（AI 的回合停在座位順序上前一個真人）
+  const who = self ?? (() => {
+    for (let k = 0; k < setup.seats; k++) {
+      const seat = (actor - k + setup.seats) % setup.seats;
+      if (isHuman(seat)) return seat;
+    }
+    return actor;
+  })();
+  const balanceGain = shown && shown.owner === who && shown.colour !== null ? { colour: shown.colour, points: shown.points } : null;
+  const balanceCard = !over ? (
+    <BalanceCard t={t} seat={who} name={names[who]} scores={game.scores[who]} gain={balanceGain} />
+  ) : null;
+
+  // 現在該講哪一句：第一句還沒做到的、而且現在用得上的
+  const coachTip: CoachTip | null = coachDone || !myTurn ? null
+    : game.phase === 'setup' ? (coachSeen.includes('setup') ? null : 'setup')
+    : pick ? (coachSeen.includes('pick') ? null : 'pick')
+    : !coachSeen.includes('turn') ? 'turn'
+    : !coachSeen.includes('balance') && game.moves.length >= setup.seats ? 'balance'
+    : null;
+  const coachText = coachTip === 'setup' ? t.coachSetup : coachTip === 'turn' ? fill(t.coachTurn, { seat: letterOf(game.turn) })
+    : coachTip === 'pick' ? t.coachPick : coachTip === 'balance' ? t.coachBalance : '';
+  const coach = coachTip ? (
+    <div className="mcl-cut flex w-full flex-col gap-2 bg-[var(--mcl-cloth-light)] p-3" role="status">
+      <p className="flex items-start gap-2 text-sm font-bold leading-snug">
+        <span aria-hidden="true" className="mcl-weight mt-1 shrink-0" />
+        <span>{coachText}</span>
+      </p>
+      <div className="flex justify-end gap-2">
+        <button type="button" onClick={writeCoachDone} className="mcl-cut px-3 py-1.5 text-xs font-black text-ink-soft fine:hover:bg-[rgb(var(--mcl-ink-rgb)/0.07)]">{t.coachOff}</button>
+        <button type="button" onClick={() => seeTip(coachTip)} className="mcl-plaque is-small px-3 py-1.5 text-xs font-black">{t.coachGot}</button>
+      </div>
+    </div>
+  ) : null;
 
   const statusBlock = (
     <div className="flex min-h-11 flex-col items-center justify-center text-center lg:items-start lg:text-left" aria-live="polite">
@@ -445,16 +564,19 @@ export default function MancalaPlay({ locale, setup, onHome, onAgain, online = n
         </div>
       </div>
       <div className="mt-1 w-full max-w-[520px] lg:hidden">{statusBlock}</div>
+      {coach && <div className="mt-2 w-full max-w-[520px] lg:hidden">{coach}</div>}
 
       {/* 圓盤：一塊圓的木頭（Oware 棋盤的木色），盤子嵌在上面 */}
       <div className="mt-1 w-full lg:mt-0 lg:!max-w-[min(600px,calc(100svh-7.5rem))] lg:flex-1" style={{ maxWidth: ringMax }}>
-        <div className="rounded-full p-[3%]" style={{ background: WOOD }}>
+        <div className="relative rounded-full p-[3%]" style={{ background: WOOD }}>
+          {skin !== 'adinkra' && <BoardFace skin={skin} />}
           <MancalaRing board={view.board} colourShort={t.colourShort} highLabel={t.high} lowLabel={t.low} ariaOf={ariaOf}
-            selectable={selectable} dimOthers={!pick} selected={pick?.from ?? null} incoming={view.incoming} emptied={view.emptied}
+            selectable={selectable} dimOthers={!pick && !hoverSow} selected={pick?.from ?? null} incoming={view.incoming} emptied={view.emptied}
             dropped={view.dropped} dropKey={view.dropKey ?? 0} mark={view.mark} onPick={onPick} center={center}
             flight={view.flight} hopMs={hopMs} scoop={anim && !reduced ? anim.sow.from : null} weigh={view.weigh}
             markDelay={anim ? Math.round(hopMs * LAND) : 0}
-            idleActor={!anim && !pick && game.phase !== 'over' ? game.turn : null} />
+            idleActor={!anim && !pick && game.phase !== 'over' ? game.turn : null}
+            trail={anim ? null : view.trail} onHover={myTurn && game.phase === 'play' ? setHover : undefined} />
         </div>
       </div>
 
@@ -469,13 +591,15 @@ export default function MancalaPlay({ locale, setup, onHome, onAgain, online = n
             {soundButton}
           </div>
           <div className="mt-4">{statusBlock}</div>
+          {coach && <div className="mt-3">{coach}</div>}
         </div>
         {pick && preview && (
           <OrderEditor t={t} from={pick.from} pieces={game.board[pick.from]} order={pick.order} sel={pick.sel} preview={preview}
-            names={names} endsText={endsText}
+            names={names} endsText={endsText} outcomes={outcomes}
             onLast={(o) => openEditor(pick.from, o)} onSlot={onSlot} onColour={(c) => setPick({ ...pick, colour: c })}
             onSuggest={() => openEditor(pick.from)} onCancel={() => setPick(null)} onSow={onSow} />
         )}
+        {balanceCard}
         <div className={pick ? 'hidden lg:block' : ''}>{scorePanel}</div>
         <div className="hidden grid-cols-2 gap-2 lg:grid">
           <button type="button" onClick={() => setHelpOpen(true)} className={wide}><LuCircleHelp aria-hidden="true" />{t.howTo}</button>

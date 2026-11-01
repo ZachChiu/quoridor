@@ -1,6 +1,6 @@
 'use client';
 import { COLOURS, END_SCORE, finalScore, type Colour, type Scores, type Seat } from '@/games/balance-mancala/engine';
-import { CLOTH, DISH_BG, seatLook } from './palette';
+import { BRASS_DEEP, CLOTH, DISH_BG, seatLook } from './palette';
 import PieceDisc from './PieceDisc';
 
 /** 分數條的刻度：0–33，30 的結束線畫在 91% 的位置，超過 30 的那一點點看得到 */
@@ -36,8 +36,10 @@ export default function ScorePanel({ scores, names, turn, gain, colourShort, fin
         const after = g ? (sc.map((v, k) => (k === g.colour ? v + g.points : v)) as Scores) : sc;
         const f = finalScore(sc);
         const f2 = finalScore(after);
+        // 最低那色算兩次、最高那色要扣：短標旁邊標 ×2／−（三色一樣多時不標）
+        const lo = Math.min(...sc), hi = Math.max(...sc);
         const row = (
-          <div key={seat} className={`mcl-cut flex items-center gap-2 px-2 py-1 ${turn === seat ? 'bg-[#201211]/[0.08]' : ''}`}
+          <div key={seat} className={`mcl-cut flex items-center gap-2 px-2 py-1 ${turn === seat ? 'bg-[rgb(var(--mcl-ink-rgb)/0.08)]' : ''}`}
             aria-label={`${names[seat]}: ${COLOURS.map((c) => `${colourShort[c]} ${sc[c]}`).join(', ')}; ${finalLabel} ${f}`}>
             <PieceDisc seat={seat} size="1.65rem" />
             {!compact && <p className="w-[4.25rem] shrink-0 truncate text-xs font-black">{names[seat]}</p>}
@@ -47,17 +49,21 @@ export default function ScorePanel({ scores, names, turn, gain, colourShort, fin
                 const add = g && g.colour === c ? g.points : 0;
                 return (
                   <div key={c} className="flex items-center gap-1">
-                    <span className="w-[1.4rem] shrink-0 whitespace-nowrap text-[9px] font-black leading-none text-ink-soft">{colourShort[c]}</span>
+                    <span className="flex w-[2.3rem] shrink-0 items-baseline gap-0.5 whitespace-nowrap text-[9px] font-black leading-none text-ink-soft">
+                      {colourShort[c]}
+                      {lo < hi && v === lo && <span style={{ color: BRASS_DEEP }}>×2</span>}
+                      {lo < hi && v === hi && <span>−</span>}
+                    </span>
                     <span className="w-5 shrink-0 text-right text-[10px] font-black tabular-nums leading-none">
                       <span key={v} className={v ? 'mcl-pop' : ''}>{v}</span>
                     </span>
-                    <div className="relative h-2 flex-1 overflow-hidden rounded-full bg-[#201211]/[0.08]">
+                    <div className="relative h-2 flex-1 overflow-hidden rounded-full bg-[rgb(var(--mcl-ink-rgb)/0.08)]">
                       <div className="absolute inset-y-0 left-0 rounded-full motion-safe:transition-[width] motion-safe:duration-500 motion-safe:ease-out" style={{ width: pct(v), background: DISH_BG[c] }} />
                       {add > 0 && (
                         <div className="absolute inset-y-0 rounded-full opacity-45"
                           style={{ left: pct(v), width: `calc(${pct(v + add)} - ${pct(v)})`, background: DISH_BG[c] }} />
                       )}
-                      <div className="absolute inset-y-0 w-0.5 bg-[#201211]/60" style={{ left: pct(END_SCORE) }} />
+                      <div className="absolute inset-y-0 w-0.5 bg-[rgb(var(--mcl-ink-rgb)/0.6)]" style={{ left: pct(END_SCORE) }} />
                     </div>
                   </div>
                 );

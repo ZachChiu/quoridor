@@ -44,7 +44,7 @@ type Level = {
 };
 
 const LEVELS: Record<Difficulty, Level> = {
-  easy: { styles: 1, shuffles: 1, top: 0, replies: 0, noise: 6, blunder: 0.3 },
+  easy: { styles: 1, shuffles: 1, top: 0, replies: 0, noise: 10, blunder: 0.5 },
   normal: { styles: 2, shuffles: 2, top: 6, replies: 1, noise: 1.5, blunder: 0.05 },
   hard: { styles: 2, shuffles: 3, top: 10, replies: 'round', noise: 0, blunder: 0 },
 };
