@@ -18,9 +18,9 @@ export const BTN_PRIMARY = 'kt-chalk flex min-h-12 items-center justify-center g
 export const MODAL_PANEL = '!rounded-[2px] !bg-[#edddc7] shadow-[inset_0_0_0_1.5px_#322e2a,inset_0_0_0_4px_#edddc7,inset_0_0_0_4.6px_rgb(50_46_42/0.6)]';
 /**
  * 標題那塊一律留「小標＋標題」的高度、貼底：沒有小標的（語言）跟有小標的（聯絡我們）標題落在同一個高度，
- * 左邊的圖示也一起貼底（11/1 Zach：「不要因為上面的小標導致整體視覺不一致」，做法同九子棋的 MORRIS_BAND）
+ * 左邊的圖示、右邊的 × 也一起貼底（× 留在上面會跟標題差一截，11/1 Zach：「不要因為上面的小標導致整體視覺不一致」，做法同九子棋的 MORRIS_BAND）
  */
-const TITLE_SLOT = '[&>div:first-child]:min-h-12 [&>div:first-child]:items-end';
+const TITLE_SLOT = '!items-end [&>div:first-child]:min-h-12 [&>div:first-child]:items-end';
 export const BAND_CHALK = { className: `mx-6 !px-0 border-b-[3px] border-double border-[#834d36] bg-transparent ${TITLE_SLOT}`, fg: 'text-[#834d36]' };
 export const BAND_INK = { className: `mx-6 !px-0 border-b-[3px] border-double border-[#322e2a]/70 bg-transparent ${TITLE_SLOT}`, fg: 'text-[#322e2a]' };
 
