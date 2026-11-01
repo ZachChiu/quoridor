@@ -659,3 +659,39 @@ html:has(.kt-root), body:has(.kt-root) { background: #edddc7; }
 /* ▸ 時間拍賣（feat/game-time-auction） */
 
 /* ▸ 均衡曼卡拉（feat/game-balance-mancala） */
+
+/* 九子棋選單的大按鈕：字放在拱中間最高的地方置中，首字留左、箭頭留右，左右對稱；節目規則左邊補一個朱紅的 ¶ 對稱右邊的蠟封
+   （11/1 Zach 在 beta 切換 A 只留字／B 首字在上／C 左右對稱後選 C）。
+   前面加 html 壓過元件上的 text-left、px-4。首字做過「頂端也是拱」「貼著左上角、上緣順著拱滑下去」，11/1 Zach 都要改回原本的方塊 */
+html .nmm-row, html .nmm-ai-head { position: relative; justify-content: center; text-align: center; padding-inline: 3.25rem; }
+html .nmm-row .nmm-initial, html .nmm-ai-head .nmm-initial { position: absolute; left: 1rem; top: 50%; translate: 0 -42%; }
+html .nmm-ai-head .nmm-initial { left: 0; }
+html .nmm-chev { position: absolute; right: 1.4rem; top: 50%; translate: 0 -42%; }
+html .nmm-row-text { flex: 0 1 auto; }
+html .nmm-row .nmm-seal { position: absolute; right: 1rem; top: 50%; translate: 0 -42%; }
+html .nmm-row:not(:has(.nmm-initial))::before { content: '¶'; position: absolute; left: 1.55rem; top: 50%; translate: 0 -42%; color: #c54915; font-size: 1.5rem; font-weight: 900; }
+
+/* 九子棋首頁的桌機版面：標題、標語一列一列排在左邊，插圖與右邊整排按鈕在同一列、下緣切齊
+   （插圖的底＝最後一張按鈕的底，「怎麼玩」掛在按鈕下面不算）。11/1 Zach：原本兩欄各自置中，左圖右按鈕一高一低；
+   從「上下都對齊」「下緣對齊」「標題置中＋左右等寬」裡選了下緣對齊、標題留左、左右不要一樣寬。
+   前面加 html 壓過元件上 lg:flex-row 那些 Tailwind 的類別 */
+@media (min-width: 1024px) {
+  html .nmm-main { display: grid; grid-template-columns: minmax(0, 1fr) 400px; grid-template-rows: auto auto auto auto; column-gap: 3rem; row-gap: 0; align-items: end; align-content: center; }
+  html .nmm-head { display: contents; }
+  html .nmm-head > :not(.nmm-art) { grid-column: 1; }
+  html .nmm-art { grid-column: 1; grid-row: 4; margin-top: 0.75rem; }
+  html .nmm-modes { grid-column: 2; grid-row: 4; position: relative; justify-content: flex-end; }
+  html .nmm-modes > a:last-child { position: absolute; top: 100%; left: 50%; translate: -50% 0; margin-top: 0.5rem; }
+}
+
+/* 九子棋連線：對方斷線（滿 3 秒）那張狀態卡反灰，正中間蓋一個斷掉的 Wi‑Fi（2026-11-01 Zach） */
+.nmm-arch.is-away { box-shadow: inset 0 0 0 1.5px rgb(238 224 196 / 0.25); background: rgb(238 224 196 / 0.08); }
+.nmm-arch.is-away > :not(.nmm-away-cover) { filter: grayscale(1); opacity: 0.75; }
+.nmm-away-cover { position: absolute; inset: 0; display: grid; place-items: center; border-radius: inherit; background: rgb(119 114 108 / 0.78); color: #eee0c4; font-size: 1.9rem; }
+
+/* 尼泊爾虎棋連線：對方斷線（滿 3 秒）那張狀態卡反灰，正中間蓋一個斷掉的 Wi‑Fi（2026-11-01 Zach）。
+   底下的字去色，上面蓋一層半透明的灰（字隱約看得到）、正中一個圖示（11/1 Zach 一路調過：實心灰把資訊全蓋住、淡墨看起來怪、
+   圖示包在圓章裡像多一顆按鈕，最後是「純灰色遮罩」。Wall Go 同一個做法） */
+.bagh-away { background: rgb(74 38 22 / 0.07) !important; color: var(--ink-soft, #6b5a48) !important; }
+.bagh-away > :not(.bagh-away-cover) { filter: grayscale(1); opacity: 0.75; }
+.bagh-away-cover { position: absolute; inset: 0; display: grid; place-items: center; border-radius: inherit; background: rgb(119 114 108 / 0.78); color: #fbf4e1; font-size: 1.9rem; }

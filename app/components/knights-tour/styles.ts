@@ -16,8 +16,14 @@ export const BTN = 'kt-plate flex min-h-12 items-center justify-center gap-2 px-
 export const BTN_PRIMARY = 'kt-chalk flex min-h-12 items-center justify-center gap-2 px-3 py-2 text-sm font-black leading-tight active:scale-[0.98] disabled:pointer-events-none disabled:opacity-35';
 /** 騎士巡遊的彈窗：書裡的一頁圖版 —— 紙色面板內側一道銅版雙線，標題下一道雙線（紅粉筆或墨），不用色帶 */
 export const MODAL_PANEL = '!rounded-[2px] !bg-[#edddc7] shadow-[inset_0_0_0_1.5px_#322e2a,inset_0_0_0_4px_#edddc7,inset_0_0_0_4.6px_rgb(50_46_42/0.6)]';
-export const BAND_CHALK = { className: 'mx-6 !px-0 border-b-[3px] border-double border-[#834d36] bg-transparent', fg: 'text-[#834d36]' };
-export const BAND_INK = { className: 'mx-6 !px-0 border-b-[3px] border-double border-[#322e2a]/70 bg-transparent', fg: 'text-[#322e2a]' };
+/**
+ * 標題那塊一律留「小標＋標題」的高度、貼底：沒有小標的（語言）跟有小標的（聯絡我們）標題落在同一個高度，
+ * 左邊的圖示、右邊的 × 也一起貼底（× 留在上面會跟標題差一截，11/1 Zach：「不要因為上面的小標導致整體視覺不一致」，做法同九子棋的 MORRIS_BAND）
+ */
+// 標題的行高＝圖示的 36px、× 往下挪 4px（× 是 44px）：三個的中線才在同一條，貼底對齊時字不會比圖示低一點
+const TITLE_SLOT = '!items-end [&>button]:-mb-1 [&>div:first-child]:min-h-12 [&>div:first-child]:items-end [&_h2]:leading-9';
+export const BAND_CHALK = { className: `mx-6 !px-0 border-b-[3px] border-double border-[#834d36] bg-transparent ${TITLE_SLOT}`, fg: 'text-[#834d36]' };
+export const BAND_INK = { className: `mx-6 !px-0 border-b-[3px] border-double border-[#322e2a]/70 bg-transparent ${TITLE_SLOT}`, fg: 'text-[#322e2a]' };
 
 /**
  * 首頁右上角「聯絡我們」與「語言」（見 cornerTheme.ts）：跟遊戲裡的彈窗同一張圖版 ——

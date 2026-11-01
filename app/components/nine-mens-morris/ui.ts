@@ -1,9 +1,14 @@
 import type { CornerTheme } from '@/components/cornerTheme';
 /** 九子棋彈窗共用的樣式（設定頁、對局頁、說明都用）。介面零件本身在 globals.css 的 .nmm-* */
 
-/** 標題前的段落符要用 Tailwind 的 arbitrary variant 才碰得到 Modal 裡的 h2（直接寫 ¶，不寫跳脫碼：原始碼與執行時的字串要一樣，Tailwind 才產得出這條） */
+/**
+ * 標題前的段落符要用 Tailwind 的 arbitrary variant 才碰得到 Modal 裡的 h2（直接寫 ¶，不寫跳脫碼：原始碼與執行時的字串要一樣，Tailwind 才產得出這條）。
+ * 標題置中、不放左邊的圖示（11/1 Zach：拱頂中間最高，字放中間；聯絡我們、語言彈窗先看）：
+ * 標題那塊撐滿、置中，左邊補一段跟右邊 × 一樣寬的空，才是真的置中。
+ * 沒有小標（語言）的標題跟有小標（聯絡我們）的落在同一個高度：標題那塊一律有小標＋標題的高度、標題貼底（11/1 Zach：語言偏高）
+ */
 export const MORRIS_BAND = {
-  className: "mx-6 !px-0 pt-7 border-b-2 border-[#c54915]/45 bg-transparent [&_h2]:before:mr-1.5 [&_h2]:before:text-[#c54915] [&_h2]:before:content-['¶']",
+  className: "mx-6 !px-0 pt-7 border-b-2 border-[#c54915]/45 bg-transparent [&_h2]:before:mr-1.5 [&_h2]:before:text-[#c54915] [&_h2]:before:content-['¶'] [&>div:first-child]:flex-1 [&>div:first-child]:justify-center [&>div:first-child]:pl-9 [&>div:first-child]:text-center !items-end [&>button]:-mb-1 [&>div:first-child]:min-h-12 [&>div:first-child]:items-end [&_h2]:leading-9 [&>div:first-child>svg]:hidden",
   fg: 'text-[#1e120a]',
 };
 /** 彈窗：拱頂的羊皮紙頁 */
@@ -21,4 +26,6 @@ export const MORRIS_CORNER: CornerTheme = {
   secondary: 'nmm-arch is-small',
   field: 'bg-[#e3c99c]/45 text-[#1e120a] outline-none ring-[#c54915] focus:ring-2',
   soft: 'text-[#1e120a]/70',
+  // 語言彈窗每一列字置中、目前的語言不打勾（朱紅那列就是目前的，11/1 Zach）
+  centerRows: true,
 };

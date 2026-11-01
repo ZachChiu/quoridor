@@ -202,7 +202,7 @@ const GAME_ICONS: Record<string, Metadata['icons'] | undefined> = {
 
   'bagh-chal': iconSet('bagh-chal'),
 
-  'nine-mens-morris': iconSet('nine-mens-morris', true),
+  'nine-mens-morris': iconSet('nine-mens-morris'),
 
   'time-auction': undefined,
 

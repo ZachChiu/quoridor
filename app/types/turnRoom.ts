@@ -23,8 +23,11 @@ export const MAX_ROOM_SEATS = 8;
  *   players    { s0?, s1?, … }   —— 空位只能坐自己
  *   moves      string            —— 整串走法（各款自己的格式）；還沒人走時不存在
  *   turn       SeatKey           —— 只有輪到的人能寫 moves 與 turn（規則看寫入前的 turn）
+ *   presence   { s0?, s1?, … }   —— true＝連著、number＝斷線的時間（2026-11-01 加，utils/roomSignals.ts）
+ *   nudge      { by, at }        —— 催輪到的人，15 秒冷卻
+ *   resigned   SeatKey           —— 投降的座位，寫了這局就結束（只能寫自己的、一次）
  *
- * 沒有 status、winner：勝負由 moves 推導，每台裝置各自重走一次（也順便驗合不合規則）。
+ * 沒有 status、winner：勝負由 moves 推導，每台裝置各自重走一次（也順便驗合不合規則）；唯一的例外是投降（resigned）。
  * 看得到整個房間就看得到整串走法 —— 盲眼五子棋的黑白、誰是誰，打開開發者工具查得到；
  * 跟 Wall Go 一樣是「跟朋友玩」的信任程度，沒有後端可以藏資料。
  */
@@ -38,6 +41,9 @@ export type TurnRoom = {
   players?: Partial<Record<SeatKey, RoomPlayer>>;
   moves?: string;
   turn: SeatKey;
+  presence?: Partial<Record<SeatKey, true | number>>;
+  nudge?: { by: SeatKey; at: number };
+  resigned?: SeatKey;
 };
 
 export const seatKey = (i: number): SeatKey => `s${i}`;
