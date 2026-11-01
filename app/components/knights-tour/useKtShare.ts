@@ -49,6 +49,8 @@ export function useKtShare({ isOpen, plates, time, isNew, kicker, title }: {
     fileName: 'knights-tour',
     homePath: localePath(locale, KNIGHTS_TOUR),
     campaign: 'knights-tour',
+    // 站名前面用這款自己的 favicon，不是平台的骰子惡魔（11/1 Zach 看到結算圖是骰子惡魔）
+    icon: '/icons/knights-tour-192.png',
     layouts: ['story'],
     fonts: [
       { font: `900 40px ${font}`, text: words },
