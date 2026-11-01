@@ -26,7 +26,7 @@ import MancalaFrame from './MancalaFrame';
 import MancalaRing, { LAND, type RingMark, type RingTrail } from './MancalaRing';
 import ScorePanel from './ScorePanel';
 import BalanceCard from './BalanceCard';
-import OrderEditor from './OrderEditor';
+import OrderEditor, { type Outcome } from './OrderEditor';
 import { RulesStepsPaged } from './MancalaRulesSteps';
 import PieceDisc from './PieceDisc';
 
@@ -48,6 +48,25 @@ export type OnlineSeat = {
   /** 自己走完一手（放子或播種）：整個新局面交給房間 */
   send: (next: MancalaState) => void;
 };
+
+/**
+ * 第一局的教學（Zach 11/1：「要想辦法讓大家好懂」）：照局面一次跳一句，做到了就換下一句（點了格子就不再講怎麼點）。
+ * 四句都看過、或按「不用教了」，記在 localStorage，之後不再出現（讀不到就照樣教，不會出錯）。
+ */
+type CoachTip = 'setup' | 'turn' | 'pick' | 'balance';
+const COACH_KEY = 'mcl-coach-done';
+const coachListeners = new Set<() => void>();
+function readCoachDone(): boolean {
+  try { return window.localStorage.getItem(COACH_KEY) === '1'; } catch { return false; }
+}
+function writeCoachDone() {
+  try { window.localStorage.setItem(COACH_KEY, '1'); } catch { /* 私密視窗：這一頁裡照樣關掉 */ }
+  coachDoneMemo = true;
+  coachListeners.forEach((cb) => cb());
+}
+let coachDoneMemo: boolean | null = null;
+const subscribeCoach = (cb: () => void) => { coachListeners.add(cb); return () => { coachListeners.delete(cb); }; };
+const coachSnapshot = () => (coachDoneMemo ??= readCoachDone());
 
 const motionQuery = '(prefers-reduced-motion: reduce)';
 function subscribeMotion(cb: () => void) {
@@ -99,6 +118,14 @@ export default function MancalaPlay({ locale, setup, onHome, onAgain, online = n
   const [pick, setPick] = useState<Pick | null>(null);
   // 滑鼠停在哪一格（電腦版）：能選的格子先畫出建議排法的路線與結果，不必點進去才知道
   const [hover, setHover] = useState<number | null>(null);
+  const coachDone = useSyncExternalStore(subscribeCoach, coachSnapshot, () => true);
+  const [coachSeen, setCoachSeen] = useState<CoachTip[]>([]);
+  const seeTip = useCallback((tip: CoachTip) => setCoachSeen((xs) => {
+    if (xs.includes(tip)) return xs;
+    const next = [...xs, tip];
+    if (next.length === 4) writeCoachDone();
+    return next;
+  }), []);
   const [helpOpen, setHelpOpen] = useState(false);
   const [leaving, setLeaving] = useState(false);
   const [endClosed, setEndClosed] = useState(false);
@@ -248,6 +275,18 @@ export default function MancalaPlay({ locale, setup, onHome, onAgain, online = n
   }, [hover, pick, game, selectable]);
   const shown = preview ?? hoverSow;
 
+  // 排序編輯器的結果卡：起點格裡每一位主人當最後一顆時（建議排法），誰 +幾分、最終分怎麼變。換起點格才重算
+  const pickFrom = pick?.from ?? null;
+  const outcomes = useMemo((): Outcome[] | undefined => {
+    if (pickFrom === null || game.phase !== 'play') return undefined;
+    return [...new Set(game.board[pickFrom])].flatMap((o) => {
+      const m = suggestMove(game, pickFrom, o);
+      if (!m) return [];
+      const r = sow(game, m.from, m.order, m.colour);
+      return [{ owner: r.owner, points: r.points, colour: r.colour, f1: finalScore(game.scores[r.owner]), f2: finalScore(r.scores[r.owner]) }];
+    });
+  }, [game, pickFrom]);
+
   const openEditor = (from: number, last?: Seat) => {
     const m = suggestMove(game, from, last) ?? { from, order: game.board[from].slice() };
     setPick({ from, order: m.order, colour: m.colour, sel: null });
@@ -263,6 +302,7 @@ export default function MancalaPlay({ locale, setup, onHome, onAgain, online = n
       return;
     }
     if (pick?.from === cell) { setPick(null); return; }
+    seeTip('turn');
     openEditor(cell);
   };
 
@@ -281,6 +321,7 @@ export default function MancalaPlay({ locale, setup, onHome, onAgain, online = n
     if (!pick || !preview) return;
     const move: Move = preview.options.length > 1 ? { from: pick.from, order: pick.order, colour: pick.colour } : { from: pick.from, order: pick.order };
     if (!isLegalMove(game, move)) return;
+    seeTip('pick');
     setPick(null);
     startSow(game, move);
     // 連線：動畫還在播，房間先寫好（其他人不必等這一手播完才收到）
@@ -481,6 +522,28 @@ export default function MancalaPlay({ locale, setup, onHome, onAgain, online = n
     <BalanceCard t={t} seat={who} name={names[who]} scores={game.scores[who]} gain={balanceGain} />
   ) : null;
 
+  // 現在該講哪一句：第一句還沒做到的、而且現在用得上的
+  const coachTip: CoachTip | null = coachDone || !myTurn ? null
+    : game.phase === 'setup' ? (coachSeen.includes('setup') ? null : 'setup')
+    : pick ? (coachSeen.includes('pick') ? null : 'pick')
+    : !coachSeen.includes('turn') ? 'turn'
+    : !coachSeen.includes('balance') && game.moves.length >= setup.seats ? 'balance'
+    : null;
+  const coachText = coachTip === 'setup' ? t.coachSetup : coachTip === 'turn' ? fill(t.coachTurn, { seat: letterOf(game.turn) })
+    : coachTip === 'pick' ? t.coachPick : coachTip === 'balance' ? t.coachBalance : '';
+  const coach = coachTip ? (
+    <div className="mcl-cut flex w-full flex-col gap-2 bg-[#fef2ec] p-3" role="status">
+      <p className="flex items-start gap-2 text-sm font-bold leading-snug">
+        <span aria-hidden="true" className="mcl-weight mt-1 shrink-0" />
+        <span>{coachText}</span>
+      </p>
+      <div className="flex justify-end gap-2">
+        <button type="button" onClick={writeCoachDone} className="mcl-cut px-3 py-1.5 text-xs font-black text-ink-soft fine:hover:bg-[#201211]/[0.07]">{t.coachOff}</button>
+        <button type="button" onClick={() => seeTip(coachTip)} className="mcl-plaque is-small px-3 py-1.5 text-xs font-black">{t.coachGot}</button>
+      </div>
+    </div>
+  ) : null;
+
   const statusBlock = (
     <div className="flex min-h-11 flex-col items-center justify-center text-center lg:items-start lg:text-left" aria-live="polite">
       <p className="text-sm font-black">{status}</p>
@@ -506,6 +569,7 @@ export default function MancalaPlay({ locale, setup, onHome, onAgain, online = n
         </div>
       </div>
       <div className="mt-1 w-full max-w-[520px] lg:hidden">{statusBlock}</div>
+      {coach && <div className="mt-2 w-full max-w-[520px] lg:hidden">{coach}</div>}
 
       {/* 圓盤：一塊圓的木頭（Oware 棋盤的木色），盤子嵌在上面 */}
       <div className="mt-1 w-full lg:mt-0 lg:!max-w-[min(600px,calc(100svh-7.5rem))] lg:flex-1" style={{ maxWidth: ringMax }}>
@@ -531,10 +595,11 @@ export default function MancalaPlay({ locale, setup, onHome, onAgain, online = n
             {soundButton}
           </div>
           <div className="mt-4">{statusBlock}</div>
+          {coach && <div className="mt-3">{coach}</div>}
         </div>
         {pick && preview && (
           <OrderEditor t={t} from={pick.from} pieces={game.board[pick.from]} order={pick.order} sel={pick.sel} preview={preview}
-            names={names} endsText={endsText}
+            names={names} endsText={endsText} outcomes={outcomes}
             onLast={(o) => openEditor(pick.from, o)} onSlot={onSlot} onColour={(c) => setPick({ ...pick, colour: c })}
             onSuggest={() => openEditor(pick.from)} onCancel={() => setPick(null)} onSow={onSow} />
         )}

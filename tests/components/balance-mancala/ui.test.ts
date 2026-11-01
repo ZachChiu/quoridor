@@ -41,6 +41,22 @@ describe('排序編輯器', () => {
     expect(html).toMatch(/<button type="button" disabled=""[^>]*>播下去<\/button>/);
   });
 
+  it('有結果卡時：每位主人一張（+幾分、最終分），落下順序預設收起', () => {
+    const s = stateOf({ 3: 'AC', 5: 'BB' }, [[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]]);
+    const html = renderToStaticMarkup(createElement(OrderEditor, {
+      t: TEXT['zh-TW'], from: 3, pieces: s.board[3], order: [0, 2], sel: null, preview: sow(s, 3, [0, 2]),
+      names: ['你', '電腦 B', '電腦 C', '電腦 D'], endsText: null,
+      onLast: noop, onSlot: noop, onColour: noop, onSuggest: noop, onCancel: noop, onSow: noop,
+      outcomes: [{ owner: 0, points: 2, colour: 0, f1: 0, f2: -2 }, { owner: 2, points: 3, colour: 1, f1: 0, f2: -3 }],
+    }));
+    expect(html).toContain(TEXT['zh-TW'].whoLastHint);
+    expect(html).toContain('aria-label="你 +2 紅色"');
+    expect(html).toContain('aria-label="電腦 C +3 藍色"');
+    expect(html).toContain('最終 0 → -3');
+    expect(html).toContain(TEXT['zh-TW'].orderToggle);
+    expect(html).toMatch(/<div hidden="">\s*<p[^>]*>落下順序/);
+  });
+
   it('一般的盤子不問顏色；最後一顆可以給別人', () => {
     const s = stateOf({ 3: 'AC', 5: 'BB' }, [[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]]);
     const html = editorHtml(s, 3, [0, 2]); // A 落在 4、C 落在 5（藍盤，3 顆）

@@ -1,6 +1,7 @@
 'use client';
+import { useState } from 'react';
 import { GiAngelWings, GiImpLaugh } from 'react-icons/gi';
-import { LuTriangleAlert, LuWandSparkles } from 'react-icons/lu';
+import { LuChevronDown, LuTriangleAlert, LuWandSparkles } from 'react-icons/lu';
 import { CELL_COLOUR, DEVIL, finalScore, type Colour, type Scores, type Seat, type Sow } from '@/games/balance-mancala/engine';
 import { fill } from '@/i18n/gameText';
 import type { BalanceMancalaText } from '@/games/balance-mancala/text';
@@ -17,15 +18,20 @@ function DestChip({ cell, t }: { cell: number; t: BalanceMancalaText }) {
     : <span className={base} style={{ background: CLOTH_LIGHT, color: WOOD, boxShadow: `inset 0 0 0 1px ${BRASS}` }}><GiAngelWings aria-hidden="true" className="size-3" /></span>;
 }
 
+/** 「最後一顆給誰」的每一個選項播完會怎樣（建議排法下）：誰 +幾分、記哪一色、他的最終分怎麼變 */
+export type Outcome = { owner: Seat; points: number; colour: Colour | null; f1: number; f2: number };
+
 /**
- * 排序編輯器：選好起點格後出現。預設套用 AI 建議的排法，玩家可以
+ * 排序編輯器：選好起點格後出現。
+ * 2026-11-01（Zach：「自己都有點難玩懂」）：最後一顆給誰改成一張張「結果」卡（誰 +幾分、哪一色、最終分怎麼變），
+ * 新手只要挑一個結果；落下順序收進「自己排落下順序」，要微調再打開。預設套用 AI 建議的排法，玩家可以
  * 1. 直接選「最後一顆給誰」（這一手最重要的決定，其餘的子會重新排成建議的樣子）
  * 2. 點兩顆子交換位置，自己微調
  * 3. 天使／惡魔格同分時選顏色
  * 盤面同時畫出播完的樣子（每顆子落在哪、最後一顆在哪、誰得幾分）。
  */
 export default function OrderEditor({
-  t, from, pieces, order, sel, preview, names, endsText, onLast, onSlot, onColour, onSuggest, onCancel, onSow,
+  t, from, pieces, order, sel, preview, names, endsText, onLast, onSlot, onColour, onSuggest, onCancel, onSow, outcomes,
 }: {
   t: BalanceMancalaText;
   from: number;
@@ -43,7 +49,10 @@ export default function OrderEditor({
   onSuggest: () => void;
   onCancel: () => void;
   onSow: () => void;
+  /** 每一個「最後一顆給誰」的結果；沒給就只列名字 */
+  outcomes?: Outcome[];
 }) {
+  const [showOrder, setShowOrder] = useState(false);
   const owners = [...new Set(pieces)].sort((a, b) => a - b);
   const last = order[order.length - 1];
   // 得分的人這一手前後的分數（還沒選色時兩者相同）
@@ -63,19 +72,43 @@ export default function OrderEditor({
       </div>
 
       <div>
-        <p className="text-xs font-bold text-ink-soft">{t.whoLast}</p>
-        <div className="mt-1.5 flex flex-wrap gap-2" role="radiogroup" aria-label={t.whoLast}>
-          {owners.map((o) => (
-            <button key={o} type="button" role="radio" aria-checked={o === last} aria-label={names[o]} onClick={() => onLast(o)}
-              className={`flex items-center gap-1.5 py-1 pl-1.5 pr-3 text-xs font-black ${o === last ? 'mcl-plaque' : patch}`}>
-              <PieceDisc seat={o} size="1.75rem" />
-              <span className="max-w-[5.5rem] truncate">{names[o]}</span>
-            </button>
-          ))}
+        <p className="text-xs font-bold text-ink-soft">{t.whoLast}{outcomes ? ` ${t.whoLastHint}` : ''}</p>
+        <div className={`mt-1.5 ${outcomes ? 'grid grid-cols-2 gap-2' : 'flex flex-wrap gap-2'}`} role="radiogroup" aria-label={t.whoLast}>
+          {owners.map((o) => {
+            const r = outcomes?.find((x) => x.owner === o);
+            if (!r) return (
+              <button key={o} type="button" role="radio" aria-checked={o === last} aria-label={names[o]} onClick={() => onLast(o)}
+                className={`flex items-center gap-1.5 py-1 pl-1.5 pr-3 text-xs font-black ${o === last ? 'mcl-plaque' : patch}`}>
+                <PieceDisc seat={o} size="1.75rem" />
+                <span className="max-w-[5.5rem] truncate">{names[o]}</span>
+              </button>
+            );
+            return (
+              <button key={o} type="button" role="radio" aria-checked={o === last} onClick={() => onLast(o)}
+                aria-label={`${names[o]} +${r.points} ${r.colour !== null ? t.colourNames[r.colour] : ''}`}
+                className={`flex items-center gap-2 px-2 py-1.5 text-left ${o === last ? 'mcl-plaque' : patch}`}>
+                <PieceDisc seat={o} size="1.9rem" />
+                <span className="min-w-0">
+                  <span className="flex items-center gap-1 text-sm font-black leading-tight">
+                    <span className="truncate">{names[o]}</span> +{r.points}
+                    {r.colour !== null && (
+                      <span className="rounded-full px-1.5 py-0.5 text-[10px] leading-none" style={{ background: DISH_BG[r.colour], color: CLOTH_LIGHT }}>{t.colourShort[r.colour]}</span>
+                    )}
+                  </span>
+                  <span className="block text-[11px] font-bold leading-tight text-ink-soft">{t.final} {r.f1} → {r.colour !== null ? r.f2 : '?'}</span>
+                </span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      <div>
+      <button type="button" onClick={() => setShowOrder((v) => !v)} aria-expanded={showOrder}
+        className="-my-1 flex items-center gap-1 self-start py-1 text-xs font-black text-ink-soft">
+        <LuChevronDown aria-hidden="true" className={`transition-transform ${showOrder ? 'rotate-180' : ''}`} />
+        {showOrder ? t.orderHide : t.orderToggle}
+      </button>
+      <div hidden={!showOrder}>
         <p className="text-xs font-bold text-ink-soft">{t.order} · {t.swapHint}</p>
         <ol className="mt-1.5 flex flex-wrap gap-x-1 gap-y-1.5">
           {order.map((o, i) => {
