@@ -2,7 +2,6 @@ import BaghHub from '@/components/bagh-chal/BaghHub';
 import BaghFrame from '@/components/bagh-chal/BaghFrame';
 import BaghWordmark from '@/components/bagh-chal/BaghWordmark';
 import BaghHeader from '@/components/bagh-chal/BaghHeader';
-import BaghAbout from '@/components/bagh-chal/BaghAbout';
 import { getMessages } from '@/i18n';
 import type { Locale } from '@/i18n/locales';
 
@@ -35,8 +34,6 @@ export default function BaghChalView({ locale }: { locale: Locale }) {
           </div>
         </main>
       </div>
-      {/* 第一屏以下的介紹（docs/platform-keywords.md）：是什麼、怎麼贏、幾個技巧，完整規則連到規則頁 */}
-      <BaghAbout locale={locale} />
     </BaghFrame>
   );
 }

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { RulesStepsList } from '@/components/bagh-chal/BaghRulesSteps';
 import BaghFrame from '@/components/bagh-chal/BaghFrame';
 import BaghWordmark from '@/components/bagh-chal/BaghWordmark';
+import BaghAbout from '@/components/bagh-chal/BaghAbout';
 import { BAGH_CORNER, BAGH_PRIMARY, BAGH_ROUND } from '@/components/bagh-chal/styles';
 import { getMessages } from '@/i18n';
 import { localePath, type Locale } from '@/i18n/locales';
@@ -35,6 +36,8 @@ export default function BaghRulesView({ locale }: { locale: Locale }) {
         <h1 className="text-balance text-center text-[clamp(1.75rem,7vw,3rem)] font-black leading-[1.15] tracking-tight">{b.rulesTitle}</h1>
         <p className="mt-2 text-center text-sm font-bold text-ink-soft">{b.tagline}</p>
         <div className="mt-6"><RulesStepsList rules={b.rules} /></div>
+        {/* 是什麼、幾個技巧（docs/platform-keywords.md 原本放首頁第一屏以下，11/1 Zach 要搬進規則頁） */}
+        <div className="mt-10"><BaghAbout locale={locale} /></div>
         <p className="mt-6 text-sm leading-relaxed text-ink-soft">{b.showNote}</p>
         {/* 名字的由來（Zach 10/24：遊戲命名用 Netflix 版本，可以在遊戲規則裡面介紹） */}
         <p className="mt-2 text-sm leading-relaxed text-ink-soft">{b.nameNote}</p>
