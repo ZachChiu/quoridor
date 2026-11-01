@@ -23,6 +23,7 @@ import { clearSession, saveSession, type MorrisMode } from './session';
 import { drawMorrisCard } from './shareCard';
 import { PLUCK_MS } from './pluck';
 import { playMorris } from './sounds';
+import { track } from '@/utils/analytics';
 import { MORRIS_BAND, MORRIS_PANEL } from './ui';
 
 const LEVELS = ['easy', 'normal', 'hard'] as const;
@@ -158,6 +159,21 @@ export default function MorrisPlay({ locale, mode, showRules, moves = '', onMenu
     }
   }, [game, human, online, pluck]);
 
+  // GA：看「狀態轉變」，不看按鈕 —— 重整接回、連線一次補好幾手都不算開局／結束（同 Wall Go、虎棋）
+  const gaMode = mode.kind === 'ai' ? 'solo' : mode.kind;
+  const gaDifficulty = mode.kind === 'ai' ? mode.difficulty : undefined;
+  const gaSeen = useRef({ plies: game.history.length, winner: game.winner });
+  useEffect(() => {
+    const prev = gaSeen.current;
+    gaSeen.current = { plies: game.history.length, winner: game.winner };
+    const base = { game: 'nine-mens-morris', mode: gaMode, players: 2, difficulty: gaDifficulty } as const;
+    if (prev.plies === 0 && game.history.length > 0) track('game_start', base);
+    if (!prev.winner && game.winner) {
+      const result = game.winner === 'draw' ? 'tie' : !human ? 'decided' : game.winner === human ? 'win' : 'lose';
+      track('game_end', { ...base, result, winner: game.winner, ended: 'natural', turns: game.history.length });
+    }
+  }, [game, gaMode, gaDifficulty, human]);
+
   const onPluck = (stage: PluckStage) => {
     if (stage === 'grip') playMorris('pluck');
     else if (stage === 'drop') playMorris('lay');
@@ -222,7 +238,10 @@ export default function MorrisPlay({ locale, mode, showRules, moves = '', onMenu
   const canUndo = !locked && !online && undoPoint(game, undoSide) >= 0;
   const doUndo = () => { plan.current = null; setGame(undoTurn(game, undoSide)); setSelected(null); };
   const restart = () => { plan.current = null; setGame(createGame({ showRules })); setSelected(null); };
-  const again = mode.kind === 'online' ? mode.newRoom : restart;
+  const again = () => {
+    track('game_restart', { game: 'nine-mens-morris', mode: gaMode, players: 2, difficulty: gaDifficulty });
+    if (mode.kind === 'online') mode.newRoom(); else restart();
+  };
 
   const levels = [m.solo.level1, m.solo.level2, m.solo.level3];
   // 這一局的設定（標題下面那一行）。傳統規則是預設，只有開了節目規則才寫出來

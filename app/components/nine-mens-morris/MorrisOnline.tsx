@@ -1,5 +1,5 @@
 'use client';
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { LuCheck, LuCopy, LuShare2 } from 'react-icons/lu';
@@ -15,6 +15,7 @@ import { TEXT } from '@/games/nine-mens-morris/text';
 import { PieceGlyph } from './MorrisBoard';
 import MorrisFrame from './MorrisFrame';
 import MorrisPlay from './MorrisPlay';
+import { track } from '@/utils/analytics';
 import { MAN_ORIGIN } from './art';
 
 /**
@@ -53,6 +54,18 @@ function Session({ locale, hash }: { locale: Locale; hash: string }) {
   }, [game, send]);
   const showRules = !!(setup && decodeSetup(setup)?.showRules);
   const newRoom = useCallback(() => { if (human) location.hash = newRoomHash(human, showRules); }, [human, showRules]);
+
+  // GA：開房的人房間開好送 room_created、連不上送 online_error（noRoom／roomFull 也送，同虎棋）
+  const created = useRef(false);
+  useEffect(() => {
+    if (created.current || !('create' in target) || !room) return;
+    created.current = true;
+    track('room_created', { game: 'nine-mens-morris', players: 2 });
+  }, [target, room]);
+  useEffect(() => {
+    // 連結本身壞了（badLink）不是連線失敗，不送
+    if (failure && failure !== 'badLink') track('online_error', { game: 'nine-mens-morris', reason: failure });
+  }, [failure]);
 
   const home = localePath(locale, NINE_MENS_MORRIS);
   if (failure) return <Failed failure={failure} home={home} />;
@@ -121,6 +134,7 @@ function Waiting({ me, showRules, url, home }: { me: Side; showRules: boolean; u
   const sides = ['black', 'white'] as const;
 
   const copy = async () => {
+    track('share_room_link', { game: 'nine-mens-morris', method: 'copy' });
     try { await navigator.clipboard.writeText(url); } catch { return; }
     setCopied(true);
     window.setTimeout(() => setCopied(false), 2000);
@@ -158,7 +172,7 @@ function Waiting({ me, showRules, url, home }: { me: Side; showRules: boolean; u
             </button>
           </div>
           {canShare && (
-            <button type="button" onClick={() => { void share({ title: t.title, text: t.shareText, url }).catch(() => {}); }}
+            <button type="button" onClick={() => { track('share_room_link', { game: 'nine-mens-morris', method: 'native' }); void share({ title: t.title, text: t.shareText, url }).catch(() => {}); }}
               className="nmm-arch is-small is-red flex h-12 w-full items-center justify-center gap-2 px-4 pt-1 text-base font-black">
               <LuShare2 className="text-lg" aria-hidden="true" />{g.share.share}
             </button>

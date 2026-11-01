@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { GiRuleBook } from 'react-icons/gi';
 import Modal from '@/components/Modal';
 import { useStep, useSwipePager } from '@/hook/useSwipePager';
@@ -8,6 +8,7 @@ import { POINT_NAMES, type Cell, type Point, type Side } from '@/games/nine-mens
 import type { MorrisText } from '@/games/nine-mens-morris/text';
 import { MorrisMiniBoard } from './MorrisBoard';
 import { MORRIS_BAND, MORRIS_PANEL } from './ui';
+import { track } from '@/utils/analytics';
 
 /**
  * 九子棋規則的七個步驟，每步一張小圖（2026-10-25 Zach：「怎麼玩」要跟 Wall Go 一樣圖配字）。
@@ -113,6 +114,13 @@ export function MorrisRulesModal({ t, open, onClose, showRules }: { t: MorrisTex
     if (open) { goTo(0); setDrawn(true); }
   }
   const last = i === STEPS.length - 1;
+  // 關掉時讀到第幾步（跟 Wall Go、虎棋一樣送 tutorial_close）：按完成、按 ×、點遮罩都算
+  const seen = useRef(i);
+  useEffect(() => { seen.current = i; }, [i]);
+  useEffect(() => {
+    if (!open) return;
+    return () => track('tutorial_close', { game: 'nine-mens-morris', step: seen.current + 1, steps: STEPS.length, finished: seen.current === STEPS.length - 1 });
+  }, [open]);
 
   return (
     <Modal isOpen={open} onClose={onClose} title={t.rulesHeading} kicker={t.title} icon={GiRuleBook}

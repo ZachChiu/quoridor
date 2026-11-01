@@ -20,6 +20,7 @@ import { BlackPieceIcon, PieceGlyph, WhitePieceIcon } from './MorrisBoard';
 import MorrisFrame from './MorrisFrame';
 import { MORRIS_BAND, MORRIS_CORNER, MORRIS_PANEL } from './ui';
 import MorrisWordmark from './MorrisWordmark';
+import { track } from '@/utils/analytics';
 import type { MorrisMode } from './session';
 
 /** 主視覺：阿方索十世《遊戲之書》（1283）裡擲骰子的九子棋那頁（公有領域，Wikimedia Commons） */
@@ -63,7 +64,7 @@ export default function MorrisSetup({ locale, onStart }: { locale: Locale; onSta
   const [side, setSide] = useState<Side | null>(null);
   const [inviteOpen, setInviteOpen] = useState(false);
   // 九子棋裡面換頁不播轉場（直接 router.push），開好房間後網址會換成 #roomId=…
-  const invite = (s: Side) => { setInviteOpen(false); router.push(localePath(locale, trialOnline(NINE_MENS_MORRIS)) + newRoomHash(s, showRules)); };
+  const invite = (s: Side) => { setInviteOpen(false); track('mode_select', { game: 'nine-mens-morris', mode: 'online', players: 2, entry: 'home' }); router.push(localePath(locale, trialOnline(NINE_MENS_MORRIS)) + newRoomHash(s, showRules)); };
   const levels = [m.solo.level1, m.solo.level2, m.solo.level3];
 
   const row = 'nmm-arch is-small flex w-full items-center gap-3 px-4 pb-3 pt-4 text-left';
