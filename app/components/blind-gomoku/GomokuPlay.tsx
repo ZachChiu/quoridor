@@ -202,6 +202,8 @@ export default function GomokuPlay({ mode, onMenu }: { mode: GomokuMode | Online
     fileName: 'blind-gomoku',
     homePath: localePath(locale, BLIND_GOMOKU),
     campaign: 'blind-gomoku',
+    // 站名前面用這款自己的 favicon，不是平台的骰子惡魔（11/1 Zach 看到結算圖是骰子惡魔）
+    icon: '/icons/blind-gomoku-192.png',
     // 只留 9:16（Zach 10/24，跟尼泊爾虎棋一樣）：只給一種，比例切換就不會出現
     layouts: ['story'],
     fonts: [
