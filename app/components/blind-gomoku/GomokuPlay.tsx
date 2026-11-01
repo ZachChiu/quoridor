@@ -294,7 +294,7 @@ export default function GomokuPlay({ mode, onMenu }: { mode: GomokuMode | Online
           blind={blind}
           revealed={flipped}
           aim={canPlay ? aim : null}
-          ghost={<Ghost blind={blind} color={color} side={game.turn} />}
+          ghost={(p) => <Ghost blind={blind} color={color} side={game.turn} p={p} />}
           glow={blind && !flipped}
           lastMark={!blind && !game.winner}
           line={settled ? game.line : null}
