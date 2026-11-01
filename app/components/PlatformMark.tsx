@@ -1,3 +1,7 @@
+'use client';
+
+import { useEffect, useRef } from 'react';
+
 /**
  * 平台的標誌：長角的藍色骰子（「骰子惡魔 1」，2026-10-20 試套；品牌名還沒定）。
  *
@@ -17,14 +21,50 @@
  * 藍色那張疊在灰色上面、平常透明，外面那顆連結要帶 `group`。滑過只給滑鼠（fine:），手指點過會一直停在 :hover；
  * 按下去那一下不淡入、直接換，手指按著的時間很短。
  *
- * 閃電（11/1 Zach 挑的「打雷」）：平常不亮、每 3.6 秒亮兩下，樣式在 globals.css 的 .die-bolt-*。
+ * 閃電（11/1 Zach 挑的「打雷」）：平常不亮，「啪啪」亮兩下（偶爾三下）就暗回去，隔 4–11 秒（隨機）再閃
+ *（同一天 Zach：「閃兩下再久一點再閃、頻率隨機一點」—— CSS 動畫只能固定節奏，所以由 useBolt 排時間）。
+ * 只有骰子本身變亮，不往外暈開（Zach：「不要有暈開的外面效果」）；遊戲頁的灰骰子閃的那一下換成藍色那張（另一層，不動滑過時變藍的那層）。
+ * 用 element.animate() 只動 filter／opacity；減少動態效果時不閃。
  */
+const BOLT_GAP = [4000, 11000];
+
+/** 一次閃電：亮、暗、再亮（偶爾多一下），約 0.6 秒 */
+function flashFrames(mono: boolean, times: number): Keyframe[] {
+  const on = (b: number): Keyframe => (mono ? { opacity: 1, filter: `brightness(${b})` } : { filter: `brightness(${b})` });
+  const off: Keyframe = mono ? { opacity: 0, filter: 'none' } : { filter: 'none' };
+  const frames: Keyframe[] = [off];
+  for (let i = 0; i < times; i++) frames.push(on(i === 0 ? 1.6 : 1.5), mono ? { opacity: 0.1, filter: 'none' } : off);
+  frames[frames.length - 1] = mono ? { opacity: 0.6, filter: 'brightness(1.2)' } : { filter: 'brightness(1.2)' };
+  frames.push(off);
+  return frames;
+}
+
+function useBolt(mono: boolean) {
+  const ref = useRef<HTMLImageElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    let timer = 0;
+    const next = (min: number, max: number) => {
+      timer = window.setTimeout(() => {
+        const times = Math.random() < 0.25 ? 3 : 2;
+        el.animate(flashFrames(mono, times), { duration: 260 + times * 170, easing: 'linear' });
+        next(BOLT_GAP[0], BOLT_GAP[1]);
+      }, min + Math.random() * (max - min));
+    };
+    next(1500, 5000);
+    return () => window.clearTimeout(timer);
+  }, [mono]);
+  return ref;
+}
+
 export default function PlatformMark({ className = '', mono = false }: { className?: string; mono?: boolean }) {
+  const bolt = useBolt(mono);
   if (!mono) {
     return (
       <span aria-hidden="true" className={`relative block size-10 shrink-0 ${className}`}>
         {/* eslint-disable-next-line @next/next/no-img-element -- 靜態匯出、SVG，不需要 next/image */}
-        <img src="/brand/die-mark.svg" alt="" width={40} height={40} className="die-bolt-blue relative size-10" />
+        <img src="/brand/die-mark.svg" alt="" width={40} height={40} ref={bolt} className="relative size-10" />
       </span>
     );
   }
@@ -32,9 +72,9 @@ export default function PlatformMark({ className = '', mono = false }: { classNa
     <span aria-hidden="true" className={`relative block size-10 shrink-0 ${className}`}>
       {/* eslint-disable-next-line @next/next/no-img-element -- 同上 */}
       <img src="/brand/die-mark-gray.svg" alt="" width={40} height={40} className="absolute inset-0 size-10 opacity-50" />
-      {/* 閃電那一下換成藍的（globals.css 的 .die-bolt-flash），跟下面滑過變藍那層分開 */}
+      {/* 閃電那一下換成藍的（useBolt），跟下面滑過變藍那層分開 */}
       {/* eslint-disable-next-line @next/next/no-img-element -- 同上 */}
-      <img src="/brand/die-mark.svg" alt="" width={40} height={40} className="die-bolt-flash absolute inset-0 size-10" />
+      <img src="/brand/die-mark.svg" alt="" width={40} height={40} ref={bolt} className="absolute inset-0 size-10 opacity-0" />
       {/* eslint-disable-next-line @next/next/no-img-element -- 同上 */}
       <img src="/brand/die-mark.svg" alt="" width={40} height={40}
         className="absolute inset-0 size-10 opacity-0 transition-opacity duration-150 group-focus-visible:opacity-100 group-active:opacity-100 group-active:duration-0 fine:group-hover:opacity-100" />
