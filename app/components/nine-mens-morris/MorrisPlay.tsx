@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { GiExitDoor } from 'react-icons/gi';
-import { LuArrowLeft, LuBellRing, LuCircleHelp, LuFlag, LuHouse, LuRotateCcw, LuUndo2, LuVolume2, LuVolumeX, LuWifiOff } from 'react-icons/lu';
+import { LuBellRing, LuCircleHelp, LuFlag, LuHouse, LuRotateCcw, LuUndo2, LuVolume2, LuVolumeX, LuWifiOff } from 'react-icons/lu';
 import Modal from '@/components/Modal';
 import { ShareResultModal, useShareCard } from '@/components/ShareResultModal';
 import { useLeaveGuard } from '@/hook/useLeaveGuard';
@@ -57,7 +57,7 @@ export type PlayMode = MorrisMode | OnlineMode;
 
 /**
  * 九子棋的對局畫面。版面照 Bagh Chal 的對局頁：
- * - 手機：上方是回九子棋首頁的房子鈕、標題與這一局的設定、說明鈕；下面狀態、棋盤，最下面一排悔棋／重來／換模式（拇指搆得到）
+ * - 手機：上方是回九子棋首頁的房子鈕、標題與這一局的設定、說明鈕；下面狀態、棋盤，最下面一排悔棋／重來／投降（拇指搆得到；回選單是左上的房子）
  * - 桌機（lg）：棋盤在左，右邊一欄放狀態與有字的按鈕
  *
  * 一個回合可能是兩段：放（走）一手成三之後，同一個人再點一顆對方的子拿掉。
@@ -258,6 +258,14 @@ export default function MorrisPlay({ locale, mode, showRules, moves = '', onMenu
   const undoSide = human ?? undefined;
   const canUndo = !locked && !online && undoPoint(game, undoSide) >= 0;
   const doUndo = () => { plan.current = null; setGame(undoTurn(game, undoSide)); setSelected(null); };
+  // 投降：本機是輪到的那方、跟電腦下是自己；局面直接蓋上勝方與原因（同連線的 resigned），之後誰都不能再走
+  const resign = () => {
+    if (mode.kind === 'online') { mode.resign(); return; }
+    if (game.winner) return;
+    const loser = mode.kind === 'ai' ? mode.human : game.turn;
+    setGame({ ...game, winner: other(loser), reason: 'resign' });
+    setSelected(null);
+  };
   const restart = () => { plan.current = null; setGame(createGame({ showRules })); setSelected(null); };
   const again = () => {
     track('game_restart', { game: 'nine-mens-morris', mode: gaMode, players: 2, difficulty: gaDifficulty });
@@ -422,7 +430,7 @@ export default function MorrisPlay({ locale, mode, showRules, moves = '', onMenu
         <div className="grid w-full max-w-[520px] grid-cols-3 gap-2 lg:hidden">
           <button type="button" onClick={doUndo} disabled={!canUndo} className={stacked}><LuUndo2 aria-hidden="true" />{t.undo}</button>
           <button type="button" onClick={restart} className={stacked}><LuRotateCcw aria-hidden="true" />{t.restart}</button>
-          <button type="button" onClick={toMenu} className={stacked}><LuArrowLeft aria-hidden="true" />{t.menu}</button>
+          <button type="button" onClick={() => setResignOpen(true)} disabled={!!game.winner} className={stacked}><LuFlag aria-hidden="true" />{g.surrender.label}</button>
         </div>
       )}
 
@@ -445,10 +453,8 @@ export default function MorrisPlay({ locale, mode, showRules, moves = '', onMenu
             <button type="button" onClick={restart} className={wide}><LuRotateCcw aria-hidden="true" />{t.restart}</button>
           </>}
           <button type="button" onClick={() => setHelpOpen(true)} className={wide}><LuCircleHelp aria-hidden="true" />{t.rulesHeading}</button>
-          {/* 連線局不放「換模式」，放投降（11/1 Zach）；分出勝負之後換回換模式 */}
-          {mode.kind === 'online' && !game.winner
-            ? <button type="button" onClick={() => setResignOpen(true)} className={wide}><LuFlag aria-hidden="true" />{g.surrender.label}</button>
-            : <button type="button" onClick={toMenu} className={wide}><LuArrowLeft aria-hidden="true" />{t.menu}</button>}
+          {/* 投降：本機、跟電腦下、連線都有（11/1 Zach）。不放「換模式」—— 左上的房子就是回選單，不用兩顆做同一件事 */}
+          <button type="button" onClick={() => setResignOpen(true)} disabled={!!game.winner} className={wide}><LuFlag aria-hidden="true" />{g.surrender.label}</button>
           {mode.kind === 'online' && !game.winner && (
             <button type="button" onClick={mode.nudge} disabled={!mode.canNudge || mode.nudged} className={`${wide} col-span-2`}>
               <LuBellRing aria-hidden="true" />{mode.nudged ? g.nudge.sent : g.nudge.button}
@@ -459,16 +465,15 @@ export default function MorrisPlay({ locale, mode, showRules, moves = '', onMenu
 
       <MorrisRulesModal t={t} open={helpOpen} onClose={() => setHelpOpen(false)} showRules={showRules} />
 
-      {mode.kind === 'online' && (
-        <Modal isOpen={resignOpen && !game.winner} onClose={() => setResignOpen(false)} title={g.surrender.heading} kicker={g.surrender.kicker}
-          band={MORRIS_BAND} panelClassName={MORRIS_PANEL}
-          footer={<>
-            <button type="button" onClick={() => setResignOpen(false)} className="nmm-arch is-small flex-1 pb-3 pt-4 font-black">{g.surrender.cancel}</button>
-            <button type="button" onClick={() => { setResignOpen(false); mode.resign(); }} className="nmm-arch is-small is-red flex-1 pb-3 pt-4 font-black">{g.surrender.confirm}</button>
-          </>}>
-          <p className="text-sm leading-relaxed">{g.surrender.body}</p>
-        </Modal>
-      )}
+      {/* 投降確認。本機是輪到的那方投降（小標寫哪一方），跟電腦下是自己；連線寫進房間（mode.resign） */}
+      <Modal isOpen={resignOpen && !game.winner} onClose={() => setResignOpen(false)} title={g.surrender.heading} kicker={mode.kind === 'local' ? name(game.turn) : g.surrender.kicker}
+        band={MORRIS_BAND} panelClassName={MORRIS_PANEL}
+        footer={<>
+          <button type="button" onClick={() => setResignOpen(false)} className="nmm-arch is-small flex-1 pb-3 pt-4 font-black">{g.surrender.cancel}</button>
+          <button type="button" onClick={() => { setResignOpen(false); resign(); }} className="nmm-arch is-small is-red flex-1 pb-3 pt-4 font-black">{g.surrender.confirm}</button>
+        </>}>
+        <p className="text-sm leading-relaxed">{g.surrender.body}</p>
+      </Modal>
 
       <Modal isOpen={leave.open} onClose={leave.cancel} title={g.leave.heading} kicker={g.leave.kicker}
         icon={GiExitDoor} band={MORRIS_BAND} panelClassName={MORRIS_PANEL}

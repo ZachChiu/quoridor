@@ -62,7 +62,6 @@ export type MorrisText = {
   };
   undo: string;
   restart: string;
-  menu: string;
   /** 對局左上角房子鈕的說明：回九子棋首頁（選模式的畫面），不是平台首頁 */
   home: string;
   youWin: string;
@@ -146,7 +145,6 @@ export const TEXT = {
     },
     undo: '悔棋',
     restart: '重來',
-    menu: '換模式',
     home: '回九子棋首頁',
     youWin: '你贏了',
     aiWins: 'AI 贏了',
@@ -229,7 +227,6 @@ export const TEXT = {
     },
     undo: 'Undo',
     restart: 'Restart',
-    menu: 'Change mode',
     home: "Back to Nine Men's Morris",
     youWin: 'You win',
     aiWins: 'The AI wins',
@@ -312,7 +309,6 @@ export const TEXT = {
     },
     undo: '待った',
     restart: 'やり直す',
-    menu: 'モード変更',
     home: 'ナイン・メンズ・モリスのトップへ',
     youWin: 'あなたの勝ち',
     aiWins: 'AIの勝ち',
@@ -395,7 +391,6 @@ export const TEXT = {
     },
     undo: '무르기',
     restart: '다시 하기',
-    menu: '모드 변경',
     home: '나인 멘스 모리스 첫 화면으로',
     youWin: '내가 이겼어요',
     aiWins: 'AI 승리',
@@ -478,7 +473,6 @@ export const TEXT = {
     },
     undo: '悔棋',
     restart: '重来',
-    menu: '换模式',
     home: '回九子棋首页',
     youWin: '你赢了',
     aiWins: 'AI 赢了',
@@ -561,7 +555,6 @@ export const TEXT = {
     },
     undo: 'ย้อนตา',
     restart: 'เริ่มใหม่',
-    menu: 'เปลี่ยนโหมด',
     home: "กลับหน้าแรก Nine Men's Morris",
     youWin: 'คุณชนะ',
     aiWins: 'AI ชนะ',
