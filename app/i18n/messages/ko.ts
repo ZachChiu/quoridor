@@ -49,6 +49,8 @@ const ko: Messages = {
     s1: '시즌1',
     playable: '플레이 가능',
     guide: '규칙 정리 중',
+    /** 還沒做的遊戲卡上的「想玩」（按了公開加一票） */
+    want: '하고 싶어요',
     seeAll: '모두 보기',
     allGames: '모든 게임',
     seasonShort: '시즌{n}',

@@ -65,7 +65,7 @@ export default function PlatformView({ locale }: { locale: Locale }) {
           <CardRow>
             {PLAYABLE.map((game) => (
               <li key={game.name} className="shrink-0">
-                <GameCard game={game} locale={locale} playable={p.playable} guide={p.guide} />
+                <GameCard game={game} locale={locale} playable={p.playable} guide={p.guide} want={p.want} />
               </li>
             ))}
           </CardRow>
@@ -94,7 +94,7 @@ export default function PlatformView({ locale }: { locale: Locale }) {
               <CardRow>
                 {playableFirst(season.games).map((game) => (
                   <li key={game.name} className="shrink-0">
-                    <GameCard game={game} locale={locale} playable={p.playable} guide={p.guide} />
+                    <GameCard game={game} locale={locale} playable={p.playable} guide={p.guide} want={p.want} />
                   </li>
                 ))}
               </CardRow>

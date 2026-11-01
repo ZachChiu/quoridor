@@ -47,6 +47,8 @@ const en: Messages = {
     s1: 'Season 1',
     playable: 'Playable',
     guide: 'Rules coming',
+    /** 還沒做的遊戲卡上的「想玩」（按了公開加一票） */
+    want: 'Want to play',
     seeAll: 'See all',
     allGames: 'All games',
     seasonShort: 'Season {n}',

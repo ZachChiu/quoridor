@@ -46,6 +46,12 @@
     - 沒有 status、winner：勝負由 moves 推導
     這段先發布、程式後上線沒關係：舊程式不會碰 turnRooms
 
+    ── 想玩（wantCounts／wantVoters，2026-11-01 加）──────────────────────
+    平台上還沒做的遊戲卡的「想玩」（app/utils/wants.ts）。人數誰都能讀；誰按過不能讀。
+    人數只能跟「自己那一票」在同一次寫入裡一起改：+1 時同時多一個自己的 uid、−1 時同時拿掉它 —— 只改數字、
+    替別人投、同一個帳號投兩次都會被拒。鑰匙只收英文名轉的小寫連字號（≤40 字）。
+    這段先發布、程式後上線沒關係：舊程式不會碰這兩個路徑。程式先上的話只是讀不到數字、按了會退回
+
     ── 回饋 ─────────────────────────────────────────────────────────
     只能新增、沒有人讀得到（裡面可能有選填的聯絡方式）；我從 Console 讀，
     Console 不受規則限制。uid 必須是本人、每個欄位有上限、多的欄位拒絕 ——
@@ -207,6 +213,21 @@
           ".validate": "newData.isString() && newData.val().matches(/^s[0-7]$/) && newData.parent().child('players/' + newData.val()).exists() || (!data.exists() && newData.isString() && newData.val().matches(/^s[0-7]$/))"
         },
         "$other": { ".validate": false }
+      }
+    },
+    "wantCounts": {
+      ".read": true,
+      "$game": {
+        ".write": "auth != null && newData.exists()",
+        ".validate": "$game.matches(/^[a-z0-9-]{1,40}$/) && newData.isNumber() && ((!root.child('wantVoters/' + $game + '/' + auth.uid).exists() && newData.parent().parent().child('wantVoters/' + $game + '/' + auth.uid).val() === true && newData.val() === (data.exists() ? data.val() : 0) + 1) || (root.child('wantVoters/' + $game + '/' + auth.uid).exists() && !newData.parent().parent().child('wantVoters/' + $game + '/' + auth.uid).exists() && newData.val() === data.val() - 1))"
+      }
+    },
+    "wantVoters": {
+      ".read": false,
+      "$game": {
+        "$uid": {
+          ".write": "auth != null && auth.uid === $uid && $game.matches(/^[a-z0-9-]{1,40}$/) && (newData.exists() ? (!data.exists() && newData.val() === true && newData.parent().parent().parent().child('wantCounts/' + $game).val() === (root.child('wantCounts/' + $game).exists() ? root.child('wantCounts/' + $game).val() : 0) + 1) : (data.exists() && newData.parent().parent().parent().child('wantCounts/' + $game).val() === root.child('wantCounts/' + $game).val() - 1))"
+        }
       }
     },
     "feedback": {

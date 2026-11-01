@@ -1,7 +1,9 @@
 import WipeLink from '@/components/WipeLink';
 import GameName from '@/components/platform/GameName';
+import WantButton from '@/components/platform/WantButton';
 import { gameName, type CatalogGame } from '@/games/catalog';
 import { localePath, type Locale } from '@/i18n/locales';
+import { wantKey } from '@/utils/wants';
 
 /**
  * 平台上的遊戲卡（首頁一排排、季目錄頁的格子共用）。寬度由呼叫的地方給：首頁是固定 240px 橫向捲動，目錄頁跟著格子走。
@@ -13,8 +15,8 @@ const NAME = 'text-[clamp(15px,12cqw,22px)] font-black leading-none';
 /** 名字底下那行這款自己的字：字標高半個字、字型那行六成大 */
 const SUB = { mark: 0.5, font: 'text-[0.6em]' };
 
-export default function GameCard({ game, locale, playable, guide, width = 'w-[240px]' }: {
-  game: CatalogGame; locale: Locale; playable: string; guide: string; width?: string;
+export default function GameCard({ game, locale, playable, guide, want, width = 'w-[240px]' }: {
+  game: CatalogGame; locale: Locale; playable: string; guide: string; want: string; width?: string;
 }) {
   const name = gameName(game, locale);
 
@@ -47,6 +49,8 @@ export default function GameCard({ game, locale, playable, guide, width = 'w-[24
 
   return (
     <div className={`${CARD} ${width} flex flex-col justify-end bg-plat-surface p-3.5`}>
+      {/* 左上角「想玩」（11/1 Zach）；flex-1 把名字推回底下 */}
+      <div className="relative flex flex-1 flex-col"><WantButton wantKey={wantKey(game.name)} label={want} name={name} /></div>
       {/* 角落是平台的骰子惡魔（Zach 10/24：規則整理中的空白卡要換上骰子惡魔）：卡片同色系的淡剪影、點數挖空，跟左上的 logo 同一個形 */}
       <span aria-hidden="true" className="plat-soon-mark absolute -right-4 -top-1 size-[124px] rotate-12 bg-plat-raised" />
       <span className="relative text-base font-black leading-tight">{name}</span>

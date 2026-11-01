@@ -58,6 +58,8 @@ const zhTW = {
     s1: '第 1 季',
     playable: '可以玩',
     guide: '規則整理中',
+    /** 還沒做的遊戲卡上的「想玩」（按了公開加一票） */
+    want: '想玩',
     /** 季目錄頁（`/season/1`…）。{n}、{season}、{names} 由程式代入 */
     seeAll: '看全部',
     allGames: '所有遊戲',

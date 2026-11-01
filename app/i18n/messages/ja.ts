@@ -46,6 +46,8 @@ const ja: Messages = {
     s1: 'シーズン1',
     playable: 'プレイ可',
     guide: 'ルール準備中',
+    /** 還沒做的遊戲卡上的「想玩」（按了公開加一票） */
+    want: '遊びたい',
     seeAll: 'すべて見る',
     allGames: 'すべてのゲーム',
     seasonShort: 'シーズン{n}',
