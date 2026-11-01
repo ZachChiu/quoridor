@@ -4,6 +4,9 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { LuCheck, LuCopy, LuShare2 } from 'react-icons/lu';
 import { parseRoomHash, useHashSession, useTurnRoom, type TurnRoomFailure } from '@/hook/useTurnRoom';
+import { useRoomSignals } from '@/hook/useRoomSignals';
+import { seatIndex, seatKey, type SeatKey } from '@/types/turnRoom';
+import { writeResigned } from '@/utils/roomSignals';
 import { share, useWebShare } from '@/hook/useWebShare';
 import { useGameText } from '@/i18n/LocaleProvider';
 import { fill, useTextTable } from '@/i18n/gameText';
@@ -41,7 +44,13 @@ function Session({ locale, hash }: { locale: Locale; hash: string }) {
   const { failure, me, room, moves, open, inviteUrl, send, fail } = useTurnRoom('nine-mens-morris', target);
   const router = useRouter();
   const setup = room?.setup;
-  const game = useMemo(() => (setup === undefined ? null : roomGame(setup, moves)), [setup, moves]);
+  const played = useMemo(() => (setup === undefined ? null : roomGame(setup, moves)), [setup, moves]);
+  // 投降不是棋盤上發生的事：房間的 resigned 蓋在重走出來的局面上（對方勝、原因寫投降），之後誰都不能再走
+  const resigned = room?.resigned;
+  const game = useMemo(() => {
+    if (!played || !resigned || played.winner) return played;
+    return { ...played, winner: other(SIDE_AT[seatIndex(resigned)]), reason: 'resign' as const };
+  }, [played, resigned]);
   // 走法解不開、不合規則、設定看不懂：當作連線壞了，不畫出一盤錯的棋
   const broken = !!room && !game;
   useEffect(() => { if (broken) fail(); }, [broken, fail]);
@@ -54,6 +63,21 @@ function Session({ locale, hash }: { locale: Locale; hash: string }) {
   }, [game, send]);
   const showRules = !!(setup && decodeSetup(setup)?.showRules);
   const newRoom = useCallback(() => { if (human) location.hash = newRoomHash(human, showRules); }, [human, showRules]);
+
+  // 在線狀態、催一下（Wall Go 有的，11/1 Zach 要正式上線的幾款都補）：人到齊、還沒分出勝負時才回報
+  const roomPath = room ? `turnRooms/${room.id}` : null;
+  const signals = useRoomSignals({
+    roomPath, me: me === null ? null : seatKey(me), presence: room?.presence, nudge: room?.nudge,
+    turn: room?.turn ?? null, active: !!game && !game.winner && open.length === 0,
+  });
+  const resign = useCallback(() => { if (roomPath && me !== null) void writeResigned(roomPath, seatKey(me)); }, [roomPath, me]);
+  const sideOfSeat = (k: string | null): Side | null => (k ? SIDE_AT[seatIndex(k as SeatKey)] ?? null : null);
+  const online = {
+    away: sideOfSeat(signals.away[0] ?? null), selfOffline: signals.selfOffline,
+    canNudge: signals.canNudge, nudged: signals.nudged, shake: signals.shake, nudgeFrom: sideOfSeat(signals.nudgeFrom),
+    nudge: () => signals.sendNudge(() => track('nudge_send', { game: 'nine-mens-morris', players: 2 })),
+    resign,
+  };
 
   // GA：開房的人房間開好送 room_created、連不上送 online_error（noRoom／roomFull 也送，同虎棋）
   const created = useRef(false);
@@ -72,7 +96,7 @@ function Session({ locale, hash }: { locale: Locale; hash: string }) {
   if (!room || !game || !human || !inviteUrl) return <Connecting />;
   if (open.length > 0) return <Waiting me={human} showRules={showRules} url={inviteUrl} home={home} />;
   return (
-    <MorrisPlay locale={locale} mode={{ kind: 'online', human, game, onMove, newRoom }} showRules={showRules}
+    <MorrisPlay locale={locale} mode={{ kind: 'online', human, game, onMove, newRoom, ...online }} showRules={showRules}
       onMenu={() => router.push(home)} />
   );
 }

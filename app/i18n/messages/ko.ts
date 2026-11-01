@@ -109,6 +109,8 @@ const ko: Messages = {
     winTigerBody: '호랑이가 염소 5마리를 잡았습니다.',
     winGoatBody: '염소가 호랑이를 모두 가뒀습니다.',
     drawBody: '수가 너무 길어져 승부가 나지 않았습니다.',
+    /** 連線對戰投降（2026-11-01） */
+    resignBody: '{side} 쪽이 기권했습니다.',
     again: '한 판 더',
     feedbackPlaceholder: '예: 호랑이가 뛸 수 있는데 눌리지 않아요, 컴퓨터가 너무 강하거나 약해요',
     invite: '친구 초대',

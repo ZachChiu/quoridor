@@ -13,6 +13,8 @@ import { applyMove, createGame, decodeMoves, encodeMoves, replay, type BaghState
 import type { BaghRoom } from '@/types/baghRoom';
 import { createBaghRoom, getBaghRoom, joinBaghRoom, subscribeBaghRoom, writeBaghMoves } from '@/utils/baghService';
 import { atStep, describeOnlineError, reportOnlineError } from '@/utils/onlineError';
+import { writeResigned } from '@/utils/roomSignals';
+import { useRoomSignals } from '@/hook/useRoomSignals';
 import { track } from '@/utils/analytics';
 import BaghPlay from './BaghPlay';
 import BaghFrame from './BaghFrame';
@@ -110,7 +112,11 @@ function Session({ locale, hash }: { locale: Locale; hash: string }) {
     return subscribeBaghRoom(roomId, (r) => {
       if (!r) { setFailure('noRoom'); return; }
       setRoom(r);
-      try { setGame(replay(decodeMoves(r.moves ?? ''))); } catch { setFailure('connectFail'); }
+      try {
+        const played = replay(decodeMoves(r.moves ?? ''));
+        // 投降不是棋盤上發生的事：房間的 resigned 蓋在重走出來的局面上（對方勝），之後誰都不能再走
+        setGame(r.resigned && !played.winner ? { ...played, winner: other(r.resigned) } : played);
+      } catch { setFailure('connectFail'); }
     });
   }, [roomId]);
 
@@ -129,6 +135,15 @@ function Session({ locale, hash }: { locale: Locale; hash: string }) {
   }, [roomId, game]);
 
   const newRoom = useCallback(() => { if (me) location.hash = `#new=${me}`; }, [me]);
+
+  // 在線狀態、催一下、投降（Wall Go 有的，11/1 Zach 要正式上線的幾款都補）：人到齊、還沒分出勝負時才回報
+  const roomPath = roomId ? `baghRooms/${roomId}` : null;
+  const seated = !!(me && room?.players?.[other(me)]);
+  const signals = useRoomSignals({
+    roomPath, me, presence: room?.presence, nudge: room?.nudge, turn: room?.turn ?? null,
+    active: seated && !game.winner,
+  });
+  const resign = useCallback(() => { if (roomPath && me) void writeResigned(roomPath, me); }, [roomPath, me]);
 
   const home = localePath(locale, baghChal());
   if (failure) {
@@ -153,7 +168,13 @@ function Session({ locale, hash }: { locale: Locale; hash: string }) {
   if (!room.players?.[other(me)]) {
     return <Waiting me={me} url={`${location.origin}${location.pathname}#roomId=${roomId}`} home={home} />;
   }
-  return <BaghPlay locale={locale} mode={{ kind: 'online', human: me, roomId, game, onMove, newRoom }} />;
+  return <BaghPlay locale={locale} mode={{
+    kind: 'online', human: me, roomId, game, onMove, newRoom,
+    resigned: room.resigned ?? null, resign,
+    away: (signals.away[0] as Side | undefined) ?? null, selfOffline: signals.selfOffline,
+    canNudge: signals.canNudge, nudged: signals.nudged, shake: signals.shake, nudgeFrom: signals.nudgeFrom as Side | null,
+    nudge: () => signals.sendNudge(() => track('nudge_send', { game: 'bagh-chal', players: 2 })),
+  }} />;
 }
 
 /**

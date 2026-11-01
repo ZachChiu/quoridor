@@ -50,7 +50,9 @@ export type EndReason =
   /** 連續 50 手沒有人被拿子 */
   | 'quiet'
   /** 節目規則：有人剩 3 顆後僵持 10 回合 */
-  | 'standoff';
+  | 'standoff'
+  /** 連線對戰投降（不是棋盤上發生的事：房間的 resigned，MorrisOnline 蓋上去；engine 自己不會產生） */
+  | 'resign';
 
 export type MorrisState = {
   board: Cell[];
