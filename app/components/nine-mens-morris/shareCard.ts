@@ -1,6 +1,6 @@
-import { COORDS, MILLS, type Cell, type Side } from '@/games/nine-mens-morris/engine';
+import { COORDS, type Cell, type Side } from '@/games/nine-mens-morris/engine';
 import { drawBrand, drawQr, fitText, type CardLayout, type ShareAssets, type ShareDraw } from '@/utils/shareCard';
-import { BOARD_H, BOARD_W, FRAME_INSET, MAN_FOOT, MAN_OUTLINE, MAN_SIZE, MAN_PARTS, STRIP, TRAY_BOX, TRAY_Y, gx, gy, trayTurn, trayX } from './art';
+import { BOARD_ART, BOARD_H, BOARD_W, MAN_FOOT, MAN_PARTS, MAN_SIZE, PIECE_ART, PIECE_PAD, TRAY_BOX, TRAY_Y, gx, gy, trayTurn, trayX } from './art';
 import { NMM } from './palette';
 import { WORDMARK_PATH, WORDMARK_VIEWBOX } from './MorrisWordmark';
 
@@ -8,7 +8,7 @@ import { WORDMARK_PATH, WORDMARK_VIEWBOX } from './MorrisWordmark';
  * 九子棋的結算分享圖（Zach 10/24：每款都要有結尾的可分享畫面，「然後各自設計符合各自」）。
  *
  * 長得像這款的頁面、也就是《遊戲之書》那幅插圖：群青底撒白點、最外緣朱紅框（四角小方塊裡一朵四瓣花，同 .nmm-frame），
- * 羊皮紙色的字；中間是終局的棋盤 —— 跟對局一樣的木頭棋盤、嵌線、鐘形小人，被拿掉的子躺在下方。
+ * 羊皮紙色的字；中間是終局的棋盤 —— 跟對局貼同一組手抄本畫法的圖（棋盤、鐘形小人），被拿掉的子躺在下方。
  * 最下面一塊拱頂的羊皮紙（同 .nmm-arch）放站名與 QR。顏色全部是 palette.ts 的，棋盤與棋子的形狀跟對局共用 art.ts。
  */
 export type MorrisCardData = {
@@ -28,104 +28,46 @@ export type MorrisCardData = {
 
 const P = NMM;
 
-/** 固定種子的亂數：同一局每次畫出來的木紋一樣（預覽與存檔是分開畫的兩張） */
-function rng(seed: number) {
-  let a = seed >>> 0;
-  return () => {
-    a = (a + 0x6d2b79f5) >>> 0;
-    let t = a;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
+/** 分享圖要先載好的圖（useShareCard 的 images），順序就是 MorrisArt 的順序：手抄本的棋盤、黑子、白子（跟對局貼同一組，見 art.ts） */
+export const MORRIS_SHARE_IMAGES = [BOARD_ART, PIECE_ART.black, PIECE_ART.white];
+type MorrisArt = { board?: HTMLImageElement; black?: HTMLImageElement; white?: HTMLImageElement };
 
-/** 木頭上的斑：一張很小的隨機透明度圖，放大時讓瀏覽器內插成一塊塊柔和的斑（對局的棋盤是 feTurbulence，看起來一樣） */
-function blotches(color: string, cols: number, rows: number, seed: number, strength: number) {
-  const c = document.createElement('canvas');
-  c.width = cols;
-  c.height = rows;
-  const g = c.getContext('2d')!;
-  const r = rng(seed);
-  g.fillStyle = color;
-  for (let y = 0; y < rows; y++) {
-    for (let x = 0; x < cols; x++) {
-      g.globalAlpha = Math.max(0, r() - 0.45) * strength;
-      g.fillRect(x, y, 1, 1);
-    }
-  }
-  return c;
-}
-
-/** 一個鐘形小人，box 是邊長（棋盤座標），(cx, cy) 是中心，rot 是躺下的角度 */
-function drawMan(ctx: CanvasRenderingContext2D, side: Side, cx: number, cy: number, box: number, rot = 0) {
+/** 一個鐘形小人，box 是小人方框的邊長（棋盤座標），(cx, cy) 是方框中心，rot 是躺下的角度。圖沒載到就畫一個平塗的剪影 */
+function drawMan(ctx: CanvasRenderingContext2D, art: MorrisArt, side: Side, cx: number, cy: number, box: number, rot = 0) {
   ctx.save();
   ctx.translate(cx, cy);
   ctx.rotate(rot);
   ctx.scale(box / 100, box / 100);
   ctx.translate(-50, -50);
-  const parts = MAN_PARTS.map((d) => new Path2D(d));
-  ctx.fillStyle = P.ink;
-  if (side === 'white') {
-    ctx.strokeStyle = P.ink;
-    ctx.lineWidth = MAN_OUTLINE;
-    ctx.lineJoin = 'round';
-    parts.forEach((p) => { ctx.fill(p); ctx.stroke(p); });
-    ctx.fillStyle = P.parchment;
+  const img = art[side];
+  if (img) ctx.drawImage(img, -PIECE_PAD, -PIECE_PAD, 100 + PIECE_PAD * 2, 100 + PIECE_PAD * 2);
+  else {
+    ctx.fillStyle = side === 'black' ? P.ink : P.parchment;
+    MAN_PARTS.forEach((d) => ctx.fill(new Path2D(d)));
   }
-  parts.forEach((p) => ctx.fill(p));
   ctx.restore();
 }
 
-/** 終局的棋盤：跟對局同一塊（MorrisBoard），寬 w */
-function drawBoard(ctx: CanvasRenderingContext2D, d: MorrisCardData, x: number, y: number, w: number) {
+/** 終局的棋盤：跟對局同一塊（MorrisBoard 貼的同一張圖），寬 w */
+function drawBoard(ctx: CanvasRenderingContext2D, d: MorrisCardData, art: MorrisArt, x: number, y: number, w: number) {
   const k = w / BOARD_W;
   ctx.save();
   ctx.translate(x, y);
   ctx.scale(k, k);
-  ctx.save();
-  ctx.beginPath();
-  ctx.moveTo(1.6, 0);
-  ctx.arcTo(BOARD_W, 0, BOARD_W, BOARD_H, 1.6);
-  ctx.arcTo(BOARD_W, BOARD_H, 0, BOARD_H, 1.6);
-  ctx.arcTo(0, BOARD_H, 0, 0, 1.6);
-  ctx.arcTo(0, 0, BOARD_W, 0, 1.6);
-  ctx.closePath();
-  ctx.clip();
-  ctx.fillStyle = P.wood;
-  ctx.fillRect(0, 0, BOARD_W, BOARD_H);
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = 'high';
-  ctx.drawImage(blotches(P.woodDark, 9, 11, 11, 1.5), 0, 0, BOARD_W, BOARD_H);
-  ctx.drawImage(blotches(P.woodDark, 20, 24, 23, 0.8), 0, 0, BOARD_W, BOARD_H);
-  ctx.drawImage(blotches(P.woodLight, 14, 17, 4, 1.4), 0, 0, BOARD_W, BOARD_H);
-  ctx.restore();
-
-  ctx.strokeStyle = P.woodDark;
-  ctx.lineWidth = 1;
-  ctx.strokeRect(0.5, 0.5, BOARD_W - 1, BOARD_H - 1);
-
-  // 木條：先整條深色的邊，再疊淺金色
-  ctx.lineCap = 'square';
-  for (const [color, width] of [[P.stripEdge, STRIP.edge], [P.strip, STRIP.core]] as const) {
-    ctx.strokeStyle = color;
-    ctx.lineWidth = width;
-    ctx.strokeRect(FRAME_INSET, FRAME_INSET, BOARD_W - FRAME_INSET * 2, BOARD_H - FRAME_INSET * 2);
-    ctx.beginPath();
-    for (const l of MILLS) {
-      const a = COORDS[l[0]], b = COORDS[l[2]];
-      ctx.moveTo(gx(a.x), gy(a.y));
-      ctx.lineTo(gx(b.x), gy(b.y));
-    }
-    ctx.stroke();
+  if (art.board) ctx.drawImage(art.board, 0, 0, BOARD_W, BOARD_H);
+  else {
+    ctx.fillStyle = P.wood;
+    ctx.fillRect(0, 0, BOARD_W, BOARD_H);
   }
 
   // 跟對局一樣：腳底站在交叉點上（方框中心在交叉點上方）
   d.board.forEach((cell, p) => {
-    if (cell) drawMan(ctx, cell === 'B' ? 'black' : 'white', gx(COORDS[p].x), gy(COORDS[p].y) - (MAN_FOOT - 0.5) * MAN_SIZE, MAN_SIZE);
+    if (cell) drawMan(ctx, art, cell === 'B' ? 'black' : 'white', gx(COORDS[p].x), gy(COORDS[p].y) - (MAN_FOOT - 0.5) * MAN_SIZE, MAN_SIZE);
   });
   for (const s of ['black', 'white'] as const) {
-    for (let i = 0; i < d.removed[s]; i++) drawMan(ctx, s, trayX(s, i), TRAY_Y, TRAY_BOX, (trayTurn(s) * Math.PI) / 180);
+    for (let i = 0; i < d.removed[s]; i++) drawMan(ctx, art, s, trayX(s, i), TRAY_Y, TRAY_BOX, (trayTurn(s) * Math.PI) / 180);
   }
   ctx.restore();
 }
@@ -209,6 +151,8 @@ function wordmark(ctx: CanvasRenderingContext2D, cx: number, y: number, width: n
 export function drawMorrisCard(d: MorrisCardData): ShareDraw {
   return (ctx: CanvasRenderingContext2D, layout: CardLayout, assets: ShareAssets) => {
     const f = d.font;
+    const [board, black, white] = assets.images;
+    const art: MorrisArt = { board, black, white };
     const paper = P.parchment;
     const W = 1080;
     const H = layout === 'story' ? 1920 : layout === 'poster' ? 1350 : 1080;
@@ -222,7 +166,7 @@ export function drawMorrisCard(d: MorrisCardData): ShareDraw {
       fitText(ctx, f, `${d.text.reason}  ${d.text.moves}`, 84, 246, { size: 28, weight: 700, color: paper, alpha: 0.85, max: 700 });
       drawQr(ctx, assets.qr, W - 84 - 150, 72, 150, P.ink, paper, 10);
       const bh = 700, bw = (bh * BOARD_W) / BOARD_H;
-      drawBoard(ctx, d, (W - bw) / 2, 282, bw);
+      drawBoard(ctx, d, art, (W - bw) / 2, 282, bw);
       const end = drawBrand(ctx, f, assets, d.text.brand, 84, 1024, { size: 30, color: paper, max: 520 });
       fitText(ctx, f, `${d.text.from} · ${d.text.host}`, W - 84, 1024, { size: 22, weight: 700, color: paper, alpha: 0.75, align: 'right', max: W - 84 - end - 40 });
       return;
@@ -237,7 +181,7 @@ export function drawMorrisCard(d: MorrisCardData): ShareDraw {
 
     const bw = story ? 840 : (748 * BOARD_W) / BOARD_H;
     const by = story ? 420 : 298;
-    drawBoard(ctx, d, (W - bw) / 2, by, bw);
+    drawBoard(ctx, d, art, (W - bw) / 2, by, bw);
     const bottom = by + (bw * BOARD_H) / BOARD_W;
 
     fitText(ctx, f, d.text.moves, W / 2, bottom + (story ? 76 : 50), { size: story ? 40 : 34, weight: 700, color: paper, align: 'center', max: 900 });

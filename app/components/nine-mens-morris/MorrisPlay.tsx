@@ -21,7 +21,7 @@ import { MorrisBoard, PieceGlyph, type Pluck, type PluckStage } from './MorrisBo
 import MorrisFrame from './MorrisFrame';
 import { MorrisRulesModal } from './MorrisRules';
 import { clearSession, saveSession, type MorrisMode } from './session';
-import { drawMorrisCard } from './shareCard';
+import { MORRIS_SHARE_IMAGES, drawMorrisCard } from './shareCard';
 import { PLUCK_MS } from './pluck';
 import { playMorris } from './sounds';
 import { track } from '@/utils/analytics';
@@ -336,6 +336,7 @@ export default function MorrisPlay({ locale, mode, showRules, moves = '', onMenu
     fonts: [{ font: `900 40px ${font}`, text: card.text.title + card.text.brand }, { font: `700 40px ${font}`, text: card.text.kicker + card.text.reason + card.text.from + card.text.moves }],
     // 只留 9:16（Zach 10/24：「感覺可以留 9:16 就好」，跟虎羊棋一樣）；只有一種就不顯示比例切換
     layouts: ['story'],
+    images: MORRIS_SHARE_IMAGES,
   });
 
   // 群青底上的按鈕是拱頂的羊皮紙小拱（手抄本插圖框的形狀，globals.css 的 .nmm-arch）

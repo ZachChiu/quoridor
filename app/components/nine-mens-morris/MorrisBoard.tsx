@@ -1,9 +1,9 @@
 'use client';
-import { useEffect, useId, useLayoutEffect, useRef, type SVGProps } from 'react';
+import { useEffect, useLayoutEffect, useRef, type SVGProps } from 'react';
 import type { IconType } from 'react-icons';
-import { COORDS, MILLS, NEIGHBORS, POINT_NAMES, sideOf, type Cell, type Move, type Point, type Side } from '@/games/nine-mens-morris/engine';
+import { COORDS, NEIGHBORS, POINT_NAMES, sideOf, type Cell, type Move, type Point, type Side } from '@/games/nine-mens-morris/engine';
 import {
-  BOARD_H, BOARD_W, FRAME_INSET, MAN_BOX, MAN_HEAD, MAN_ORIGIN, MAN_OUTLINE, MAN_PARTS, MAN_SCALE, MAN_TOP, SPOT_Y, STRIP, TRAY_BOX, TRAY_Y,
+  BOARD_ART, BOARD_H, BOARD_W, MAN_BOX, MAN_HEAD, MAN_ORIGIN, MAN_SCALE, MAN_TOP, PIECE_ART, PIECE_PAD, SPOT_Y, TRAY_BOX, TRAY_Y,
   gx, gy, trayTurn, trayX,
 } from './art';
 import { playIdle } from './idleMotion';
@@ -12,7 +12,7 @@ import { PLUCK_AT, PLUCK_MS, pluckPlan } from './pluck';
 
 /**
  * 九子棋的棋盤與棋子，照首頁那幅《遊戲之書》（1283）插圖（Zach 10/24：「棋盤可以跟視覺圖一樣」、「棋子有點醜」）：
- * 木頭棋盤上有深淺的斑，線是嵌進去的淺金色木條，邊上一圈同樣的木條，下方多一段空木頭；
+ * 手抄本平塗的棋盤（赭色斑駁、筆刷紋），線是金色木條、兩側描墨線，邊上一圈同樣的木條，下方多一段空木頭；
  * 棋子是插圖裡那種側面看的鐘形小人，腳底站在交叉點上（不是把方框置中在交叉點：那樣交叉點落在胸口，整顆子看起來比點低半顆）。
  * 形狀與尺寸在 art.ts（分享圖也用同一份）。
  *
@@ -37,19 +37,15 @@ const reducedMotion = () => typeof window !== 'undefined' && window.matchMedia('
 const left = (x: number) => `${(x / BOARD_W) * 100}%`;
 const top = (y: number) => `${(y / BOARD_H) * 100}%`;
 
-/** 鐘形小人。mark：上一手的子，頭上點一個反色小點 */
+/**
+ * 鐘形小人。畫法是手抄本的筆觸（細而抖的墨線、蛋彩斑駁、提白），由 scripts/build-nmm-art.mjs 烘成圖（art.ts 的 PIECE_ART），
+ * 這裡只貼圖 —— 一盤十幾顆子各跑一次 feTurbulence，手機上會卡。mark：上一手的子，頭上點一個反色小點
+ */
 export function PieceGlyph({ side, mark = false, className = '' }: { side: Side; mark?: boolean; className?: string }) {
   return (
-    <svg viewBox="0 0 100 100" className={className} aria-hidden="true">
-      {side === 'black'
-        ? <g fill={NMM.ink}>{MAN_PARTS.map((d) => <path key={d} d={d} />)}</g>
-        : (
-          <>
-            <g fill={NMM.ink} stroke={NMM.ink} strokeWidth={MAN_OUTLINE} strokeLinejoin="round">{MAN_PARTS.map((d) => <path key={d} d={d} />)}</g>
-            <g fill={NMM.parchment}>{MAN_PARTS.map((d) => <path key={d} d={d} />)}</g>
-          </>
-        )}
-      {mark && <circle cx={MAN_HEAD.x} cy={MAN_HEAD.y} r={6} fill={side === 'black' ? NMM.parchment : NMM.ink} />}
+    <svg viewBox="0 0 100 100" overflow="visible" className={className} aria-hidden="true">
+      <image href={PIECE_ART[side]} x={-PIECE_PAD} y={-PIECE_PAD} width={100 + PIECE_PAD * 2} height={100 + PIECE_PAD * 2} />
+      {mark && <circle cx={MAN_HEAD.x} cy={MAN_HEAD.y} r={5} fill={side === 'black' ? NMM.parchment : NMM.ink} />}
     </svg>
   );
 }
@@ -68,39 +64,14 @@ function StripLine({ l, ...rest }: { l: readonly Point[] } & SVGProps<SVGLineEle
   return <line x1={gx(a.x)} y1={gy(a.y)} x2={gx(b.x)} y2={gy(b.y)} {...rest} />;
 }
 
-/** 木頭、斑、木條、粉筆線。斑用 SVG 的 feTurbulence 畫（插圖的棋盤是一塊塊深淺不一的木色），顏色是插圖取樣的 */
-function BoardArt({ uid, mills }: { uid: string; mills: Point[][] }) {
-  const clip = `${uid}c`, dark = `${uid}d`, light = `${uid}l`;
-  const frame = <rect x={FRAME_INSET} y={FRAME_INSET} width={BOARD_W - FRAME_INSET * 2} height={BOARD_H - FRAME_INSET * 2} />;
+/**
+ * 棋盤：手抄本那種平塗（赭色斑駁、筆刷紋、零星剝落、金色木條兩側描墨線），整塊烘成一張圖（art.ts 的 BOARD_ART，
+ * 由 scripts/build-nmm-art.mjs 產生）。上面只畫會變的東西：剛連成的線（粉筆）。
+ */
+function BoardArt({ mills }: { mills: Point[][] }) {
   return (
     <svg viewBox={`0 0 ${BOARD_W} ${BOARD_H}`} className="absolute inset-0 size-full" aria-hidden="true">
-      <defs>
-        <clipPath id={clip}><rect width={BOARD_W} height={BOARD_H} rx={1.6} /></clipPath>
-        {/* 雜訊的紅色頻道越低、深色斑越濃；綠色頻道越高、淺色斑越濃（兩張不同的雜訊） */}
-        <filter id={dark} x="0" y="0" width="1" height="1" colorInterpolationFilters="sRGB">
-          <feTurbulence type="fractalNoise" baseFrequency="0.05 0.03" numOctaves={3} seed={11} />
-          <feColorMatrix type="matrix" values="0 0 0 0 0.471 0 0 0 0 0.278 0 0 0 0 0.090 -2.8 0 0 0 1.3" />
-        </filter>
-        <filter id={light} x="0" y="0" width="1" height="1" colorInterpolationFilters="sRGB">
-          <feTurbulence type="fractalNoise" baseFrequency="0.07 0.035" numOctaves={2} seed={4} />
-          <feColorMatrix type="matrix" values="0 0 0 0 0.608 0 0 0 0 0.420 0 0 0 0 0.180 0 2.6 0 0 -1.4" />
-        </filter>
-      </defs>
-      <g clipPath={`url(#${clip})`}>
-        <rect width={BOARD_W} height={BOARD_H} fill={NMM.wood} />
-        <rect width={BOARD_W} height={BOARD_H} filter={`url(#${dark})`} />
-        <rect width={BOARD_W} height={BOARD_H} filter={`url(#${light})`} />
-      </g>
-      <rect x={0.5} y={0.5} width={BOARD_W - 1} height={BOARD_H - 1} rx={1.3} fill="none" stroke={NMM.woodDark} strokeWidth={1} />
-      {/* 木條：先畫整條深色的邊，再把淺金色疊上去 —— 交叉的地方淺色自然接在一起，跟插圖一樣 */}
-      <g fill="none" stroke={NMM.stripEdge} strokeWidth={STRIP.edge} strokeLinecap="square">
-        {frame}
-        {MILLS.map((l, i) => <StripLine key={i} l={l} />)}
-      </g>
-      <g fill="none" stroke={NMM.strip} strokeWidth={STRIP.core} strokeLinecap="square">
-        {frame}
-        {MILLS.map((l, i) => <StripLine key={i} l={l} />)}
-      </g>
+      <image href={BOARD_ART} width={BOARD_W} height={BOARD_H} preserveAspectRatio="none" />
       {/* 剛連成的線：木條上蓋一道粉筆（壓在棋子底下） */}
       <g stroke={NMM.parchment} strokeWidth={3.2} strokeLinecap="round" opacity={0.95}>
         {mills.map((l) => {
@@ -202,10 +173,9 @@ export function MorrisMiniBoard({ board, mills = [], removable = [], selected, t
   lastFrom?: Point;
   removed?: Record<Side, number>;
 }) {
-  const uid = useId().replace(/[^a-zA-Z0-9]/g, '');
   return (
     <div className="relative w-full" style={{ aspectRatio: `${BOARD_W} / ${BOARD_H}` }} aria-hidden="true">
-      <BoardArt uid={uid} mills={mills} />
+      <BoardArt mills={mills} />
       <TrayPieces removed={removed} />
       {board.map((cell, p) => {
         const { x, y } = COORDS[p];
@@ -258,7 +228,6 @@ export function MorrisBoard({ board, targets, movable, removable, selected, last
   labels: BoardLabels;
   onPick: (p: Point) => void;
 }) {
-  const uid = useId().replace(/[^a-zA-Z0-9]/g, '');
   const rootRef = useRef<HTMLDivElement>(null);
   const seen = useRef(plies);
   const onPluckRef = useRef(onPluck);
@@ -353,7 +322,7 @@ export function MorrisBoard({ board, targets, movable, removable, selected, last
 
   return (
     <div ref={rootRef} className="relative w-full" style={{ aspectRatio: `${BOARD_W} / ${BOARD_H}` }}>
-      <BoardArt uid={uid} mills={mills} />
+      <BoardArt mills={mills} />
 
       <TrayPieces removed={removed} />
 
