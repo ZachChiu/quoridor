@@ -76,7 +76,7 @@ export default function GomokuMenu({ locale, onStart }: { locale: Locale; onStar
       {/* 右上角的聯絡、語言：圓鈕與打開的彈窗都是這款自己的布（GMK_CORNER），不是 Wall Go 的奶油底＋深墨 */}
       <PlatformCorner locale={locale} theme={GMK_CORNER} offset="calc(var(--gmk-frame, 26px) + 6px)" />
 
-      {/* 桌機排法見 deskLayout.ts（A／B 兩種給 Zach 挑）：header 與 nav 在桌機拆成格線裡的幾塊（lg:contents），手機照舊一欄 */}
+      {/* 桌機排法見 deskLayout.ts：header 與 nav 在桌機拆成格線裡的幾塊（lg:contents），手機照舊一欄 */}
       <header className="flex w-full max-w-[440px] flex-col items-center text-center lg:contents">
         <div className="flex flex-col items-center lg:items-start lg:self-end lg:text-left lg:[grid-area:title]">
           <p className="text-xs font-black tracking-wide text-ink-soft">{t.tags}</p>

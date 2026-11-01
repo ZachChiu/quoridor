@@ -369,7 +369,7 @@ export default function GomokuPlay({ mode, onMenu }: { mode: GomokuMode | Online
       </div>
       <div className="mt-2 w-full max-w-[520px] lg:hidden">{statusBlock}</div>
 
-      {/* 桌機：棋盤與右欄並排（排法 A／B 見 deskLayout.ts）；手機這一層是 contents，不影響手機的上下排 */}
+      {/* 桌機：棋盤與右欄並排（排法見 deskLayout.ts）；手機這一層是 contents，不影響手機的上下排 */}
       <div className={PLAY_GRID.row}>
         {/* 棋盤：手機在剩下的高度裡置中；寬度同時受高度限制，矮的手機也放得下下面的選色盤 */}
         <div ref={boardRef} className="flex w-full max-w-[min(520px,calc(100svh-17rem))] flex-1 items-center py-2 lg:w-[min(640px,calc(100svh-4rem))] lg:max-w-none lg:flex-none lg:py-0">
