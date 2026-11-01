@@ -100,6 +100,8 @@ export default React.memo(function GameStatus({ me, isLock, currentPlayer, uniqT
             style={{
               backgroundColor: playerVar(p),
               ...(p === me ? { outline: `3px solid ${playerVar(p)}`, outlineOffset: '3px' } : null),
+              // 斷線：整塊去色（字、數字照樣看得到，11/1 Zach：灰到把資訊全蓋住不行）
+              ...(gone ? { filter: 'grayscale(1)' } : null),
             }}
           >
             <span className="flex flex-col coarse:hidden">
@@ -116,10 +118,10 @@ export default React.memo(function GameStatus({ me, isLock, currentPlayer, uniqT
               </span>
             )}
             {p === me && <span className="sr-only">{g.status.you}</span>}
-            {/* 斷線：整塊蓋一層灰、正中一個 Wi‑Fi 斷掉的圖示（11/1 Zach：角落那顆拔插頭的小圓不夠明顯）。
-                灰用蓋的、不用 filter：filter 會連圖示一起淡掉。米白圖示在這個灰上 4.6:1 */}
+            {/* 斷線：整塊去色（外層的 filter），再蓋一層淡淡的墨、正中一個 Wi‑Fi 斷掉的圖示（11/1 Zach：角落那顆拔插頭的小圓不夠明顯；
+                第一版蓋實心灰把分數整個遮掉，Zach 要資訊還看得到） */}
             {gone && (
-              <span className="absolute inset-0 z-10 grid place-items-center rounded-[inherit] bg-[#77726c] text-[26px] text-tile-cream coarse:text-xl">
+              <span className="absolute inset-0 z-10 grid place-items-center rounded-[inherit] bg-tile-ink/35 text-[26px] text-tile-cream coarse:text-xl">
                 <LuWifiOff aria-hidden="true" />
                 <span className="sr-only">{g.status.away}</span>
               </span>
