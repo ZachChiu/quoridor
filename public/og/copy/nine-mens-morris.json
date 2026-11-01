@@ -1,0 +1,50 @@
+{
+  "zh-TW": {
+    "kicker": "骰子惡魔",
+    "title": [
+      "九子棋",
+      "Nine Men's Morris"
+    ],
+    "titleSize": 56
+  },
+  "en": {
+    "kicker": "Dice Devil",
+    "title": [
+      "Nine Men's Morris",
+      "The mill game"
+    ],
+    "titleSize": 56
+  },
+  "ja": {
+    "kicker": "Dice Devil",
+    "title": [
+      "ナイン・メンズ・モリス",
+      "Nine Men's Morris"
+    ],
+    "titleSize": 56
+  },
+  "ko": {
+    "kicker": "Dice Devil",
+    "title": [
+      "나인 멘스 모리스",
+      "Nine Men's Morris"
+    ],
+    "titleSize": 56
+  },
+  "zh-Hans": {
+    "kicker": "骰子恶魔",
+    "title": [
+      "九子棋",
+      "Nine Men's Morris"
+    ],
+    "titleSize": 56
+  },
+  "th": {
+    "kicker": "Dice Devil",
+    "title": [
+      "Nine Men's Morris",
+      "หมากเก้าตัว"
+    ],
+    "titleSize": 56
+  }
+}

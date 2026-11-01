@@ -35,7 +35,10 @@
     - 座位：同 rooms，空位只能坐自己
     - moves 與 turn：**只有輪到的人**能寫（看寫入前的 turn），走完一手兩個一起寫。
       所以不能替對方走、也不能把回合搶過來。合不合規則由兩邊的程式重走一次檢查
-    - 沒有 status、winners：勝負全部由 moves 推導（目前沒有投降）
+    - 沒有 status、winners：勝負由 moves 推導；唯一的例外是投降（resigned）
+    - presence、nudge、resigned（2026-11-01 加，utils/roomSignals.ts；turnRooms 同一套）：
+      presence 每個座位只有本人能寫（true 或斷線的時間戳記，同 rooms）；nudge 只有在座、而且不是輪到的人能寫，15 秒冷卻；
+      resigned 只能寫自己的座位、只能寫一次（寫了這局就結束）。先發布、程式後上線都沒關係：舊程式不寫；新程式寫入被拒時只是沒有這些功能
 
     ── 輪流下的遊戲共用的房間（turnRooms，2026-10-24 加）────────────────
     九子棋、盲眼五子棋、均衡曼卡拉共用（結構見 app/types/turnRoom.ts）。做法跟 baghRooms 一樣，只是座位不寫死：
@@ -45,6 +48,12 @@
     - moves 與 turn：**只有輪到的人**能寫（看寫入前的 turn 指到的座位是不是自己），走完一手兩個一起寫
     - 沒有 status、winner：勝負由 moves 推導
     這段先發布、程式後上線沒關係：舊程式不會碰 turnRooms
+
+    ── 想玩（wantCounts／wantVoters，2026-11-01 加）──────────────────────
+    平台上還沒做的遊戲卡的「想玩」（app/utils/wants.ts）。人數誰都能讀；誰按過不能讀。
+    人數只能跟「自己那一票」在同一次寫入裡一起改：+1 時同時多一個自己的 uid、−1 時同時拿掉它 —— 只改數字、
+    替別人投、同一個帳號投兩次都會被拒。鑰匙只收英文名轉的小寫連字號（≤40 字）。
+    這段先發布、程式後上線沒關係：舊程式不會碰這兩個路徑。程式先上的話只是讀不到數字、按了會退回
 
     ── 回饋 ─────────────────────────────────────────────────────────
     只能新增、沒有人讀得到（裡面可能有選填的聯絡方式）；我從 Console 讀，
@@ -174,6 +183,23 @@
           ".write": "auth != null && ((data.parent().child('turn').val() === 'tiger' && data.parent().child('players/tiger/uid').val() === auth.uid) || (data.parent().child('turn').val() === 'goat' && data.parent().child('players/goat/uid').val() === auth.uid))",
           ".validate": "newData.val() === 'tiger' || newData.val() === 'goat'"
         },
+        "presence": {
+          "$seat": {
+            ".write": "auth != null && ($seat === 'tiger' || $seat === 'goat') && data.parent().parent().child('players').child($seat).child('uid').val() === auth.uid",
+            ".validate": "newData.val() === true || (newData.isNumber() && newData.val() <= now)"
+          }
+        },
+        "nudge": {
+          ".write": "auth != null && newData.exists() && (!data.exists() || now > data.child('at').val() + 15000)",
+          ".validate": "newData.hasChildren(['by', 'at']) && newData.child('at').val() === now && newData.child('by').val() !== data.parent().child('turn').val() && data.parent().child('players').child(newData.child('by').val()).child('uid').val() === auth.uid",
+          "by": { ".validate": "newData.val() === 'tiger' || newData.val() === 'goat'" },
+          "at": { ".validate": "newData.isNumber()" },
+          "$other": { ".validate": false }
+        },
+        "resigned": {
+          ".write": "auth != null && !data.exists() && newData.exists() && data.parent().child('players').child(newData.val()).child('uid').val() === auth.uid",
+          ".validate": "newData.val() === 'tiger' || newData.val() === 'goat'"
+        },
         "$other": { ".validate": false }
       }
     },
@@ -206,7 +232,39 @@
           ".write": "auth != null && data.parent().child('players/' + data.parent().child('turn').val() + '/uid').val() === auth.uid",
           ".validate": "newData.isString() && newData.val().matches(/^s[0-7]$/) && newData.parent().child('players/' + newData.val()).exists() || (!data.exists() && newData.isString() && newData.val().matches(/^s[0-7]$/))"
         },
+        "presence": {
+          "$seat": {
+            ".write": "auth != null && data.parent().parent().child('players').child($seat).child('uid').val() === auth.uid",
+            ".validate": "$seat.matches(/^s[0-7]$/) && (newData.val() === true || (newData.isNumber() && newData.val() <= now))"
+          }
+        },
+        "nudge": {
+          ".write": "auth != null && newData.exists() && (!data.exists() || now > data.child('at').val() + 15000)",
+          ".validate": "newData.hasChildren(['by', 'at']) && newData.child('at').val() === now && newData.child('by').val() !== data.parent().child('turn').val() && data.parent().child('players').child(newData.child('by').val()).child('uid').val() === auth.uid",
+          "by": { ".validate": "newData.isString() && newData.val().matches(/^s[0-7]$/)" },
+          "at": { ".validate": "newData.isNumber()" },
+          "$other": { ".validate": false }
+        },
+        "resigned": {
+          ".write": "auth != null && !data.exists() && newData.exists() && newData.isString() && newData.val().matches(/^s[0-7]$/) && data.parent().child('players').child(newData.val()).child('uid').val() === auth.uid",
+          ".validate": "newData.isString() && newData.val().matches(/^s[0-7]$/)"
+        },
         "$other": { ".validate": false }
+      }
+    },
+    "wantCounts": {
+      ".read": true,
+      "$game": {
+        ".write": "auth != null && newData.exists()",
+        ".validate": "$game.matches(/^[a-z0-9-]{1,40}$/) && newData.isNumber() && ((!root.child('wantVoters/' + $game + '/' + auth.uid).exists() && newData.parent().parent().child('wantVoters/' + $game + '/' + auth.uid).val() === true && newData.val() === (data.exists() ? data.val() : 0) + 1) || (root.child('wantVoters/' + $game + '/' + auth.uid).exists() && !newData.parent().parent().child('wantVoters/' + $game + '/' + auth.uid).exists() && newData.val() === data.val() - 1))"
+      }
+    },
+    "wantVoters": {
+      ".read": false,
+      "$game": {
+        "$uid": {
+          ".write": "auth != null && auth.uid === $uid && $game.matches(/^[a-z0-9-]{1,40}$/) && (newData.exists() ? (!data.exists() && newData.val() === true && newData.parent().parent().parent().child('wantCounts/' + $game).val() === (root.child('wantCounts/' + $game).exists() ? root.child('wantCounts/' + $game).val() : 0) + 1) : (data.exists() && newData.parent().parent().parent().child('wantCounts/' + $game).val() === root.child('wantCounts/' + $game).val() - 1))"
+        }
       }
     },
     "feedback": {

@@ -13,6 +13,9 @@ import { applyMove, createGame, decodeMoves, encodeMoves, replay, type BaghState
 import type { BaghRoom } from '@/types/baghRoom';
 import { createBaghRoom, getBaghRoom, joinBaghRoom, subscribeBaghRoom, writeBaghMoves } from '@/utils/baghService';
 import { atStep, describeOnlineError, reportOnlineError } from '@/utils/onlineError';
+import { writeResigned } from '@/utils/roomSignals';
+import { useRoomSignals } from '@/hook/useRoomSignals';
+import { track } from '@/utils/analytics';
 import BaghPlay from './BaghPlay';
 import BaghFrame from './BaghFrame';
 import { GoatToken, InviteToken, TigerToken } from './tokens';
@@ -76,16 +79,17 @@ function Session({ locale, hash }: { locale: Locale; hash: string }) {
           const id = await atStep('create', createBaghRoom(target.create, seat));
           if (cancelled) return;
           history.replaceState(null, '', `${location.pathname}#roomId=${id}`);
+          track('room_created', { game: 'bagh-chal', players: 2 });
           setMe(target.create); setRoomId(id);
           return;
         }
         const existing = await atStep('getRoom', getBaghRoom(target.roomId));
         if (cancelled) return;
-        if (!existing) { setFailure('noRoom'); return; }
+        if (!existing) { track('online_error', { game: 'bagh-chal', reason: 'noRoom' }); setFailure('noRoom'); return; }
         const mine = (['tiger', 'goat'] as const).find((s) => existing.players?.[s]?.uid === uid);
         const open = (['tiger', 'goat'] as const).find((s) => !existing.players?.[s]);
         const side = mine ?? open;
-        if (!side) { setFailure('roomFull'); return; }
+        if (!side) { track('online_error', { game: 'bagh-chal', reason: 'roomFull' }); setFailure('roomFull'); return; }
         if (!mine) await atStep('join', joinBaghRoom(target.roomId, side, seat));
         if (cancelled) return;
         setMe(side); setRoomId(target.roomId);
@@ -93,7 +97,9 @@ function Session({ locale, hash }: { locale: Locale; hash: string }) {
         if (cancelled) return;
         console.error('[bagh-chal online]', err);
         const info = describeOnlineError(err);
-        reportOnlineError('create' in target ? 'createFail' : 'connectFail', info);
+        const reason = 'create' in target ? 'createFail' : 'connectFail';
+        track('online_error', { game: 'bagh-chal', reason, fail_step: info.step });
+        reportOnlineError(reason, info);
         setFailure('connectFail');
       }
     })();
@@ -106,7 +112,11 @@ function Session({ locale, hash }: { locale: Locale; hash: string }) {
     return subscribeBaghRoom(roomId, (r) => {
       if (!r) { setFailure('noRoom'); return; }
       setRoom(r);
-      try { setGame(replay(decodeMoves(r.moves ?? ''))); } catch { setFailure('connectFail'); }
+      try {
+        const played = replay(decodeMoves(r.moves ?? ''));
+        // 投降不是棋盤上發生的事：房間的 resigned 蓋在重走出來的局面上（對方勝），之後誰都不能再走
+        setGame(r.resigned && !played.winner ? { ...played, winner: other(r.resigned) } : played);
+      } catch { setFailure('connectFail'); }
     });
   }, [roomId]);
 
@@ -117,12 +127,23 @@ function Session({ locale, hash }: { locale: Locale; hash: string }) {
     setGame(next);
     writeBaghMoves(roomId, encodeMoves(next.history), next.turn).catch((err) => {
       console.error('[bagh-chal online] 寫入失敗', err);
-      reportOnlineError('connectFail', describeOnlineError(err));
+      const info = describeOnlineError(err);
+      track('online_error', { game: 'bagh-chal', reason: 'connectFail', fail_step: info.step });
+      reportOnlineError('connectFail', info);
       setFailure('connectFail');
     });
   }, [roomId, game]);
 
   const newRoom = useCallback(() => { if (me) location.hash = `#new=${me}`; }, [me]);
+
+  // 在線狀態、催一下、投降（Wall Go 有的，11/1 Zach 要正式上線的幾款都補）：人到齊、還沒分出勝負時才回報
+  const roomPath = roomId ? `baghRooms/${roomId}` : null;
+  const seated = !!(me && room?.players?.[other(me)]);
+  const signals = useRoomSignals({
+    roomPath, me, presence: room?.presence, nudge: room?.nudge, turn: room?.turn ?? null,
+    active: seated && !game.winner,
+  });
+  const resign = useCallback(() => { if (roomPath && me) void writeResigned(roomPath, me); }, [roomPath, me]);
 
   const home = localePath(locale, baghChal());
   if (failure) {
@@ -147,7 +168,13 @@ function Session({ locale, hash }: { locale: Locale; hash: string }) {
   if (!room.players?.[other(me)]) {
     return <Waiting me={me} url={`${location.origin}${location.pathname}#roomId=${roomId}`} home={home} />;
   }
-  return <BaghPlay locale={locale} mode={{ kind: 'online', human: me, game, onMove, newRoom }} />;
+  return <BaghPlay locale={locale} mode={{
+    kind: 'online', human: me, roomId, game, onMove, newRoom,
+    resigned: room.resigned ?? null, resign,
+    away: (signals.away[0] as Side | undefined) ?? null, selfOffline: signals.selfOffline,
+    canNudge: signals.canNudge, nudged: signals.nudged, shake: signals.shake, nudgeFrom: signals.nudgeFrom as Side | null,
+    nudge: () => signals.sendNudge(() => track('nudge_send', { game: 'bagh-chal', players: 2 })),
+  }} />;
 }
 
 /**
@@ -189,6 +216,7 @@ function Waiting({ me, url, home }: { me: Side; url: string; home: string }) {
 
   const copy = async () => {
     try { await navigator.clipboard.writeText(url); } catch { return; }
+    track('share_room_link', { game: 'bagh-chal', method: 'copy' });
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -226,7 +254,7 @@ function Waiting({ me, url, home }: { me: Side; url: string; home: string }) {
             </button>
           </div>
           {canShare && (
-            <button type="button" onClick={() => share({ title: b.title, text: b.shareText, url })}
+            <button type="button" onClick={() => { track('share_room_link', { game: 'bagh-chal', method: 'native' }); void share({ title: b.title, text: b.shareText, url }); }}
               className={`${BAGH_PRIMARY} h-12 w-full px-4 text-base`}>
               <LuShare2 className="text-lg" aria-hidden="true" />{g.share.share}
             </button>

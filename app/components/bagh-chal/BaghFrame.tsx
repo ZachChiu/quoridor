@@ -10,7 +10,10 @@ import type React from 'react';
  * 圖騰鋪在這一層本身（.bagh-bg，重複鋪的圖塊，長頁面也不會被拉大），跟著頁面一起捲。
  * 先前是另一層 fixed 的背景（捲動時圖騰不動），但 iOS 26 Safari 不把 fixed 的東西畫到狀態列與工具列底下，
  * 那兩條只剩番紅花色塊；跟著頁面捲的內容才會出現在那裡（2026-10-25 Zach：「圖騰改成鋪在頁面本身」）。
- * 不掛在 html 上：Modal 打開時 body 會變成 fixed（useScrollLock），html 的背景會跳回頂端的位置。
+ * 停在最上面時那兩條還是只有番紅花：狀態列那條 Safari 26 一律只塗 html 的底色（viewport-fit=cover 沒用，
+ * env(safe-area-inset-*) 都是 0），工具列那條試過往下多鋪一截圖騰（100lvh − 100svh）也沒接上 ——
+ * 同一天 Zach：「好像無解，改回原來」，所以拿掉了。只有加到主畫面打開時頁面才畫得到狀態列底下。
+ * 不掛在 html 上：當初 Modal 打開時 body 會變成 fixed，html 的背景會跳回頂端的位置（11/1 起捲動鎖改成 overflow: hidden，見 useScrollLock）。
  * 面板外一圈紙色襯邊，跟熱鬧的圖騰隔開；桌機限制寬度置中，兩側露出更多圖騰。
  *
  * - hub：遊戲首頁、page：規則頁 —— 四周留多一點

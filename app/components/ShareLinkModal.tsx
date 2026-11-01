@@ -44,7 +44,7 @@ const ShareLinkModal: React.FC<Props> = ({ isOpen, shareUrl, joinedCount, totalC
     桌機沒有 navigator.share，就只留複製。
   */
   const handleShare = async () => {
-    track('share_room_link', { method: 'native' });
+    track('share_room_link', { game: 'wall-go', method: 'native' });
     // 網址只放 url，不要在 text 裡再寫一次 —— 有些平台會把兩者串起來，
     // 於是同一個連結出現兩次。
     await share({
@@ -55,7 +55,7 @@ const ShareLinkModal: React.FC<Props> = ({ isOpen, shareUrl, joinedCount, totalC
   };
 
   const handleCopy = async () => {
-    track('share_room_link', { method: 'copy' });
+    track('share_room_link', { game: 'wall-go', method: 'copy' });
     try {
       await navigator.clipboard.writeText(shareUrl);
     } catch {

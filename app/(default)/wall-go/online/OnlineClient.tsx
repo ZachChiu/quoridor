@@ -58,13 +58,13 @@ export default function OnlineClient() {
           joinedAt: Date.now(),
         }, toWgf(createGame(createCount))));
         history.replaceState(null, '', `${location.pathname}#roomId=${roomId}`);
-        track('room_created', { players: createCount });
+        track('room_created', { game: 'wall-go', players: createCount });
         setTarget({ roomId });
       } catch (err) {
         console.error('[online] 開房失敗：', err);
         const info = describeOnlineError(err);
         setCreateFailed(true);
-        track('online_error', { reason: 'createFail', fail_step: info.step });
+        track('online_error', { game: 'wall-go', reason: 'createFail', fail_step: info.step });
         reportOnlineError('createFail', info);
       }
     })();

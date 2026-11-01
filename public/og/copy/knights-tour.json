@@ -1,0 +1,49 @@
+{
+  "zh-TW": {
+    "kicker": "骰子惡魔",
+    "title": [
+      "騎士巡遊",
+      "Knight's Tour"
+    ],
+    "titleSize": 66
+  },
+  "en": {
+    "kicker": "Dice Devil",
+    "title": [
+      "Knight's Tour"
+    ],
+    "titleSize": 66
+  },
+  "ja": {
+    "kicker": "Dice Devil",
+    "title": [
+      "ナイトツアー",
+      "Knight's Tour"
+    ],
+    "titleSize": 66
+  },
+  "ko": {
+    "kicker": "Dice Devil",
+    "title": [
+      "기사의 여행",
+      "Knight's Tour"
+    ],
+    "titleSize": 66
+  },
+  "zh-Hans": {
+    "kicker": "骰子恶魔",
+    "title": [
+      "骑士巡游",
+      "Knight's Tour"
+    ],
+    "titleSize": 66
+  },
+  "th": {
+    "kicker": "Dice Devil",
+    "title": [
+      "Knight's Tour",
+      "ทางเดินม้า"
+    ],
+    "titleSize": 66
+  }
+}

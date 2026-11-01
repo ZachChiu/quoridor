@@ -28,11 +28,11 @@ export type EntranceScene = {
 const LOADERS: Record<string, () => Promise<{ default: EntranceScene }>> = {
   // 時間拍賣（feat/game-time-auction 打開這一行）
 
-  // 九子棋（feat/game-nine-mens-morris 打開這一行）
+  'nine-mens-morris': () => import('./nine-mens-morris/Entrance'),
 
   'blind-gomoku': () => import('./blind-gomoku/Entrance'),
 
-  // 騎士巡邏（feat/game-knights-tour 打開這一行）
+  'knights-tour': () => import('./knights-tour/Entrance'),
 
   // 均衡曼卡拉（feat/game-balance-mancala 打開這一行）
 };

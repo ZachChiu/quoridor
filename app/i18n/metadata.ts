@@ -202,13 +202,13 @@ const GAME_ICONS: Record<string, Metadata['icons'] | undefined> = {
 
   'bagh-chal': iconSet('bagh-chal'),
 
-  'nine-mens-morris': undefined,
+  'nine-mens-morris': iconSet('nine-mens-morris'),
 
   'time-auction': undefined,
 
   'blind-gomoku': iconSet('blind-gomoku', true),
 
-  'knights-tour': undefined,
+  'knights-tour': iconSet('knights-tour', true),
 
   'balance-mancala': undefined,
 };
@@ -309,5 +309,18 @@ export function trialGameMetadata(locale: Locale, path: string, title: string, d
     },
     twitter: { card: 'summary_large_image', title, description, images: [url] },
   };
+}
+
+/**
+ * 上線了的第二批遊戲頁（首頁、規則頁）：同 trialGameMetadata，但會被索引，帶 canonical 與 hreflang（同 localeMetadata，互相指到彼此、x-default 是 /en）。
+ * 某一款上線時把它的頁面從 trialGameMetadata 換成這個，next-sitemap.config.js 的排除清單也要一起拿掉那款
+ * （11/1 騎士巡遊上線時漏了，頁面一直是 noindex）。
+ */
+export function launchedGameMetadata(locale: Locale, path: string, title: string, description: string): Metadata {
+  const { robots: _noindex, ...meta } = trialGameMetadata(locale, path, title, description);
+  void _noindex;
+  const languages = Object.fromEntries(LOCALES.map((l) => [HREFLANG[l], SITE + localePath(l, path)])) as Record<string, string>;
+  languages['x-default'] = SITE + localePath('en', path);
+  return { ...meta, alternates: { canonical: SITE + localePath(locale, path), languages } };
 }
 

@@ -37,7 +37,7 @@ export default function ContactButton({ theme, buttonClassName }: { theme?: Corn
       >
         <LuMessageCircle aria-hidden="true" />
       </button>
-      <FeedbackModal
+      <FeedbackModal game="wall-go"
         isOpen={open}
         onClose={() => setOpen(false)}
         variant="contact"

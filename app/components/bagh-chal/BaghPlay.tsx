@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { LuCircleHelp, LuHouse, LuRotateCcw, LuUndo2, LuVolume2, LuVolumeX } from 'react-icons/lu';
+import { LuBellRing, LuCircleHelp, LuFlag, LuHouse, LuRotateCcw, LuUndo2, LuVolume2, LuVolumeX, LuWifiOff } from 'react-icons/lu';
+import { shakeElement } from '@/hook/useRoomSignals';
 import Modal from '@/components/Modal';
 import FeedbackModal from '@/components/FeedbackModal';
 import { useUser } from '@/contexts/UserContext';
@@ -24,12 +25,21 @@ import { BAGH_CORNER, BAGH_PRIMARY, BAGH_ROUND, BAGH_SECONDARY } from './styles'
 import BaghWordmark from './BaghWordmark';
 import { labelled } from './BaghUi';
 import { BAGH_CARD_IMAGES, drawBaghCard } from './shareCard';
+import { track, type GameModeParam } from '@/utils/analytics';
 
 export type BaghMode =
   | { kind: 'local' }
   | { kind: 'ai'; human: Side; difficulty: Difficulty }
   /** 連線：局面由房間推導（BaghOnline 持有），這裡只負責畫與把自己的那一手交出去 */
-  | { kind: 'online'; human: Side; game: BaghState; onMove: (m: Move) => void; newRoom: () => void };
+  | {
+    kind: 'online'; human: Side; roomId: string; game: BaghState; onMove: (m: Move) => void; newRoom: () => void;
+    /** 在線狀態、催一下、投降（BaghOnline 的 useRoomSignals，2026-11-01）。resigned：投降的那一邊（game.winner 已經蓋成對方） */
+    resigned: Side | null; resign: () => void;
+    away: Side | null; selfOffline: boolean;
+    canNudge: boolean; nudged: boolean; nudge: () => void;
+    /** 被催：數字變了就抖一下棋盤、拍手鼓；nudgeFrom 是誰催的（3.5 秒後清掉） */
+    shake: number; nudgeFrom: Side | null;
+  };
 
 const fmt = (s: string, n: number) => s.replace('{n}', String(n));
 
@@ -54,6 +64,11 @@ export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghM
   const online = mode.kind === 'online';
   const [selected, setSelected] = useState<Point | null>(null);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [resignOpen, setResignOpen] = useState(false);
+  /** 本機、跟電腦下的投降（11/1 Zach）：投降的那一邊；局面的 winner 直接蓋成對方 */
+  const [localResigned, setLocalResigned] = useState<Side | null>(null);
+  const resignedSide = mode.kind === 'online' ? mode.resigned : localResigned;
+  const boardRef = useRef<HTMLDivElement>(null);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const { ensureUser } = useUser();
 
@@ -73,11 +88,69 @@ export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghM
     return () => window.clearTimeout(id);
   }, [aiTurn, mode, game]);
 
-  const restart = () => { setGame(createGame()); setSelected(null); };
+  const restart = () => { setGame(createGame()); setSelected(null); setLocalResigned(null); };
+  // 投降：本機是輪到的那方、跟電腦下是自己；連線寫進房間
+  const resign = () => {
+    if (mode.kind === 'online') { mode.resign(); return; }
+    if (game.winner) return;
+    const loser = mode.kind === 'ai' ? mode.human : game.turn;
+    setLocalResigned(loser);
+    setGame({ ...game, winner: loser === 'tiger' ? 'goat' : 'tiger' });
+    setSelected(null);
+  };
+
+  // GA（docs/platform-tracking.md）：跟 Wall Go 送同一套事件，帶 game。看狀態的轉變而不是按鈕 ——
+  // 開始＝下了第一手（連線也是：兩邊到齊後的第一手），結束＝分出勝負。
+  // 第一次觀察到的狀態不送：連線局重整時盤面是從房間重走出來的，那時「已經開始／已經結束」不是這次發生的事；
+  // 連線局同一間房在這個分頁裡也只送一次
+  const difficulty = mode.kind === 'ai' ? mode.difficulty : undefined;
+  const gaBase = useMemo(() => ({
+    game: 'bagh-chal' as const,
+    mode: (mode.kind === 'ai' ? 'solo' : mode.kind) as GameModeParam,
+    players: 2 as const,
+    difficulty,
+  }), [mode.kind, difficulty]);
+  const started = game.history.length > 0;
+  const ended = !!game.winner;
+  const gaSeen = useRef<{ started: boolean; ended: boolean } | null>(null);
+  const startedAt = useRef<number | null>(null);
+  useEffect(() => {
+    const prev = gaSeen.current;
+    gaSeen.current = { started, ended };
+    if (!prev) return;
+    const once = (what: string) => {
+      if (mode.kind !== 'online') return true;
+      const key = `ga:bagh:${mode.roomId}:${what}`;
+      try {
+        if (sessionStorage.getItem(key)) return false;
+        sessionStorage.setItem(key, '1');
+      } catch { /* 存取失敗時照送，寧可多一筆也不要整個壞掉 */ }
+      return true;
+    };
+    if (started && !prev.started && once('start')) {
+      startedAt.current = Date.now();
+      track('game_start', gaBase);
+    }
+    if (ended && game.winner && !prev.ended && once('end')) {
+      const w = game.winner;
+      track('game_end', {
+        ...gaBase,
+        // 跟電腦下、連線從這台裝置上的人看；本機兩人沒有「我」，只分有沒有和局
+        result: w === 'draw' ? 'tie' : mode.kind === 'local' ? 'decided' : w === mode.human ? 'win' : 'lose',
+        winner: w,
+        // 連線可以投降（2026-11-01）
+        ended: resignedSide ? 'resign' : 'natural',
+        turns: game.history.length,
+        duration_sec: startedAt.current ? Math.round((Date.now() - startedAt.current) / 1000) : undefined,
+      });
+    }
+    // 只在「開始／結束」翻轉時才需要重跑；其餘值是送出當下讀的
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [started, ended]);
   // 連線局沒有悔棋與重來（要兩個人都同意，先不做）；結束後「再來一局」是再開一間房、重新傳連結
   // 結算關掉之後停在終局的盤面上（記住是哪一局關的，重來就是新的一局）
   const [closedFor, setClosedFor] = useState<BaghState | null>(null);
-  const again = mode.kind === 'online' ? mode.newRoom : restart;
+  const again = () => { track('game_restart', gaBase); (mode.kind === 'online' ? mode.newRoom : restart)(); };
   const side = (s: Side) => (s === 'tiger' ? b.tiger : b.goat);
   const whoAmI = mode.kind === 'local' ? '' : mode.kind === 'online' ? b.youAre.replace('{side}', side(mode.human)) : labelled(locale, b.playAs, side(mode.human));
   // 自己是哪一邊（本機對戰沒有「自己」）：那張狀態卡多一圈同色的框，中間留一道縫（跟 Wall Go 的比分一樣），手機上就不必再寫一行「你要當：老虎」
@@ -100,6 +173,19 @@ export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghM
       window.setTimeout(() => playBagh('turn'), 360);
     }
   }, [game, mode]);
+  // 投降沒有多一手，上面的音效不會響：這裡補勝負的聲音
+  useEffect(() => {
+    if (!resignedSide) return;
+    playBagh(mode.kind === 'local' || resignedSide !== mode.human ? 'win' : 'lose');
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 只在投降那一下響
+  }, [resignedSide]);
+  // 被催（連線）：棋盤抖一下、拍手鼓（震動在 useRoomSignals）
+  const shake = mode.kind === 'online' ? mode.shake : 0;
+  useEffect(() => {
+    if (!shake) return;
+    shakeElement(boardRef.current);
+    playBagh('nudge');
+  }, [shake]);
   // 虎羊棋裡面換頁不播轉場（木窗門只留在從平台卡片進來的那一下）
   // 下到一半離開先問（房子鈕、返回鍵、電腦版關分頁）：連線局一開打就算，其他下過一步才算
   const leave = useLeaveGuard({ live: !game.winner, inProgress: !game.winner && (online || game.history.length > 0) });
@@ -137,13 +223,20 @@ export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghM
   const canUndo = !locked && !online && game.history.length >= undoSteps;
   const doUndo = () => { setGame(undo(game, undoSteps)); setSelected(null); };
 
+  // 連線的提示（跟 Wall Go 同一套文案）：自己斷線最要緊，再來是對方斷線、被催
+  const away = mode.kind === 'online' && !game.winner ? mode.away : null;
+  const notice = mode.kind !== 'online' || game.winner ? null
+    : mode.selfOffline ? g.play.reconnecting
+    : away ? fill(g.play.away, { who: side(away) })
+    : mode.nudgeFrom ? fill(g.nudge.received, { who: side(mode.nudgeFrom) }) : null;
   const status = game.winner ? '' : aiTurn ? b.thinking : theirTurn ? b.opponentTurn
     : mode.kind === 'local' ? (game.turn === 'tiger' ? b.turnTiger : b.turnGoat) : b.yourTurn;
   // 第二行提示：新手最常卡住的兩件事 —— 羊不能吃、老虎要「跳過」才吃得到
   const hint = game.winner || locked ? ''
     : game.turn === 'tiger' ? b.hintTiger
     : game.goatsInHand > 0 ? b.hintPlace : b.hintGoat;
-  const result = game.winner === 'tiger' ? { title: b.winTiger, body: b.winTigerBody }
+  const result = resignedSide && game.winner && game.winner !== 'draw' ? { title: game.winner === 'tiger' ? b.winTiger : b.winGoat, body: fill(b.resignBody, { side: side(resignedSide) }) }
+    : game.winner === 'tiger' ? { title: b.winTiger, body: b.winTigerBody }
     : game.winner === 'goat' ? { title: b.winGoat, body: b.winGoatBody }
     : { title: b.draw, body: b.drawBody };
 
@@ -181,16 +274,20 @@ export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghM
   const round = BAGH_ROUND;
   const wide = `${BAGH_SECONDARY} h-12 text-sm`;
 
+  // 對方斷線（滿 3 秒）：那張卡反灰，正中間蓋一個斷掉的 Wi‑Fi（11/1 Zach：各款都這樣做）
+  const awayCover = <span className="bagh-away-cover" role="img" aria-label={g.status.away}><LuWifiOff aria-hidden="true" /></span>;
   // 兩行：上面圖示＋哪一方，下面數字。數字跟圖示擠同一行的話，「還有 14 隻羊要放」在手機上會斷成三行
   const statusCards = (
     <div className="grid w-full grid-cols-2 gap-3">
-      <div className={`flex flex-col gap-1 rounded-2xl p-3 ${game.turn === 'tiger' && !game.winner ? 'bg-[#e3a43c] text-tile-ink' : 'bg-[#4a2616]/[0.07] text-ink-soft'} ${mine === 'tiger' ? 'ring ring-[#e3a43c] ring-offset-2 ring-offset-[#fbf4e1]' : ''}`}>
+      <div className={`relative flex flex-col gap-1 rounded-2xl p-3 ${game.turn === 'tiger' && !game.winner ? 'bg-[#e3a43c] text-tile-ink' : 'bg-[#4a2616]/[0.07] text-ink-soft'} ${mine === 'tiger' ? 'ring ring-[#e3a43c] ring-offset-2 ring-offset-[#fbf4e1]' : ''} ${away === 'tiger' ? 'bagh-away' : ''}`}>
         <p className="flex items-center gap-2 text-sm font-bold"><TigerToken className="shrink-0 text-[28px]" />{b.tiger}</p>
         <p className="text-[15px] font-black leading-tight">{fmt(b.captured, game.captured)}</p>
+        {away === 'tiger' && awayCover}
       </div>
-      <div className={`flex flex-col gap-1 rounded-2xl p-3 ${game.turn === 'goat' && !game.winner ? 'bg-[#5b6620] text-tile-cream' : 'bg-[#4a2616]/[0.07] text-ink-soft'} ${mine === 'goat' ? 'ring ring-[#5b6620] ring-offset-2 ring-offset-[#fbf4e1]' : ''}`}>
+      <div className={`relative flex flex-col gap-1 rounded-2xl p-3 ${game.turn === 'goat' && !game.winner ? 'bg-[#5b6620] text-tile-cream' : 'bg-[#4a2616]/[0.07] text-ink-soft'} ${mine === 'goat' ? 'ring ring-[#5b6620] ring-offset-2 ring-offset-[#fbf4e1]' : ''} ${away === 'goat' ? 'bagh-away' : ''}`}>
         <p className="flex items-center gap-2 text-sm font-bold"><GoatToken className="shrink-0 text-[28px]" />{b.goat}</p>
         <p className="text-[15px] font-black leading-tight">{game.goatsInHand > 0 ? fmt(b.goatsInHand, game.goatsInHand) : `${GOATS - game.captured} / ${GOATS}`}</p>
+        {away === 'goat' && awayCover}
       </div>
     </div>
   );
@@ -198,14 +295,15 @@ export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghM
   const statusLine = (
     <div className="flex min-h-12 flex-col items-center text-center lg:items-start lg:text-left" aria-live="polite">
       <p className="text-sm font-black">{status}</p>
-      {hint && <p className="mt-1 text-xs font-bold text-ink-soft">{hint}</p>}
+      {notice ? <p className="mt-1 rounded-md bg-[#4a2616] px-2.5 py-0.5 text-xs font-black text-tile-cream">{notice}</p>
+        : hint && <p className="mt-1 text-xs font-bold text-ink-soft">{hint}</p>}
     </div>
   );
 
   // 手機只留一行：在等電腦／對方時寫在等誰，輪到人時寫怎麼下（輪到誰看亮起來的那張狀態卡就知道）
   const mobileLine = (
     <p className="min-h-6 py-1 text-center text-xs font-bold text-ink-soft" aria-live="polite">
-      {locked ? status : hint}
+      {notice ? <span className="rounded-md bg-[#4a2616] px-2.5 py-0.5 font-black text-tile-cream">{notice}</span> : locked ? status : hint}
     </p>
   );
 
@@ -242,7 +340,7 @@ export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghM
       </div>
 
       {/* 手機：棋盤在剩下的高度裡置中，不貼在狀態列下面、底下空一大塊 */}
-      <div className="flex w-full max-w-[520px] flex-1 items-center py-2 lg:max-w-[min(620px,calc(100svh-5rem))] lg:flex-none lg:py-0">
+      <div ref={boardRef} className="flex w-full max-w-[520px] flex-1 items-center py-2 lg:max-w-[min(620px,calc(100svh-5rem))] lg:flex-none lg:py-0">
         <BaghBoard board={game.board} targets={targets} movable={movable}
           selected={selected} last={last} plies={game.history.length}
           placing={!locked && !game.winner && game.turn === 'goat' && game.goatsInHand > 0}
@@ -250,11 +348,19 @@ export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghM
           labels={{ tiger: b.tiger, goat: b.goat }} onPick={pick} />
       </div>
 
-      {/* 手機：悔棋、重來放在棋盤下面（連線局沒有） */}
-      {!online && (
+      {/* 手機：連線局棋盤下面放催一下與投降（沒有悔棋、重來） */}
+      {mode.kind === 'online' && !game.winner && (
         <div className="grid w-full max-w-[520px] grid-cols-2 gap-2.5 pt-1 lg:hidden">
+          <button type="button" onClick={mode.nudge} disabled={!mode.canNudge || mode.nudged} className={wide}><LuBellRing aria-hidden="true" />{mode.nudged ? g.nudge.sent : g.nudge.button}</button>
+          <button type="button" onClick={() => setResignOpen(true)} className={wide}><LuFlag aria-hidden="true" />{g.surrender.label}</button>
+        </div>
+      )}
+      {/* 手機：悔棋、重來、投降放在棋盤下面（連線局沒有悔棋、重來） */}
+      {!online && (
+        <div className="grid w-full max-w-[520px] grid-cols-3 gap-2.5 pt-1 lg:hidden">
           <button type="button" onClick={doUndo} disabled={!canUndo} className={wide}><LuUndo2 aria-hidden="true" />{b.undo}</button>
           <button type="button" onClick={restart} className={wide}><LuRotateCcw aria-hidden="true" />{b.restart}</button>
+          <button type="button" onClick={() => setResignOpen(true)} disabled={!!game.winner} className={wide}><LuFlag aria-hidden="true" />{g.surrender.label}</button>
         </div>
       )}
 
@@ -275,7 +381,13 @@ export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghM
             <button type="button" onClick={restart} className={wide}><LuRotateCcw aria-hidden="true" />{b.restart}</button>
           </>}
           <button type="button" onClick={() => setHelpOpen(true)} className={wide}><LuCircleHelp aria-hidden="true" />{b.rulesHeading}</button>
-          <button type="button" onClick={home} className={wide}><LuHouse aria-hidden="true" />{b.menu}</button>
+          {/* 投降：本機、跟電腦下、連線都有（11/1 Zach）。不放「回首頁選玩法」—— 左上的房子就是，不用兩顆做同一件事 */}
+          <button type="button" onClick={() => setResignOpen(true)} disabled={!!game.winner} className={wide}><LuFlag aria-hidden="true" />{g.surrender.label}</button>
+          {mode.kind === 'online' && !game.winner && (
+            <button type="button" onClick={mode.nudge} disabled={!mode.canNudge || mode.nudged} className={`${wide} col-span-2`}>
+              <LuBellRing aria-hidden="true" />{mode.nudged ? g.nudge.sent : g.nudge.button}
+            </button>
+          )}
         </div>
       </aside>
 
@@ -286,6 +398,16 @@ export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghM
           <button type="button" onClick={leave.confirm} className={`${BAGH_PRIMARY} h-12 flex-1`}>{g.leave.confirm}</button>
         </>}>
         <p className="text-sm leading-relaxed">{online ? g.leave.bodyOnline : g.leave.body}</p>
+      </Modal>
+
+      {/* 投降確認。本機是輪到的那方（小標寫哪一方），跟電腦下是自己 */}
+      <Modal skin="bagh" isOpen={resignOpen && !game.winner} onClose={() => setResignOpen(false)} title={g.surrender.heading} kicker={mode.kind === 'local' ? side(game.turn) : g.surrender.kicker}
+        band={{ className: 'bg-[#4a2616]', fg: 'text-tile-cream' }}
+        footer={<>
+          <button type="button" onClick={() => setResignOpen(false)} className={`${BAGH_SECONDARY} h-12 flex-1`}>{g.surrender.cancel}</button>
+          <button type="button" onClick={() => { setResignOpen(false); resign(); }} className={`${BAGH_PRIMARY} h-12 flex-1`}>{g.surrender.confirm}</button>
+        </>}>
+        <p className="text-sm leading-relaxed">{g.surrender.body}</p>
       </Modal>
 
       <Modal skin="bagh" isOpen={helpOpen} onClose={() => setHelpOpen(false)} title={b.rulesHeading} kicker={b.name}
@@ -304,7 +426,7 @@ export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghM
           secondary: 'bagh-line bg-[#f2e4c4] text-tile-ink hover:bg-[#ead8ad]',
           button: 'font-black', placeholder: 'bg-[#e3a43c]/30',
         }} />
-      <FeedbackModal isOpen={feedbackOpen} onClose={() => setFeedbackOpen(false)} theme={BAGH_CORNER} placeholder={b.feedbackPlaceholder}
+      <FeedbackModal game="bagh-chal" isOpen={feedbackOpen} onClose={() => setFeedbackOpen(false)} theme={BAGH_CORNER} placeholder={b.feedbackPlaceholder}
         // 對局回饋的評分是必選（視窗沒選不給送），這裡的 null 只是型別上的可能
         onSubmit={async (rating, message, contact) => rating === null ? undefined :
           sendFeedback({
@@ -313,8 +435,7 @@ export default function BaghPlay({ locale, mode }: { locale: Locale; mode: BaghM
             mode: mode.kind === 'online' ? 'online' : mode.kind === 'ai' ? 'ai' : 'local',
             playersNum: 2,
             result: result.title.slice(0, 40),
-            // 尼泊爾虎棋沒有投降：分出勝負就是照規則下完
-            ended: game.winner ? 'natural' : 'unfinished',
+            ended: !game.winner ? 'unfinished' : resignedSide ? 'resign' : 'natural',
             ua: typeof navigator !== 'undefined' ? navigator.userAgent.slice(0, 400) : '',
             viewport: typeof window !== 'undefined' ? `${window.innerWidth}x${window.innerHeight}@${window.devicePixelRatio}` : '',
           }, await ensureUser())} />

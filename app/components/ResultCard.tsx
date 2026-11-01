@@ -124,14 +124,14 @@ export function useResultCard(isOpen: boolean, input: ShareCardInput) {
     a.click();
     a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 10_000);
-    track('share', { method: 'download', content_type: 'result_card', item_id: layout });
+    track('share', { game: 'wall-go', method: 'download', content_type: 'result_card', item_id: layout });
   };
 
   const shareFile = async () => {
     if (!ready) return;
     try {
       await navigator.share({ files: [ready.file], title: g.share.shareTitle });
-      track('share', { method: 'native', content_type: 'result_card', item_id: layout });
+      track('share', { game: 'wall-go', method: 'native', content_type: 'result_card', item_id: layout });
     } catch (err) {
       // 使用者在面板上取消不是錯誤；其他失敗（權限、App 內建瀏覽器）就退回存檔
       if (!(err instanceof DOMException && err.name === 'AbortError')) save();
