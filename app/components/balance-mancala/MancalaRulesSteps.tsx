@@ -142,7 +142,7 @@ function Stage({ i, t }: { i: number; t: BalanceMancalaText }) {
     );
   }
   return (
-    <div inert aria-hidden="true" className={`mcl-cut flex aspect-square w-full items-center justify-center bg-[#ebd2cb] ${i < 5 ? 'p-[3%]' : 'p-[6%]'}`}>
+    <div inert aria-hidden="true" className={`mcl-cut flex aspect-square w-full items-center justify-center bg-[var(--mcl-cloth)] ${i < 5 ? 'p-[3%]' : 'p-[6%]'}`}>
       {body}
     </div>
   );
@@ -168,10 +168,10 @@ export function RulesStepsList() {
   return (
     <>
       {/* 目標先講（2026-11-01）：原本「三色要平均」是第七步才出現，前六步看完還不知道要幹嘛 */}
-      <p className="mcl-cut mb-4 bg-[#fef2ec] p-4 text-base font-black leading-relaxed md:p-5">{t.goal}</p>
+      <p className="mcl-cut mb-4 bg-[var(--mcl-cloth-light)] p-4 text-base font-black leading-relaxed md:p-5">{t.goal}</p>
       <ol className="flex flex-col gap-4">
         {Array.from({ length: STEP_COUNT }, (_, i) => (
-          <li key={i} className="mcl-cut bg-[#fef2ec] p-4 md:p-5">
+          <li key={i} className="mcl-cut bg-[var(--mcl-cloth-light)] p-4 md:p-5">
             <div className="grid gap-4 md:grid-cols-[20rem_1fr] md:items-center md:gap-6">
               <div className="mx-auto w-full max-w-xs md:max-w-none"><Stage i={i} t={t} /></div>
               <div><Caption i={i} t={t} heading="h2" /></div>
@@ -209,7 +209,7 @@ export function RulesStepsPaged({ open, prev, next, done, onDone }: {
   const last = i === STEP_COUNT - 1;
   return (
     <div className="flex flex-col gap-4">
-      {i === 0 && <p className="mcl-cut bg-[#ebd2cb] px-3 py-2 text-sm font-black leading-snug">{t.goal}</p>}
+      {i === 0 && <p className="mcl-cut bg-[var(--mcl-cloth)] px-3 py-2 text-sm font-black leading-snug">{t.goal}</p>}
       <div {...pager.viewport}>
         <div className="flex items-start" style={pager.trackStyle}>
           {Array.from({ length: STEP_COUNT }, (_, n) => (

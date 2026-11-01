@@ -59,7 +59,7 @@ export default function OrderEditor({
   const after = preview.scores[preview.owner];
   const prior = preview.colour !== null ? (after.map((v, k) => (k === preview.colour ? v - preview.points : v)) as Scores) : after;
   // 播種面板是一條印花布（上下兩道梳線）；裡面的選項是切角的小布片，選中與「播種」是黃銅牌 —— globals.css 的 .mcl-*
-  const patch = 'mcl-cut bg-[#201211]/[0.07] transition fine:hover:bg-[#201211]/[0.12]';
+  const patch = 'mcl-cut bg-[rgb(var(--mcl-ink-rgb)/0.07)] transition fine:hover:bg-[rgb(var(--mcl-ink-rgb)/0.12)]';
   const chip = `${patch} px-3 py-1.5 text-xs font-black`;
 
   return (
@@ -118,7 +118,7 @@ export default function OrderEditor({
               <li key={i}>
                 <button type="button" onClick={() => onSlot(i)} aria-pressed={sel === i}
                   aria-label={`${i + 1}. ${names[o]} → ${cellName(dest, t)}`}
-                  className={`mcl-cut flex flex-col items-center gap-1 px-1 pb-1 pt-1.5 transition ${sel === i ? '-translate-y-0.5 bg-[#201211]/[0.14]' : 'fine:hover:bg-[#201211]/[0.07]'}`}>
+                  className={`mcl-cut flex flex-col items-center gap-1 px-1 pb-1 pt-1.5 transition ${sel === i ? '-translate-y-0.5 bg-[rgb(var(--mcl-ink-rgb)/0.14)]' : 'fine:hover:bg-[rgb(var(--mcl-ink-rgb)/0.07)]'}`}>
                   <PieceDisc seat={o} size={isLast ? '2.1rem' : '1.7rem'} ring={sel === i ? 'selected' : isLast ? 'last' : undefined} />
                   <DestChip cell={dest} t={t} />
                 </button>
@@ -149,7 +149,7 @@ export default function OrderEditor({
           <div className="mt-1.5 flex gap-2" role="radiogroup" aria-label={t.pickColour}>
             {preview.options.map((c) => (
               <button key={c} type="button" role="radio" aria-checked={preview.colour === c} onClick={() => onColour(c)}
-                className={`rounded-full px-4 py-1.5 text-sm font-black transition ${preview.colour === c ? 'ring-4 ring-[#201211]' : 'opacity-80'}`}
+                className={`rounded-full px-4 py-1.5 text-sm font-black transition ${preview.colour === c ? 'ring-4 ring-[var(--mcl-ink)]' : 'opacity-80'}`}
                 style={{ background: DISH_BG[c], color: CLOTH_LIGHT }}>
                 {t.colourNames[c]}
               </button>
@@ -159,7 +159,7 @@ export default function OrderEditor({
       )}
 
       {endsText && (
-        <p className="mcl-cut flex items-center gap-2 bg-[#201211] px-3 py-2 text-xs font-black text-[#ebd2cb]">
+        <p className="mcl-cut flex items-center gap-2 bg-[var(--mcl-ink)] px-3 py-2 text-xs font-black text-[var(--mcl-cloth)]">
           <LuTriangleAlert aria-hidden="true" className="shrink-0 text-base" />{endsText}
         </p>
       )}
