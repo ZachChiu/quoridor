@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLeaveGuard } from '@/hook/useLeaveGuard';
-import { LuCheck, LuCircleHelp, LuGrid3X3, LuLightbulb, LuRotateCcw, LuTimer, LuUndo2, LuX } from 'react-icons/lu';
+import { LuCheck, LuCircleHelp, LuGrid3X3, LuImage, LuLightbulb, LuRotateCcw, LuTimer, LuUndo2, LuX } from 'react-icons/lu';
 import { ShareResultModal } from '@/components/ShareResultModal';
 import { fill, useTextTable } from '@/i18n/gameText';
 import {
@@ -162,11 +162,6 @@ export default function PracticeGame({ n, onMenu, onSize }: { n: number; onMenu:
         <div className="kt-plate flex flex-1 flex-wrap items-center gap-x-3 gap-y-1 px-3.5 py-2">
           <span className="whitespace-nowrap text-xl font-black tabular-nums">{size}</span>
           <span className="whitespace-nowrap text-sm font-bold tabular-nums text-ink-soft">{tour.path.length} / {total}</span>
-          {chip && (
-            <span className={`ml-auto flex items-center gap-1 whitespace-nowrap px-2.5 py-1.5 text-xs font-black ${chip.cls}`}>
-              <chip.icon aria-hidden="true" className="shrink-0" />{chip.text}
-            </span>
-          )}
         </div>
         <div className="kt-plate flex min-w-[5.5rem] flex-col items-end justify-center px-3.5 py-2">
           <span className="flex items-center gap-1 text-[10px] font-bold leading-none text-ink-soft"><LuTimer aria-hidden="true" />{t.elapsed}</span>
@@ -181,7 +176,13 @@ export default function PracticeGame({ n, onMenu, onSize }: { n: number; onMenu:
             {hint.keep ? fill(t.undoTo, { k: hint.keep }) : t.reselectStart}
           </button>
         )}
-        {assisted && !done && <p className="text-xs font-bold text-ink-soft">{t.assisted}</p>}
+        {/* 走不走得完只在按過提示之後才講（11/1 Zach：沒按提示就別先講）；跟「用過提示」放同一行，不另外撐高 */}
+        {assisted && !done && (
+          <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-bold text-ink-soft">
+            {chip && <span className={`flex items-center gap-1 whitespace-nowrap px-2 py-1 font-black ${chip.cls}`}><chip.icon aria-hidden="true" className="shrink-0" />{chip.text}</span>}
+            {t.assisted}
+          </p>
+        )}
       </div>
     </div>
   );
@@ -194,9 +195,16 @@ export default function PracticeGame({ n, onMenu, onSize }: { n: number; onMenu:
         <button type="button" onClick={() => back(undo(tour))} disabled={!tour.path.length || done} className={cls}>
           <LuUndo2 aria-hidden="true" className="shrink-0 text-lg" />{t.undo}
         </button>
-        <button type="button" onClick={askHint} disabled={done} className={cls}>
-          <LuLightbulb aria-hidden="true" className="shrink-0 text-lg" />{t.hint}
-        </button>
+        {/* 走完之後提示沒用了，換成叫回結算（關掉之後原本叫不回來，11/1 Zach） */}
+        {done && result ? (
+          <button type="button" onClick={() => setResult((r) => (r ? { ...r, open: true } : r))} className={cls}>
+            <LuImage aria-hidden="true" className="shrink-0 text-lg" />{t.viewResult}
+          </button>
+        ) : (
+          <button type="button" onClick={askHint} disabled={done} className={cls}>
+            <LuLightbulb aria-hidden="true" className="shrink-0 text-lg" />{t.hint}
+          </button>
+        )}
         <button type="button" onClick={restart} disabled={!tour.path.length && startedAt === null} className={done ? `${BTN_PRIMARY}${bar ? ' flex-col gap-0.5 px-1 text-xs' : ''}` : cls}>
           <LuRotateCcw aria-hidden="true" className="shrink-0 text-lg" />{t.restart}
         </button>

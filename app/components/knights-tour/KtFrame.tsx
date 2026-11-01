@@ -11,7 +11,8 @@ export default function KtFrame({ className = '', tab = 'Tab. I.', children }: {
     <div className="kt-root flex min-h-dvh flex-col bg-[#edddc7] p-[clamp(6px,1.6vw,14px)] font-[family-name:var(--font-app)] text-[#322e2a]">
       <div className={`kt-frame relative flex flex-1 flex-col ${className}`}>
         {children}
-        <span aria-hidden="true" className="kt-serif pointer-events-none absolute bottom-1.5 right-3 text-xs italic tracking-wide opacity-70">{tab}</span>
+        {/* 排在內容底下、不疊上去：疊著的話手機上會壓到最下面那顆按鈕的框（11/1 Zach） */}
+        <span aria-hidden="true" className="kt-serif pointer-events-none mb-1.5 mr-3 mt-1 self-end text-xs italic leading-none tracking-wide opacity-70">{tab}</span>
       </div>
     </div>
   );

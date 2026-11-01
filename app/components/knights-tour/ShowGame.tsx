@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLeaveGuard } from '@/hook/useLeaveGuard';
 import { GiHourglass } from 'react-icons/gi';
-import { LuArrowRight, LuCheck, LuRotateCcw, LuTimer } from 'react-icons/lu';
+import { LuArrowRight, LuCheck, LuImage, LuRotateCcw, LuTimer } from 'react-icons/lu';
 import Modal from '@/components/Modal';
 import { ShareResultModal } from '@/components/ShareResultModal';
 import { fill, useTextTable } from '@/i18n/gameText';
@@ -206,7 +206,17 @@ export default function ShowGame({ onMenu, onPractice }: {
         </button>
       );
     }
-    if (over) return <button type="button" onClick={again} className={`${BTN_PRIMARY} ${cls}`}><LuRotateCcw aria-hidden="true" className="shrink-0" />{t.again}</button>;
+    if (over) {
+      const againBtn = <button type="button" onClick={again} className={`${BTN_PRIMARY} ${cls}`}><LuRotateCcw aria-hidden="true" className="shrink-0" />{t.again}</button>;
+      // 結算關掉之後叫得回來（11/1 Zach）
+      if (!endClosed) return againBtn;
+      return (
+        <div className="grid grid-cols-2 gap-2">
+          <button type="button" onClick={() => setEndClosed(false)} className={`${BTN} ${cls}`}><LuImage aria-hidden="true" className="shrink-0" />{t.viewResult}</button>
+          {againBtn}
+        </div>
+      );
+    }
     return (
       <button type="button" onClick={act(showRetry)} disabled={status === 'playing' && tour.path.length === 0}
         className={`${status === 'failed' ? BTN_PRIMARY : BTN} ${cls}`}>
