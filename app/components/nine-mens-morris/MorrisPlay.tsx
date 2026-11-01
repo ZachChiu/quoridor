@@ -276,6 +276,8 @@ export default function MorrisPlay({ locale, mode, showRules, moves = '', onMenu
     fileName: 'nine-mens-morris',
     homePath: localePath(locale, NINE_MENS_MORRIS),
     campaign: 'nine-mens-morris',
+    // 站名前面用這款自己的 favicon，不是平台的骰子惡魔（11/1 Zach 看到結算圖是骰子惡魔）
+    icon: '/icons/nine-mens-morris-192.png',
     fonts: [{ font: `900 40px ${font}`, text: card.text.title + card.text.brand }, { font: `700 40px ${font}`, text: card.text.kicker + card.text.reason + card.text.from + card.text.moves }],
     // 只留 9:16（Zach 10/24：「感覺可以留 9:16 就好」，跟虎羊棋一樣）；只有一種就不顯示比例切換
     layouts: ['story'],
