@@ -10,7 +10,7 @@ import type { BlindGomokuText } from '@/games/blind-gomoku/text';
  *   絳紅 #983c4a 5.3:1 · 珊瑚 #b35e40 3.7:1 · 檸檬黃 #dfda24 1.1:1 · 青綠 #046161 5.7:1
  *   深藍 #0b2859 9.9:1 · 紫 #46246b 9:1 · 桃紅 #be3479 4.1:1
  *
- * 黃色是包袱巾裡的檸檬黃，本來就亮：每顆子都有一圈黑絲細邊（像布塊之間的縫線），黃子靠這圈邊站在盤上，
+ * 黃色是包袱巾裡的檸檬黃，本來就亮：每顆子都有一圈黑絲細邊，黃子靠這圈邊站在盤上，
  * 形狀也改用黑絲色。形狀才是真正的身分（色盲用），顏色是輔助。
  * 翻開後的白子是包袱巾裡最亮的白絲 #ebe1cf，跟棋盤差不多亮，靠一圈黑絲邊分出來。
  */
@@ -71,23 +71,91 @@ export function shapePath(shape: Shape): string {
   }
 }
 
-/** 盲棋看到的那一面：顏色＋形狀 */
-export function ColorFace({ color, className = 'size-full' }: { color: StoneColor; className?: string }) {
+// ─── 原石（11/1 Zach 從五種石頭／方塊裡挑的 D「天然原石」）────────────────────
+/*
+  每顆子是一塊不規則的七邊形原石：從偏上的一點往七個角切成七個切面，一面亮一面暗，外緣一圈黑絲線、底下一點影子。
+  切面的明暗只用那顆子自己的顏色混白、混黑絲（不加新色）。外形照 seed（盤上的位置）決定 ——
+  同一點每次畫都一樣、相鄰的子不會長得一模一樣；不用 Math.random。分享圖（shareCard.ts）讀同一份外形。
+  形狀標記照原本的大小（約 ±27）：外形最窄也有 40，標記整個落在石頭裡。
+*/
+/** 每個切面往白（正）或往黑絲（負）混多少 */
+const FACET_TINT = [0.22, -0.18, 0.1, -0.3, 0.15, -0.08, 0.05];
+const CORNERS = 7;
+
+function rng(seed: number) {
+  let a = (seed * 2654435761 + 0x9e3779b9) >>> 0;
+  return () => {
+    a = (a + 0x6d2b79f5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+export type RockShape = { corners: [number, number][]; apex: [number, number] };
+
+const rocks = new Map<number, RockShape>();
+/** seed 這顆原石的外形（100×100 座標），算過的記起來 */
+export function rockShape(seed: number): RockShape {
+  const hit = rocks.get(seed);
+  if (hit) return hit;
+  const rnd = rng(seed);
+  const corners = Array.from({ length: CORNERS }, (_, i): [number, number] => {
+    const a = (i / CORNERS) * Math.PI * 2 - Math.PI / 2 + (rnd() - 0.5) * 0.35;
+    const r = 41 + rnd() * 7;
+    return [50 + Math.cos(a) * r, 50 + Math.sin(a) * r * 0.94];
+  });
+  const rock: RockShape = { corners, apex: [47 + rnd() * 6, 43 + rnd() * 6] };
+  rocks.set(seed, rock);
+  return rock;
+}
+
+function mix(a: string, b: string, t: number): string {
+  const ch = (h: string, i: number) => parseInt(h.slice(i, i + 2), 16);
+  return '#' + [1, 3, 5].map((i) => Math.round(ch(a, i) + (ch(b, i) - ch(a, i)) * t).toString(16).padStart(2, '0')).join('');
+}
+
+/** 第 i 個切面的顏色。黑子往黑混不出差別，只有亮的那幾面；白子跟棋盤一樣亮，亮面多混一點 */
+export function facetColor(base: string, i: number): string {
+  const t = FACET_TINT[i % FACET_TINT.length];
+  if (t > 0) return mix(base, '#ffffff', base === WHITE_FACE ? t * 1.6 : t);
+  return mix(base, INK, -t * (base === INK ? 1.5 : 1));
+}
+
+const pt = ([x, y]: [number, number]) => `${x.toFixed(1)},${y.toFixed(1)}`;
+
+function Rock({ base, seed }: { base: string; seed: number }) {
+  const { corners, apex } = rockShape(seed);
+  return (
+    <>
+      <ellipse cx="51" cy="93" rx="34" ry="4.5" fill={INK} opacity="0.18" />
+      {corners.map((p, i) => (
+        <polygon key={i} points={`${pt(apex)} ${pt(p)} ${pt(corners[(i + 1) % CORNERS])}`} fill={facetColor(base, i)} stroke={facetColor(base, i)} strokeWidth="0.6" />
+      ))}
+      <polygon points={corners.map(pt).join(' ')} fill="none" stroke={EDGE} strokeWidth="3" strokeLinejoin="round" />
+    </>
+  );
+}
+
+/** 顏色沒給 seed 時（選單、圖示）每個顏色固定一塊 */
+export const COLOR_SEED: Record<StoneColor, number> = { red: 301, orange: 302, yellow: 303, green: 304, blue: 305, purple: 306, pink: 307 };
+
+/** 盲棋看到的那一面：顏色＋形狀。seed＝盤上的位置，同一點的兩面同一塊石頭 */
+export function ColorFace({ color, seed = COLOR_SEED[color], className = 'size-full' }: { color: StoneColor; seed?: number; className?: string }) {
   return (
     <svg viewBox="0 0 100 100" className={className} aria-hidden="true">
-      <circle cx="50" cy="50" r="47.5" fill={STONE_HEX[color]} stroke={EDGE} strokeWidth="5" />
+      <Rock base={STONE_HEX[color]} seed={seed} />
       <ShapeMark shape={SHAPE_OF[color]} fill={LIGHT.has(color) ? INK : CREAM} />
     </svg>
   );
 }
 
 /** 底面：真正的黑白 */
-export function SideFace({ side, className = 'size-full' }: { side: Side; className?: string }) {
+export function SideFace({ side, seed = side === 'black' ? 401 : 402, className = 'size-full' }: { side: Side; seed?: number; className?: string }) {
   return (
     <svg viewBox="0 0 100 100" className={className} aria-hidden="true">
-      {side === 'black'
-        ? <circle cx="50" cy="50" r="50" fill={INK} />
-        : <circle cx="50" cy="50" r="46" fill={WHITE_FACE} stroke={EDGE} strokeWidth="8" />}
+      <Rock base={side === 'black' ? INK : WHITE_FACE} seed={seed} />
     </svg>
   );
 }

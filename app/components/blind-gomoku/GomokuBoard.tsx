@@ -91,11 +91,12 @@ function StoneView({ p, stone, blind, revealed, delay }: { p: Point; stone: Ston
               transitionDelay: revealed ? `${delay}ms` : '0ms',
             }}
           >
-            <div style={{ ...FACE, ...faceShown(!revealed, revealed ? delay + FLIP_MS / 2 : 0) }}><ColorFace color={stone.color} /></div>
-            <div style={{ ...FACE, transform: 'rotateY(180deg)', ...faceShown(revealed, revealed ? delay + FLIP_MS / 2 : 0) }}><SideFace side={stone.side} /></div>
+            <div style={{ ...FACE, ...faceShown(!revealed, revealed ? delay + FLIP_MS / 2 : 0) }}><ColorFace color={stone.color} seed={p} /></div>
+            {/* 背面轉了 180°、外形會左右相反：再鏡射一次，翻過來還是同一塊石頭 */}
+            <div style={{ ...FACE, transform: 'rotateY(180deg)', ...faceShown(revealed, revealed ? delay + FLIP_MS / 2 : 0) }}><div className="size-full -scale-x-100"><SideFace side={stone.side} seed={p} /></div></div>
           </div>
         ) : (
-          <SideFace side={stone.side} />
+          <SideFace side={stone.side} seed={p} />
         )}
       </div>
     </div>
@@ -165,8 +166,8 @@ type Props = {
   /** 盲棋結算：全部翻到黑白 */
   revealed: boolean;
   aim: Point | null;
-  /** 瞄準點上要畫的半透明子 */
-  ghost: ReactNode;
+  /** 瞄準點上的半透明子（拿到瞄準的那一點：原石的外形跟落下去那顆一樣） */
+  ghost: (p: Point) => ReactNode;
   /** 最後一手亮一下（盲棋） */
   glow: boolean;
   /** 最後一手一直標一個小點（一般模式） */
@@ -299,7 +300,7 @@ export function GomokuBoard({ board, moves, blind, revealed, aim, ghost, glow, l
         <StonesLayer board={board} moves={moves} blind={blind} revealed={revealed} />
         {aim !== null && !board[aim] && (
           <div className="pointer-events-none absolute opacity-60" style={{ ...at(aim), width: pct(STONE), height: pct(STONE), transform: 'translate(-50%, -50%)' }}>
-            {ghost}
+            {ghost(aim)}
           </div>
         )}
         {glow && last !== null && <Glow key={moves.length} p={last} />}
@@ -316,6 +317,6 @@ export function GomokuBoard({ board, moves, blind, revealed, aim, ghost, glow, l
 }
 
 /** 瞄準點上的半透明子 */
-export function Ghost({ blind, color, side }: { blind: boolean; color: Stone['color']; side: Stone['side'] }) {
-  return blind ? <ColorFace color={color} /> : <SideFace side={side} />;
+export function Ghost({ blind, color, side, p }: { blind: boolean; color: Stone['color']; side: Stone['side']; p: Point }) {
+  return blind ? <ColorFace color={color} seed={p} /> : <SideFace side={side} seed={p} />;
 }

@@ -84,7 +84,7 @@ function MiniBoard({ stones, face, rows = [0, N - 1], line, rings = [], aim }: {
         </svg>
         {stones.map((d) => (
           <div key={`${d.r}-${d.c}`} className="absolute" style={at(d.r, d.c, 0.9)}>
-            {face === 'color' ? <ColorFace color={d.color} /> : <SideFace side={d.side} />}
+            {face === 'color' ? <ColorFace color={d.color} seed={d.r * 15 + d.c} /> : <SideFace side={d.side} seed={d.r * 15 + d.c} />}
           </div>
         ))}
         {aim && <div className="absolute opacity-60" style={at(aim.r, aim.c, 0.9)}><ColorFace color={aim.color} /></div>}

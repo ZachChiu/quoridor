@@ -1,7 +1,7 @@
 import { SIZE, SHAPE_OF, colOf, rowOf, type Point, type Side, type Stone, type StoneColor } from '@/games/blind-gomoku/engine';
 import { drawBrand, drawQr, fillBox, fitText, type CardLayout, type ShareAssets } from '@/utils/shareCard';
 import { GMK } from './palette';
-import { CREAM, INK, LIGHT, STONE_HEX, WHITE_FACE, shapePath } from './Stone';
+import { COLOR_SEED, CREAM, INK, LIGHT, STONE_HEX, WHITE_FACE, facetColor, rockShape, shapePath } from './Stone';
 
 /**
  * 盲五子棋的結算分享圖（Zach 10/24：結尾的可分享畫面，各自設計符合各自）。
@@ -94,32 +94,42 @@ function frame(ctx: CanvasRenderingContext2D, W: number, H: number, band: number
 
 // ─── 棋子 ─────────────────────────────────────────────────────────────────────
 
-/** 翻開那一面：黑子一塊黑絲；白子白絲＋一圈黑絲邊（同 Stone.tsx 的 SideFace） */
-function sideStone(ctx: CanvasRenderingContext2D, side: Side, cx: number, cy: number, d: number) {
+/** 一塊原石（同 Stone.tsx 的 Rock）：七個切面、外緣一圈黑絲線、底下一點影子 */
+function rock(ctx: CanvasRenderingContext2D, base: string, seed: number, cx: number, cy: number, d: number) {
+  const { corners, apex } = rockShape(seed);
+  ctx.save();
+  ctx.translate(cx - d / 2, cy - d / 2);
+  ctx.scale(d / 100, d / 100);
+  ctx.globalAlpha = 0.18;
+  ctx.fillStyle = INK;
+  ctx.beginPath(); ctx.ellipse(51, 93, 34, 4.5, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.globalAlpha = 1;
+  ctx.lineWidth = 0.6;
+  corners.forEach((p, i) => {
+    const q = corners[(i + 1) % corners.length];
+    ctx.beginPath(); ctx.moveTo(apex[0], apex[1]); ctx.lineTo(p[0], p[1]); ctx.lineTo(q[0], q[1]); ctx.closePath();
+    ctx.fillStyle = facetColor(base, i);
+    ctx.strokeStyle = ctx.fillStyle;
+    ctx.fill(); ctx.stroke();
+  });
   ctx.beginPath();
-  if (side === 'black') {
-    ctx.arc(cx, cy, d / 2, 0, Math.PI * 2);
-    ctx.fillStyle = INK;
-    ctx.fill();
-  } else {
-    ctx.arc(cx, cy, d * 0.46, 0, Math.PI * 2);
-    ctx.fillStyle = WHITE_FACE;
-    ctx.fill();
-    ctx.lineWidth = d * 0.08;
-    ctx.strokeStyle = INK;
-    ctx.stroke();
-  }
-}
-
-/** 顏色那一面：布色＋形狀、一圈黑絲邊（同 Stone.tsx 的 ColorFace） */
-function colorStone(ctx: CanvasRenderingContext2D, color: StoneColor, cx: number, cy: number, d: number) {
-  ctx.beginPath();
-  ctx.arc(cx, cy, d * 0.475, 0, Math.PI * 2);
-  ctx.fillStyle = STONE_HEX[color];
-  ctx.fill();
-  ctx.lineWidth = d * 0.05;
+  corners.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
+  ctx.closePath();
+  ctx.lineWidth = 3;
+  ctx.lineJoin = 'round';
   ctx.strokeStyle = INK;
   ctx.stroke();
+  ctx.restore();
+}
+
+/** 翻開那一面：黑子、白子各一塊原石（同 Stone.tsx 的 SideFace）。seed 沒給就跟 SideFace 預設同一塊 */
+function sideStone(ctx: CanvasRenderingContext2D, side: Side, cx: number, cy: number, d: number, seed = side === 'black' ? 401 : 402) {
+  rock(ctx, side === 'black' ? INK : WHITE_FACE, seed, cx, cy, d);
+}
+
+/** 顏色那一面：布色的原石＋形狀（同 Stone.tsx 的 ColorFace） */
+function colorStone(ctx: CanvasRenderingContext2D, color: StoneColor, cx: number, cy: number, d: number) {
+  rock(ctx, STONE_HEX[color], COLOR_SEED[color], cx, cy, d);
   ctx.save();
   ctx.translate(cx - d / 2, cy - d / 2);
   ctx.scale(d / 100, d / 100);
@@ -186,7 +196,7 @@ function board(ctx: CanvasRenderingContext2D, d: GomokuCardData, x: number, y: n
     ctx.beginPath(); ctx.arc(px(c), py(r), cell * 0.12, 0, Math.PI * 2); ctx.fill();
   }
   ctx.restore();
-  d.board.forEach((st, p) => { if (st) sideStone(ctx, st.side, px(colOf(p)), py(rowOf(p)), cell * 0.9); });
+  d.board.forEach((st, p) => { if (st) sideStone(ctx, st.side, px(colOf(p)), py(rowOf(p)), cell * 0.9, p); });
   if (!d.line) return;
   ctx.save();
   ctx.strokeStyle = GMK.teal;
