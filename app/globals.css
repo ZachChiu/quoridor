@@ -550,29 +550,27 @@ html:has(.bagh-root), body:has(.bagh-root) { background: #e3a43c; }
 
 /*
   平台標誌（骰子惡魔）的閃電（11/1 Zach：「骰子惡魔在左上角時，多一個閃電的那種頻率的亮藍燈」，從霓虹／打雷／點數通電三種挑了打雷）：
-  平常不亮，每 3.6 秒「啪啪」亮兩下就暗回去 —— 一直亮會跟各款自己的配色搶。光暈是一層放射狀的藍（.die-bolt-glow），
-  藍骰子本身同時提亮；遊戲頁的灰骰子閃的那一下換成藍色那張（.die-bolt-flash，另一層，不動滑過時變藍的那層）。
-  只動 opacity／filter；減少動態效果時不閃。
+  平常不亮，每 3.6 秒「啪啪」亮兩下就暗回去 —— 一直亮會跟各款自己的配色搶。只有骰子本身變亮，不往外暈開（同一天 Zach：「不要有暈開的外面效果」）。
+  遊戲頁的灰骰子閃的那一下換成藍色那張（.die-bolt-flash，另一層，不動滑過時變藍的那層）。只動 opacity／filter；減少動態效果時不閃。
 */
-.die-bolt-glow {
-  position: absolute; inset: -45%; border-radius: 9999px; pointer-events: none; opacity: 0;
-  background: radial-gradient(circle, rgb(147 197 253) 0%, rgb(59 130 246 / 0.8) 28%, rgb(37 99 235 / 0.3) 50%, transparent 70%);
-  animation: die-bolt 3.6s infinite;
-}
 .die-bolt-blue { animation: die-bolt-blue 3.6s infinite; }
-.die-bolt-flash { opacity: 0; animation: die-bolt 3.6s infinite; }
-@keyframes die-bolt {
-  0%, 55% { opacity: 0; } 57% { opacity: 1; } 60% { opacity: 0.1; } 63% { opacity: 1; } 66% { opacity: 0.6; } 74%, 100% { opacity: 0; }
-}
+.die-bolt-flash { opacity: 0; animation: die-bolt-flash 3.6s infinite; }
 @keyframes die-bolt-blue {
   0%, 55%, 74%, 100% { filter: none; }
-  57% { filter: brightness(1.45) drop-shadow(0 0 8px rgb(191 219 254)); }
+  57% { filter: brightness(1.6); }
   60% { filter: none; }
-  63% { filter: brightness(1.4) drop-shadow(0 0 8px rgb(191 219 254)); }
-  66% { filter: brightness(1.15); }
+  63% { filter: brightness(1.5); }
+  66% { filter: brightness(1.2); }
+}
+@keyframes die-bolt-flash {
+  0%, 55%, 74%, 100% { opacity: 0; filter: none; }
+  57% { opacity: 1; filter: brightness(1.6); }
+  60% { opacity: 0.1; filter: none; }
+  63% { opacity: 1; filter: brightness(1.5); }
+  66% { opacity: 0.6; filter: brightness(1.2); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .die-bolt-glow, .die-bolt-flash { animation: none; opacity: 0; }
+  .die-bolt-flash { animation: none; opacity: 0; }
   .die-bolt-blue { animation: none; }
 }
 
