@@ -874,7 +874,7 @@ html:has(.mcl-root) { --ink-soft: #5e4b3f; }
 /* 連線的等人畫面：圓木桌上還空著的座位（黃銅虛線圈）輕輕浮著、亮一點又淡回去（MancalaOnline.tsx，只在 motion-safe 時掛上） */
 @keyframes mcl-wait { 0%, 100% { translate: 0 0; opacity: 0.5; } 50% { translate: 0 -8%; opacity: 0.95; } }
 
-/* ── 九子棋試看（StyleTrial.tsx 的切換鈕，beta 才有；Zach 選好之後只留選上的那一種、寫回元件裡） ── */
+/* ── 九子棋選單按鈕的試看（StyleTrial.tsx 的切換鈕，beta 才有；Zach 選好之後只留選上的那一種、寫回元件裡） ── */
 /* 按鈕 A：只留字、置中，拿掉首字與箭頭（節目規則的蠟封留在右邊） */
 html[data-nmm-btn='a'] .nmm-row, html[data-nmm-btn='a'] .nmm-ai-head { position: relative; justify-content: center; text-align: center; }
 html[data-nmm-btn='a'] .nmm-row .nmm-initial, html[data-nmm-btn='a'] .nmm-ai-head .nmm-initial, html[data-nmm-btn='a'] .nmm-chev { display: none; }
@@ -895,20 +895,17 @@ html[data-nmm-btn='c'] .nmm-chev { position: absolute; right: 1.4rem; top: 50%; 
 html[data-nmm-btn='c'] .nmm-row-text { flex: 0 1 auto; }
 html[data-nmm-btn='c'] .nmm-row .nmm-seal { position: absolute; right: 1rem; top: 50%; translate: 0 -42%; }
 html[data-nmm-btn='c'] .nmm-row:not(:has(.nmm-initial))::before { content: '¶'; position: absolute; left: 1.55rem; top: 50%; translate: 0 -42%; color: #c54915; font-size: 1.5rem; font-weight: 900; }
-/* 版面（只有桌機）：標題、標語一列一列排，插圖與右邊整排按鈕在同一列、下緣切齊（插圖的底＝最後一張按鈕的底，「怎麼玩」掛在按鈕下面不算；11/1 Zach 偏好下緣對齊） */
+/* 九子棋首頁的桌機版面：標題、標語一列一列排在左邊，插圖與右邊整排按鈕在同一列、下緣切齊
+   （插圖的底＝最後一張按鈕的底，「怎麼玩」掛在按鈕下面不算）。11/1 Zach：原本兩欄各自置中，左圖右按鈕一高一低；
+   從「上下都對齊」「下緣對齊」「標題置中＋左右等寬」裡選了下緣對齊、標題留左、左右不要一樣寬。
+   前面加 html 壓過元件上 lg:flex-row 那些 Tailwind 的類別 */
 @media (min-width: 1024px) {
-  html[data-nmm-layout] .nmm-main { display: grid; grid-template-columns: minmax(0, 1fr) 400px; grid-template-rows: auto auto auto auto; column-gap: 3rem; row-gap: 0; align-items: end; align-content: center; }
-  html[data-nmm-layout] .nmm-head { display: contents; }
-  html[data-nmm-layout] .nmm-head > :not(.nmm-art) { grid-column: 1; }
-  html[data-nmm-layout] .nmm-art { grid-column: 1; grid-row: 4; margin-top: 0.75rem; }
-  html[data-nmm-layout] .nmm-modes { grid-column: 2; grid-row: 4; position: relative; justify-content: flex-end; }
-  html[data-nmm-layout] .nmm-modes > a:last-child { position: absolute; top: 100%; left: 50%; translate: -50% 0; margin-top: 0.5rem; }
-  /* 標題置中＋等寬：標題那幾列橫跨兩欄、置中；左右兩欄一樣寬，置中的標題底下才不會一邊重 */
-  html[data-nmm-layout='top'] .nmm-main { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
-  html[data-nmm-layout='top'] .nmm-head > :not(.nmm-art) { grid-column: 1 / -1; justify-self: center; text-align: center; align-items: center; }
-  html[data-nmm-layout='top'] .nmm-head h1 > * { justify-content: center; margin-inline: auto; }
-  html[data-nmm-layout='top'] .nmm-modes { width: 100%; }
-  html[data-nmm-layout='top'] .nmm-art, html[data-nmm-layout='top'] .nmm-modes { margin-top: 1.75rem; }
+  html .nmm-main { display: grid; grid-template-columns: minmax(0, 1fr) 400px; grid-template-rows: auto auto auto auto; column-gap: 3rem; row-gap: 0; align-items: end; align-content: center; }
+  html .nmm-head { display: contents; }
+  html .nmm-head > :not(.nmm-art) { grid-column: 1; }
+  html .nmm-art { grid-column: 1; grid-row: 4; margin-top: 0.75rem; }
+  html .nmm-modes { grid-column: 2; grid-row: 4; position: relative; justify-content: flex-end; }
+  html .nmm-modes > a:last-child { position: absolute; top: 100%; left: 50%; translate: -50% 0; margin-top: 0.5rem; }
 }
 
 /* 九子棋連線：對方斷線（滿 3 秒）那張狀態卡反灰，正中間蓋一個斷掉的 Wi‑Fi（2026-11-01 Zach） */
