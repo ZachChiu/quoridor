@@ -101,6 +101,10 @@ export function useDialog(isOpen: boolean, onClose: () => void, onKeyDown?: (e: 
       window.removeEventListener('resize', onResize);
       window.removeEventListener('scroll', onResize);
       window.visualViewport?.removeEventListener('resize', onResize);
+      // 關掉時把多蓋的高度清掉：下次打開那一下遮罩先露出來、捲動鎖才量捲軸，
+      // 留著上次的高度會把頁面撐出一條捲軸，鎖就多補 15px 的 padding，右邊變寬（11/1 Zach：第二次打開才會）
+      el.style.top = '';
+      el.style.height = '';
     };
   }, [isOpen, portalReady]);
 
