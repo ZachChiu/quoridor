@@ -23,7 +23,6 @@ export default function PlatformMark({ className = '', mono = false }: { classNa
   if (!mono) {
     return (
       <span aria-hidden="true" className={`relative block size-10 shrink-0 ${className}`}>
-        <span className="die-bolt-glow" />
         {/* eslint-disable-next-line @next/next/no-img-element -- 靜態匯出、SVG，不需要 next/image */}
         <img src="/brand/die-mark.svg" alt="" width={40} height={40} className="die-bolt-blue relative size-10" />
       </span>
@@ -31,7 +30,6 @@ export default function PlatformMark({ className = '', mono = false }: { classNa
   }
   return (
     <span aria-hidden="true" className={`relative block size-10 shrink-0 ${className}`}>
-      <span className="die-bolt-glow" />
       {/* eslint-disable-next-line @next/next/no-img-element -- 同上 */}
       <img src="/brand/die-mark-gray.svg" alt="" width={40} height={40} className="absolute inset-0 size-10 opacity-50" />
       {/* 閃電那一下換成藍的（globals.css 的 .die-bolt-flash），跟下面滑過變藍那層分開 */}
