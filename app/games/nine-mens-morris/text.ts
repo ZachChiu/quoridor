@@ -69,7 +69,8 @@ export type MorrisText = {
   aiWins: string;
   win: string;
   draw: string;
-  reason: { pieces: string; blocked: string; repetition: string; quiet: string; standoff: string; standoffDraw: string };
+  /** resign：連線對戰投降（2026-11-01） */
+  reason: { pieces: string; blocked: string; repetition: string; quiet: string; standoff: string; standoffDraw: string; resign: string };
   again: string;
   /** 說明彈窗的標題 */
   rulesHeading: string;
@@ -153,6 +154,7 @@ export const TEXT = {
     draw: '和局',
     reason: {
       pieces: '{side}只剩 2 顆子。',
+      resign: '{side}投降了。',
       blocked: '{side}被困住，沒有子可以動。',
       repetition: '同一個局面出現了三次。',
       quiet: '連續 50 手沒有人被拿子。',
@@ -235,6 +237,7 @@ export const TEXT = {
     draw: 'Draw',
     reason: {
       pieces: '{side} is down to 2 pieces.',
+      resign: '{side} resigned.',
       blocked: '{side} is blocked and has no move.',
       repetition: 'The same position came up three times.',
       quiet: '50 moves in a row without a capture.',
@@ -317,6 +320,7 @@ export const TEXT = {
     draw: '引き分け',
     reason: {
       pieces: '{side}の駒が残り2個になりました。',
+      resign: '{side}が投了しました。',
       blocked: '{side}は動かせる駒がありません。',
       repetition: '同じ局面が3回現れました。',
       quiet: '50手続けて駒が取られませんでした。',
@@ -399,6 +403,7 @@ export const TEXT = {
     draw: '무승부',
     reason: {
       pieces: '{side}의 말이 2개만 남았습니다.',
+      resign: '{side}이(가) 기권했습니다.',
       blocked: '{side}의 말이 모두 막혀 움직일 수 없습니다.',
       repetition: '같은 국면이 세 번 나왔습니다.',
       quiet: '50수 연속으로 아무도 말을 잃지 않았습니다.',
@@ -481,6 +486,7 @@ export const TEXT = {
     draw: '和局',
     reason: {
       pieces: '{side}只剩 2 枚棋子。',
+      resign: '{side}认输了。',
       blocked: '{side}被困住，没有棋子可以动。',
       repetition: '同一个局面出现了三次。',
       quiet: '连续 50 步没有人被拿子。',
@@ -563,6 +569,7 @@ export const TEXT = {
     draw: 'เสมอ',
     reason: {
       pieces: '{side}เหลือหมากแค่ 2 ตัว',
+      resign: '{side}ยอมแพ้',
       blocked: '{side}ถูกล้อมจนไม่มีหมากที่เดินได้',
       repetition: 'ตำแหน่งเดิมเกิดซ้ำครบ 3 ครั้ง',
       quiet: 'เดินติดกัน 50 ตาโดยไม่มีใครเสียหมาก',

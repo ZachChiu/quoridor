@@ -125,6 +125,8 @@ const zhTW = {
     winTigerBody: '老虎吃掉了 5 隻羊。',
     winGoatBody: '羊把老虎全部困住了。',
     drawBody: '走了太多步還分不出勝負。',
+    /** 連線對戰投降（2026-11-01） */
+    resignBody: '{side}投降了。',
     again: '再來一局',
     /** 結算後「給點意見」的範例句（Wall Go 那句講的是三人局，放在這裡不通） */
     feedbackPlaceholder: '例如：老虎明明能跳卻點不下去、電腦太強或太弱',

@@ -126,6 +126,7 @@ nudge { by, at }          最近一次「催一下」
 - `app/utils/gameService.ts` — `createRoom`, `joinRoom`, `getRoom`, `subscribeRoom`, `updateGameState`, `setRoomWinner`
 - `app/types/room.ts` — `Room`, `RoomPlayer`, `RoomStatus` 型別
 - **在線狀態**（2026-10-23）：`gameService.trackPresence` 照 Firebase 官方的做法 —— 先登記 `onDisconnect` 寫斷線時間、伺服器收下才標成 `true`；關分頁、手機收到背景、網路斷掉時由伺服器寫斷線。畫面在 `hook/useRoomPresence.ts`：**斷線滿 3 秒才顯示**（有人重新整理時不閃）、回來立刻拿掉；斷線的對手在比分那塊掛一顆拔插頭的小圓（`GameStatus`），輪到他時提示句寫「藍方暫時離線」，自己斷線寫「連線中斷，正在重新連線…」。從等人開始回報，結束後停（結算會 `releaseConnection`）。規則要 Zach 先在 Console 發布；沒發布時寫入被拒、什麼都不顯示，不會出錯
+- **其他正式上線的遊戲（尼泊爾虎棋 `baghRooms`、九子棋 `turnRooms`）也有在線狀態、催一下、投降**（2026-11-01 Zach：「跟 Wall Go 一樣」）：讀寫在 `utils/roomSignals.ts`（路徑由各款給，座位是各款自己的字串），畫面邏輯在 `hook/useRoomSignals.ts`（斷線滿 3 秒才顯示、第一次看到的 nudge 不算），Wall Go 沒有改用它。對方斷線時那張狀態卡反灰、正中間蓋一個斷掉的 Wi‑Fi（`LuWifiOff`）；被催時棋盤抖一下、各款自己的聲音（九子棋敲木頭、虎棋拍手鼓）。連線局把「換模式」換成「投降」（先確認），投降寫進房間的 `resigned`，各台裝置把它蓋在重走出來的局面上；GA `game_end` 帶 `ended: 'resign'`。規則同樣要先發布
 - **分頁標題提醒**：`hook/useTitleAlert.ts`，連線時輪到自己、分頁在背景，標題輪流換成「● 輪到你了」。只有電腦版看得到；手機切到別的 App 時網頁沒有任何辦法提醒（推播要 Service Worker＋能發送的後端，靜態站做不到）
 - **輪到誰**（2026-10-23，Zach 的提議）：棋盤外圈一層輪到那一方顏色的**淡陰影**（`.board-turn`；先前多一圈 5px 實色框，Zach 要只留淡淡的陰影），輪到這台裝置上的人時用 `element.animate()` 讓陰影濃一下再退回。**這是全站唯一的陰影**，不是在模擬光源，是「現在是誰」的訊號。連線時還有提示音（見下）
 - **催一下**（同日）：連線時還沒輪到的人可以催輪到的人 —— 對方棋盤抖一下（只動 transform，不會推開旁邊的東西）、敲門聲、手機震一下（跟著音效開關走）、提示列寫「紅方在催你」。15 秒冷卻由資料庫規則擋。電腦版按鈕在右下提示塊裡，手機在棋盤下方取代步驟標

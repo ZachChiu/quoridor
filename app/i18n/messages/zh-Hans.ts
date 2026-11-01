@@ -113,6 +113,8 @@ const zhHans: Messages = {
     winTigerBody: '老虎吃掉了 5 只羊。',
     winGoatBody: '羊把老虎全部困住了。',
     drawBody: '走了太多步还分不出胜负。',
+    /** 連線對戰投降（2026-11-01） */
+    resignBody: '{side}认输了。',
     again: '再来一局',
     feedbackPlaceholder: '例如：老虎明明能跳却点不下去、电脑太强或太弱',
     invite: '邀请朋友',
