@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="九子棋 Nine Men’s Morris">
+  <!-- 顏色：nine-mens-morris/palette.ts（《遊戲之書》1283 取樣）；小人：art.ts 的 MAN_PARTS -->
+  <rect width="64" height="64" rx="6" fill="#c54915"/>
+  <rect x="4.5" y="4.5" width="55" height="55" rx="2.5" fill="#4b4577"/>
+  <g transform="translate(5.5 5.2) scale(0.53)">
+    <g fill="none" stroke="#1e120a" stroke-width="12" stroke-linejoin="round"><path d="M14 88Q50 99 86 88C82 68 63 58 59 43H41C37 58 18 68 14 88Z"/><path d="M36 37h28a3.8 3.8 0 0 1 0 7.6H36a3.8 3.8 0 0 1 0-7.6Z"/><path d="M64.5 24a14.5 14.5 0 1 1-29 0a14.5 14.5 0 1 1 29 0Z"/></g>
+    <g fill="#eee0c4"><path d="M14 88Q50 99 86 88C82 68 63 58 59 43H41C37 58 18 68 14 88Z"/><path d="M36 37h28a3.8 3.8 0 0 1 0 7.6H36a3.8 3.8 0 0 1 0-7.6Z"/><path d="M64.5 24a14.5 14.5 0 1 1-29 0a14.5 14.5 0 1 1 29 0Z"/></g>
+  </g>
+</svg>
