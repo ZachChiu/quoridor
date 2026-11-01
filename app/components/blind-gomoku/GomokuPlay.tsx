@@ -344,7 +344,8 @@ export default function GomokuPlay({ mode, onMenu }: { mode: GomokuMode | Online
             {picker}
           </div>
         )}
-        <div className="grid grid-cols-2 gap-2.5">
+        {/* 盲棋沒有悔棋只剩三顆：兩欄排會單出一顆在左下（11/1 Zach：桌機有點不對稱），三顆就排一排 */}
+        <div className={`grid gap-2.5 ${blind && !online ? 'grid-cols-3' : 'grid-cols-2'}`}>
           {!blind && !online && <button type="button" onClick={doUndo} disabled={!canUndo} className={wide}><LuUndo2 aria-hidden="true" />{t.undo}</button>}
           {!online && <button type="button" onClick={restart} className={wide}><LuRotateCcw aria-hidden="true" />{t.restart}</button>}
           <button type="button" onClick={() => setHelpOpen(true)} className={wide}><LuCircleHelp aria-hidden="true" />{t.rules}</button>

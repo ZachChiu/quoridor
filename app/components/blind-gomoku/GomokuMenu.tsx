@@ -1,5 +1,6 @@
 'use client';
 import { useState, type ReactNode } from 'react';
+import { useLatched } from '@/hook/useLatched';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { IconType } from 'react-icons';
@@ -58,6 +59,8 @@ export default function GomokuMenu({ locale, onStart }: { locale: Locale; onStar
   const router = useRouter();
   /** 選難度的對象：true 盲棋、false 一般五子棋、null 沒開 */
   const [levelFor, setLevelFor] = useState<boolean | null>(null);
+  // 彈窗淡出時內容照最後選的那個畫，不退回一般模式
+  const shownFor = useLatched(levelFor);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteBlind, setInviteBlind] = useState(true);
   const [inviteSide, setInviteSide] = useState<Side>('black');
@@ -68,11 +71,13 @@ export default function GomokuMenu({ locale, onStart }: { locale: Locale; onStar
   };
 
   return (
-    <GomokuFrame className={`${MENU_CLASS} items-center px-4 pb-5 pt-14 lg:flex-row lg:items-center lg:justify-center lg:gap-12 lg:px-10 lg:py-16`}>
+    <GomokuFrame className={`${MENU_CLASS} items-center px-4 pb-5 pt-14 lg:flex-row lg:items-end lg:justify-center lg:gap-12 lg:px-10 lg:py-16`}>
       {/* 右上角的聯絡、語言：圓鈕與打開的彈窗都是這款自己的布（GMK_CORNER），不是 Wall Go 的奶油底＋深墨 */}
       <PlatformCorner locale={locale} theme={GMK_CORNER} offset="calc(var(--gmk-frame, 26px) + 6px)" />
 
-      <header className="flex w-full max-w-[440px] flex-col items-center text-center lg:max-w-[520px] lg:items-start lg:text-left">
+      {/* 桌機：左欄跟包袱巾一樣寬（先前 520px 欄裡只放 26rem 的圖，右邊空一截、兩欄看起來不對稱，11/1 Zach），
+          右欄的底對齊圖的底（同九子棋） */}
+      <header className="flex w-full max-w-[440px] flex-col items-center text-center lg:w-[26rem] lg:max-w-none lg:items-start lg:text-left">
         <p className="text-xs font-black tracking-wide text-ink-soft">{t.tags}</p>
         <h1 className="mt-1.5 text-[clamp(2rem,6svh,3.5rem)] font-black leading-[1.02] tracking-tight">{t.title}</h1>
         <p className="mt-1 text-base font-black text-ink-soft lg:text-lg">{t.subtitle}</p>
@@ -82,7 +87,7 @@ export default function GomokuMenu({ locale, onStart }: { locale: Locale; onStar
         <div className="mt-3 flex flex-col items-center gap-1 lg:items-start">
           {/* eslint-disable-next-line @next/next/no-img-element -- 靜態匯出，不需要 next/image */}
           <img src="/games/blind-gomoku/pojagi.webp" alt="" aria-hidden="true" width={750} height={746}
-            className="h-[min(14rem,24svh)] w-auto rounded-sm lg:h-auto lg:w-[min(100%,26rem)]" />
+            className="h-[min(14rem,24svh)] w-auto rounded-sm lg:h-auto lg:w-full" />
         </div>
       </header>
 
@@ -108,7 +113,7 @@ export default function GomokuMenu({ locale, onStart }: { locale: Locale; onStar
       </nav>
 
       <Modal isOpen={levelFor !== null} onClose={() => setLevelFor(null)} title={t.pickLevel}
-        kicker={levelFor ? t.blindAi : t.classicAi} icon={levelFor ? GiBlindfold : GiRobotGolem}
+        kicker={shownFor ? t.blindAi : t.classicAi} icon={shownFor ? GiBlindfold : GiRobotGolem}
         band={GMK_BAND} panelClassName={GMK_PANEL}>
         <div className="flex flex-col gap-2.5">
           {LEVELS.map((lv, i) => (
