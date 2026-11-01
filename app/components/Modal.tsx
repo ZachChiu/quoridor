@@ -68,6 +68,15 @@ const Modal: React.FC<Props> = ({
     於是對局頁左上那兩顆鈕蓋到了「遊玩方式」上面（Zach 截圖）。
   */
   const node = (
+    <>
+      {/*
+        遮罩是 absolute、定在目前的捲動位置、上下多蓋一截（useDialog 的 placeBackdrop），才畫得到 iPhone 工具列後面那一截；
+        所以放在 fixed 的外框外面。點遮罩關閉改由外框接（點到外框本身、不是面板）。
+
+        關閉時一定要 display: none（hidden）：iOS 26 的 Safari 拿「貼著畫面邊緣的 fixed 元素」的
+        background-color 染上下列、不管祖先的 opacity（Zach 回報「Safari 上下變灰色」）。現在不是 fixed 了，照舊關掉最保險。
+      */}
+      <div ref={backdropRef} aria-hidden="true" className={`dialog-backdrop absolute inset-x-0 z-[55] ${backdropClassName} ${isOpen ? '' : 'hidden'}`}></div>
     <div
       /*
         上下一定留距離，而且不小於系統安全區（瀏海、底部橫條）。
@@ -87,18 +96,8 @@ const Modal: React.FC<Props> = ({
         inert 會一併擋掉焦點與讀屏；aria-hidden 是給還不支援 inert 的瀏覽器的保險。
       */
       {...(isOpen ? {} : { inert: true, 'aria-hidden': true })}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      {/*
-        遮罩撐到最大可視高度（見 globals.css 的 .cover-viewport）；面板仍置中在看得到的範圍。
-
-        關閉時一定要 display: none（hidden），不能只靠外層的 opacity-0：
-        iOS 26 的 Safari 不看 theme-color，改拿「貼著畫面邊緣的 fixed 元素」的
-        background-color 染上下列 —— 而且**不管祖先的 opacity**。每頁都常駐好幾個
-        關著的 Modal，於是 Safari 的上下列永遠被染成米色疊 50% 黑的 #73706b
-        （Zach 回報「Safari 上下變灰色」，模擬器上量到）。開著的時候變暗是對的，
-        跟整個畫面一起被遮住。
-      */}
-      <div ref={backdropRef} className={`cover-viewport ${backdropClassName} ${isOpen ? '' : 'hidden'}`} onClick={onClose}></div>
 
       {bare ? (
         <div ref={panelRef} tabIndex={-1} className={`relative flex max-h-full flex-col font-[family-name:var(--font-app)] outline-none ${panelClassName}`}>
@@ -168,6 +167,7 @@ const Modal: React.FC<Props> = ({
       </div>
       )}
     </div>
+    </>
   );
 
   return portalReady ? createPortal(node, document.body) : node;

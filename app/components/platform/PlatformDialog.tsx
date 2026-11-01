@@ -13,7 +13,7 @@ import { useMessages } from '@/i18n/LocaleProvider';
  * **行為**跟 Modal 共用同一份（useDialog：捲動鎖、Esc、焦點鎖、portal），只有長相分開。
  *
  * 層級與遮罩跟 Modal 一致：z-[55]（頁面最高 z-50、換頁轉場 z-[60]），
- * 遮罩用 .cover-viewport 往外多蓋，關閉時 display:none（iOS 26 Safari 會拿 fixed 元素染工具列）。
+ * 遮罩是 absolute、上下多蓋一截（useDialog 的 placeBackdrop），關閉時 display:none（iOS 26 Safari 會拿 fixed 元素染工具列）。
  */
 export default function PlatformDialog({ isOpen, onClose, title, children }: {
   isOpen: boolean;
@@ -25,6 +25,9 @@ export default function PlatformDialog({ isOpen, onClose, title, children }: {
   const t = useMessages();
 
   const node = (
+    <>
+      {/* 遮罩在 fixed 外框外面、absolute 定位（見 Modal 與 useDialog 的 placeBackdrop） */}
+      <div ref={backdropRef} aria-hidden="true" className={`dialog-backdrop absolute inset-x-0 z-[55] bg-black/70 ${isOpen ? '' : 'hidden'}`}></div>
     <div
       className={`fixed inset-0 z-[55] flex items-center justify-center px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] transition-opacity duration-200 ${
         isOpen ? 'opacity-100' : 'pointer-events-none opacity-0'
@@ -33,8 +36,8 @@ export default function PlatformDialog({ isOpen, onClose, title, children }: {
       aria-modal="true"
       aria-label={title}
       {...(isOpen ? {} : { inert: true, 'aria-hidden': true })}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div ref={backdropRef} className={`cover-viewport bg-black/70 ${isOpen ? '' : 'hidden'}`} onClick={onClose}></div>
       <div
         ref={panelRef}
         tabIndex={-1}
@@ -54,6 +57,7 @@ export default function PlatformDialog({ isOpen, onClose, title, children }: {
         <div className="min-h-0 overflow-y-auto overscroll-contain px-6 pb-6 pt-2">{children}</div>
       </div>
     </div>
+    </>
   );
 
   return portalReady ? createPortal(node, document.body) : node;

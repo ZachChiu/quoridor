@@ -3,33 +3,18 @@ import { useEffect, useRef, useState } from 'react';
 import { useScrollLock } from './useScrollLock';
 
 /*
-  開著對話框時，頁面本身的底色也跟著遮罩一起變暗（11/1 Zach 回報：手機上彈窗打開，最下面一條沒有變暗）。
-  iPhone 上工具列收起來時、頁面拉過頭時露出來的那條，畫的是 html 的底色（WebKit 的 under-page 底色），
-  不是頁面上的東西 —— fixed 的遮罩再怎麼往外多蓋（.cover-viewport）也蓋不到。所以開著時把 html／body 的底色
-  換成「原本的底色疊上遮罩那層黑」，關掉時還原。好幾個對話框疊著開時只在第一個開、最後一個關時動。
-  只動 html、不動 body：body 也變暗的話，遮罩底下的頁面會被暗兩次，跟那條對不上（第一版就這樣，Zach 截圖抓到）。
+  遮罩不用 fixed，改成 absolute、定在目前的捲動位置、上下各多蓋一截（11/1 Zach：手機上彈窗打開，最下面一條沒有變暗）。
+  iOS 26 的 Safari（與 iPhone 上的 Chrome）把頁面一路畫到工具列後面，但只畫跟著頁面捲的內容，fixed 的層不畫 ——
+  fixed 的遮罩再怎麼往外多蓋（.cover-viewport）那一截都是 html 的底色。換頁轉場（WipeOverlay）也是同一個做法。
+  捲動鎖因此也不能再把 body 變成 fixed（useScrollLock），不然整頁都不畫在那一截。
 */
-let dimmed = 0;
-let restoreRoot: (() => void) | null = null;
+const BLEED = (h: number) => Math.round(Math.max(h * 0.25, 192));
 
-function dimRoot(backdrop: HTMLElement | null) {
-  if (dimmed++ > 0 || !backdrop) return;
-  const alpha = /rgba?\([^)]*?,\s*([\d.]+)\)/.exec(getComputedStyle(backdrop).backgroundColor)?.[1];
-  const root = document.documentElement;
-  const base = /rgba?\((\d+),\s*(\d+),\s*(\d+)/.exec(getComputedStyle(root).backgroundColor);
-  if (!alpha || !base) return;
-  const keep = 1 - Number(alpha);
-  const color = `rgb(${base.slice(1).map((v) => Math.round(Number(v) * keep)).join(',')})`;
-  const prev = root.style.backgroundColor;
-  root.style.backgroundColor = color;
-  restoreRoot = () => { root.style.backgroundColor = prev; };
-}
-
-function undimRoot() {
-  if (--dimmed > 0) return;
-  dimmed = 0;
-  restoreRoot?.();
-  restoreRoot = null;
+function placeBackdrop(el: HTMLElement) {
+  const h = Math.max(window.innerHeight, window.visualViewport?.height ?? 0);
+  const bleed = BLEED(h);
+  el.style.top = `${window.scrollY - bleed}px`;
+  el.style.height = `${Math.ceil(h) + 2 * bleed}px`;
 }
 
 const FOCUSABLE = 'a[href],button:not([disabled]),input,select,textarea,[tabindex]:not([tabindex="-1"])';
@@ -43,7 +28,7 @@ const FOCUSABLE = 'a[href],button:not([disabled]),input,select,textarea,[tabinde
  */
 export function useDialog(isOpen: boolean, onClose: () => void, onKeyDown?: (e: KeyboardEvent) => void) {
   const panelRef = useRef<HTMLDivElement>(null);
-  /** 遮罩那層：讀它的透明度，把頁面底色調成一樣暗（dimRoot） */
+  /** 遮罩那層：absolute，打開時定到目前的捲動位置（placeBackdrop） */
   const backdropRef = useRef<HTMLDivElement>(null);
   const restoreRef = useRef<HTMLElement | null>(null);
 
@@ -104,10 +89,18 @@ export function useDialog(isOpen: boolean, onClose: () => void, onKeyDown?: (e: 
   }, [isOpen]);
 
   useEffect(() => {
-    if (!isOpen) return;
-    dimRoot(backdropRef.current);
-    return undimRoot;
-  }, [isOpen]);
+    const el = backdropRef.current;
+    if (!isOpen || !el) return;
+    placeBackdrop(el);
+    // 轉向、工具列伸縮時重量（捲動已鎖住，scrollY 不會變）
+    const onResize = () => placeBackdrop(el);
+    window.addEventListener('resize', onResize);
+    window.visualViewport?.addEventListener('resize', onResize);
+    return () => {
+      window.removeEventListener('resize', onResize);
+      window.visualViewport?.removeEventListener('resize', onResize);
+    };
+  }, [isOpen, portalReady]);
 
   return { panelRef, backdropRef, portalReady };
 }
