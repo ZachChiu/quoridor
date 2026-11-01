@@ -424,6 +424,10 @@ body {
 
    換頁轉場（WipeOverlay）也掛這個 class，但它是 absolute（見元件註解），
    位置與高度由元件自己用 JS 量了覆寫 —— absolute 往外多蓋會把頁面撐長。 */
+/* 對話框遮罩（Modal、PlatformDialog）：打開時淡入。關閉時直接 display:none，不淡出 */
+.dialog-backdrop { transition: opacity 300ms; }
+@starting-style { .dialog-backdrop { opacity: 0; } }
+
 .cover-viewport {
   --overscan: max(25vh, 12rem);
   position: fixed;
