@@ -118,13 +118,11 @@ export default React.memo(function GameStatus({ me, isLock, currentPlayer, uniqT
               </span>
             )}
             {p === me && <span className="sr-only">{g.status.you}</span>}
-            {/* 斷線：整塊去色（外層的 filter），正中一顆實心的墨色圓章、裡面一個 Wi‑Fi 斷掉的圖示（11/1 Zach：角落那顆拔插頭的小圓不夠明顯；
-                第一版蓋實心灰把分數整個遮掉，Zach 要資訊還看得到；細線圖示直接疊在字上會糊在一起） */}
+            {/* 斷線：整塊去色（外層的 filter），蓋一層半透明的灰、正中一個 Wi‑Fi 斷掉的圖示（11/1 Zach：角落那顆拔插頭的小圓不夠明顯；
+                一路調過實心灰（把分數全蓋住）、淡墨、圓章（像多一顆按鈕），最後是「純灰色遮罩」） */}
             {gone && (
-              <span className="absolute inset-0 z-10 grid place-items-center rounded-[inherit]">
-                <span className="grid size-9 place-items-center rounded-full bg-tile-ink text-lg text-tile-cream ring-2 ring-tile-cream coarse:size-8 coarse:text-base">
-                  <LuWifiOff aria-hidden="true" />
-                </span>
+              <span className="absolute inset-0 z-10 grid place-items-center rounded-[inherit] bg-[#77726c]/[0.78] text-[26px] text-tile-cream coarse:text-xl">
+                <LuWifiOff aria-hidden="true" />
                 <span className="sr-only">{g.status.away}</span>
               </span>
             )}
