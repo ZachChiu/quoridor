@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { PLAYER_ON, playerVar, type PlayerKey } from "@/config/players";
 import type { Player } from "@/types/chessboard";
 import { useGameText } from '@/i18n/LocaleProvider';
-import { GiUnplugged } from 'react-icons/gi';
+import { LuWifiOff } from 'react-icons/lu';
 import { clockOf, fmtClock, type LiveClock } from '@/utils/clock';
 
 interface Props {
@@ -86,6 +86,7 @@ export default React.memo(function GameStatus({ me, isLock, currentPlayer, uniqT
     >
       {players.map((p) => {
         const active = !isLock && currentPlayer === p;
+        const gone = away?.includes(p) ?? false;
         return (
           <div
             key={p}
@@ -115,9 +116,11 @@ export default React.memo(function GameStatus({ me, isLock, currentPlayer, uniqT
               </span>
             )}
             {p === me && <span className="sr-only">{g.status.you}</span>}
-            {away?.includes(p) && (
-              <span className="absolute -right-2 -top-2 grid size-6 place-items-center rounded-full bg-tile-ink text-[13px] text-tile-cream ring ring-primary-50">
-                <GiUnplugged aria-hidden="true" />
+            {/* 斷線：整塊蓋一層灰、正中一個 Wi‑Fi 斷掉的圖示（11/1 Zach：角落那顆拔插頭的小圓不夠明顯）。
+                灰用蓋的、不用 filter：filter 會連圖示一起淡掉。米白圖示在這個灰上 4.6:1 */}
+            {gone && (
+              <span className="absolute inset-0 z-10 grid place-items-center rounded-[inherit] bg-[#77726c] text-[26px] text-tile-cream coarse:text-xl">
+                <LuWifiOff aria-hidden="true" />
                 <span className="sr-only">{g.status.away}</span>
               </span>
             )}

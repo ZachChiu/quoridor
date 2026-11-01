@@ -389,7 +389,8 @@ export default function MorrisPlay({ locale, mode, showRules, moves = '', onMenu
 
       {/* 桌機的右邊一欄 */}
       <aside className="hidden w-[340px] shrink-0 flex-col gap-5 lg:flex">
-        <div className="flex items-start gap-3">
+        {/* 兩顆圓鈕跟標題那兩行的中線對齊（11/1 Zach：頂端對齊時圓鈕看起來比字高） */}
+        <div className="flex items-center gap-3">
           <button type="button" onClick={toMenu} aria-label={t.home} className={round}><LuHouse aria-hidden="true" /></button>
           <div className="min-w-0 flex-1">
             <h1 className="text-3xl font-black leading-none">{t.title}</h1>
