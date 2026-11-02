@@ -57,6 +57,8 @@ export type BlindGomokuText = {
   localBlindHint: string;
   aimHint: string;
   place: string;
+  /** 手機「下子」鈕還沒瞄準時的字（取代原本棋盤上方那行 aimHint，那行一出一沒棋盤會跳） */
+  aimFirst: string;
   restart: string;
   undo: string;
   rules: string;
@@ -154,6 +156,7 @@ export const TEXT: TextTable<BlindGomokuText> = {
     localBlindHint: '兩人都只看得到顏色，記住自己的子',
     aimHint: '點交叉點瞄準，再點一次就下子',
     place: '下子',
+    aimFirst: '先選位置',
     restart: '重來',
     undo: '悔棋',
     rules: '怎麼玩',
@@ -244,6 +247,7 @@ export const TEXT: TextTable<BlindGomokuText> = {
     localBlindHint: 'You both see only colours — remember your own stones',
     aimHint: 'Tap a point to aim, tap it again to place',
     place: 'Place',
+    aimFirst: 'Pick a point',
     restart: 'Restart',
     undo: 'Undo',
     rules: 'How to play',
@@ -334,6 +338,7 @@ export const TEXT: TextTable<BlindGomokuText> = {
     localBlindHint: '2人とも色しか見えません。自分の石を覚えておこう',
     aimHint: '交点をタップして狙い、もう一度タップで打つ',
     place: '打つ',
+    aimFirst: '交点を選ぶ',
     restart: 'やり直す',
     undo: '待った',
     rules: '遊び方',
@@ -424,6 +429,7 @@ export const TEXT: TextTable<BlindGomokuText> = {
     localBlindHint: '둘 다 색깔만 보여요. 자기 돌을 기억하세요',
     aimHint: '교차점을 눌러 조준하고, 한 번 더 누르면 둬요',
     place: '두기',
+    aimFirst: '자리 고르기',
     restart: '다시 시작',
     undo: '무르기',
     rules: '게임 방법',
@@ -514,6 +520,7 @@ export const TEXT: TextTable<BlindGomokuText> = {
     localBlindHint: '两人都只看得到颜色，记住自己的棋子',
     aimHint: '点交叉点瞄准，再点一次就落子',
     place: '落子',
+    aimFirst: '先选位置',
     restart: '重来',
     undo: '悔棋',
     rules: '怎么玩',
@@ -604,6 +611,7 @@ export const TEXT: TextTable<BlindGomokuText> = {
     localBlindHint: 'ทั้งสองคนเห็นแค่สี จำหมากของตัวเองไว้',
     aimHint: 'แตะจุดตัดเพื่อเล็ง แตะอีกครั้งเพื่อวาง',
     place: 'วาง',
+    aimFirst: 'เลือกจุด',
     restart: 'เริ่มใหม่',
     undo: 'ย้อน',
     rules: 'วิธีเล่น',
