@@ -11,6 +11,7 @@ import { BLIND_GOMOKU } from '@/i18n/routes';
 import { useSound } from '@/hook/useSound';
 import { useLeaveGuard } from '@/hook/useLeaveGuard';
 import { shakeElement } from '@/hook/useRoomSignals';
+import { track } from '@/utils/analytics';
 import { TEXT } from '@/games/blind-gomoku/text';
 import {
   COLORS, applyMove, createGame, isLegal, lastColor, other, play, pointName, undo,
@@ -146,6 +147,20 @@ export default function GomokuPlay({ mode, onMenu }: { mode: GomokuMode | Online
     playNudge();
   }, [shake]);
 
+  // GA：看「狀態轉變」，不看按鈕 —— 連線一次補好幾手、重整接回都不算開局／結束（同九子棋、虎棋）
+  const gaMode = online ? 'online' : vsAi ? 'solo' : 'local';
+  const gaBase = useMemo(() => ({ game: 'blind-gomoku', mode: gaMode, players: 2, difficulty: level ?? undefined } as const), [gaMode, level]);
+  const gaSeen = useRef({ moves: game.moves.length, winner: game.winner });
+  useEffect(() => {
+    const prev = gaSeen.current;
+    gaSeen.current = { moves: game.moves.length, winner: game.winner };
+    if (prev.moves === 0 && game.moves.length > 0) track('game_start', gaBase);
+    if (!prev.winner && game.winner) {
+      const result = game.winner === 'draw' ? 'tie' : !mySide ? 'decided' : game.winner === mySide ? 'win' : 'lose';
+      track('game_end', { ...gaBase, result, winner: game.winner, ended: resignedSide ? 'resign' : 'natural', turns: game.moves.length });
+    }
+  }, [game, gaBase, mySide, resignedSide]);
+
   const pickColor = (c: StoneColor) => { setColor(c); playPick(colorString(c)); };
 
   const place = useCallback((p: Point) => {
@@ -166,7 +181,10 @@ export default function GomokuPlay({ mode, onMenu }: { mode: GomokuMode | Online
     setResultOpen(false);
   };
   // 連線的再來一局是再開一間房
-  const again = online ? online.newRoom : restart;
+  const again = () => {
+    track('game_restart', gaBase);
+    if (online) online.newRoom(); else restart();
+  };
   // 悔棋只有一般模式、不連線；對電腦時退到「又輪到你」（電腦已經回了就退兩手）
   const undoSteps = vsAi ? 2 : 1;
   const canUndo = !blind && !online && canPlay && game.moves.length >= undoSteps;
