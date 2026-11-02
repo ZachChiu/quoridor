@@ -207,7 +207,8 @@ export default function GomokuPlay({ mode, onMenu }: { mode: GomokuMode | Online
   const modeLabel = level
     ? `${blind ? t.blindAi : t.classicAi} · ${t.levels[level].name}`
     : `${online ? t.online : t.local} · ${blind ? t.blind : t.classic}`;
-  const ended = !!game.winner && settled && !resultOpen;
+  // 翻完、畫好線就算結束：結算開著時背後也是結束的樣子（11/2 Zach：先前綁著「結算沒開」，一打開結算，後面的按鈕區就跳回下棋的狀態）
+  const ended = !!game.winner && settled;
   /** 標題大約幾個字寬（中日韓一個字 1、粗體的拉丁與泰文約 0.7），手機上方一排用它決定字級 */
   const titleEm = Array.from(t.title).reduce((n, ch) => n + (ch.charCodeAt(0) >= 0x2e80 ? 1 : ch === ' ' ? 0.3 : 0.7), 0).toFixed(2);
 
