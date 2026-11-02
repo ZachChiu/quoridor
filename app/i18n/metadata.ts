@@ -206,7 +206,7 @@ const GAME_ICONS: Record<string, Metadata['icons'] | undefined> = {
 
   'time-auction': undefined,
 
-  'blind-gomoku': undefined,
+  'blind-gomoku': iconSet('blind-gomoku', true),
 
   'knights-tour': iconSet('knights-tour', true),
 

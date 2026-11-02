@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { GoogleAnalytics } from '@next/third-parties/google'
+import Script from "next/script";
 import "./globals.css";
 import { GameProvider } from "./contexts/GameContext";
 import { RuleModalProvider } from "./contexts/RuleModalContext";
@@ -10,7 +10,8 @@ import { HTML_LANG, PREFIXED, type Locale } from "./i18n/locales";
 import { PLAYABLE } from "./games/catalog";
 import { pageMetaScript } from "./utils/pageMeta";
 
-const PAGE_META = pageMetaScript(PREFIXED, PLAYABLE.map((g) => g.playable!.slice(1)));
+const GA_ID = "G-1CTRTGRPFF";
+const PAGE_META = pageMetaScript(GA_ID, PREFIXED, PLAYABLE.map((g) => g.playable!.slice(1)));
 /**
  * 站台外殼：<html> 與所有 provider。
  *
@@ -26,7 +27,7 @@ export function Shell({ locale, children }: { locale: Locale; children: React.Re
   return (
     <html lang={HTML_LANG[locale]}>
       <body className="select-none antialiased">
-        {/* page_view 帶 page_type／game：要在 GA 載入前先包住 history，見 utils/pageMeta.ts */}
+        {/* GA 的初始化與 page_view（帶 page_type／game）：要在 GA 載入前先包住 history，見 utils/pageMeta.ts */}
         {process.env.NEXT_PUBLIC_APP_ENV === "production" && (
           <script dangerouslySetInnerHTML={{ __html: PAGE_META }} />
         )}
@@ -52,13 +53,13 @@ export function Shell({ locale, children }: { locale: Locale; children: React.Re
         </LocaleProvider>
       </body>
       {/*
-        頁面瀏覽（page_view）全交給 GA 自己算：首次載入由 config 送，站內換頁
-        由「加強型評估」的「依瀏覽器記錄事件判斷網頁變更」送（GA 後台預設開啟）。
-        先前另外有一個 AnalyticsProvider 手動送 page_view，於是每次瀏覽都算兩次
-        —— Next 的文件明寫兩者只能擇一（third-party-libraries.md〈Tracking Pageviews〉）。
+        頁面瀏覽（page_view）由 utils/pageMeta.ts 的內嵌 script 送，一次換頁一筆、帶 page_type／game；
+        config 是 send_page_view: false，GA 後台的「依瀏覽器記錄事件判斷網頁變更」要關掉（11/2，docs/page-type-ga-fix.md）。
+        所以不用 @next/third-parties 的 <GoogleAnalytics>：它自己再 config 一次會多送一筆 page_view。這裡只載 gtag.js。
+        先前另外有一個 AnalyticsProvider 也手動送 page_view，於是每次瀏覽都算兩次 —— 送 page_view 的地方只能有一個。
       */}
       {process.env.NEXT_PUBLIC_APP_ENV === "production" && (
-        <GoogleAnalytics gaId="G-1CTRTGRPFF" />
+        <Script id="_ga" src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`} strategy="afterInteractive" />
       )}
     </html>
   );

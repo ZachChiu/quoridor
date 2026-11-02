@@ -1027,6 +1027,8 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
   // 重整時瀏覽器停在哪一筆就重新載入哪一筆 —— 若停在守門上，一開始就要知道，
   // 否則下一次點擊又疊一筆，要按兩次返回才問得到
   const guardOnTopRef = useRef(typeof window !== 'undefined' && !!window.history.state?.__wallgoGuard);
+  /** 守門那筆的網址：popstate 時網址還是它才是按了返回 */
+  const guardHrefRef = useRef<string | null>(null);
   const [leaveVia, setLeaveVia] = useState<null | 'back' | 'home'>(null);
   const leaveOpenRef = useRef(false);
   useEffect(() => { leaveOpenRef.current = leaveVia !== null; });
@@ -1035,6 +1037,7 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
   const pushGuard = useCallback(() => {
     if (guardOnTopRef.current) return;
     window.history.pushState({ ...window.history.state, __wallgoGuard: true }, '', window.location.href);
+    guardHrefRef.current = window.location.href;
     guardOnTopRef.current = true;
   }, []);
 
@@ -1052,6 +1055,9 @@ export default function PlayClient({ roomId, playersNum: routePlayers, aiDifficu
     const onPop = (e: PopStateEvent) => {
       if (!guardOnTopRef.current || e.state?.__wallgoGuard) return;
       guardOnTopRef.current = false;
+      // 網址變了就不是按返回：在網址列貼上另一間房的連結（只有 # 後面不同）也會觸發 popstate，
+      // 當成返回的話會替使用者退一步、退回舊的那一局（11/2 Zach，同 hook/useLeaveGuard.ts）
+      if (guardHrefRef.current !== null && window.location.href !== guardHrefRef.current) return;
       if (guardWantedRef.current) setLeaveVia('back');
       else window.history.back(); // 沒東西會丟：替使用者把這一步退完
     };
