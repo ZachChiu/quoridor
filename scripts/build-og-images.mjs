@@ -62,6 +62,8 @@ const ART = {
 };
 /** 整張鋪滿的背景：平台首頁是七款卡片斜排的牆（scripts/og-art/collage.mjs 產生，要在七款都合進來的 beta 上跑） */
 const BG = { platform: 'scripts/og-art/platform.jpg' };
+/** 置中的標誌（排法見 og-design.mjs 的 centered）：平台首頁是骰子惡魔 */
+const MARK = { platform: 'public/brand/die-mark.svg' };
 
 async function dataUri(src, square) {
   const file = typeof src === 'string' ? src : src.file;
@@ -78,7 +80,8 @@ function copyFor(locale, page) {
   // 英文的 titleLine2 整個不給 —— 用模板拼會變成字面上的 "undefined"（見 app/i18n/index.ts 的 siteName）
   const site = [t.home.titleLine1, t.home.titleLine2].filter(Boolean).join(' ');
   // 平台首頁：膠囊放平台名，標題逐行指定（metaTitle 太長；自動斷行會把節目名拆開）
-  if (page === 'platform') return { kicker: brandName(locale), title: t.platform.ogLines, titleSize: fitTitleSize(t.platform.ogLines) };
+  // 置中排、標題在標誌底下，字級比靠左的版本小（整組要塞進正中 630px 寬，裁成正方形才不會切到字）
+  if (page === 'platform') return { kicker: brandName(locale), title: t.platform.ogLines, titleSize: fitTitleSize(t.platform.ogLines, 64, 44, 600) };
   // Bagh Chal：膠囊放出自哪一季的節目名，標題是遊戲名＋副名
   if (page === 'bagh-chal') { const lines = [t.baghChal.title, t.baghChal.subtitle]; return { kicker: t.meta.showName, title: lines, titleSize: fitTitleSize(lines) }; }
   // 第二批：各款自己決定膠囊與標題（同 Bagh Chal 的寫法：膠囊是出自哪一季、標題是遊戲名＋副名）
@@ -139,9 +142,10 @@ const SHAPED = { th: 'node_modules/.cache/wallgo-fonts/NotoSansThai[wdth,wght].t
 const chrome = Object.keys(SHAPED).some((l) => LOCALES.includes(l)) ? await openChrome() : null;
 
 // 圖每一頁轉一次就好，六個語系共用
-const images = { art: {}, bg: {} };
+const images = { art: {}, bg: {}, mark: {} };
 for (const page of BUILD) {
   if (ART[page]) images.art[page] = await dataUri(ART[page], true);
+  if (MARK[page]) images.mark[page] = await dataUri(MARK[page], false);
   if (BG[page]) images.bg[page] = await dataUri(BG[page], false);
 }
 
@@ -175,7 +179,7 @@ for (const locale of LOCALES) {
       }
     }
     let png = Buffer.from(await new ImageResponse(
-      poster({ tone: toneOf(page), copy, titleImages, art: images.art[page], bg: images.bg[page] }),
+      poster({ tone: toneOf(page), copy, titleImages, art: images.art[page], bg: images.bg[page], mark: images.mark[page] }),
       { width: 1200, height: 630, fonts }
     ).arrayBuffer());
     // 有照片（主視覺、平台的卡片牆）的圖直接輸出會到 400KB–1MB：WhatsApp 超過約 300KB 就不顯示預覽。
