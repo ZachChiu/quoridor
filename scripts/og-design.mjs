@@ -131,8 +131,9 @@ export function fitTitleSize(lines, max = 92, min = 56, room = 500) {
  * `bg`（選填）：整張鋪滿的背景圖（data URI），字靠左壓在上面、右邊不放東西 —— 平台首頁那張七款卡片斜排的牆。
  * `tone`：TONES 的代號，或直接給 { bg, fg, pill, pillFg }（scripts/og-games/ 各款自己帶）。
  */
-export function poster({ tone, copy, titleImages, art, bg }) {
+export function poster({ tone, copy, titleImages, art, bg, mark }) {
   const t = typeof tone === 'string' ? TONES[tone] : tone;
+  if (mark) return centered(t, copy, titleImages, mark, bg);
   const text = textColumn(t, copy, titleImages);
   if (bg) {
     return div({ width: 1200, height: 630, background: t.bg, color: t.fg, alignItems: 'center', padding: '0 80px', fontFamily: 'OG', position: 'relative' }, [
@@ -149,6 +150,29 @@ export function poster({ tone, copy, titleImages, art, bg }) {
   }, [
     text,
     art ? { type: 'img', props: { src: art, width: 408, height: 408, style: { borderRadius: 24 } } } : board(),
+  ]);
+}
+
+/**
+ * `mark`（選填）：整張置中排 —— 標誌在上、膠囊與標題在下，全部對齊正中線（平台首頁）。
+ * 11/2 大腦筋：Google 搜「WALL GO」的縮圖被裁成正方形，原本字靠左、右邊是卡片牆，裁完只剩牆的中間（還挑到九子棋的古畫）。
+ * 置中之後裁成 1:1、4:3 都還看得到骰子惡魔。`bg` 有給時壓得很暗、只當底紋（七款卡片的牆，10/25 Zach 要的「多個遊戲集結的感覺」）。
+ */
+function centered(t, copy, titleImages, mark, bg) {
+  const lines = copy.title.map((line, i) => {
+    const img = titleImages?.[i];
+    if (img) return { type: 'img', props: { src: img.src, width: img.width, height: img.height, style: { marginTop: -img.pad, marginBottom: -img.pad } } };
+    const hangul = /[\uAC00-\uD7AF]/.test(line);
+    return div({ fontSize: copy.titleSize, fontWeight: 900, lineHeight: 1.08, ...(hangul ? { wordBreak: 'keep-all' } : {}) }, line);
+  });
+  return div({ width: 1200, height: 630, background: t.bg, color: t.fg, fontFamily: 'OG', position: 'relative', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }, [
+    ...(bg ? [
+      { type: 'img', props: { src: bg, width: 1200, height: 630, style: { position: 'absolute', left: 0, top: 0 } } },
+      div({ position: 'absolute', left: 0, top: 0, width: 1200, height: 630, background: t.bg, opacity: 0.84 }, []),
+    ] : []),
+    { type: 'img', props: { src: mark, width: 236, height: 236, style: { marginBottom: 22 } } },
+    div({ background: t.pill, color: t.pillFg, borderRadius: 999, padding: '8px 26px', fontSize: 30, fontWeight: 900, whiteSpace: 'nowrap', marginBottom: 18 }, copy.kicker),
+    div({ flexDirection: 'column', alignItems: 'center', textAlign: 'center' }, lines),
   ]);
 }
 

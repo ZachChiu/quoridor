@@ -318,6 +318,8 @@ nudge { by, at }          最近一次「催一下」
   改了標題相關文案（`metaTitle`、`titleLine1/2`、`showName`）要跑 `npm run og:build`，
   CI 有 `og:check` 擋著（比對表一頁一份：`public/og/copy/<頁>.json`）。`npm run og:build -- <頁>…` 只重建那幾頁 —— 各款的分支只重建自己的，合併才不會撞。
   2026-10-25：平台首頁是**七款卡片斜排的一面牆**（Zach：「可以放多個遊戲集結的感覺」；背景 `scripts/og-art/platform.jpg` 由同資料夾的 `collage.mjs` 在七款都合進來的 beta 上產生）、
+  **11/2 改成置中**（docs/platform-thumbnail.md：Google 把平台首頁的縮圖裁成正方形、還挑到九子棋的古畫）：骰子惡魔在正中、膠囊與標題在它底下，卡片牆壓暗只當底紋（`og-design.mjs` 的 `centered`），裁成 1:1、4:3 都還是骰子惡魔。
+  平台首頁的 JSON-LD 另外指定代表圖 `public/brand/cover-{1x1,4x3,16x9}.png`（骰子惡魔＋深色底、不放字，`scripts/og-art/brand-covers.mjs` 產生）；`robots.ts` 只對 Googlebot-Image 擋 `libro.webp` 那一張。
   尼泊爾虎棋換成虎棋自己的顏色＋平台那張真棋盤方圖（原本是舊版棋盤的 key-art.svg）、第二批五款各一份 `scripts/og-games/<id>.mjs`（格式見那裡的 README）。
   有照片的圖轉成 256 色 PNG：直接輸出 400KB–1MB，WhatsApp 超過約 300KB 就不顯示預覽。
   **不要改用 Next 的 `opengraph-image.tsx`** —— 那個慣例產出的檔案沒有副檔名
