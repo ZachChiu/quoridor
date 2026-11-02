@@ -4,6 +4,7 @@ import { BLURB as BLIND_GOMOKU } from './blind-gomoku/blurb';
 import { BLURB as KNIGHTS_TOUR } from './knights-tour/blurb';
 import { BLURB as TIME_AUCTION } from './time-auction/blurb';
 import { BLURB as BALANCE_MANCALA } from './balance-mancala/blurb';
+import { BLURB as LIARS_DICE } from './liars-dice/blurb';
 
 /**
  * 第二批五款在平台大卡片上的介紹，依站內路徑查（文案在各款自己的 blurb.ts）。
@@ -15,4 +16,5 @@ export const BLURBS: Partial<Record<string, typeof NINE_MENS_MORRIS>> = {
   [routes.KNIGHTS_TOUR]: KNIGHTS_TOUR,
   [routes.TIME_AUCTION]: TIME_AUCTION,
   [routes.BALANCE_MANCALA]: BALANCE_MANCALA,
+  [routes.LIARS_DICE]: LIARS_DICE,
 };

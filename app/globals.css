@@ -691,6 +691,35 @@ html:has(.kt-root), body:has(.kt-root) { background: #edddc7; }
 }
 @media (pointer: fine) { .kt-chalk:hover:not(:disabled) { filter: brightness(1.1); } }
 
+/* ▸ 大話骰（feat/game-liars-dice） */
+/* 大話骰（LdFrame）：一件殖民時期秘魯的安地斯小披風（uncu，17–18 世紀，大都會博物館 CC0）。頁面是披風的紫褐羊毛，
+   .ld-frame 是胸前那排階梯方格 —— 黃與靛藍交錯、胭脂蟲紅的格線、每一格中間一顆「眼」（跟骰子的點同一個形狀），
+   唯一的裝飾，只有最外緣這一圈。顏色見 components/liars-dice/palette.ts。 */
+html:has(.ld-root), body:has(.ld-root) { background: #41303a; }
+.ld-frame {
+  border: var(--ld-frame, 14px) solid #8a3536;
+  border-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56'%3E%3Crect width='56' height='56' fill='%238a3536'/%3E%3Crect x='1' y='1' width='12' height='12' fill='%23c9b17b'/%3E%3Cellipse cx='7' cy='7' rx='1.7' ry='3' fill='%238a3536'/%3E%3Crect x='15' y='1' width='12' height='12' fill='%23242f44'/%3E%3Cellipse cx='21' cy='7' rx='1.7' ry='3' fill='%23c9b17b'/%3E%3Crect x='29' y='1' width='12' height='12' fill='%23c9b17b'/%3E%3Cellipse cx='35' cy='7' rx='1.7' ry='3' fill='%238a3536'/%3E%3Crect x='43' y='1' width='12' height='12' fill='%23242f44'/%3E%3Cellipse cx='49' cy='7' rx='1.7' ry='3' fill='%23c9b17b'/%3E%3Crect x='1' y='15' width='12' height='12' fill='%23242f44'/%3E%3Cellipse cx='7' cy='21' rx='1.7' ry='3' fill='%23c9b17b'/%3E%3Crect x='43' y='15' width='12' height='12' fill='%23c9b17b'/%3E%3Cellipse cx='49' cy='21' rx='1.7' ry='3' fill='%238a3536'/%3E%3Crect x='1' y='29' width='12' height='12' fill='%23c9b17b'/%3E%3Cellipse cx='7' cy='35' rx='1.7' ry='3' fill='%238a3536'/%3E%3Crect x='43' y='29' width='12' height='12' fill='%23242f44'/%3E%3Cellipse cx='49' cy='35' rx='1.7' ry='3' fill='%23c9b17b'/%3E%3Crect x='1' y='43' width='12' height='12' fill='%23242f44'/%3E%3Cellipse cx='7' cy='49' rx='1.7' ry='3' fill='%23c9b17b'/%3E%3Crect x='15' y='43' width='12' height='12' fill='%23c9b17b'/%3E%3Cellipse cx='21' cy='49' rx='1.7' ry='3' fill='%238a3536'/%3E%3Crect x='29' y='43' width='12' height='12' fill='%23242f44'/%3E%3Cellipse cx='35' cy='49' rx='1.7' ry='3' fill='%23c9b17b'/%3E%3Crect x='43' y='43' width='12' height='12' fill='%23c9b17b'/%3E%3Cellipse cx='49' cy='49' rx='1.7' ry='3' fill='%238a3536'/%3E%3C/svg%3E") 14 / var(--ld-frame, 14px) round;
+}
+@media (max-width: 640px) { .ld-frame { --ld-frame: 10px; } }
+
+/* 大話骰的按鈕：一塊織出來的布 —— 下緣一道 3px 的黃線（披風下擺的鑲邊），沒有框線。
+   is-ink：棉線底深字（主要）；is-soft：羊毛上淡一層棉線（次要）；is-red：胭脂蟲紅（開！）；is-quiet：右上角的小圓鈕。 */
+.ld-btn {
+  border-radius: 3px; font-weight: 900;
+  box-shadow: inset 0 -3px 0 rgb(201 177 123 / 0.9);
+  transition: filter 0.15s, transform 0.1s;
+}
+.ld-btn:active:not(:disabled) { transform: scale(0.98); }
+.ld-btn:disabled { opacity: 0.4; }
+@media (pointer: fine) { .ld-btn:hover:not(:disabled) { filter: brightness(1.08); } }
+.ld-btn.is-ink { background: #d4b98f; color: #2e1822; box-shadow: inset 0 -3px 0 #8a3536; }
+.ld-btn.is-soft { background: rgb(212 185 143 / 0.13); color: #d4b98f; }
+.ld-btn.is-red { background: #8a3536; color: #d4b98f; }
+.ld-btn.is-quiet { background: rgb(212 185 143 / 0.12); color: #d4b98f; box-shadow: none; border-radius: 9999px; }
+/* 彈窗（棉線色的紙）裡的次要鈕 */
+.ld-btn.is-paper { background: rgb(46 24 34 / 0.08); color: #2e1822; box-shadow: inset 0 -3px 0 rgb(46 24 34 / 0.18); }
+.ld-btn.is-on { background: #2e1822; color: #d4b98f; box-shadow: inset 0 -3px 0 #c9b17b; }
+
 /* ▸ 時間拍賣（feat/game-time-auction） */
 
 /* ▸ 均衡曼卡拉（feat/game-balance-mancala） */

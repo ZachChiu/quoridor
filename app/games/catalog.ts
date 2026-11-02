@@ -96,7 +96,9 @@ export const SEASONS: Season[] = [
       { name: 'Treasure Island', names: { 'zh-TW': '寶藏島', 'zh-Hans': '宝藏岛' } },
       { name: 'Triple Dice', names: { 'zh-TW': '三顆骰子相同點數', 'zh-Hans': '三骰子' } },
       { name: 'Balance Mancala', names: { 'zh-TW': '平衡播棋', 'zh-Hans': '平衡播棋' } },
-      { name: 'Doubt and Bet', names: { 'zh-TW': '疑心下注', 'zh-Hans': '疑心下注' } },
+      // 點進去玩的是它的原型大話骰（2026-11-03 Zach：大話骰排入研究、找風格套用）；卡片照舊寫節目的名字
+      { name: 'Doubt and Bet', names: { 'zh-TW': '疑心下注', 'zh-Hans': '疑心下注' }, playable: routes.LIARS_DICE,
+        look: { card: 'bg-[#41303a] text-[#d4b98f]', wipe: '#41303a', art: '/games/liars-dice/uncu.webp', cover: true, entrance: 'liars-dice' } },
       { name: 'Equation Pyramid', names: { 'zh-TW': '方程式金字塔', 'zh-Hans': '方程式金字塔' } },
       { name: 'Big Small', names: { 'zh-TW': '大或小', 'zh-Hans': '大或小' } },
       { name: 'Question and Truth', names: { 'zh-TW': '提問與真相', 'zh-Hans': '提问与真相' } },
