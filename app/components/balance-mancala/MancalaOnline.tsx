@@ -13,7 +13,7 @@ import { TEXT } from '@/games/balance-mancala/text';
 import { CELLS, CELL_COLOUR, DEVIL, letterOf, type MancalaState, type Seat } from '@/games/balance-mancala/engine';
 import type { MatchSetup } from './match';
 import { movesOf, parseNew, stateOf } from './online';
-import { BRASS, CLOTH_LIGHT, DISH_BG, INK, WOOD, seatLook } from './palette';
+import { BRASS, CLOTH_LIGHT, DEVIL_BG, DISH_BG, WOOD, seatLook } from './palette';
 import MancalaFrame from './MancalaFrame';
 import MancalaPlay from './MancalaPlay';
 import PieceDisc from './PieceDisc';
@@ -100,7 +100,7 @@ function MiniBoard({ sowing = false, children }: { sowing?: boolean; children?: 
           <span key={cell} className="absolute grid -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full"
             style={{
               left: `${50 + 37 * Math.cos(a)}%`, top: `${50 + 37 * Math.sin(a)}%`, width: '14cqw', height: '14cqw',
-              background: colour !== null ? DISH_BG[colour] : cell === DEVIL ? INK : CLOTH_LIGHT,
+              background: colour !== null ? DISH_BG[colour] : cell === DEVIL ? DEVIL_BG : CLOTH_LIGHT,
               boxShadow: `inset 0 0 0 1cqw ${BRASS}`,
             }}>
             {sowing && (

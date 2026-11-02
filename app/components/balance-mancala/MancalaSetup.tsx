@@ -16,6 +16,7 @@ import { ONLINE_MAX, ONLINE_MIN } from './online';
 import MancalaFrame from './MancalaFrame';
 import { CLOTH, WOOD } from './palette';
 import { MCL_CORNER } from './styles';
+import { SKINS, useMclSkin } from './skins';
 
 const SEAT_CHOICES = Array.from({ length: MAX_SEATS - MIN_SEATS + 1 }, (_, i) => MIN_SEATS + i);
 const HUMAN_CHOICES = Array.from({ length: MAX_SEATS - 1 }, (_, i) => i + 2);
@@ -36,6 +37,7 @@ const KEY_ART = '/games/balance-mancala/weights.webp';
  */
 export default function MancalaSetup({ locale, initial, onStart }: { locale: Locale; initial: MatchSetup; onStart: (m: MatchSetup) => void }) {
   const t = useTextTable(TEXT);
+  const skin = SKINS[useMclSkin()];
   const router = useRouter();
   const [mode, setMode] = useState(initial.mode);
   const [seats, setSeats] = useState(initial.mode === 'solo' ? initial.seats : 4);
@@ -67,8 +69,8 @@ export default function MancalaSetup({ locale, initial, onStart }: { locale: Loc
           {/* 出處：阿坎（今迦納）19 世紀的黃金砝碼，克里夫蘭美術館（CC0）。畫面上不寫出處（Zach 10/24：插圖不要說明） */}
           <div className="flex w-full flex-col items-center gap-1">
             {/* eslint-disable-next-line @next/next/no-img-element -- 靜態匯出的單張主視覺，不需要 next/image */}
-            <img src={KEY_ART} alt="" aria-hidden="true" width={1000} height={264}
-              className="block h-auto w-[min(100%,24rem,calc(19svh*3.79))]" />
+            <img src={skin.keyArt === SKINS.adinkra.keyArt ? KEY_ART : skin.keyArt} alt="" aria-hidden="true" width={1000} height={Math.round(1000 / skin.keyRatio)}
+              className="block h-auto" style={{ width: `min(100%, 24rem, calc(19svh * ${skin.keyRatio.toFixed(2)}))` }} />
           </div>
           <p className="mt-4 text-[11px] font-bold tracking-wide text-ink-soft">{t.showRef}</p>
           <h1 className="mt-1 text-[clamp(2rem,6svh,3.25rem)] font-black leading-[1.05] tracking-tight">{t.title}</h1>
@@ -81,7 +83,7 @@ export default function MancalaSetup({ locale, initial, onStart }: { locale: Loc
         <div className="mcl-cloth grid grid-cols-3 gap-1 px-1 py-2.5" role="radiogroup" aria-label={modes.map(([, label]) => label).join(' / ')}>
           {modes.map(([md, label]) => (
             <button key={md} type="button" role="radio" aria-checked={mode === md} onClick={() => setMode(md)}
-              className={`min-h-11 px-1 text-sm font-black leading-tight ${mode === md ? 'mcl-plaque' : 'text-ink-soft fine:hover:text-[#201211]'}`}>
+              className={`min-h-11 px-1 text-sm font-black leading-tight ${mode === md ? 'mcl-plaque' : 'text-ink-soft fine:hover:text-[var(--mcl-ink)]'}`}>
               {label}
             </button>
           ))}

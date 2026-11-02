@@ -18,6 +18,8 @@ import {
 import { chooseMove, choosePlacement, personalityOf, suggestColour, suggestMove } from '@/games/balance-mancala/ai';
 import { humanSeatsOf, type MatchSetup } from './match';
 import { beforeLast, catchUp } from './online';
+import { useMclSkin } from './skins';
+import { BoardFace } from './skinArt';
 import { BRASS, DISH_BG, INK, MCL_BAND, MCL_PANEL, WOOD, CLOTH_LIGHT, cellName } from './palette';
 import { MCL_ROUND, MCL_SHARE, MCL_WIDE } from './styles';
 import { playMancala } from './sounds';
@@ -102,6 +104,7 @@ export default function MancalaPlay({ locale, setup, onHome, onAgain, online = n
   online?: OnlineSeat | null;
 }) {
   const t = useTextTable(TEXT);
+  const skin = useMclSkin();
   const gt = useGameText();
   const msgs = useMessages();
   const { prefs: soundPrefs, setPrefs: setSoundPrefs } = useSound();
@@ -532,13 +535,13 @@ export default function MancalaPlay({ locale, setup, onHome, onAgain, online = n
   const coachText = coachTip === 'setup' ? t.coachSetup : coachTip === 'turn' ? fill(t.coachTurn, { seat: letterOf(game.turn) })
     : coachTip === 'pick' ? t.coachPick : coachTip === 'balance' ? t.coachBalance : '';
   const coach = coachTip ? (
-    <div className="mcl-cut flex w-full flex-col gap-2 bg-[#fef2ec] p-3" role="status">
+    <div className="mcl-cut flex w-full flex-col gap-2 bg-[var(--mcl-cloth-light)] p-3" role="status">
       <p className="flex items-start gap-2 text-sm font-bold leading-snug">
         <span aria-hidden="true" className="mcl-weight mt-1 shrink-0" />
         <span>{coachText}</span>
       </p>
       <div className="flex justify-end gap-2">
-        <button type="button" onClick={writeCoachDone} className="mcl-cut px-3 py-1.5 text-xs font-black text-ink-soft fine:hover:bg-[#201211]/[0.07]">{t.coachOff}</button>
+        <button type="button" onClick={writeCoachDone} className="mcl-cut px-3 py-1.5 text-xs font-black text-ink-soft fine:hover:bg-[rgb(var(--mcl-ink-rgb)/0.07)]">{t.coachOff}</button>
         <button type="button" onClick={() => seeTip(coachTip)} className="mcl-plaque is-small px-3 py-1.5 text-xs font-black">{t.coachGot}</button>
       </div>
     </div>
@@ -573,7 +576,8 @@ export default function MancalaPlay({ locale, setup, onHome, onAgain, online = n
 
       {/* 圓盤：一塊圓的木頭（Oware 棋盤的木色），盤子嵌在上面 */}
       <div className="mt-1 w-full lg:mt-0 lg:!max-w-[min(600px,calc(100svh-7.5rem))] lg:flex-1" style={{ maxWidth: ringMax }}>
-        <div className="rounded-full p-[3%]" style={{ background: WOOD }}>
+        <div className="relative rounded-full p-[3%]" style={{ background: WOOD }}>
+          {skin !== 'adinkra' && <BoardFace skin={skin} />}
           <MancalaRing board={view.board} colourShort={t.colourShort} highLabel={t.high} lowLabel={t.low} ariaOf={ariaOf}
             selectable={selectable} dimOthers={!pick && !hoverSow} selected={pick?.from ?? null} incoming={view.incoming} emptied={view.emptied}
             dropped={view.dropped} dropKey={view.dropKey ?? 0} mark={view.mark} onPick={onPick} center={center}

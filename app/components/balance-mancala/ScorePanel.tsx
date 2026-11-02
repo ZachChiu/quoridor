@@ -39,7 +39,7 @@ export default function ScorePanel({ scores, names, turn, gain, colourShort, fin
         // 最低那色算兩次、最高那色要扣：短標旁邊標 ×2／−（三色一樣多時不標）
         const lo = Math.min(...sc), hi = Math.max(...sc);
         const row = (
-          <div key={seat} className={`mcl-cut flex items-center gap-2 px-2 py-1 ${turn === seat ? 'bg-[#201211]/[0.08]' : ''}`}
+          <div key={seat} className={`mcl-cut flex items-center gap-2 px-2 py-1 ${turn === seat ? 'bg-[rgb(var(--mcl-ink-rgb)/0.08)]' : ''}`}
             aria-label={`${names[seat]}: ${COLOURS.map((c) => `${colourShort[c]} ${sc[c]}`).join(', ')}; ${finalLabel} ${f}`}>
             <PieceDisc seat={seat} size="1.65rem" />
             {!compact && <p className="w-[4.25rem] shrink-0 truncate text-xs font-black">{names[seat]}</p>}
@@ -57,13 +57,13 @@ export default function ScorePanel({ scores, names, turn, gain, colourShort, fin
                     <span className="w-5 shrink-0 text-right text-[10px] font-black tabular-nums leading-none">
                       <span key={v} className={v ? 'mcl-pop' : ''}>{v}</span>
                     </span>
-                    <div className="relative h-2 flex-1 overflow-hidden rounded-full bg-[#201211]/[0.08]">
+                    <div className="relative h-2 flex-1 overflow-hidden rounded-full bg-[rgb(var(--mcl-ink-rgb)/0.08)]">
                       <div className="absolute inset-y-0 left-0 rounded-full motion-safe:transition-[width] motion-safe:duration-500 motion-safe:ease-out" style={{ width: pct(v), background: DISH_BG[c] }} />
                       {add > 0 && (
                         <div className="absolute inset-y-0 rounded-full opacity-45"
                           style={{ left: pct(v), width: `calc(${pct(v + add)} - ${pct(v)})`, background: DISH_BG[c] }} />
                       )}
-                      <div className="absolute inset-y-0 w-0.5 bg-[#201211]/60" style={{ left: pct(END_SCORE) }} />
+                      <div className="absolute inset-y-0 w-0.5 bg-[rgb(var(--mcl-ink-rgb)/0.6)]" style={{ left: pct(END_SCORE) }} />
                     </div>
                   </div>
                 );

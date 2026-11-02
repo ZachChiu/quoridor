@@ -1,7 +1,10 @@
 import { COLOURS, letterOf, type Scores, type Seat } from '@/games/balance-mancala/engine';
 import { drawBrand, drawQr, fitText, type CardLayout, type ShareAssets } from '@/utils/shareCard';
 import { fill } from '@/i18n/gameText';
-import { BRASS, BRASS_DEEP, CLOTH, CLOTH_LIGHT, INK, INK_SOFT, WOOD, seatLook } from './palette';
+import { HEX, seatLook } from './palette';
+
+// 分享圖先維持現況（Adinkra）的顏色與素材：試做的皮只換畫面
+const { BRASS, BRASS_DEEP, CLOTH, CLOTH_LIGHT, INK, INK_SOFT, WOOD } = HEX;
 
 /**
  * 平衡播棋的結算分享圖（Zach 10/24：結尾的可分享畫面，各自設計）。長得像這款的頁面，不像 Wall Go 的平塗撞色：

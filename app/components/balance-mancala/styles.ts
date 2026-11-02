@@ -13,7 +13,7 @@ import { MCL_BAND, MCL_PANEL } from './palette';
  */
 
 /** 角落的小鈕：切角的淡布片（黃銅留給主要動作） */
-export const MCL_ROUND = 'mcl-cut grid size-11 shrink-0 place-items-center bg-[#201211]/[0.07] text-xl text-ink-soft transition fine:hover:bg-[#201211]/[0.12]';
+export const MCL_ROUND = 'mcl-cut grid size-11 shrink-0 place-items-center bg-[rgb(var(--mcl-ink-rgb)/0.07)] text-xl text-ink-soft transition fine:hover:bg-[rgb(var(--mcl-ink-rgb)/0.12)]';
 /** 寬的次要鈕：一條印花布（上下兩道梳線） */
 export const MCL_WIDE = 'mcl-cloth flex h-11 items-center justify-center gap-2 text-sm font-black';
 
@@ -23,13 +23,13 @@ export const MCL_WIDE = 'mcl-cloth flex h-11 items-center justify-center gap-2 t
  * 聚焦時內側一圈黃銅（切角會把外側的 ring 切掉，所以用 inset）。
  */
 export const MCL_CORNER: CornerTheme = {
-  button: '!rounded-none mcl-cut bg-[#201211]/[0.07] text-ink-soft fine:hover:bg-[#201211]/[0.12]',
+  button: '!rounded-none mcl-cut bg-[rgb(var(--mcl-ink-rgb)/0.07)] text-ink-soft fine:hover:bg-[rgb(var(--mcl-ink-rgb)/0.12)]',
   band: MCL_BAND,
   panelClassName: MCL_PANEL,
   primary: '!rounded-none mcl-plaque',
   secondary: '!rounded-none mcl-cloth',
-  field: '!rounded-none mcl-cut bg-[#ebd2cb] text-[#201211] outline-none ring-inset ring-[#856f4c] placeholder:text-[#5e4b3f]/70 focus:ring-2',
-  soft: 'text-[#5e4b3f]',
+  field: '!rounded-none mcl-cut bg-[var(--mcl-cloth)] text-[var(--mcl-ink)] outline-none ring-inset ring-[var(--mcl-brass-deep)] placeholder:text-[rgb(var(--mcl-ink-soft-rgb)/0.7)] focus:ring-2',
+  soft: 'text-[var(--mcl-ink-soft)]',
 };
 
 /**
@@ -39,9 +39,9 @@ export const MCL_CORNER: CornerTheme = {
 export const MCL_SHARE: Partial<ShareClasses> = {
   primary: 'mcl-plaque',
   secondary: 'mcl-wood',
-  toggle: '!rounded-none mcl-cut bg-[#362522]',
+  toggle: '!rounded-none mcl-cut bg-[var(--mcl-wood)]',
   toggleOn: '!rounded-none mcl-plaque is-small',
-  toggleOff: '!rounded-none text-[#fef2ec]/75 fine:hover:text-[#fef2ec]',
+  toggleOff: '!rounded-none text-[rgb(var(--mcl-cloth-light-rgb)/0.75)] fine:hover:text-[var(--mcl-cloth-light)]',
   button: 'font-black',
-  placeholder: 'bg-[#ebd2cb]/25',
+  placeholder: 'bg-[rgb(var(--mcl-cloth-rgb)/0.25)]',
 };

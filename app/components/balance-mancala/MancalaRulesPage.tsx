@@ -24,7 +24,7 @@ export default function MancalaRulesPage({ locale }: { locale: Locale }) {
   const home = localePath(locale, BALANCE_MANCALA);
   return (
     <MancalaFrame>
-      <header className="sticky top-0 z-40 border-b-4 border-double border-[#201211]/55 bg-[#ebd2cb]">
+      <header className="sticky top-0 z-40 border-b-4 border-double border-[rgb(var(--mcl-ink-rgb)/0.55)] bg-[var(--mcl-cloth)]">
         <div className="mx-auto grid max-w-[46rem] grid-cols-[1fr_auto_1fr] items-center gap-2 px-3 py-2">
           {/* 跟右邊的語言鈕同一個大小與樣子（40px＋外擴的觸控範圍、切角淡布片） */}
           <Link href={home} aria-label={t.home}
@@ -51,7 +51,7 @@ export default function MancalaRulesPage({ locale }: { locale: Locale }) {
           <LuHouse aria-hidden="true" className="text-xl" />{t.rulesCta}
         </Link>
 
-        <div className="mt-10 flex flex-col gap-2 border-t-4 border-double border-[#201211]/55 pt-6 text-sm leading-relaxed text-ink-soft">
+        <div className="mt-10 flex flex-col gap-2 border-t-4 border-double border-[rgb(var(--mcl-ink-rgb)/0.55)] pt-6 text-sm leading-relaxed text-ink-soft">
           <p>{t.showNote}</p>
           {/* 名字的由來（glossary〈遊戲名〉：每款的規則最後一段寫名字的由來） */}
           <p>{t.nameNote}</p>
