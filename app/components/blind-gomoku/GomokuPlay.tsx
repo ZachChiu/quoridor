@@ -290,13 +290,13 @@ export default function GomokuPlay({ mode, onMenu }: { mode: GomokuMode | Online
     </button>
   );
 
-  const mine = (s: Side) => (online ? online.side === s : false);
-  const sub = (s: Side) => (vsAi ? (s === 'black' ? t.you : t.ai) : '');
-  // 連線時自己那半的縫線換成 2px 實線（11/2 Zach 從實線框、底下布邊、名字後的小人三種挑了實線框）：
+  // 自己是哪一方：連線看座位、對電腦是黑。畫面上不寫「你／AI」，用實線框標（11/2 Zach：對電腦時寫了「你」）
+  const mine = (s: Side) => (online ? online.side === s : vsAi ? s === 'black' : false);
+  // 自己那半（連線、對電腦）的縫線換成 2px 實線（11/2 Zach 從實線框、底下布邊、名字後的小人三種挑了實線框）：
   // 輪到自己時在青綠布上是白絲，輪到對方時是黑絲；跟選色盤選中的那格同一個記號
   const markBox = (s: Side, lit: boolean) => (!mine(s) ? ''
     : lit ? '![outline-color:#f2e4c9] ![outline-style:solid] ![outline-width:2px]' : '![outline-color:#2a2525] ![outline-style:solid] ![outline-width:2px]');
-  // 兩方是一條分段條（11/2 Zach 從計分牌、上下夾、分段條挑了分段條），手機與桌機同一條，輪到的那半是拼起來的青綠布；名字只有一行（對電腦才多一行「你／AI」），黑白兩塊才對得齊
+  // 兩方是一條分段條（11/2 Zach 從計分牌、上下夾、分段條挑了分段條），手機與桌機同一條，輪到的那半是拼起來的青綠布；名字只有一行，黑白兩塊才對得齊
   const segment = (tall: boolean) => (
     <div className="gmk-patch is-ramie grid grid-cols-2 gap-1 p-1 ![outline-offset:-3px]">
       {(['black', 'white'] as const).map((s) => {
@@ -305,12 +305,12 @@ export default function GomokuPlay({ mode, onMenu }: { mode: GomokuMode | Online
           <div key={s} className={`relative flex items-center justify-center gap-2 rounded-[2px] font-black ![outline-offset:-4px] ${tall ? 'h-14 text-base' : 'h-10 text-sm'} ${
             lit ? 'gmk-patch is-pieced ![--corner:14px]' : 'text-ink-soft'} ${markBox(s, lit)} ${away === s ? 'gmk-away [--away-size:1.1rem]' : ''}`}>
             <SideFace side={s} className={`${tall ? 'size-7' : 'size-6'} shrink-0`} />
-            <span>{sideName(s)}{sub(s) && <span className="ml-1 text-[11px] font-bold opacity-75">{sub(s)}</span>}</span>
+            <span>{sideName(s)}</span>
             {away === s && awayCover}
           </div>
         );
       })}
-      {online && <span className="sr-only">{online.side === 'black' ? t.youAreBlack : t.youAreWhite}</span>}
+      {(online || vsAi) && <span className="sr-only">{mine('black') ? t.youAreBlack : t.youAreWhite}</span>}
     </div>
   );
   const sideCards = segment(true);
