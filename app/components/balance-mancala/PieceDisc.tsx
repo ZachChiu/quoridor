@@ -25,7 +25,7 @@ export default function PieceDisc({ seat, size, count = 1, ring, mine = false, o
   const outer = ring === 'incoming' ? `, 0 0 0 calc(${size} * 0.2) ${INK}`
     : ring === 'selected' ? `, 0 0 0 calc(${size} * 0.2) ${INK}`
     : ring === 'last' ? `, 0 0 0 calc(${size} * 0.2) ${BRASS_DEEP}`
-    : mine ? `, 0 0 0 calc(${size} * 0.2) ${CLOTH_LIGHT}, 0 0 0 calc(${size} * 0.2 + max(2px, ${size} * 0.07)) ${look.bg}` : '';
+    : mine ? `, 0 0 0 calc(${gap} + max(2px, ${size} * 0.07)) ${look.bg}` : '';
   return (
     <span
       aria-hidden="true"

@@ -91,8 +91,9 @@ export default function OrderEditor({
                 className={`flex items-center gap-2 px-2 py-1.5 text-left ${o === last ? 'mcl-plaque' : patch}`}>
                 <PieceDisc seat={o} size="1.9rem" mine={o === self} />
                 <span className="min-w-0">
+                  {/* 名字不寫（子上已經印了座位字母，窄的兩欄裡「玩家 A」會被截斷）；讀屏照舊念名字 */}
                   <span className="flex items-center gap-1 text-sm font-black leading-tight">
-                    <span className="truncate">{names[o]}</span> +{r.points}
+                    +{r.points}
                     {r.colour !== null && (
                       <span className="rounded-full px-1.5 py-0.5 text-[10px] leading-none" style={{ background: DISH_BG[r.colour], color: CLOTH_LIGHT }}>{t.colourShort[r.colour]}</span>
                     )}
