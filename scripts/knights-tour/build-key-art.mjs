@@ -5,7 +5,7 @@
  *   public/games/knights-tour/hero-square.webp  1080×1080 手機大卡片，下面五分之三蓋著黑色漸層與字，棋盤放上半
  *   public/games/knights-tour/card.webp         960×540   小卡片，左上是「可以玩」、左下是名字
  *
- * 跟 Wall Go、尼泊爾虎棋同一個做法：前景是**遊戲裡真的棋盤**（練習模式 8×8 照歐拉的走法下了 23 步，帶紙邊斜放），
+ * 跟 Wall Go、尼泊爾虎棋同一個做法：前景是**遊戲裡真的棋盤**（練習模式 8×8 照歐拉的走法下了 23 步，斜放），
  * 底是那款的世界 —— 一疊散開的手稿紙，每張是一條**不同的**騎士巡遊（數字表＋紅粉筆路線，照首頁 Fig. 1 的畫法）。
  * 路線用 Warnsdorff 法則加亂數平手規則產生、每條都驗過是 64 格的合法巡遊，同一張圖裡沒有兩張一樣的。亂數有固定種子，重跑結果一樣。
  *
@@ -104,16 +104,12 @@ function background(w, h, size, seed) {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><rect width="${w}" height="${h}" fill="${PAPER}"/>${sheets.map((s) => s.body).join('')}</svg>`;
 }
 
-/** 前景：真的棋盤，外面一圈紙邊與褐色細框，斜放 */
+/** 前景：真的棋盤，跟對局裡一樣只有一圈墨框（不加紙邊：11/3 Zach 問「為什麼多一個白色外框」，對局裡的棋盤沒有），斜放 */
 async function board(size, deg) {
   const bw = Math.max(3, Math.round(size * 0.008));
   const inner = await sharp(BOARD).resize(size).composite([{ input: Buffer.from(
     `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}"><rect x="${bw / 2}" y="${bw / 2}" width="${size - bw}" height="${size - bw}" fill="none" stroke="${INK}" stroke-width="${bw}"/></svg>`) }]).png().toBuffer();
-  const m = Math.round(size * 0.06), S = size + 2 * m;
-  const framed = await sharp(inner).extend({ top: m, bottom: m, left: m, right: m, background: '#f6ecdc' })
-    .composite([{ input: Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="${S}" height="${S}"><rect x="1.5" y="1.5" width="${S - 3}" height="${S - 3}" fill="none" stroke="#6b5a3e" stroke-width="3"/></svg>`) }])
-    .png().toBuffer();
-  const rot = await sharp(framed).rotate(deg, { background: { r: 0, g: 0, b: 0, alpha: 0 } }).png().toBuffer();
+  const rot = await sharp(inner).rotate(deg, { background: { r: 0, g: 0, b: 0, alpha: 0 } }).png().toBuffer();
   // 輕陰影：同一塊的形狀塗黑、模糊、淡淡地壓在底下
   const { width, height } = await sharp(rot).metadata();
   const alpha = await sharp(rot).extractChannel('alpha').toBuffer();
