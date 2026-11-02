@@ -1,10 +1,8 @@
 'use client';
 import { useEffect, useLayoutEffect, useRef, type CSSProperties, type ReactNode } from 'react';
-import { GiAngelWings, GiImpLaugh } from 'react-icons/gi';
 import { CELLS, ANGEL, DEVIL, CELL_COLOUR, type Colour, type Seat } from '@/games/balance-mancala/engine';
 import { BRASS, CLOTH_LIGHT, DEVIL_BG, DISH_BG, INK, WOOD } from './palette';
-import { useMclSkin } from './skins';
-import { PitArt } from './skinArt';
+import { PitArt } from './hoursArt';
 import PieceDisc from './PieceDisc';
 import { playIdle } from './idleMotion';
 
@@ -174,7 +172,6 @@ export default function MancalaRing({
   /** 滑鼠移進／移出格子（只有滑鼠，手指沒有 hover） */
   onHover?: (cell: number | null) => void;
 }) {
-  const skin = useMclSkin();
   const rootRef = useRef<HTMLDivElement>(null);
   const flyRef = useRef<HTMLSpanElement>(null);
   const land = Math.round(hopMs * LAND);
@@ -270,9 +267,7 @@ export default function MancalaRing({
                 outline, outlineOffset: '0.5cqw',
               }}
             >
-              {skin !== 'adinkra' && (cell === DEVIL || cell === ANGEL) && <PitArt skin={skin} cell={cell === DEVIL ? 'devil' : 'angel'} faded={owners.length > 0} />}
-              {skin === 'adinkra' && cell === DEVIL && <GiImpLaugh aria-hidden="true" className="absolute size-[62%]" style={{ color: BRASS, opacity: owners.length ? 0.35 : 0.9 }} />}
-              {skin === 'adinkra' && cell === ANGEL && <GiAngelWings aria-hidden="true" className="absolute size-[66%]" style={{ color: WOOD, opacity: owners.length ? 0.18 : 0.55 }} />}
+              {(cell === DEVIL || cell === ANGEL) && <PitArt cell={cell === DEVIL ? 'devil' : 'angel'} faded={owners.length > 0} />}
               <CellPieces owners={owners} incoming={!!incoming?.has(cell)}
                 drop={dropped === cell ? { kind: flight && hopMs ? 'land' : 'pop', key: dropKey, delay: land } : null} />
               {/* 不能選的格子蓋一層木頭色調暗。不用 opacity：半透明的格子會透出底下那圈軌道線 */}

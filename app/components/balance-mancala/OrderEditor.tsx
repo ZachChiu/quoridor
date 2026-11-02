@@ -5,7 +5,7 @@ import { LuChevronDown, LuTriangleAlert, LuWandSparkles } from 'react-icons/lu';
 import { CELL_COLOUR, DEVIL, finalScore, type Colour, type Scores, type Seat, type Sow } from '@/games/balance-mancala/engine';
 import { fill } from '@/i18n/gameText';
 import type { BalanceMancalaText } from '@/games/balance-mancala/text';
-import { BRASS, CLOTH_LIGHT, DISH_BG, INK, WOOD, cellName } from './palette';
+import { BRASS, CLOTH_LIGHT, DEVIL_BG, DISH_BG, WOOD, cellName } from './palette';
 import PieceDisc from './PieceDisc';
 
 /** 落點的小標：盤子是那個顏色＋短標，惡魔、天使是圖示 */
@@ -14,7 +14,7 @@ function DestChip({ cell, t }: { cell: number; t: BalanceMancalaText }) {
   const base = 'grid h-4 min-w-[1.6rem] place-items-center rounded-full px-1 text-[9px] font-black leading-none';
   if (c !== null) return <span className={base} style={{ background: DISH_BG[c], color: CLOTH_LIGHT }}>{t.colourShort[c]}</span>;
   return cell === DEVIL
-    ? <span className={base} style={{ background: INK, color: BRASS }}><GiImpLaugh aria-hidden="true" className="size-3" /></span>
+    ? <span className={base} style={{ background: DEVIL_BG, color: CLOTH_LIGHT }}><GiImpLaugh aria-hidden="true" className="size-3" /></span>
     : <span className={base} style={{ background: CLOTH_LIGHT, color: WOOD, boxShadow: `inset 0 0 0 1px ${BRASS}` }}><GiAngelWings aria-hidden="true" className="size-3" /></span>;
 }
 

@@ -19,8 +19,7 @@ import {
 import { chooseMove, choosePlacement, personalityOf, suggestColour, suggestMove } from '@/games/balance-mancala/ai';
 import { humanSeatsOf, type MatchSetup } from './match';
 import { beforeLast, catchUp } from './online';
-import { useMclSkin } from './skins';
-import { BoardFace } from './skinArt';
+import { BoardFace } from './hoursArt';
 import { BRASS, DISH_BG, INK, MCL_BAND, MCL_PANEL, WOOD, CLOTH_LIGHT, cellName } from './palette';
 import { MCL_ROUND, MCL_SHARE, MCL_WIDE } from './styles';
 import { playMancala } from './sounds';
@@ -93,7 +92,7 @@ function subscribeMotion(cb: () => void) {
  * 進行到一半先問一次（原本就有的確認視窗）。原本另有一顆「換設定」，跟回首頁是同一個畫面，拿掉了。
  *
  * 版面：手機直式上面圓盤、下面分數（選了起點格時分數換成排序編輯器）；桌機（lg）左盤右欄。
- * 整頁是同一塊 Adinkra 印花布（MancalaFrame），盤面是一塊圓的木頭（WOOD），軌道線與勝利的桂冠是黃銅。
+ * 整頁是同一頁時禱書的羊皮紙（MancalaFrame），盤面是墨底金格紋的圓（WOOD＋hoursArt 的 BoardFace），軌道線與勝利的桂冠是金。
  */
 export default function MancalaPlay({ locale, setup, onHome, onAgain, online = null }: {
   locale: Locale;
@@ -105,7 +104,6 @@ export default function MancalaPlay({ locale, setup, onHome, onAgain, online = n
   online?: OnlineSeat | null;
 }) {
   const t = useTextTable(TEXT);
-  const skin = useMclSkin();
   const gt = useGameText();
   const msgs = useMessages();
   const { prefs: soundPrefs, setPrefs: setSoundPrefs } = useSound();
@@ -443,7 +441,7 @@ export default function MancalaPlay({ locale, setup, onHome, onAgain, online = n
 
   const askLeave = () => leave.request(onHome);
 
-  // 角落的小鈕是切角的淡布片（黃銅留給主要動作），寬的是一條印花布（上下兩道梳線）—— styles.ts、globals.css 的 .mcl-*
+  // 角落的小鈕是切角的淡墨片（金箔留給主要動作），寬的是一條畫了格線的羊皮紙 —— styles.ts、globals.css 的 .mcl-*
   const round = MCL_ROUND;
   const wide = MCL_WIDE;
   const soundButton = (
@@ -546,9 +544,9 @@ export default function MancalaPlay({ locale, setup, onHome, onAgain, online = n
     </div>
   );
 
-  // 手機上圓盤讓出分數面板的高度（每席約 2.75rem）與上下兩條布邊（各 20px），整頁塞得進一個畫面
+  // 手機上圓盤讓出分數面板的高度（每席約 2.75rem）與上下兩條頁邊（各 30px），整頁塞得進一個畫面
   // svh 不用 dvh：手機工具列收起時 dvh 變大，圓盤會跟著脹（Zach 10/24）
-  const ringMax = `max(15rem, min(100%, calc(100svh - ${11 + setup.seats * 2.75}rem)))`;
+  const ringMax = `max(15rem, min(100%, calc(100svh - ${12.25 + setup.seats * 2.75}rem)))`;
 
   return (
     <MancalaFrame className="items-center px-4 pb-5 pt-3 lg:flex-row lg:items-start lg:justify-center lg:gap-10 lg:pt-8">
@@ -567,9 +565,9 @@ export default function MancalaPlay({ locale, setup, onHome, onAgain, online = n
       {coach && <div className="mt-2 w-full max-w-[520px] lg:hidden">{coach}</div>}
 
       {/* 圓盤：一塊圓的木頭（Oware 棋盤的木色），盤子嵌在上面 */}
-      <div className="mt-1 w-full lg:mt-0 lg:!max-w-[min(600px,calc(100svh-7.5rem))] lg:flex-1" style={{ maxWidth: ringMax }}>
+      <div className="mt-1 w-full lg:mt-0 lg:!max-w-[min(600px,calc(100svh-9.5rem))] lg:flex-1" style={{ maxWidth: ringMax }}>
         <div className="relative rounded-full p-[3%]" style={{ background: WOOD }}>
-          {skin !== 'adinkra' && <BoardFace skin={skin} />}
+          <BoardFace />
           <MancalaRing board={view.board} colourShort={t.colourShort} highLabel={t.high} lowLabel={t.low} ariaOf={ariaOf}
             selectable={selectable} dimOthers={!pick && !hoverSow} selected={pick?.from ?? null} incoming={view.incoming} emptied={view.emptied}
             dropped={view.dropped} dropKey={view.dropKey ?? 0} mark={view.mark} onPick={onPick} center={center}

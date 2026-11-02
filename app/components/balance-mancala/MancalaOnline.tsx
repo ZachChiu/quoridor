@@ -14,6 +14,7 @@ import { CELLS, CELL_COLOUR, DEVIL, letterOf, type MancalaState, type Seat } fro
 import type { MatchSetup } from './match';
 import { movesOf, parseNew, stateOf } from './online';
 import { BRASS, CLOTH_LIGHT, DEVIL_BG, DISH_BG, WOOD, seatLook } from './palette';
+import { BoardFace } from './hoursArt';
 import MancalaFrame from './MancalaFrame';
 import MancalaPlay from './MancalaPlay';
 import PieceDisc from './PieceDisc';
@@ -25,8 +26,8 @@ import PieceDisc from './PieceDisc';
  * - 坐滿：同一個 MancalaPlay，局面由房間的整串走法重走出來（online.ts），解不開或不合規則就當作連線壞了
  * - 結算的「再來一局」是換 hash 開一間新房（同樣的人數），再把新連結傳出去
  *
- * 三個畫面（連線中、等人、失敗）都是這款自己的世界：印花布的頁面（MancalaFrame）、Oware 的圓木盤、黃銅牌與梳線的印花布條。
- * 不用 Wall Go 的紙色面板與紅藍棋子，也不用 Rattray 的 #3／#11／#12／#16 與 Bowdich 1817 的圖（布邊只有 MancalaFrame 那一圈）。
+ * 三個畫面（連線中、等人、失敗）都是這款自己的世界：時禱書的頁面（MancalaFrame）、墨底的圓盤、金箔與畫了格線的羊皮紙條。
+ * 不用 Wall Go 的紙色面板與紅藍棋子（裝飾只有 MancalaFrame 那一圈頁邊）。
  */
 export default function MancalaOnline({ locale }: { locale: Locale }) {
   const session = useHashSession();
@@ -89,6 +90,7 @@ function MiniBoard({ sowing = false, children }: { sowing?: boolean; children?: 
 
   return (
     <div ref={ref} aria-hidden="true" className="relative aspect-square w-[clamp(150px,44vw,196px)] rounded-full [container-type:inline-size]" style={{ background: WOOD }}>
+      <BoardFace />
       <svg viewBox="0 0 100 100" className="absolute inset-0 size-full">
         <circle cx={50} cy={50} r={37} fill="none" stroke={BRASS} strokeOpacity={0.45} strokeWidth={0.8} />
       </svg>
@@ -182,6 +184,7 @@ function Waiting({ seats, filled, me, url, home }: { seats: number; filled: Seat
 
         <div className="relative aspect-square w-[clamp(210px,62vw,280px)] rounded-full [container-type:inline-size]" style={{ background: WOOD }}
           role="list" aria-live="polite">
+          <BoardFace />
           <svg viewBox="0 0 100 100" className="absolute inset-0 size-full" aria-hidden="true">
             <circle cx={50} cy={50} r={36} fill="none" stroke={BRASS} strokeOpacity={0.45} strokeWidth={0.6} />
           </svg>

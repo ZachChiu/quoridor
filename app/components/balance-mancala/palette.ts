@@ -1,25 +1,25 @@
 import { CELL_COLOUR, DEVIL, letterOf, type Colour, type Seat } from '@/games/balance-mancala/engine';
 
 /**
- * 均衡曼卡拉的配色：阿坎（今迦納）的 Adinkra 印花布、黃金砝碼、Oware 播棋盤（設計總表第 9 節）。
- * 2026-10-21 從原件取樣，不自己調：
- * - 布、墨：1825 年的 Adinkra 印花布（萊登世界文化博物館藏，Wikimedia Commons〈Adinkra 1825.jpg〉，公有領域）——
- *   布 #ebd2cb（k-means 最大的淺色群）、亮處 #fef2ec、印花的墨 #201211（暗部平均）
- * - 黃銅：克里夫蘭美術館的黃金砝碼（1962.244 幾何形，CC0）—— #af9b71、暗部 #856f4c；
- *   副字色 #5e4b3f 取自同館的羚羊砝碼（1935.306）
- * - 木頭：Wikimedia Commons〈Oware Board.jpg〉（CC BY-SA 4.0，只取色、不放進網站）的棋盤暗部 #362522
+ * 均衡曼卡拉的配色：一頁 1430 年代法蘭德斯的時禱書（11/3 Zach 從 Adinkra 印花布、桑吉巴木雕、祈禱書三種裡選了祈禱書）。
+ * 從克里夫蘭美術館〈Leaf from a Book of Hours: The Last Judgment〉（1999.130，CC0）取樣，不自己調（k-means，scripts/balance-mancala/km.cjs）：
+ * 羊皮紙 #eedec1／亮處 #f5ecd9、墨 #3f3833、褐 #68593f、金 #d2ae67／暗金 #9c7436、插圖背景金底格紋的暗部 #433828、朱紅 #ac6744
+ * （頁邊另外用到的綠 #628a54、群青 #3f5063 只在外框與天使、惡魔格的小圖裡）。
  *
- * 頁面是一塊布（MancalaFrame：最外緣一圈蓋印的布邊），盤面是一塊圓的木頭，上面嵌黃銅的軌道線。
- * 對比：墨在布上 13:1、副字色 5.7:1；黃銅在木頭上 5.4:1、亮布色在木頭上 13:1。
+ * 頁面是一頁羊皮紙（MancalaFrame：最外緣一圈頁邊的藤蔓與金葉），盤面是插圖背景那種墨底金格紋的圓（hoursArt.tsx 的 BoardFace），
+ * 盤子外緣一圈金。主要動作是金箔、次要動作是畫了格線的羊皮紙（globals.css 的 .mcl-*）。
+ * 天使格是頁邊的小天使、惡魔格是朱紅底上的小惡魔（同一頁下方聖米迦勒秤靈魂，旁邊有個小惡魔在拉秤）。
+ * 對比：墨在羊皮紙上 8.7:1、褐 5.1:1、墨在金箔上 5.5:1；金在盤面上 5.4:1、亮羊皮紙在盤面上 9.7:1；暗金在羊皮紙上 3.2:1（只用在大字）。
  *
- * 盤子的紅藍綠是規則（站上的玩家色 --player-A/B/C），在木頭上 2.9–3.2:1，盤子外緣另有一圈黃銅（5.4:1）圈出輪廓。
+ * 盤子的紅藍綠是規則（站上的玩家色 --player-A/B/C），盤子外緣另有一圈金圈出輪廓。
  * **座位色刻意避開紅、藍、綠**：「紅方的藍色分數」這種說法會打結，所以 7 個座位用紫、琥珀、天藍、炭黑、洋紅、橘、褐，
- * 每顆子另外印座位字母（不只靠顏色）。座位色是功能色、不是識別色，沒有跟著換。
- * 子的外圈留一道亮布色的縫，疊在任何盤子上都分得開。
+ * 每顆子另外印座位字母（不只靠顏色）。座位色是功能色、不是識別色。
+ * 子的外圈留一道亮羊皮紙的縫，疊在任何盤子上都分得開。
+ *
+ * 畫面上一律用 CSS 變數（值寫在 globals.css 的 html:has(.mcl-root)，只寫一次）；Canvas 讀不懂變數，分享圖用 HEX —— 兩邊要一起改。
+ * 名字沿用最早那一版（布、黃銅、木頭）：CLOTH＝羊皮紙、BRASS＝金、WOOD＝盤面的暗底。
  */
-/** 原本的十六進位值（分享圖的 Canvas 用：Canvas 讀不懂 CSS 變數） */
-export const HEX = { CLOTH: '#ebd2cb', CLOTH_LIGHT: '#fef2ec', INK: '#201211', INK_SOFT: '#5e4b3f', BRASS: '#af9b71', BRASS_DEEP: '#856f4c', WOOD: '#362522' };
-/* 試做三種皮（skins.ts）：畫面上一律用 CSS 變數，預設值在 globals.css 的 html:has(.mcl-root) */
+export const HEX = { CLOTH: '#eedec1', CLOTH_LIGHT: '#f5ecd9', INK: '#3f3833', INK_SOFT: '#68593f', BRASS: '#d2ae67', BRASS_DEEP: '#9c7436', WOOD: '#433828', DEVIL: '#ac6744' };
 export const CLOTH = 'var(--mcl-cloth)';
 export const CLOTH_LIGHT = 'var(--mcl-cloth-light)';
 export const INK = 'var(--mcl-ink)';
@@ -62,8 +62,8 @@ export function cellName(cell: number, t: { devil: string; angel: string; dishNa
 export { letterOf };
 
 /**
- * 彈窗：一塊切角的印花布 —— 標題是木頭色的字，底下兩道梳子畫的線（布上隔開方格的那種），不用色帶。
- * 介面零件本身在 globals.css 的 .mcl-*（黃銅牌、印花布條、寶螺殼印章）。
+ * 彈窗：一塊切角的羊皮紙 —— 標題是盤面暗底色的字，底下一道雙線（抄本畫的格線），不用色帶。
+ * 介面零件本身在 globals.css 的 .mcl-*（金箔、畫了格線的羊皮紙條）。
  */
 export const MCL_PANEL = '!rounded-none !bg-[var(--mcl-cloth-light)] [clip-path:polygon(10px_0,calc(100%-10px)_0,100%_10px,100%_calc(100%-10px),calc(100%-10px)_100%,10px_100%,0_calc(100%-10px),0_10px)]';
 export const MCL_BAND = { className: 'mx-6 !px-0 bg-transparent border-b-[4px] border-double border-[rgb(var(--mcl-ink-rgb)/0.55)]', fg: 'text-[var(--mcl-wood)]' };

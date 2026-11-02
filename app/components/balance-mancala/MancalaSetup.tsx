@@ -16,28 +16,26 @@ import { ONLINE_MAX, ONLINE_MIN } from './online';
 import MancalaFrame from './MancalaFrame';
 import { CLOTH, WOOD } from './palette';
 import { MCL_CORNER } from './styles';
-import { SKINS, useMclSkin } from './skins';
 
 const SEAT_CHOICES = Array.from({ length: MAX_SEATS - MIN_SEATS + 1 }, (_, i) => MIN_SEATS + i);
 const HUMAN_CHOICES = Array.from({ length: MAX_SEATS - 1 }, (_, i) => i + 2);
 const ONLINE_CHOICES = Array.from({ length: ONLINE_MAX - ONLINE_MIN + 1 }, (_, i) => ONLINE_MIN + i);
 const LEVELS: Difficulty[] = ['easy', 'normal', 'hard'];
 
-/** 主視覺：克里夫蘭美術館的三件阿坎黃金砝碼（CC0，摳掉攝影棚的灰底、留下淡淡的影子），直接放在布上 */
-const KEY_ART = '/games/balance-mancala/weights.webp';
+/** 主視覺：時禱書那頁下方的聖米迦勒秤靈魂（克里夫蘭美術館 1999.130，CC0），外面一道金線一道墨線，像頁上框起來的小插圖 */
+const KEY_ART = '/games/balance-mancala/key-art.webp';
 
 /**
- * 開局設定（這一頁同時是遊戲首頁）。整頁是一塊 Adinkra 印花布（MancalaFrame）；上面是三件黃金砝碼與標題，
+ * 開局設定（這一頁同時是遊戲首頁）。整頁是一頁時禱書的羊皮紙（MancalaFrame）；上面是聖米迦勒秤靈魂的插圖與標題，
  * 下面選模式、席數、難度。有 AI 時按難度就開始；全部是真人時按「開始」。
  * 連線對戰選人數（4–7，全部是真人）、按「開房間」到 /balance-mancala/online#new=N 開房（不播轉場，這款裡面換頁直接換）。
  * 「怎麼玩」連到規則頁（/balance-mancala/rules，一步一張圖；2026-10-25 之前是開一個整面文字的彈窗），一樣不播轉場。
- * 選項照全站：選中的是墨、其餘是布上一層淡墨，沒有框線；難度的點數用砝碼的黃銅（一個面板一個色相）。
- * 左上是平台 logo、右上是聯絡與語言（PlatformCorner，遊戲首頁才放），離邊多讓一個布邊的寬度；
- * 那兩顆鈕與打開的彈窗用這款自己的樣子（MCL_CORNER：切角淡布片、亮布面板、黃銅牌）。
+ * 選項照全站：選中的是墨、其餘是紙上一層淡墨，沒有框線；難度的點數用深金的小方塊（一個面板一個色相）。
+ * 左上是平台 logo、右上是聯絡與語言（PlatformCorner，遊戲首頁才放），離邊多讓一個頁邊的寬度；
+ * 那兩顆鈕與打開的彈窗用這款自己的樣子（MCL_CORNER：切角的淡墨片、亮羊皮紙面板、金箔）。
  */
 export default function MancalaSetup({ locale, initial, onStart }: { locale: Locale; initial: MatchSetup; onStart: (m: MatchSetup) => void }) {
   const t = useTextTable(TEXT);
-  const skin = SKINS[useMclSkin()];
   const router = useRouter();
   const [mode, setMode] = useState(initial.mode);
   const [seats, setSeats] = useState(initial.mode === 'solo' ? initial.seats : 4);
@@ -58,7 +56,7 @@ export default function MancalaSetup({ locale, initial, onStart }: { locale: Loc
     : computers > 0 ? fill(t.localFill, { n: computers }) : t.localNoFill;
   const modes = [['solo', t.modeSolo], ['local', t.modeLocal], ['online', t.modeOnline]] as const;
 
-  // 選中的是黃銅砝碼的牌子（切角），其餘是一條印花布（上下兩道梳線）—— globals.css 的 .mcl-*
+  // 選中的是金箔（切角），其餘是一條畫了格線的羊皮紙（上下各一道金線、一道墨線）—— globals.css 的 .mcl-*
   const chip = (on: boolean) => `h-12 text-lg font-black ${on ? 'mcl-plaque' : 'mcl-cloth'}`;
 
   return (
@@ -66,11 +64,11 @@ export default function MancalaSetup({ locale, initial, onStart }: { locale: Loc
       <PlatformCorner locale={locale} theme={MCL_CORNER} offset="calc(var(--mcl-frame, 28px) + 6px)" />
       <div className="w-full max-w-[460px] px-5 pt-[60px]">
         <header className="flex flex-col items-center text-center">
-          {/* 出處：阿坎（今迦納）19 世紀的黃金砝碼，克里夫蘭美術館（CC0）。畫面上不寫出處（Zach 10/24：插圖不要說明） */}
+          {/* 出處：1430 年代法蘭德斯的時禱書，克里夫蘭美術館（CC0）。畫面上不寫出處（Zach 10/24：插圖不要說明） */}
           <div className="flex w-full flex-col items-center gap-1">
             {/* eslint-disable-next-line @next/next/no-img-element -- 靜態匯出的單張主視覺，不需要 next/image */}
-            <img src={skin.keyArt === SKINS.adinkra.keyArt ? KEY_ART : skin.keyArt} alt="" aria-hidden="true" width={1000} height={Math.round(1000 / skin.keyRatio)}
-              className="block h-auto" style={{ width: `min(100%, 24rem, calc(19svh * ${skin.keyRatio.toFixed(2)}))` }} />
+            <img src={KEY_ART} alt="" aria-hidden="true" width={1000} height={560}
+              className="block h-auto w-[min(100%,24rem,calc(19svh*1.79))]" />
           </div>
           <p className="mt-4 text-[11px] font-bold tracking-wide text-ink-soft">{t.showRef}</p>
           <h1 className="mt-1 text-[clamp(2rem,6svh,3.25rem)] font-black leading-[1.05] tracking-tight">{t.title}</h1>
@@ -111,7 +109,7 @@ export default function MancalaSetup({ locale, initial, onStart }: { locale: Loc
         ) : computers > 0 ? (
           <section>
             <p className="text-sm font-bold text-ink-soft">{t.level}</p>
-            {/* 一條條印花布；強度用小塊的黃銅砝碼講：一塊、兩塊、三塊 */}
+            {/* 一條條羊皮紙；強度用深金的小方塊講：一塊、兩塊、三塊 */}
             <div className="mt-2 grid w-full grid-cols-3 gap-3">
               {LEVELS.map((d, i) => (
                 <button key={d} type="button" onClick={() => start(d)}

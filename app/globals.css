@@ -773,18 +773,6 @@ html:has(.tau-root), body:has(.tau-root) { background: #ebe1b8; }
 @keyframes tau-wait { 0%, 100% { transform: none; opacity: 0.55; } 50% { transform: translateY(-3px); opacity: 0.9; } }
 @media (prefers-reduced-motion: reduce) { .tau-stamp, .tau-count, .tau-coin, .tau-seat-empty { animation: none; } .tau-press { transition: none; } }
 
-/* 均衡曼卡拉（MancalaFrame）：一塊阿坎（今迦納）的 Adinkra 印花布。.mcl-frame 是蓋了印的布邊 —— 兩側各兩道梳子畫的細線
-   （nwomu），中間一排印章：上下寶螺殼（Nsirewa）、左右曲折（Nkyimkyim）、四角連在一起的心（Akoma ntoaso）。
-   符號摳自 Rattray 1927 的圖版（公有領域），做成 3 倍的點陣圖 public/games/balance-mancala/frame.png（尺寸與做法見 MancalaFrame.tsx）。
-   唯一的裝飾，只有這一層。邊段 round 重複，任何長度都是整數個印章；梳線在四角交叉（布上的格線本來就是交叉的）。
-   副字色換成羚羊砝碼的青銅 #5e4b3f（布上 5.7:1）。顏色見 components/balance-mancala/palette.ts。 */
-html:has(.mcl-root), body:has(.mcl-root) { background: #ebd2cb; }
-html:has(.mcl-root) { --ink-soft: #5e4b3f; }
-.mcl-frame {
-  border: var(--mcl-frame, 28px) solid #201211;
-  border-image: url('/games/balance-mancala/frame.png') 84 / var(--mcl-frame, 28px) round;
-}
-@media (max-width: 640px) { .mcl-frame { --mcl-frame: 20px; } }
 .nmm-field {
   background-color: #4b4577;
   background-image:
@@ -810,67 +798,65 @@ html:has(.mcl-root) { --ink-soft: #5e4b3f; }
   border-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath fill='%23736922' fill-rule='evenodd' d='M0 0H24V24H0Z M3.5 3.5V20.5H20.5V3.5Z'/%3E%3Cpath fill='%23736922' fill-rule='evenodd' d='M6 6H18V18H6Z M7.5 7.5V16.5H16.5V7.5Z'/%3E%3C/svg%3E") 8 / var(--line, 8px) stretch;
 }
 /* ▸ 均衡曼卡拉（feat/game-balance-mancala） */
-/* 均衡曼卡拉（MancalaFrame）：一塊阿坎（今迦納）的 Adinkra 印花布。.mcl-frame 是蓋了印的布邊 —— 兩側各兩道梳子畫的細線
-   （nwomu），中間一排印章：上下寶螺殼（Nsirewa）、左右曲折（Nkyimkyim）、四角連在一起的心（Akoma ntoaso）。
-   符號摳自 Rattray 1927 的圖版（公有領域），做成 3 倍的點陣圖 public/games/balance-mancala/frame.png（尺寸與做法見 MancalaFrame.tsx）。
-   唯一的裝飾，只有這一層。邊段 round 重複，任何長度都是整數個印章；梳線在四角交叉（布上的格線本來就是交叉的）。
-   副字色換成羚羊砝碼的青銅 #5e4b3f（布上 5.7:1）。顏色見 components/balance-mancala/palette.ts。 */
-/* 試做三種皮（components/balance-mancala/skins.ts）：顏色都是變數，預設是現況；換皮時由 applySkin 寫在 <html> 的 style 上 */
+/* 均衡曼卡拉（MancalaFrame）：一頁 1430 年代法蘭德斯時禱書的羊皮紙（克里夫蘭美術館 1999.130〈最後的審判〉，CC0；11/3 Zach 從
+   Adinkra 印花布、木雕版、祈禱書版裡選了祈禱書）。.mcl-frame 是頁邊的裝飾：墨線藤蔓上掛金色常春藤葉，內側一道金線、一道墨線，
+   四角一朵群青＋朱紅的五瓣花（public/games/balance-mancala/frame.svg，scripts/balance-mancala/build-frame.mjs 畫的；84×84、slice 28）。
+   唯一的裝飾，只有這一層。邊段 round 重複，任何長度都是整數段藤蔓。頁邊比布邊寬：44px（手機 30px）。
+   顏色全部從那頁取樣，見 components/balance-mancala/palette.ts；這裡是唯一寫值的地方（palette.ts 的 HEX 給 Canvas 用，要一起改）。 */
 html:has(.mcl-root) {
-  --mcl-cloth: #ebd2cb; --mcl-cloth-rgb: 235 210 203; --mcl-cloth-light: #fef2ec; --mcl-cloth-light-rgb: 254 242 236;
-  --mcl-ink: #201211; --mcl-ink-rgb: 32 18 17; --mcl-ink-soft: #5e4b3f; --mcl-ink-soft-rgb: 94 75 63;
-  --mcl-brass: #af9b71; --mcl-brass-rgb: 175 155 113; --mcl-brass-deep: #856f4c; --mcl-brass-deep-rgb: 133 111 76;
-  --mcl-wood: #362522; --mcl-wood-rgb: 54 37 34; --mcl-plaque: #af9b71; --mcl-plaque-fg: #201211; --mcl-devil: #201211;
+  --mcl-cloth: #eedec1; --mcl-cloth-rgb: 238 222 193; --mcl-cloth-light: #f5ecd9; --mcl-cloth-light-rgb: 245 236 217;
+  --mcl-ink: #3f3833; --mcl-ink-rgb: 63 56 51; --mcl-ink-soft: #68593f; --mcl-ink-soft-rgb: 104 89 63;
+  --mcl-brass: #d2ae67; --mcl-brass-rgb: 210 174 103; --mcl-brass-deep: #9c7436; --mcl-brass-deep-rgb: 156 116 54;
+  --mcl-wood: #433828; --mcl-wood-rgb: 67 56 40; --mcl-plaque: #d2ae67; --mcl-plaque-fg: #3f3833; --mcl-devil: #ac6744;
   --ink-soft: var(--mcl-ink-soft);
 }
 html:has(.mcl-root), body:has(.mcl-root) { background: var(--mcl-cloth); }
 .mcl-frame {
-  border: var(--mcl-frame, 28px) solid var(--mcl-ink);
-  border-image: var(--mcl-border-image, url('/games/balance-mancala/frame.png') 84 / var(--mcl-frame, 28px) round);
+  border: var(--mcl-frame, 44px) solid var(--mcl-cloth);
+  border-image: url('/games/balance-mancala/frame.svg') 28 / var(--mcl-frame, 44px) round;
 }
-@media (max-width: 640px) { .mcl-frame { --mcl-frame: 20px; } }
+@media (max-width: 640px) { .mcl-frame { --mcl-frame: 30px; } }
 
-/* 均衡曼卡拉的介面零件：照阿坎的東西做 —— 主要動作是黃銅砝碼的牌子（黃銅底、四角切角，像鑄出來的金屬牌）；
-   次要動作是一條印花布，上下各兩道梳子畫的細線（nwomu，布上隔開方格的線），左右不封；難度用小塊的黃銅砝碼（一到三塊；
-   寶螺殼印章試過，縮小後像鍵盤的 ⌘）；
-   連結底下兩道線。不疊花紋：裝飾仍只有最外緣的布邊。顏色同 components/balance-mancala/palette.ts。 */
+/* 均衡曼卡拉的介面零件：照抄本的東西做 —— 主要動作是一塊金箔（金底、四角切角，內側一圈墨線、再一道羊皮紙的縫）；
+   次要動作是一條羊皮紙，上下各一道金線、一道墨線（抄本畫格線的方式），左右不封；難度用小塊的深金（一到三塊）；
+   連結底下兩道線。不疊花紋：裝飾仍只有最外緣的頁邊。顏色同 components/balance-mancala/palette.ts。 */
 .mcl-plaque {
   background: var(--mcl-plaque); color: var(--mcl-plaque-fg);
   clip-path: polygon(7px 0, calc(100% - 7px) 0, 100% 7px, 100% calc(100% - 7px), calc(100% - 7px) 100%, 7px 100%, 0 calc(100% - 7px), 0 7px);
-  box-shadow: inset 0 0 0 2px rgb(var(--mcl-ink-rgb) / 0.28);
+  box-shadow: inset 0 0 0 2px rgb(var(--mcl-ink-rgb) / 0.55), inset 0 0 0 4px var(--mcl-cloth-light);
   transition: filter 0.15s;
 }
 @media (pointer: fine) { .mcl-plaque:hover:not(:disabled) { filter: brightness(1.06); } }
 .mcl-plaque.is-small { clip-path: polygon(4px 0, calc(100% - 4px) 0, 100% 4px, 100% calc(100% - 4px), calc(100% - 4px) 100%, 4px 100%, 0 calc(100% - 4px), 0 4px); }
 .mcl-cut { clip-path: polygon(5px 0, calc(100% - 5px) 0, 100% 5px, 100% calc(100% - 5px), calc(100% - 5px) 100%, 5px 100%, 0 calc(100% - 5px), 0 5px); }
 .mcl-cloth {
-  --comb: rgb(var(--mcl-ink-rgb) / 0.55);
+  --rule: rgb(var(--mcl-ink-rgb) / 0.5);
   background:
-    linear-gradient(var(--comb) 0 0) left 0 top 3px / 100% 1px no-repeat,
-    linear-gradient(var(--comb) 0 0) left 0 top 6px / 100% 1px no-repeat,
-    linear-gradient(var(--comb) 0 0) left 0 bottom 3px / 100% 1px no-repeat,
-    linear-gradient(var(--comb) 0 0) left 0 bottom 6px / 100% 1px no-repeat,
+    linear-gradient(var(--mcl-brass) 0 0) left 0 top 2px / 100% 2px no-repeat,
+    linear-gradient(var(--rule) 0 0) left 0 top 6px / 100% 1px no-repeat,
+    linear-gradient(var(--rule) 0 0) left 0 bottom 6px / 100% 1px no-repeat,
+    linear-gradient(var(--mcl-brass) 0 0) left 0 bottom 2px / 100% 2px no-repeat,
     var(--mcl-cloth-light);
   color: var(--mcl-ink); transition: background-color 0.15s;
 }
-@media (pointer: fine) { .mcl-cloth:hover:not(:disabled) { --comb: rgb(var(--mcl-ink-rgb) / 0.85); } }
-/* 小塊黃銅砝碼（難度的級數）：深一階的黃銅，疊在淺布上才看得清楚（對比 4.4:1） */
+@media (pointer: fine) { .mcl-cloth:hover:not(:disabled) { --rule: rgb(var(--mcl-ink-rgb) / 0.85); } }
+/* 小塊深金（難度的級數）：深一階的金，疊在羊皮紙上才看得清楚 */
 .mcl-weight { display: inline-block; width: 10px; height: 13px; background: var(--mcl-brass-deep);
   clip-path: polygon(2.5px 0, calc(100% - 2.5px) 0, 100% 2.5px, 100% calc(100% - 2.5px), calc(100% - 2.5px) 100%, 2.5px 100%, 0 calc(100% - 2.5px), 0 2.5px); }
 .mcl-link { font-weight: 900; text-decoration: underline double rgb(var(--mcl-ink-rgb) / 0.6); text-underline-offset: 5px; }
-/* 暗底上（結算分享圖的遮罩）的次要鈕：一條木頭（盤面的木色），同一組上下兩道梳線換成亮布色。
+/* 暗底上（結算分享圖的遮罩）的次要鈕：一條金底格紋的暗部（盤面的底色），同一組格線換成金線＋亮羊皮紙的細線。
    不用半透明：遮罩底下的盤面會從鈕裡透出來 */
 .mcl-wood {
-  --comb: rgb(var(--mcl-cloth-light-rgb) / 0.5);
+  --rule: rgb(var(--mcl-cloth-light-rgb) / 0.5);
   background:
-    linear-gradient(var(--comb) 0 0) left 0 top 3px / 100% 1px no-repeat,
-    linear-gradient(var(--comb) 0 0) left 0 top 6px / 100% 1px no-repeat,
-    linear-gradient(var(--comb) 0 0) left 0 bottom 3px / 100% 1px no-repeat,
-    linear-gradient(var(--comb) 0 0) left 0 bottom 6px / 100% 1px no-repeat,
+    linear-gradient(var(--mcl-brass) 0 0) left 0 top 2px / 100% 2px no-repeat,
+    linear-gradient(var(--rule) 0 0) left 0 top 6px / 100% 1px no-repeat,
+    linear-gradient(var(--rule) 0 0) left 0 bottom 6px / 100% 1px no-repeat,
+    linear-gradient(var(--mcl-brass) 0 0) left 0 bottom 2px / 100% 2px no-repeat,
     var(--mcl-wood);
   color: var(--mcl-cloth-light);
 }
-@media (pointer: fine) { .mcl-wood:hover:not(:disabled) { --comb: rgb(var(--mcl-cloth-light-rgb) / 0.85); } }
+@media (pointer: fine) { .mcl-wood:hover:not(:disabled) { --rule: rgb(var(--mcl-cloth-light-rgb) / 0.85); } }
 /* 播種：飛過去的那顆種子落地後，坑裡才出現真的那顆（mcl-land，延遲＝飛行時間，由元件給 --mcl-delay）；
    坑裡已經有同一個人的子（合成一顆顯示）時只彈一下（mcl-receive）。分數變了的數字跳一下（mcl-pop）。
    只動 scale／opacity 獨立屬性，不蓋掉元件本身的 transform。減少動態效果時全部關掉。 */
@@ -881,7 +867,7 @@ html:has(.mcl-root), body:has(.mcl-root) { background: var(--mcl-cloth); }
 .mcl-receive { animation: mcl-receive 260ms ease-out both; animation-delay: var(--mcl-delay, 0ms); }
 .mcl-pop { display: inline-block; animation: mcl-pop 420ms var(--mo-snap); }
 @media (prefers-reduced-motion: reduce) { .mcl-land, .mcl-receive, .mcl-pop { animation: none !important; } }
-/* 連線的等人畫面：圓木桌上還空著的座位（黃銅虛線圈）輕輕浮著、亮一點又淡回去（MancalaOnline.tsx，只在 motion-safe 時掛上） */
+/* 連線的等人畫面：圓盤上還空著的座位（金色虛線圈）輕輕浮著、亮一點又淡回去（MancalaOnline.tsx，只在 motion-safe 時掛上） */
 @keyframes mcl-wait { 0%, 100% { translate: 0 0; opacity: 0.5; } 50% { translate: 0 -8%; opacity: 0.95; } }
 
 /* 九子棋選單的大按鈕：字放在拱中間最高的地方置中，首字留左、箭頭留右，左右對稱；節目規則左邊補一個朱紅的 ¶ 對稱右邊的蠟封
@@ -919,24 +905,3 @@ html .nmm-row:not(:has(.nmm-initial))::before { content: '¶'; position: absolut
 .bagh-away { background: rgb(74 38 22 / 0.07) !important; color: var(--ink-soft, #6b5a48) !important; }
 .bagh-away > :not(.bagh-away-cover) { filter: grayscale(1); opacity: 0.75; }
 .bagh-away-cover { position: absolute; inset: 0; display: grid; place-items: center; border-radius: inherit; background: rgb(119 114 108 / 0.78); color: #fbf4e1; font-size: 1.9rem; }
-/* 試做的兩種皮（skins.ts）：次要鈕換成各自的樣子，主要鈕的底色由 --mcl-plaque 換。
-   木雕版：上下各一排刻出來的小三角（Bao 棋盤邊上的刻紋），石灰白底、烏木的刻痕；主要鈕是牆腳的靛藍。
-   祈禱書版：羊皮紙上下各一道金線、一道墨線（抄本畫格線的方式）；主要鈕是金箔，內側一圈墨。 */
-html[data-mcl-skin="wood"] .mcl-cloth {
-  background:
-    conic-gradient(from 135deg at 50% 0, rgb(var(--mcl-ink-rgb) / 0.6) 90deg, transparent 0) left 0 top 0 / 8px 4px repeat-x,
-    conic-gradient(from -45deg at 50% 100%, rgb(var(--mcl-ink-rgb) / 0.6) 90deg, transparent 0) left 0 bottom 0 / 8px 4px repeat-x,
-    var(--mcl-cloth-light);
-}
-html[data-mcl-skin="hours"] .mcl-cloth {
-  background:
-    linear-gradient(var(--mcl-brass) 0 0) left 0 top 2px / 100% 2px no-repeat,
-    linear-gradient(rgb(var(--mcl-ink-rgb) / 0.5) 0 0) left 0 top 6px / 100% 1px no-repeat,
-    linear-gradient(rgb(var(--mcl-ink-rgb) / 0.5) 0 0) left 0 bottom 6px / 100% 1px no-repeat,
-    linear-gradient(var(--mcl-brass) 0 0) left 0 bottom 2px / 100% 2px no-repeat,
-    var(--mcl-cloth-light);
-}
-html[data-mcl-skin="hours"] .mcl-plaque { box-shadow: inset 0 0 0 2px rgb(var(--mcl-ink-rgb) / 0.55), inset 0 0 0 4px var(--mcl-cloth-light); }
-/* 祈禱書的頁邊比布邊寬：外框 44px（手機 30px） */
-html[data-mcl-skin="hours"] .mcl-frame { --mcl-frame: 44px; }
-@media (max-width: 640px) { html[data-mcl-skin="hours"] .mcl-frame { --mcl-frame: 30px; } }

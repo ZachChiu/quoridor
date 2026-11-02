@@ -1,13 +1,16 @@
 import type { EntranceScene } from '@/components/entrances';
 import type { WipePhase } from '@/components/WipeOverlay';
-import { BRASS, CLOTH, CLOTH_LIGHT, DISH_BG, INK, WOOD } from './palette';
+import { DISH_BG, HEX } from './palette';
+
+// 進場播在平台頁上，那裡沒有 .mcl-root、這款的 CSS 變數不存在，所以直接用取樣值
+const { BRASS, CLOTH, CLOTH_LIGHT, INK, WOOD } = HEX;
 
 /**
  * 均衡曼卡拉的進場：播種 —— 畫面從中心切成 14 塊扇形（棋盤是 14 格繞一圈），照規則的方向（順時針、從最上面那格起）
- * 一塊一塊播下去，每塊帶著一個盤子；播滿一圈就蓋滿了。換好頁之後繼續順時針一塊一塊收走，最後收掉中間的黃銅。
+ * 一塊一塊播下去，每塊帶著一個盤子；播滿一圈就蓋滿了。換好頁之後繼續順時針一塊一塊收走，最後收掉中間的金。
  *
- * 扇形是印花布的兩種布色交替，塊與塊之間一道墨色的縫（越往外越寬，像梳子畫出去的線）；盤子是紅、藍、綠三色，
- * 最上、最下兩格是木頭色（棋盤上那兩格特殊格）；中間一塊嵌木邊的黃銅。顏色同 palette.ts。
+ * 扇形是羊皮紙的兩種紙色交替，塊與塊之間一道墨色的縫（越往外越寬，像抄本畫出去的格線）；盤子是紅、藍、綠三色，
+ * 最上、最下兩格是盤面的暗底色（棋盤上那兩格特殊格）；中間一塊嵌暗邊的金。顏色同 palette.ts（時禱書取樣）。
  * 只動 transform／opacity（見 components/entrances.ts）。
  */
 
@@ -25,10 +28,10 @@ const RING = 38;
 const DISH = 11;
 /** 相鄰兩塊各多疊一點點（度），墨色的縫才不會在交界處反鋸齒出一條亮線 */
 const OVERLAP = 0.3;
-/** 布比扇形窄多少（度）：兩邊露出墨色的縫，越往外越寬 */
+/** 紙比扇形窄多少（度）：兩邊露出墨色的縫，越往外越寬 */
 const SEAM = 0.7;
 const tan = (deg: number) => Math.tan((deg * Math.PI) / 180);
-/** 布在長條頂端左右各退多少（%）：扇形與布都是從中心放射出去的，退的比例處處相同 */
+/** 紙在長條頂端左右各退多少（%）：扇形與紙都是從中心放射出去的，退的比例處處相同 */
 const CLOTH_INSET = ((1 - tan(SPAN / 2 - SEAM) / tan(SPAN / 2 + OVERLAP)) * 50).toFixed(2);
 
 /**
@@ -70,7 +73,7 @@ function Scene({ phase }: { phase: WipePhase }) {
             opacity: covered ? 1 : 0,
           }}
         >
-          {/* 布：比扇形窄一點，兩邊露出墨色的縫 */}
+          {/* 紙：比扇形窄一點，兩邊露出墨色的縫 */}
           <div className="absolute inset-0" style={{ clipPath: `polygon(50% 100%, ${CLOTH_INSET}% 0%, ${100 - Number(CLOTH_INSET)}% 0%)`, backgroundColor: i % 2 ? CLOTH : CLOTH_LIGHT }} />
           <div
             className="absolute left-1/2 rounded-full"
@@ -83,7 +86,7 @@ function Scene({ phase }: { phase: WipePhase }) {
           />
         </div>
       ))}
-      {/* 中間的黃銅：嵌一圈木邊 */}
+      {/* 中間的金：嵌一圈暗邊 */}
       <div
         data-brass
         className="absolute left-0 top-0 size-[16vmin] -translate-x-1/2 -translate-y-1/2 rounded-full"
@@ -99,7 +102,7 @@ function play(root: HTMLElement, phase: WipePhase): Animation[] {
   if (cells.length !== CELLS || !brass) return [];
   const anims: Animation[] = [];
   if (phase === 'cover') {
-    // 先放黃銅，再從最上面那格順時針一塊塊播下去：每塊從中心往外長一點點、同時出現
+    // 先放金，再從最上面那格順時針一塊塊播下去：每塊從中心往外長一點點、同時出現
     anims.push(brass.animate([{ opacity: 0, transform: 'translate(-50%, -50%) scale(0.2)' }, { opacity: 1, transform: 'translate(-50%, -50%) scale(1)' }],
       { duration: 180, easing: 'cubic-bezier(0.2, 0.9, 0.3, 1.2)', fill: 'both' }));
     cells.forEach((cell, i) => {
@@ -107,7 +110,7 @@ function play(root: HTMLElement, phase: WipePhase): Animation[] {
         { duration: 170, delay: 60 + i * STEP_MS, easing: 'cubic-bezier(0.2, 0.7, 0.3, 1)', fill: 'both' }));
     });
   } else {
-    // 繼續順時針：從最上面那格起一塊塊收走，最後收掉中間的黃銅
+    // 繼續順時針：從最上面那格起一塊塊收走，最後收掉中間的金
     cells.forEach((cell, i) => {
       anims.push(cell.animate([{ opacity: 1, transform: 'scale(1)' }, { opacity: 0, transform: 'scale(1.06)' }],
         { duration: 160, delay: 80 + i * STEP_MS, easing: 'ease-in', fill: 'both' }));

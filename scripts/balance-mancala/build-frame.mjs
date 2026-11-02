@@ -1,7 +1,8 @@
-// 試做（explore/mancala-skins）：均衡曼卡拉木雕版、祈禱書版的外框 SVG（border-image，84×84、slice 28、邊段 28 一個圖案）。
-// node scripts/mancala-skins/build-frames.mjs → public/games/balance-mancala/skins/{wood,hours}-frame.svg
-// 顏色出處見 app/components/balance-mancala/skins.ts。
+// 均衡曼卡拉的頁邊（border-image，84×84、slice 28、邊段 28 一段藤蔓）。
+// node scripts/balance-mancala/build-frame.mjs → public/games/balance-mancala/frame.svg（頁面用）＋ frame-card.png（3 倍，結算分享圖的 Canvas 用：
+// Canvas 從 SVG 切九宮格時是照 84px 的原尺寸點陣化再放大，會糊）。顏色出處見 app/components/balance-mancala/palette.ts。
 import { writeFileSync } from 'node:fs';
+import sharp from 'sharp';
 const B = 28, S = 84;
 const f = (v) => +v.toFixed(2);
 function frame(bg, edge, corner) {
@@ -14,22 +15,7 @@ function frame(bg, edge, corner) {
     + `</svg>`;
 }
 
-// 木雕版：桑吉巴門框那圈菱格（1920 的照片），外側一排刻出來的三角（Bao 棋盤的邊）。烏木底、石灰白的刻線。
-{
-  const ink = '#13151c', lime = '#c7d2d5', grey = '#697f90';
-  const notch = [0, 7, 14, 21].map((x) => `<path d="M${x} 2.2 L${x + 3.5} 7 L${x + 7} 2.2 Z" fill="${lime}" fill-opacity="0.55"/>`).join('');
-  const dia = [0, 14].map((x) => `<path d="M${x} 16.5 L${x + 7} 10 L${x + 14} 16.5 L${x + 7} 23 Z" fill="none" stroke="${lime}" stroke-width="1.3"/>`
-    + `<circle cx="${x + 7}" cy="16.5" r="1.4" fill="${lime}"/>`).join('');
-  const rails = `<rect x="0" y="8.4" width="28" height="0.9" fill="${lime}" fill-opacity="0.7"/><rect x="0" y="24.2" width="28" height="0.9" fill="${lime}" fill-opacity="0.7"/>`;
-  const edge = `<rect width="28" height="${B}" fill="${ink}"/>${notch}${rails}${dia}<rect x="0" y="26.6" width="28" height="1.4" fill="${grey}"/>`;
-  // 四角：八瓣的蓮花（斯瓦希里門上常見的花），框在兩道刻線裡
-  const petals = Array.from({ length: 8 }, (_, i) => `<ellipse cx="14" cy="9.2" rx="2.1" ry="4.2" transform="rotate(${i * 45} 14 14)" fill="none" stroke="${lime}" stroke-width="1"/>`).join('');
-  const corner = `<rect width="${B}" height="${B}" fill="${ink}"/><rect x="1.5" y="1.5" width="25" height="25" fill="none" stroke="${lime}" stroke-opacity="0.7" stroke-width="0.9"/>${petals}<circle cx="14" cy="14" r="2" fill="${lime}"/>`
-    + `<rect x="26.6" y="0" width="1.4" height="28" fill="${grey}"/><rect x="0" y="26.6" width="28" height="1.4" fill="${grey}"/>`;
-  writeFileSync('public/games/balance-mancala/skins/wood-frame.svg', frame(null, edge, corner));
-}
-
-// 祈禱書版：頁邊的墨線藤蔓、金色常春藤葉（金點描墨邊），內側一道金線；四角一朵群青＋朱紅的花。羊皮紙底。
+// 頁邊的墨線藤蔓、金色常春藤葉（金點描墨邊），內側一道金線；四角一朵群青＋朱紅的花。羊皮紙底。
 {
   const vel = '#eedec1', ink = '#3f3833', gold = '#d2ae67', goldD = '#9c7436', blue = '#3f5063', red = '#ac6744', green = '#628a54';
   const pts = [];
@@ -45,5 +31,7 @@ function frame(bg, edge, corner) {
   const corner = `<rect width="${B}" height="${B}" fill="${vel}"/>`
     + `<path d="M4 24 q 2 -8 8 -10" stroke="${green}" stroke-width="1.6" fill="none"/>${petals}<circle cx="14" cy="14" r="3" fill="${gold}" stroke="${ink}" stroke-width="0.5"/>`
     + `<rect x="25.6" y="25.6" width="2.4" height="2.4" fill="${gold}"/>`;
-  writeFileSync('public/games/balance-mancala/skins/hours-frame.svg', frame(null, edge, corner));
+  const svg = frame(null, edge, corner);
+  writeFileSync('public/games/balance-mancala/frame.svg', svg);
+  await sharp(Buffer.from(svg), { density: 216 }).resize(S * 3, S * 3).png({ compressionLevel: 9 }).toFile('public/games/balance-mancala/frame-card.png');
 }

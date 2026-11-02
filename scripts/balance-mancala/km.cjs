@@ -1,6 +1,6 @@
 /* eslint-disable */
-// 試做用的一次性腳本（explore/mancala-skins）：從 scratchpad/mcl/src 的原件取樣、裁主視覺；路徑是相對那個資料夾
-const sharp=require('/Users/zach/Desktop/projects/quoridor/node_modules/sharp');
+// 取樣原件的顏色（k-means）：node scripts/balance-mancala/km.cjs <圖> <左> <上> <寬> <高>（0–1 的比例）[群數]，由多到少印出 #hex
+const sharp=require('sharp');
 const [f,l,t,w,h,k]=process.argv.slice(2);
 (async()=>{const img=sharp(f);const m=await img.metadata();const ex={left:Math.round(+l*m.width),top:Math.round(+t*m.height),width:Math.round(+w*m.width),height:Math.round(+h*m.height)};
 const {data,info}=await sharp(f).extract(ex).removeAlpha().resize(120).raw().toBuffer({resolveWithObject:true});
