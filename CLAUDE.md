@@ -242,6 +242,10 @@ nudge { by, at }          最近一次「催一下」
 
   - 均衡曼卡拉：試做中，視覺在 `feat/game-balance-mancala`。
 
+  - 六角數字盤（`feat/game-hexagon`，2026-11-03 試做，第 1 季決賽第 2 戰的 Hexagon；規則、出題、原件與配色見 `docs/hexagon.md`）：原件是大都會博物館 15～16 世紀的藍白六角磁磚（伊茲尼克 40.181.11、馬木路克 1982.478.1，CC0）；最外緣一圈鈷藍邊磚＋一串釉白小六角（`.hx-frame`），按鈕是一塊塊磁磚（`.hx-tile`／`.hx-cobalt`）。
+    `/hexagon` 一頁，模式放 hash：`#daily`（當地日期當種子、5 回合）、`#show`（10 回合）、`#practice-easy|normal|hard`。規則在 `app/games/hexagon/engine.ts`（27 條線與節目十盤的答案由測試鎖住、每題保證 2～5 組），畫面在 `app/components/hexagon/`。
+    整頁與名字字標是圓體 Chiron GoRound TC（繁中、英文）。首頁上排的平台 logo、聯絡、語言跟著版面排，不浮著。還沒有規則頁、og 圖、favicon、GA 事件。
+
 - **棋盤**：外圍那圈 9px 是「牆」不是裝飾邊框（規則裡棋盤外緣本身就算一道牆）。
   牆的位移一律 `calc(var(--board-gap) * -0.5)` —— 對齊的是格線中心而不是格子邊，
   兩者差半個格縫，寫死會漂掉。

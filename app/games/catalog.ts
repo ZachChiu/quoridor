@@ -128,7 +128,9 @@ export const SEASONS: Season[] = [
       { name: "Nine Men's Morris", names: { 'zh-TW': '九子棋', 'zh-Hans': '九子棋' }, playable: routes.NINE_MENS_MORRIS,
         look: { card: 'bg-[#4b4577] text-[#eee0c4]', wipe: '#4b4577', art: '/games/nine-mens-morris/libro.webp', cover: true, entrance: 'nine-mens-morris', rules: routes.trialRules(routes.NINE_MENS_MORRIS),
           lettering: { mark: '/games/nine-mens-morris/wordmark.svg', ratio: 7473 / 757, spellsName: true } } },
-      { name: 'Hexagon', names: { 'zh-TW': '六角數字盤', 'zh-Hans': '六角数字盘' } },
+      // 六角數字盤：第三批試做（feat/game-hexagon，2026-11-03）。卡片是伊茲尼克的六角花磚（Met CC0）去背放在釉白上
+      { name: 'Hexagon', names: { 'zh-TW': '六角數字盤', 'zh-Hans': '六角数字盘' }, playable: routes.HEXAGON,
+        look: { card: 'bg-[#f5e5d3] text-[#22283b]', wipe: '#f5e5d3', art: '/games/hexagon/card.webp', hero: '/games/hexagon/hero-wide.webp', heroSquare: '/games/hexagon/hero-square.webp', cover: true, entrance: 'hexagon' } },
     ],
   },
 ];

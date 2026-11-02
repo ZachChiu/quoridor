@@ -34,6 +34,8 @@ export const NINE_MENS_MORRIS = '/nine-mens-morris';
 export const BLIND_GOMOKU = '/blind-gomoku';
 export const BALANCE_MANCALA = '/balance-mancala';
 export const KNIGHTS_TOUR = '/knights-tour';
+/** 第三批試做（2026-11-03）：六角數字盤（第 1 季決賽第 2 戰的 Hexagon），一個人解的、不做連線 */
+export const HEXAGON = '/hexagon';
 
 /**
  * 第二批的連線房（2026-10-24 Zach：有兩方互動的都補連線版，騎士巡遊是一個人解的、不用）。
