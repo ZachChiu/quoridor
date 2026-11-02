@@ -21,7 +21,7 @@ import { MorrisBoard, PieceGlyph, type Pluck, type PluckStage } from './MorrisBo
 import MorrisFrame from './MorrisFrame';
 import { MorrisRulesModal } from './MorrisRules';
 import { clearSession, saveSession, type MorrisMode } from './session';
-import { drawMorrisCard } from './shareCard';
+import { MORRIS_SHARE_IMAGES, drawMorrisCard } from './shareCard';
 import { PLUCK_MS } from './pluck';
 import { playMorris } from './sounds';
 import { track } from '@/utils/analytics';
@@ -239,10 +239,6 @@ export default function MorrisPlay({ locale, mode, showRules, moves = '', onMenu
   }
   // 電腦或對方在挑要拿哪一顆時，自己的子不搖（跟電腦下一樣，提示列寫「正在挑」）
   const removableNow = new Set(still ? [] : removable(game));
-  // 這一回合（成三的話是拿子之前那一手）放下或走動的子
-  const step = last?.kind === 'remove' ? prev : last;
-  const lastTo = step && step.kind !== 'remove' ? step.to : undefined;
-  const lastFrom = step?.kind === 'move' ? step.from : undefined;
   const removed = { black: removedCount('black'), white: removedCount('white') };
   const mills = lastMills(game);
   // 成三了卻沒進入拿子（節目規則：對方的子全在線上）
@@ -336,6 +332,7 @@ export default function MorrisPlay({ locale, mode, showRules, moves = '', onMenu
     fonts: [{ font: `900 40px ${font}`, text: card.text.title + card.text.brand }, { font: `700 40px ${font}`, text: card.text.kicker + card.text.reason + card.text.from + card.text.moves }],
     // 只留 9:16（Zach 10/24：「感覺可以留 9:16 就好」，跟虎羊棋一樣）；只有一種就不顯示比例切換
     layouts: ['story'],
+    images: MORRIS_SHARE_IMAGES,
   });
 
   // 群青底上的按鈕是拱頂的羊皮紙小拱（手抄本插圖框的形狀，globals.css 的 .nmm-arch）
@@ -414,7 +411,7 @@ export default function MorrisPlay({ locale, mode, showRules, moves = '', onMenu
       {/* 棋盤比寬多一段（下方放被拿掉的子，106:118），桌機照高度算寬 */}
       <div ref={boardRef} className="flex w-full max-w-[500px] flex-1 items-center py-2 lg:max-w-[min(580px,calc((100svh-5rem)*0.9))] lg:flex-none lg:py-0">
         <MorrisBoard board={game.board} targets={targets} movable={selected === null ? movable : new Set()} removable={removableNow}
-          selected={selected} lastTo={lastTo} lastFrom={lastFrom} mills={mills} removed={removed} last={last}
+          selected={selected} mills={mills} removed={removed} last={last}
           plies={h.length} pluck={pluck} onPluck={onPluck} idle={game.winner ? null : other(game.turn)} ghost={phase === 'place' && !still ? game.turn : undefined}
           labels={{ black: t.black, white: t.white, empty: t.empty, remove: t.phase.remove }} onPick={pick} />
       </div>
