@@ -110,3 +110,19 @@ describe('JSON-LD 圖的完整性', () => {
     }
   });
 });
+
+describe('平台首頁的代表圖', () => {
+  it.each(LOCALES)('%s：三種比例都在、尺寸對得上檔案，代表圖是 16:9 那張', async (locale) => {
+    const sharp = (await import('sharp')).default;
+    const g = pageGraph(locale, 'platform') as { '@graph': Node[] };
+    const page = g['@graph'].find((n) => n['@type'] === 'CollectionPage')!;
+    const images = page.image as { url: string; width: number; height: number }[];
+    expect(images.map((i) => i.width / i.height)).toEqual([1, 4 / 3, 16 / 9]);
+    expect(page.primaryImageOfPage).toEqual(images[2]);
+    for (const img of images) {
+      expect(img.width).toBeGreaterThanOrEqual(1200);
+      const meta = await sharp(`public${new URL(img.url).pathname}`).metadata();
+      expect([meta.width, meta.height]).toEqual([img.width, img.height]);
+    }
+  });
+});

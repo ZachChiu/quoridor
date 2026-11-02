@@ -5,7 +5,7 @@
       "《魔鬼的計謀》",
       "遊戲線上玩"
     ],
-    "titleSize": 71
+    "titleSize": 64
   },
   "en": {
     "kicker": "Dice Devil",
@@ -13,7 +13,7 @@
       "The Devil's Plan",
       "games online"
     ],
-    "titleSize": 56
+    "titleSize": 64
   },
   "ja": {
     "kicker": "Dice Devil",
@@ -21,7 +21,7 @@
       "『悪魔の計略』の",
       "ゲームで遊ぼう"
     ],
-    "titleSize": 62
+    "titleSize": 64
   },
   "ko": {
     "kicker": "Dice Devil",
@@ -29,7 +29,7 @@
       "『데블스 플랜』",
       "게임 바로 플레이"
     ],
-    "titleSize": 61
+    "titleSize": 64
   },
   "zh-Hans": {
     "kicker": "骰子恶魔",
@@ -37,7 +37,7 @@
       "《魔鬼的计谋》",
       "游戏在线玩"
     ],
-    "titleSize": 71
+    "titleSize": 64
   },
   "th": {
     "kicker": "Dice Devil",
@@ -45,6 +45,6 @@
       "เล่นเกมจาก",
       "The Devil's Plan"
     ],
-    "titleSize": 56
+    "titleSize": 64
   }
 }
