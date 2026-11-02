@@ -225,6 +225,8 @@ nudge { by, at }          最近一次「催一下」
     動作（`idleMotion.ts`）：落子壓一下布、旁邊的子跟著滑；閒置動作只在一般模式、只動等待那一方 —— **盲棋沒有閒置動作**（只動一方就等於告訴你哪些是對方的子）。
     邀請朋友（10/24）：共用的 `turnRooms`，`s0` 黑、`s1` 白，setup 是 `blind`／`classic`，moves 是 engine 的 `encodeMoves`（`games/blind-gomoku/online.ts`）；首頁的彈窗選玩法與自己執黑或執白 → `/blind-gomoku/online#new=blind-black`。對局沿用 `GomokuPlay`（只有輪到自己能下、沒有悔棋與重來、再來一局＝開新房）；盲棋兩邊都只畫顏色、各自選色（沒有 AI 的跟色）；畫面上寫黑方／白方、不寫「你」「對方」，自己那方是狀態底下實線縫邊的那塊小布。連線中、等人、失敗是 `GomokuOnline` 裡自己的一小塊包袱巾（縫線往前縫、兩塊布縫在一起、一角脫線）。這款裡面換頁都不播轉場；結算只留 9:16。
     規則頁 `/blind-gomoku/rules`（10/25，`RulesPage.tsx`）：一步一張圖配字，圖是遊戲自己的棋盤與棋子畫的 7×7 一角（`RulesSteps.tsx`；只有講翻開那張畫黑白，講一般五子棋那張用另一盤，免得前面的彩色圖等於明牌），首頁的「怎麼玩」連過去、不再開彈窗；對局中的說明彈窗是同一份步驟、一次一步、可以左右滑（`useSwipePager`），彈窗裡只有步驟（出處、署名在規則頁）。分享圖 `scripts/og-games/blind-gomoku.mjs`：青綠底、白絲字，主視覺是裁掉館藏照片灰邊的 `scripts/og-art/blind-gomoku.webp`。
+    **2026-11-02 上線**（v26.11.9）：首頁、規則頁 `launchedGameMetadata`、進 sitemap；GA 送同一套事件（`game: 'blind-gomoku'`），難度多一級 `show`（照節目的 AI）。
+    對局畫面（11/2 Zach）：兩方是**一條分段條**，手機與桌機同一條（計分牌、上下夾、分段條三種裡挑的），輪到的那半是青綠拼布；自己那半（連線、對電腦）一圈 2px 實線（實線框、布邊、小人三種裡挑的；畫面上不寫「你／AI」）。手機的狀態＋提示固定兩行高（提示一出一沒棋盤會跳），「點交叉點瞄準」改寫在「下子」鈕上（先選位置）。結算關掉後狀態那一塊換成「黑方勝 · 看結算」。
 
   - 騎士巡遊（`feat/game-knights-tour`）：原件是歐拉 1759 的數學版畫、18 世紀紅粉筆素描；最外緣銅版雙線框（`.kt-frame`）；主視覺 `plate.webp`，首頁 Fig. 1 是歐拉的走法（`euler.ts`，有測試）。平台小卡片 `card.webp` 是同一張、左邊空白的紙上多一隻對局裡的騎士（10/25 Zach：「偏空泛」；2.1 倍、對局同線寬，夾在「可以玩」與兩行的名字（中文名＋襯線斜體的 Knight’s Tour）中間，細線版與跳進「1」的弧線也試過）；大卡片照舊 `plate.webp`（桌機字壓在左邊，騎士會被字蓋住）。favicon 是紙上一枚銅版畫的騎士（對局裡同一隻，線條加粗）、外圈一道墨線（`public/icons/knights-tour.*`）。整頁的字（按鈕、說明、彈窗、分享圖）是 Noto Serif，各語系跟名字字標同一套（`scripts/game-fonts/knights-tour.mjs`，10/25），拉丁字與數字照舊 `.kt-serif`。
     聲音是歐拉那個年代的書房（`knights-tour/sounds.ts`，配方寫在檔頭）：騎士每跳一步彈一聲大鍵琴、音高看落在第幾列（D 大調，整條路就是一段旋律），點錯是鵝毛筆刮紙、悔棋是擦紅粉筆、重來是翻一頁紙，走完琶音、封閉巡遊再加一段終止式顫音；聲音開關在對局右上（手機）／標題旁（桌機）。
@@ -322,6 +324,7 @@ nudge { by, at }          最近一次「催一下」
 - **瀏覽器自己的「確定要離開嗎？」（`beforeunload`）只在電腦版有用**：它只管整頁跳轉，站內換頁不觸發；iPhone 的 Safari 與 Chrome 完全不顯示。保留它給電腦版，但不能只靠它。
 - **房子鈕**：對局還沒結束就先開 `LeaveConfirmModal`。
 - **瀏覽器返回鍵**：對局頁第一次點擊時，在歷史紀錄最上面放一筆同網址的「守門」（`__wallgoGuard`）。按返回只是從守門退回真正那筆、頁面不換，`popstate` 裡攔下來問；離開就再退一步，不離開就把守門放回去。沒東西會丟（還沒下、已下完、連線還在等人）就自動替使用者再退一步。守門**必須在點擊當下 push**（WebKit 規則，見上方〈站內換頁〉那條），所以不等「有進度」才放。確認視窗開著時的點擊不放守門；重整後若停在守門上要先認出來。從房子鈕離開時用 `navigate(..., { replace: true })` 取代守門。
+- **守門只攔「網址沒變」的 popstate**（11/2 Zach：在結束的連線局分頁貼上新的房間連結，一直被退回舊的那局）：只換 # 的導覽也會觸發 popstate，網址跟守門那筆不同就是去新的地方、不是按返回，不攔也不替使用者退一步（`useLeaveGuard` 與 PlayClient 的 `guardHrefRef`）。
 - **其他遊戲共用 `hook/useLeaveGuard.ts`**（10/25 Zach：「遊戲玩到一半要退出離開都要有一個提示詢問」）：同一套房子鈕、返回鍵守門、電腦版 `beforeunload`，確認視窗由各款用自己的樣子畫（文案共用 `useGameText().leave`）。房子鈕呼叫 `request(離開要做的事)`，守門那筆會先退掉再走，回到選單後按一次返回就回得去；不必問、用 replaceState 換網址的換局（騎士巡遊換大小）走 `skip`，同樣先退掉守門。Wall Go 的 `PlayClient` 是原版，沒有改用它。
 - **重整接回**（本機、單人）：每一步把 WGF 寫進 sessionStorage（`utils/savedGame.ts`，只活在這個分頁），掛載時 `replay` 回來；分出勝負、重新開始、確認離開就清掉。從首頁磁磚或 `/solo` 選難度進來是新的一局（會清）。進行到一半的那一手不會保留。連線局本來就從 Firebase 接回。接回的那一下不送 GA 的 `game_start`。
 
@@ -382,8 +385,10 @@ GA 由 `app/shell.tsx` 的 `<GoogleAnalytics>` 載入（只有 `NEXT_PUBLIC_APP_
 | `select_game` | 平台首頁、季目錄點了能玩的遊戲卡（大卡的「開始玩」也算） | game、location（home_hero／home_grid／season／related）、season（1／2／3） |
 
 - `game_start` / `game_end` 看**狀態轉變**而不是按鈕；第一次觀察到的狀態不送（重整後從棋譜重建的「已開始／已結束」不是這次發生的），連線另用 sessionStorage 去重。連線局每位玩家各送一次，所以是「人次」不是「局數」。投降不另外送，會以 `game_end` 的 `ended: 'resign'` 出現。
-- **`page_view` 交給 GA 自己算**（首次載入由 config、站內換頁由加強型評估的「依瀏覽器記錄事件」）。不要再手動送 —— 以前的 `AnalyticsProvider` 就是這樣讓每次瀏覽都算兩次。
-  它要帶的 `page_type`（platform_home／season／game_home／rules／play）與 `game` 用 `gtag('set')` 設：`utils/pageMeta.ts` 的內嵌 script 在 GA 載入前包住 pushState／replaceState、聽 popstate，網址一變就照新網址 set（在 React effect 裡 set 會晚 GA 一步、帶到上一頁的值）。set 過的值這一頁之後的每個事件都會帶。
+- **`page_view` 由 `utils/pageMeta.ts` 的內嵌 script 送，一次換頁一筆**，事件本身帶 `page_type`（platform_home／season／game_home／rules／play）與 `game`（11/2 大腦筋派工，`docs/page-type-ga-fix.md`）。
+  先前用 `gtag('set')` 讓 GA 自己送的 page_view 帶上，但 GA4 的 set 不會把自訂參數帶進事件、換頁再 config 一次參數也不會更新（無頭 Chrome 攔下 /g/collect 實測），v26.11.1 起的 page_view 全部沒帶。
+  所以 config 是 `send_page_view: false`、不用 `@next/third-parties` 的 `<GoogleAnalytics>`（它自己 config 會多送一筆），**GA 後台「加強型評估 → 依瀏覽器記錄事件判斷網頁變更」要關掉**，不然站內換頁算兩次。
+  只看 pathname＋search（hash、離開守門那筆同網址的 push 不算），等新頁標題換上再送（最多 1 秒），page_location 不帶 hash。其他事件不帶 page_type。不要另外再手動送 page_view。
 - `select_game` 由 `SelectGameTracker` 在 document 上聽 click：能玩的卡本來就有 `data-game`，往上找 `data-select-location` 決定是哪一區。
 - 參數要在 GA 後台「管理 → 自訂定義」註冊才看得到：維度 `mode`、`players`、`difficulty`、`entry`、`result`、`winner`、`ended`、`reason`、`fail_step`、`method`、`from`、`to`、`finished`、`game`、`location`、`page_type`、`season`、`board_size`（騎士巡遊的棋盤大小，11/1 已註冊）；指標 `turns`、`duration_sec`、`step`、`rating`。
   `share` 的 `content_type`、`item_id` 是 GA4 建議事件的標準參數，後台有沒有內建維度要上線後確認，沒有再註冊。

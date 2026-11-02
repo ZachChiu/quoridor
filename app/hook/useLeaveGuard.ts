@@ -34,10 +34,13 @@ export function useLeaveGuard({ live, inProgress }: { live: boolean; inProgress:
   const openRef = useRef(false);
   useEffect(() => { openRef.current = via !== null; });
   const pendingRef = useRef<(() => void) | null>(null);
+  /** 守門那筆的網址：popstate 時網址還是它才是按了返回 */
+  const guardHrefRef = useRef<string | null>(null);
 
   const pushGuard = useCallback(() => {
     if (onTopRef.current) return;
     window.history.pushState({ ...window.history.state, [KEY]: true }, '', window.location.href);
+    guardHrefRef.current = window.location.href;
     onTopRef.current = true;
   }, []);
 
@@ -61,6 +64,10 @@ export function useLeaveGuard({ live, inProgress }: { live: boolean; inProgress:
     const onPop = (e: PopStateEvent) => {
       if (!onTopRef.current || isGuard(e.state)) return;
       onTopRef.current = false;
+      // 網址變了就不是按返回：在網址列貼上另一間房的連結（只有 # 後面不同）也會觸發 popstate。
+      // 先前當成返回、又替使用者退一步，就退回舊的那一局，新的連結怎麼貼都進不去（11/2 Zach）
+      // 重整後停在守門上的那種（guardHrefRef 沒記到）照舊當成返回
+      if (guardHrefRef.current !== null && window.location.href !== guardHrefRef.current) return;
       if (inProgressRef.current) setVia('back');
       else window.history.back(); // 沒東西會丟：替使用者把這一步退完
     };

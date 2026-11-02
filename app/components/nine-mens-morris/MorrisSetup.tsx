@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import { useLatched } from '@/hook/useLatched';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { GiBrain, GiScrollUnfurled, GiTabletopPlayers } from 'react-icons/gi';
@@ -62,6 +63,8 @@ export default function MorrisSetup({ locale, onStart }: { locale: Locale; onSta
   const router = useRouter();
   const [showRules, setShowRules] = useState(false);
   const [side, setSide] = useState<Side | null>(null);
+  // 彈窗淡出時內容照最後選的那邊畫，不退回黑方
+  const shown = useLatched(side);
   const [inviteOpen, setInviteOpen] = useState(false);
   // 九子棋裡面換頁不播轉場（直接 router.push），開好房間後網址會換成 #roomId=…
   const invite = (s: Side) => { setInviteOpen(false); track('mode_select', { game: 'nine-mens-morris', mode: 'online', players: 2, entry: 'home' }); router.push(localePath(locale, trialOnline(NINE_MENS_MORRIS)) + newRoomHash(s, showRules)); };
@@ -163,8 +166,8 @@ export default function MorrisSetup({ locale, onStart }: { locale: Locale; onSta
         </div>
       </main>
 
-      <Modal isOpen={!!side} onClose={() => setSide(null)} title={m.ui.pickLevel} kicker={side === 'white' ? t.second : t.first}
-        icon={side === 'white' ? WhitePieceIcon : BlackPieceIcon} band={MORRIS_BAND} panelClassName={MORRIS_PANEL}>
+      <Modal isOpen={!!side} onClose={() => setSide(null)} title={m.ui.pickLevel} kicker={shown === 'white' ? t.second : t.first}
+        icon={shown === 'white' ? WhitePieceIcon : BlackPieceIcon} band={MORRIS_BAND} panelClassName={MORRIS_PANEL}>
         {/* 三個拱，各畫一面骰子：一點、二點、三點 */}
         <div className="grid w-full grid-cols-3 gap-3">
           {LEVELS.map((d, i) => (
