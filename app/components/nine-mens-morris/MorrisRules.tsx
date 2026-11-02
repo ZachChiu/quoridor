@@ -25,8 +25,6 @@ type StepArt = {
   selected?: Point;
   targets?: Point[];
   ghost?: { side: Side; at: Point };
-  lastTo?: Point;
-  lastFrom?: Point;
   removed?: Record<Side, number>;
 };
 
@@ -46,18 +44,18 @@ const STEPS: StepArt[] = [
   // 棋盤：24 個點，空的
   { board: position('', '') },
   // 放子：黑方剛放下第 3 顆（頭上一個點），輪到白方，半透明的那顆是正要放下去的
-  { board: position('d6 c4 f2', 'd5 e4'), lastTo: pt('f2'), ghost: { side: 'white', at: pt('b6') } },
+  { board: position('d6 c4 f2', 'd5 e4'), ghost: { side: 'white', at: pt('b6') } },
   // 連成一線：黑方上排連成一線（粉筆），白方能拿的兩顆在搖；白方下排連成一線的三顆不能拿、不搖。
   // 先前白方連成那條線時拿走過黑方一顆（躺在下方）
-  { board: position('a7 d7 g7 b4 e5', 'a1 d1 g1 d5 f4'), mills: [pts('a7 d7 g7')], lastTo: pt('g7'), removable: pts('d5 f4'), removed: { black: 1, white: 0 } },
+  { board: position('a7 d7 g7 b4 e5', 'a1 d1 g1 d5 f4'), mills: [pts('a7 d7 g7')], removable: pts('d5 f4'), removed: { black: 1, white: 0 } },
   // 走子：黑方拿起 d6，粉筆點是沿線相鄰的空點
   { board: position('a7 d6 b4 c3 f2 d1 e5', 'g7 f6 e4 g4 d3 b2'), selected: pt('d6'), targets: pts('d7 b6 d5'), removed: { black: 2, white: 3 } },
   // 飛子：白方只剩 3 顆，拿起來的那顆可以去任何空點
   { board: FLY, selected: pt('e4'), targets: FLY.flatMap((c, p) => (c ? [] : [p])), removed: { black: 3, white: 6 } },
   // 輸贏：黑方連成一線拿掉白方第 7 顆，白方只剩 2 顆
-  { board: position('c3 d3 e3 b6 f4', 'a1 g7'), mills: [pts('c3 d3 e3')], lastTo: pt('d3'), removed: { black: 4, white: 7 } },
+  { board: position('c3 d3 e3 b6 f4', 'a1 g7'), mills: [pts('c3 d3 e3')], removed: { black: 4, white: 7 } },
   // 節目規則：黑方從 f4 走上來連成一線，但白方的子全都在線上 —— 一顆都不搖，這次沒得拿
-  { board: position('b6 d6 f6 c4 e3', 'a1 d1 g1 g4 g7'), mills: [pts('b6 d6 f6')], lastTo: pt('f6'), lastFrom: pt('f4'), removed: { black: 4, white: 4 } },
+  { board: position('b6 d6 f6 c4 e3', 'a1 d1 g1 g4 g7'), mills: [pts('b6 d6 f6')], removed: { black: 4, white: 4 } },
 ];
 /** 節目規則那一步（最後一步）：對局開了節目規則時，彈窗裡這一步的字墊一塊深一階的羊皮紙 */
 const SHOW_STEP = STEPS.length - 1;
