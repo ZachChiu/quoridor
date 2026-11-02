@@ -3,7 +3,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { LuCircleHelp } from 'react-icons/lu';
-import PlatformCorner from '@/components/PlatformCorner';
+import GameHomeBar from '@/components/GameHomeBar';
 import { fill, useTextTable } from '@/i18n/gameText';
 import { localePath, type Locale } from '@/i18n/locales';
 import { BALANCE_MANCALA, trialOnline, trialRules } from '@/i18n/routes';
@@ -32,7 +32,7 @@ const KEY_ART = '/games/balance-mancala/key-art.webp';
  * 連線對戰選人數（4–7，全部是真人）、按「開房間」到 /balance-mancala/online#new=N 開房（不播轉場，這款裡面換頁直接換）。
  * 「怎麼玩」連到規則頁（/balance-mancala/rules，一步一張圖；2026-10-25 之前是開一個整面文字的彈窗），一樣不播轉場。
  * 選項照全站：選中的是墨、其餘是紙上一層淡墨，沒有框線；難度的點數用深金的小方塊（一個面板一個色相）。
- * 左上是平台 logo、右上是聯絡與語言（PlatformCorner，遊戲首頁才放），離邊多讓一個頁邊的寬度；
+ * 最上面一列是平台 logo、聯絡與語言（GameHomeBar，遊戲首頁才放），跟內容同寬、排在流裡（11/3 Zach：跟時間拍賣一樣、不要浮著）；
  * 那兩顆鈕與打開的彈窗用這款自己的樣子（MCL_CORNER：切角的淡墨片、亮羊皮紙面板、金箔）。
  */
 export default function MancalaSetup({ locale, initial, onStart }: { locale: Locale; initial: MatchSetup; onStart: (m: MatchSetup) => void }) {
@@ -69,8 +69,8 @@ export default function MancalaSetup({ locale, initial, onStart }: { locale: Loc
 
   return (
     <MancalaFrame className="items-center">
-      <PlatformCorner locale={locale} theme={MCL_CORNER} offset="calc(var(--mcl-frame, 28px) + 6px)" />
-      <div className="w-full max-w-[460px] px-5 pt-[60px]">
+      <div className="w-full max-w-[460px] px-5 pt-2.5">
+        <GameHomeBar locale={locale} theme={MCL_CORNER} className="mb-3" />
         <header className="flex flex-col items-center text-center">
           {/* 出處：1430 年代法蘭德斯的時禱書，克里夫蘭美術館（CC0）。畫面上不寫出處（Zach 10/24：插圖不要說明） */}
           <div className="flex w-full flex-col items-center gap-1">
