@@ -33,11 +33,18 @@ const zhTW = {
   },
   /** 平台首頁（`/`）：《魔鬼的計謀》節目遊戲總覽。平台名不在這裡，見 app/brand.ts */
   platform: {
-    metaTitle: '魔鬼的計謀 遊戲整理與線上玩',
-    metaDescription: 'Netflix 韓綜《魔鬼的計謀》每一季的遊戲整理：第 1 季、第 2 季《死亡密室》與即將上線的第 3 季。能玩的直接在瀏覽器開打，免下載、免註冊，目前可以玩牆壁圍棋 Wall Go。',
+    /**
+     * 搜尋結果的標題。10/25 起 Wall Go 擺最前面（搬家前九成的搜尋點擊落在 `/`）；11/1 大腦筋改成節目名在前、後段接「線上桌遊」
+     *（docs/platform-keywords.md：Wall Go 已經由 `/wall-go/` 排在前面，首頁改接大詞），牆壁圍棋仍留在標題裡
+     */
+    metaTitle: "魔鬼的計謀線上桌遊：牆壁圍棋、尼泊爾虎棋免費玩",
+    /** `{games}` 換成上線中能玩的遊戲（metadata.ts 的 platformDescription，Wall Go 一定第一個），每上一款自己補上 */
+    metaDescription: '免費線上桌遊，Netflix 韓綜《魔鬼的計謀》每一季的遊戲整理：第 1 季、第 2 季《死亡密室》與即將上線的第 3 季。能玩的直接在瀏覽器開打，免下載、免註冊，目前可以玩{games}。',
     ogTitle: '魔鬼的計謀 遊戲整理與線上玩',
     ogDescription: '節目裡的每一款遊戲，能玩的直接開打。免下載、免註冊。',
     heading: '《魔鬼的計謀》遊戲',
+    /** h1（sr-only）底下看得到的一句：線上桌遊這組詞（docs/platform-keywords.md，11/1 大腦筋） */
+    lead: "免下載、免註冊的線上桌遊，手機就能跟朋友對戰，也能跟 AI 下。",
     /** 分享圖上的大標，逐行指定 —— 自動斷行會把節目名從中間拆開。
      *  第二行要是一句話：原本只有「遊戲」兩個字自己一行，看起來像被擠下去的（10/25 Zach） */
     ogLines: ['《魔鬼的計謀》', '遊戲線上玩'],
@@ -51,11 +58,24 @@ const zhTW = {
     rules: '規則與玩法',
     s3: '第 3 季《Dead Again》',
     s3Badge: '11/10 上線',
-    s3Empty: '播出後每週更新這一季的遊戲',
+    s3Empty: '敬請期待',
     s2: '第 2 季《死亡密室》',
     s1: '第 1 季',
     playable: '可以玩',
     guide: '規則整理中',
+    /** 還沒做的遊戲卡上的「想玩」（按了公開加一票） */
+    want: '想玩',
+    /** 季目錄頁（`/season/1`…）。{n}、{season}、{names} 由程式代入 */
+    seeAll: '看全部',
+    allGames: '所有遊戲',
+    /** 季目錄頁上方切換各季的短名（完整季名只寫在大標題，10/25 Zach 從三種排法選了 A） */
+    seasonShort: '第 {n} 季',
+    seasonCount: '{n} 款遊戲',
+    seasonPlayable: '{n} 款可以玩',
+    seasonMetaTitle: '魔鬼的計謀 {season} 遊戲一覽',
+    seasonMetaDescription: 'Netflix 韓綜《魔鬼的計謀》{season}的全部 {n} 款遊戲：{names}。能玩的直接在瀏覽器開打，免下載、免註冊。',
+    seasonMetaDescriptionEmpty: 'Netflix 韓綜《魔鬼的計謀》{season}，11/10 上線。播出後每週更新這一季的遊戲。',
+    listSep: '、',
     disclaimer: '非官方粉絲作品，與 Netflix 及節目製作方無關。',
   },
   /** Bagh Chal。中文名照節目用「尼泊爾虎棋」（Zach 10/24：遊戲命名用 Netflix 版本，見 glossary）；「虎羊棋」留在說明與規則頁的名字由來 */
@@ -69,6 +89,15 @@ const zhTW = {
     /** 畫面上的名字：用讀者的文字寫一個就好（天城體字標是 logo、Bagh Chal 只留在網頁標題與名字由來，見 glossary） */
     name: '尼泊爾虎棋',
     tagline: '4 隻老虎對 20 隻羊',
+    /** 首頁棋盤下面的介紹（docs/platform-keywords.md）：是什麼、幾個技巧（規則頁步驟底下） */
+    aboutHeading: "尼泊爾虎棋是什麼",
+    aboutWhat: "尼泊爾虎棋（Bagh Chal，尼泊爾語「老虎走動」）是尼泊爾的傳統棋：5×5 的交叉點上，一方是 4 隻老虎，另一方是 20 隻羊。老虎一開始在四個角，可以沿線走一步，或跳過相鄰的羊把牠吃掉；羊一隻一隻放上棋盤，放完才能移動。",
+    aboutTipsTitle: "幾個小技巧",
+    aboutTips: [
+      "當羊：先佔邊和角。老虎要跳過羊，羊背後得有空位，靠邊的羊背後就是棋盤外，比較安全。",
+      "當羊：羊要一隻挨著一隻，別在羊背後留空位，老虎就跳不過來。",
+      "當老虎：四隻分散開來，別擠在一起堵死自己的路。",
+    ],
     local: '本機對戰',
     vsAi: '跟 AI 下',
     playAs: '你要當',
@@ -96,6 +125,8 @@ const zhTW = {
     winTigerBody: '老虎吃掉了 5 隻羊。',
     winGoatBody: '羊把老虎全部困住了。',
     drawBody: '走了太多步還分不出勝負。',
+    /** 連線對戰投降（2026-11-01） */
+    resignBody: '{side}投降了。',
     again: '再來一局',
     /** 結算後「給點意見」的範例句（Wall Go 那句講的是三人局，放在這裡不通） */
     feedbackPlaceholder: '例如：老虎明明能跳卻點不下去、電腦太強或太弱',
@@ -168,7 +199,7 @@ const zhTW = {
 
   ui: { next: '下一步', prev: '上一步', startGame: '開始遊戲', close: '關閉', pickLevel: '選擇難度' },
   error: { title: '出了點問題', body: '畫面執行時出錯了，重新整理通常就能恢復。連線對局的每一手都存在房間裡，重新整理後會接著下。', retry: '重新整理', home: '回首頁' },
-  notFound: { title: '找不到這一頁', body: '這個網址可能打錯了，或是那一局已經結束了。', home: '回首頁', rules: '看看怎麼玩' },
+  notFound: { title: '找不到這一頁', body: '這個網址可能打錯了，或是這一頁已經搬家了。', home: '回首頁', browse: '或是看看各季的遊戲' },
   crumb: { home: '首頁' },
   nav: { language: '語言', backHome: '回首頁' },
   credits: { prefix: '圖示來自', middle: '（CC BY 3.0）與', suffix: '（ISC）' },

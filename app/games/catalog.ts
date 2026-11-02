@@ -43,6 +43,12 @@ export type GameLook = {
    * 2026-10-22 Zach：「為啥每一個進場都跟 Wall Go 一樣」—— 有自己識別的遊戲，進場也要有自己的樣子。
    */
   entrance?: string;
+  /**
+   * 這款自己的字（2026-10-25 Zach：「各遊戲不是有自己的字體嗎」）：平台卡片與大卡片的名字底下多一行原名，用那款首頁標題的同一種字
+   *（components/platform/GameName.tsx）。mark 是字標（單色外框的 SVG，public/ 底下）與它的寬高比；font 是那款的字型 class。
+   * spellsName：那行就是英文官方名（name）—— 名字本身是英文時（英文版）不重複寫兩次，直接拿它當名字。
+   */
+  lettering?: ({ mark: string; ratio: number } | { font: string }) & { spellsName?: boolean };
 };
 
 export type CatalogGame = {
@@ -61,22 +67,26 @@ export type CatalogGame = {
 
 export type Season = {
   id: 's1' | 's2' | 's3';
+  /** 開播那一年（季目錄頁的副標） */
+  year: number;
   games: CatalogGame[];
 };
 
 export const SEASONS: Season[] = [
   // 第 3 季《Dead Again》2026-11-10 上線，遊戲播出後才知道
-  { id: 's3', games: [] },
+  { id: 's3', year: 2026, games: [] },
   {
     id: 's2',
+    year: 2025,
     games: [
       // since 是 v25.6.1（第一版）上線那天
       { name: 'Wall Go', names: { 'zh-TW': '牆壁圍棋', 'zh-Hans': '墙壁围棋', ja: '壁囲碁', ko: '벽바둑' }, playable: routes.WALL_GO, since: '2025-06-02',
         // 底色是 Wall Go 自己的頁面底色 #e8e1d7（10/25 Zach：為什麼要用藍底）；轉場也擴散這個顏色，跟虎羊棋擴散它的紙色一樣
         look: { card: 'bg-[#e8e1d7] text-tile-ink', wipe: '#e8e1d7', art: '/games/wall-go/card.svg', hero: '/games/wall-go/hero.svg', heroSquare: '/games/wall-go/hero-square.svg', cover: true, rules: routes.wallGo('/rules') } },
       // 中文用節目的「尼泊爾虎棋」（Zach 10/24：命名用 Netflix 版本）、韓文「바그찰」是節目 RULE 卡上的寫法（見 glossary）
-      { name: 'Bagh Chal', names: { 'zh-TW': '尼泊爾虎棋', 'zh-Hans': '尼泊尔虎棋', ko: '바그찰' }, playable: routes.BAGH_CHAL,
-        look: { card: 'bg-[#e3a43c] text-tile-ink', wipe: '#f1e6cd', art: '/games/bagh-chal/key-art.webp', hero: '/games/bagh-chal/hero.webp', heroSquare: '/games/bagh-chal/hero-square.webp', cover: true, doors: true, rules: routes.baghChal('/rules') } },
+      { name: 'Bagh Chal', names: { 'zh-TW': '尼泊爾虎棋', 'zh-Hans': '尼泊尔虎棋', ko: '바그찰' }, playable: routes.BAGH_CHAL, since: '2026-11-01',
+        look: { card: 'bg-[#e3a43c] text-tile-ink', wipe: '#f1e6cd', art: '/games/bagh-chal/key-art.webp', hero: '/games/bagh-chal/hero.webp', heroSquare: '/games/bagh-chal/hero-square.webp', cover: true, doors: true, rules: routes.baghChal('/rules'),
+          lettering: { mark: '/games/bagh-chal/wordmark.svg', ratio: 3140 / 679 } } },
       { name: 'Crooked Cops', names: { 'zh-TW': '腐敗警察', 'zh-Hans': '腐败警察' } },
       { name: 'Remove One', names: { 'zh-TW': '移除一個', 'zh-Hans': '移除一个' } },
       { name: 'Unknown', names: { 'zh-TW': '未知', 'zh-Hans': '未知' } },
@@ -91,11 +101,15 @@ export const SEASONS: Season[] = [
       { name: 'Equation Pyramid', names: { 'zh-TW': '方程式金字塔', 'zh-Hans': '方程式金字塔' } },
       { name: 'Big Small', names: { 'zh-TW': '大或小', 'zh-Hans': '大或小' } },
       { name: 'Question and Truth', names: { 'zh-TW': '提問與真相', 'zh-Hans': '提问与真相' } },
-      { name: "Knight's Tour", names: { 'zh-TW': '騎士巡遊', 'zh-Hans': '骑士巡游' } },
+      { name: "Knight's Tour", names: { 'zh-TW': '騎士巡遊', 'zh-Hans': '骑士巡游' }, playable: routes.KNIGHTS_TOUR,
+        // 小卡片是 plate.webp 左邊的空白處加上對局那隻騎士（10/25 Zach：「視覺圖偏空泛」）；大卡片照舊 plate.webp —— 桌機字壓在左邊，騎士會在字底下
+        look: { card: 'bg-[#edddc7] text-[#322e2a]', wipe: '#edddc7', art: '/games/knights-tour/card.webp', hero: '/games/knights-tour/hero-wide.webp', heroSquare: '/games/knights-tour/hero-square.webp', cover: true, entrance: 'knights-tour', rules: routes.trialRules(routes.KNIGHTS_TOUR),
+          lettering: { font: 'kt-serif font-normal italic', spellsName: true } } },
     ],
   },
   {
     id: 's1',
+    year: 2023,
     games: [
       { name: 'Virus Game', names: { 'zh-TW': '病毒遊戲', 'zh-Hans': '病毒游戏' } },
       { name: 'Rules Race', names: { 'zh-TW': '規則競賽', 'zh-Hans': '规则竞赛' } },
@@ -109,9 +123,12 @@ export const SEASONS: Season[] = [
       { name: 'Scale Game', names: { 'zh-TW': '托盤天平', 'zh-Hans': '托盘天平' } },
       { name: 'Montage', names: { 'zh-TW': '蒙太奇', 'zh-Hans': '蒙太奇' } },
       { name: 'Four Player Three in a Row', names: { 'zh-TW': '四人三子棋', 'zh-Hans': '四人三子棋' } },
-      { name: 'Blind Gomoku', names: { 'zh-TW': '盲五子棋', 'zh-Hans': '盲五子棋' } },
+      { name: 'Blind Gomoku', names: { 'zh-TW': '盲五子棋', 'zh-Hans': '盲五子棋' }, playable: routes.BLIND_GOMOKU,
+        look: { card: 'bg-[#046161] text-[#f2e4c9]', wipe: '#046161', art: '/games/blind-gomoku/pojagi.webp', cover: true, entrance: 'blind-gomoku', rules: routes.trialRules(routes.BLIND_GOMOKU) } },
       // （盲眼五子棋與九子棋各自的分支會改上下這兩行，中間隔這一行，依序合併才不會衝突）
-      { name: "Nine Men's Morris", names: { 'zh-TW': '九子棋', 'zh-Hans': '九子棋' } },
+      { name: "Nine Men's Morris", names: { 'zh-TW': '九子棋', 'zh-Hans': '九子棋' }, playable: routes.NINE_MENS_MORRIS,
+        look: { card: 'bg-[#4b4577] text-[#eee0c4]', wipe: '#4b4577', art: '/games/nine-mens-morris/libro.webp', cover: true, entrance: 'nine-mens-morris', rules: routes.trialRules(routes.NINE_MENS_MORRIS),
+          lettering: { mark: '/games/nine-mens-morris/wordmark.svg', ratio: 7473 / 757, spellsName: true } } },
       { name: 'Hexagon', names: { 'zh-TW': '六角數字盤', 'zh-Hans': '六角数字盘' } },
     ],
   },
@@ -168,8 +185,25 @@ export const PLAYABLE: CatalogGame[] = SEASONS.flatMap((s) => s.games).filter((g
  */
 export const NEWEST: CatalogGame | undefined = [...PLAYABLE].sort((a, b) => (b.since ?? '9999').localeCompare(a.since ?? '9999'))[0];
 
+/**
+ * 大卡片**現在**預設放的那一款：Wall Go（10/25 Zach 照大腦的建議）。平台上線後 `/` 從 Wall Go 首頁換成平台首頁，
+ * 搬家前九成的搜尋點擊落在 `/`、找的是 Wall Go —— Google 認得 `/wall-go/` 之前，第一眼要先看到它。
+ * 什麼時候換回 NEWEST（放最新上線的），等上線 4 週大腦驗收 `/wall-go/` 接住多少搜尋再定。使用者點過哪一款照舊換成那一款。
+ */
+export const HERO_DEFAULT: CatalogGame | undefined = PLAYABLE.find((g) => g.playable === routes.WALL_GO) ?? NEWEST;
+
 /** 一季裡能玩的排前面，其他照節目播出順序 */
+/** 能玩的遊戲（站內路徑）→ 第幾季。GA 的 select_game 要帶 season（SelectGameTracker） */
+export const SEASON_OF: Record<string, 1 | 2 | 3> = Object.fromEntries(
+  SEASONS.flatMap((s) => s.games.flatMap((g) => (g.playable ? [[g.playable, Number(s.id.slice(1)) as 1 | 2 | 3]] : []))),
+);
+
 export function playableFirst(games: CatalogGame[]): CatalogGame[] {
   return [...games].sort((a, b) => Number(!!b.playable) - Number(!!a.playable));
 }
 
+
+/** 季目錄頁用：'2' → 第 2 季 */
+export function seasonById(n: '1' | '2' | '3'): Season {
+  return SEASONS.find((s) => s.id === `s${n}`)!;
+}

@@ -11,6 +11,7 @@ import BaghFrame from './BaghFrame';
 import { BaghDifficulty } from './BaghUi';
 import BaghWordmark from './BaghWordmark';
 import { BAGH_SELECTED } from './styles';
+import { track } from '@/utils/analytics';
 
 /**
  * /bagh-chal/solo：跟電腦下。
@@ -64,6 +65,7 @@ export default function BaghSolo({ locale }: { locale: Locale }) {
         <div className="flex flex-col gap-2">
           <p className="text-sm font-bold text-ink-soft">{b.level}</p>
           <BaghDifficulty side={side} onPick={(difficulty) => {
+            track('mode_select', { game: 'bagh-chal', mode: 'solo', players: 2, difficulty, entry: 'solo_page' });
             history.replaceState(null, '', location.pathname + soloHash(side, difficulty));
             setMode({ side, difficulty });
           }} />

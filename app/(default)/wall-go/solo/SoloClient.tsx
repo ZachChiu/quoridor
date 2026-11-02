@@ -73,7 +73,7 @@ export default function SoloClient() {
           setPicked(true);
           // 在這裡選的也要進網址，之後重整才回得來
           history.replaceState(null, '', location.pathname + gameHash({ aiDifficulty: key }));
-          track('mode_select', { mode: 'solo', players: 2, difficulty: key, entry: 'solo_page' });
+          track('mode_select', { game: 'wall-go', mode: 'solo', players: 2, difficulty: key, entry: 'solo_page' });
         }}
       />
     </div>

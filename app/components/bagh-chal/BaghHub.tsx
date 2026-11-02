@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import { useLatched } from '@/hook/useLatched';
 import Modal from '@/components/Modal';
 import { useRouter } from 'next/navigation';
 import { useMessages, useLocale } from '@/i18n/LocaleProvider';
@@ -10,6 +11,7 @@ import type { Difficulty } from '@/games/bagh-chal/ai';
 import { soloHash } from './soloHash';
 import { GOAT_SRC, GoatToken, INVITE_SRC, InviteToken, LOCAL_SRC, TIGER_SRC, TigerToken } from './tokens';
 import { BaghDifficulty, labelled } from './BaghUi';
+import { track } from '@/utils/analytics';
 
 /** 一般點擊交給呼叫端（走轉場）；修飾鍵與中鍵放行給瀏覽器，「在新分頁開啟」才不會壞 */
 const intercept = (fn: () => void) => (e: React.MouseEvent<HTMLAnchorElement>) => {
@@ -51,11 +53,14 @@ export default function BaghHub() {
   const locale = useLocale();
   const router = useRouter();
   const [side, setSide] = useState<Side | null>(null);
+  // 彈窗淡出時內容照最後選的那邊畫，不退回老虎
+  const shown = useLatched(side);
   const [inviteOpen, setInviteOpen] = useState(false);
   const go = (path: string) => router.push(localePath(locale, path));
 
   const startSolo = (difficulty: Difficulty) => {
     if (!side) return;
+    track('mode_select', { game: 'bagh-chal', mode: 'solo', players: 2, difficulty, entry: 'home' });
     setSide(null);
     router.push(localePath(locale, baghChal('/solo')) + soloHash(side, difficulty));
   };
@@ -65,7 +70,7 @@ export default function BaghHub() {
       <div className="grid w-full grid-cols-2 gap-2.5">
         <Choice src={TIGER_SRC} label={b.tiger} sub={b.vsAi} onClick={() => setSide('tiger')} />
         <Choice src={GOAT_SRC} label={b.goat} sub={b.vsAi} onClick={() => setSide('goat')} />
-        <Choice src={LOCAL_SRC} label={b.local} sub={b.localSub} href={localePath(locale, baghChal('/local'))} onClick={() => go(baghChal('/local'))} />
+        <Choice src={LOCAL_SRC} label={b.local} sub={b.localSub} href={localePath(locale, baghChal('/local'))} onClick={() => { track('mode_select', { game: 'bagh-chal', mode: 'local', players: 2, entry: 'home' }); go(baghChal('/local')); }} />
         <Choice src={INVITE_SRC} label={b.onlineTitle} sub={b.inviteSub} onClick={() => setInviteOpen(true)} />
       </div>
 
@@ -75,10 +80,10 @@ export default function BaghHub() {
       </a>
 
       <Modal skin="bagh" isOpen={!!side} onClose={() => setSide(null)} title={t.ui.pickLevel}
-        kicker={labelled(locale, b.playAs, side === 'goat' ? b.goat : b.tiger)}
-        icon={side === 'goat' ? GoatToken : TigerToken}
-        band={side === 'goat' ? { className: 'bg-[#5b6620]', fg: 'text-tile-cream' } : { className: 'bg-[#e3a43c]', fg: 'text-tile-ink' }}>
-        <BaghDifficulty side={side ?? 'tiger'} onPick={startSolo} />
+        kicker={labelled(locale, b.playAs, shown === 'goat' ? b.goat : b.tiger)}
+        icon={shown === 'goat' ? GoatToken : TigerToken}
+        band={shown === 'goat' ? { className: 'bg-[#5b6620]', fg: 'text-tile-cream' } : { className: 'bg-[#e3a43c]', fg: 'text-tile-ink' }}>
+        <BaghDifficulty side={shown ?? 'tiger'} onPick={startSolo} />
       </Modal>
 
       <Modal skin="bagh" isOpen={inviteOpen} onClose={() => setInviteOpen(false)} title={b.pickSide} kicker={b.onlineTitle}
@@ -88,7 +93,7 @@ export default function BaghHub() {
             const Icon = s === 'tiger' ? TigerToken : GoatToken;
             return (
               <button key={s} type="button"
-                onClick={() => { setInviteOpen(false); router.push(localePath(locale, baghChal('/online')) + `#new=${s}`); }}
+                onClick={() => { setInviteOpen(false); track('mode_select', { game: 'bagh-chal', mode: 'online', players: 2, entry: 'home' }); router.push(localePath(locale, baghChal('/online')) + `#new=${s}`); }}
                 className="bagh-line flex flex-col items-center gap-2 bg-[#f2e4c4] py-5 text-xl font-black text-tile-ink transition hover:bg-[#ead8ad] active:scale-[0.97]">
                 <Icon className="text-6xl" />{s === 'tiger' ? b.tiger : b.goat}
               </button>

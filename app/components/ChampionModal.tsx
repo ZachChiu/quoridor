@@ -29,9 +29,9 @@ interface ChampionModalProps {
   寬度扣掉那一欄＋間距＋左右各 1rem ＝ 16.25rem。
 */
 const SIZE: Record<CardLayout, string> = {
-  story: 'h-[min(calc(100dvh_-_11.5rem),calc((100vw_-_2rem)*16/9),720px)] short:h-[calc(100dvh_-_2rem)]',
-  poster: 'h-[min(calc(100dvh_-_11.5rem),calc((100vw_-_2rem)*5/4),640px)] short:h-[min(calc(100dvh_-_2rem),calc((100vw_-_16.25rem)*5/4))]',
-  square: 'h-[min(calc(100dvh_-_11.5rem),calc(100vw_-_2rem),560px)] short:h-[min(calc(100dvh_-_2rem),calc(100vw_-_16.25rem))]',
+  story: 'h-[min(calc(100svh_-_11.5rem),calc((100vw_-_2rem)*16/9),720px)] short:h-[calc(100svh_-_2rem)]',
+  poster: 'h-[min(calc(100svh_-_11.5rem),calc((100vw_-_2rem)*5/4),640px)] short:h-[min(calc(100svh_-_2rem),calc((100vw_-_16.25rem)*5/4))]',
+  square: 'h-[min(calc(100svh_-_11.5rem),calc(100vw_-_2rem),560px)] short:h-[min(calc(100svh_-_2rem),calc(100vw_-_16.25rem))]',
 };
 
 /** 按鈕的尺寸跟一般 Modal 的底部按鈕列一樣（Button 預設是給頁面上單獨一顆的大 CTA） */

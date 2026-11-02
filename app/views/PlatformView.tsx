@@ -1,17 +1,20 @@
 import Link from 'next/link';
 import { GiHourglass } from 'react-icons/gi';
-import { LuInfo, LuPlay } from 'react-icons/lu';
+import { LuChevronRight, LuInfo, LuPlay } from 'react-icons/lu';
 import WipeLink from '@/components/WipeLink';
 import PlatformLanguageMenu from '@/components/platform/PlatformLanguageMenu';
 import PlatformContact from '@/components/platform/PlatformContact';
 import HeroPicker from '@/components/platform/HeroPicker';
 import CardRow from '@/components/platform/CardRow';
+import GameCard from '@/components/platform/GameCard';
+import SelectGameTracker from '@/components/platform/SelectGameTracker';
+import GameName from '@/components/platform/GameName';
 import { brandName } from '@/brand';
 import PlatformMark from '@/components/PlatformMark';
-import { NEWEST, PLAYABLE, SEASONS, gameName, playableFirst, type CatalogGame } from '@/games/catalog';
+import { HERO_DEFAULT, PLAYABLE, SEASONS, SEASON_OF, playableFirst, type CatalogGame } from '@/games/catalog';
 import { getMessages } from '@/i18n';
 import { localePath, type Locale } from '@/i18n/locales';
-import { BAGH_CHAL, WALL_GO } from '@/i18n/routes';
+import { BAGH_CHAL, WALL_GO, season as seasonPath, type SeasonNumber } from '@/i18n/routes';
 import { BLURBS } from '@/games/blurbs';
 import { pageGraph, ldScript } from '@/i18n/jsonld';
 
@@ -46,35 +49,43 @@ export default function PlatformView({ locale }: { locale: Locale }) {
 
       <main className="mx-auto flex max-w-[1360px] flex-col gap-9 px-4 pb-14">
         <h1 className="sr-only">{p.heading}</h1>
+        {/* 看得到的一句介紹，小字、不搶推薦作品（docs/platform-keywords.md）。gap-9 太開，往下吃掉一截 */}
+        <p className="-mb-5 text-sm font-bold text-plat-muted">{p.lead}</p>
 
-        {/* 推薦作品：預設是最新上線的那一款，使用者點過哪一款就換成那一款（10/24 Zach）。
+        {/* 推薦作品：預設是 HERO_DEFAULT（現在是 Wall Go，見 catalog；原本是最新上線的那款），使用者點過哪一款就換成那一款（10/24 Zach）。
             每一款能玩的都有一張在 HTML 裡，外層的 data-hero-pick 決定露出哪張；換的那段在 HeroPicker。
             suppressHydrationWarning：data-hero-pick 會在 hydrate 之前被內嵌 script 換掉 */}
-        <div data-hero-pick={NEWEST?.playable} suppressHydrationWarning>
+        <div data-hero-pick={HERO_DEFAULT?.playable} data-select-location="home_hero" suppressHydrationWarning>
           <style dangerouslySetInnerHTML={{ __html: PLAYABLE.map((g) => `[data-hero-pick="${g.playable}"]>[data-slide]:not([data-slide="${g.playable}"]){display:none}`).join('') }} />
           {PLAYABLE.map((game) => <GameHero key={game.name} game={game} locale={locale} />)}
           <HeroPicker />
         </div>
 
         {/* 現在就能玩：已經做成線上版的遊戲集中一排（各季那幾排裡也有，Netflix 的排與排本來就會重複） */}
-        <section id="play-now" className="flex flex-col gap-3">
+        <section id="play-now" data-select-location="home_grid" className="flex flex-col gap-3">
           <h2 className="text-[21px] font-black">{p.heroBadge}</h2>
           <CardRow>
             {PLAYABLE.map((game) => (
               <li key={game.name} className="shrink-0">
-                <GameCard game={game} locale={locale} playable={p.playable} guide={p.guide} />
+                <GameCard game={game} locale={locale} playable={p.playable} guide={p.guide} want={p.want} />
               </li>
             ))}
           </CardRow>
         </section>
 
         {SEASONS.map((season) => (
-          <section key={season.id} id={`season-${season.id.slice(1)}`} className="flex flex-col gap-3">
+          <section key={season.id} id={`season-${season.id.slice(1)}`} data-select-location="home_grid" className="flex flex-col gap-3">
+            {/* 標題連到這一季的目錄頁（10/25 Zach：每一季一個目錄頁）。「看全部」一直看得到 —— 手機沒有 hover */}
             <h2 className="flex flex-wrap items-center gap-2.5 text-[21px] font-black">
-              {seasonTitle[season.id]}
-              {season.id === 's3' && (
-                <span className="rounded-md bg-brand-red px-2.5 py-0.5 text-[13px] font-black text-white">{p.s3Badge}</span>
-              )}
+              <Link href={localePath(locale, seasonPath(season.id.slice(1) as SeasonNumber))} className="group flex flex-wrap items-center gap-x-2.5 gap-y-1">
+                {seasonTitle[season.id]}
+                {season.id === 's3' && (
+                  <span className="rounded-md bg-brand-red px-2.5 py-0.5 text-[13px] font-black text-white">{p.s3Badge}</span>
+                )}
+                <span className="flex items-center text-[14px] font-bold text-plat-muted transition fine:group-hover:text-tile-cream">
+                  {p.seeAll}<LuChevronRight aria-hidden="true" className="text-[18px] transition fine:group-hover:translate-x-0.5" />
+                </span>
+              </Link>
             </h2>
             {season.games.length === 0 ? (
               <div className="flex items-center gap-3 rounded-xl bg-plat-surface px-5 py-6 text-[15px] font-bold text-plat-muted">
@@ -85,7 +96,7 @@ export default function PlatformView({ locale }: { locale: Locale }) {
               <CardRow>
                 {playableFirst(season.games).map((game) => (
                   <li key={game.name} className="shrink-0">
-                    <GameCard game={game} locale={locale} playable={p.playable} guide={p.guide} />
+                    <GameCard game={game} locale={locale} playable={p.playable} guide={p.guide} want={p.want} />
                   </li>
                 ))}
               </CardRow>
@@ -100,6 +111,8 @@ export default function PlatformView({ locale }: { locale: Locale }) {
       </main>
 
       <script {...ldScript(pageGraph(locale, 'platform'))} />
+      {/* 點了哪一區的哪張卡（GA 的 select_game）：上面幾區的 data-select-location */}
+      <SelectGameTracker seasons={SEASON_OF} />
     </div>
   );
 }
@@ -122,7 +135,7 @@ function GameHero({ game, locale }: { game: CatalogGame; locale: Locale }) {
   const blurb = BLURBS[game.playable!]?.[locale];
   const copy = wallGoGame ? [p.heroMeta, p.heroBody] : game.playable === BAGH_CHAL ? [p.baghHeroMeta, p.baghHeroBody] : blurb ? [blurb.meta, blurb.body] : null;
   // Wall Go 的標題照舊是首頁那兩行（中文名＋Wall Go）；規則頁頂部是森綠，進規則頁就擴散森綠
-  const title = wallGoGame ? <>{t.home.titleLine1}{t.home.titleLine2 && <><br />{t.home.titleLine2}</>}</> : gameName(game, locale);
+  const title = wallGoGame ? <>{t.home.titleLine1}{t.home.titleLine2 && <><br />{t.home.titleLine2}</>}</> : <GameName game={game} locale={locale} sub={{ mark: 0.42, font: 'text-[0.5em]' }} swap={0.9} />;
   const rulesWipe = wallGoGame ? RULES_GREEN : look.wipe;
   return (
     <section data-slide={game.playable} className={`${HERO} flex-col bg-black md:flex-row md:items-end`}>
@@ -160,48 +173,5 @@ function GameHero({ game, locale }: { game: CatalogGame; locale: Locale }) {
   );
 }
 
-const CARD = 'relative block aspect-video w-[240px] overflow-hidden rounded-xl';
-
 /** 進規則頁的轉場顏色：規則頁頂部與 Wall Go 首頁「遊戲規則」磁磚的森綠 */
 const RULES_GREEN = 'rgb(var(--tile-forest))';
-
-function GameCard({ game, locale, playable, guide }: {
-  game: CatalogGame; locale: Locale; playable: string; guide: string;
-}) {
-  const name = gameName(game, locale);
-
-  if (game.playable && game.look) {
-    // 能玩的遊戲用自己的識別（主色＋主視覺），點進去擴散自己的顏色
-    const { card, wipe, art, cover, doors, entrance } = game.look;
-    return (
-      <WipeLink href={localePath(locale, game.playable)} color={wipe} doors={doors} entrance={entrance} data-game={game.playable} aria-label={name} className={`${CARD} ${card}`}>
-        {cover ? (
-          <>
-            {/* 橫幅主視覺鋪滿；名字壓在底部的黑色漸層上 */}
-            {/* eslint-disable-next-line @next/next/no-img-element -- 同上 */}
-            <img src={art} alt="" loading="lazy" className="pointer-events-none absolute inset-0 size-full object-cover" />
-            <span aria-hidden="true" className="absolute inset-x-0 bottom-0 h-3/5 bg-gradient-to-t from-black/80 to-transparent" />
-            <span className="absolute inset-x-3 bottom-2.5 text-[22px] font-black leading-none text-white">{name}</span>
-          </>
-        ) : (
-          <>
-            {/* eslint-disable-next-line @next/next/no-img-element -- 同上 */}
-            <img src={art} alt="" className="pointer-events-none absolute right-[-70px] top-[-50px] w-[230px] rotate-[-14deg]" />
-            {/* 名字壓在主視覺上會看不清楚，墊一塊卡片同色的底 */}
-            <span className={`absolute bottom-2 left-2 rounded-md px-1.5 py-1 text-[22px] font-black leading-none ${card}`}>{name}</span>
-          </>
-        )}
-        <span className="absolute left-3 top-3 rounded-md bg-brand-red px-2 py-0.5 text-xs font-black text-white">▶ {playable}</span>
-      </WipeLink>
-    );
-  }
-
-  return (
-    <div className={`${CARD} flex flex-col justify-end bg-plat-surface p-3.5`}>
-      {/* 角落是平台的骰子惡魔（Zach 10/24：規則整理中的空白卡要換上骰子惡魔）：卡片同色系的淡剪影、點數挖空，跟左上的 logo 同一個形 */}
-      <span aria-hidden="true" className="plat-soon-mark absolute -right-4 -top-1 size-[124px] rotate-12 bg-plat-raised" />
-      <span className="relative text-base font-black leading-tight">{name}</span>
-      <span className="relative text-xs font-bold text-plat-muted">{guide}</span>
-    </div>
-  );
-}

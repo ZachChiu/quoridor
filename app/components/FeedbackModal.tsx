@@ -1,10 +1,9 @@
 'use client';
 import React, { useState } from 'react';
-import { GiChatBubble } from 'react-icons/gi';
+import { LuMessageCircle } from 'react-icons/lu';
 import Modal from './Modal';
-import { InviteToken } from './bagh-chal/tokens';
 import Button from './Button';
-import { track } from '@/utils/analytics';
+import { track, type GameSlug } from '@/utils/analytics';
 import { useGameText, useMessages } from '@/i18n/LocaleProvider';
 import { DEFAULT_CORNER, type CornerTheme } from './cornerTheme';
 
@@ -30,6 +29,8 @@ type Props = {
   theme?: CornerTheme;
   /** 留言框的範例句。預設是 Wall Go 的（講三人局），其他遊戲的對局回饋要換成自己的 */
   placeholder?: string;
+  /** 哪一款遊戲的回饋（GA 的 game 參數）。Wall Go 首頁的聯絡我們也算 Wall Go */
+  game: GameSlug;
 };
 
 /*
@@ -42,7 +43,7 @@ const FACES: { value: 1 | 2 | 3; emoji: string }[] = [
   { value: 3, emoji: '🤩' },
 ];
 
-const FeedbackModal: React.FC<Props> = ({ isOpen, onClose, onSubmit, variant = 'game', theme, placeholder }) => {
+const FeedbackModal: React.FC<Props> = ({ isOpen, onClose, onSubmit, variant = 'game', theme, placeholder, game }) => {
   const g = useGameText();
   const t = useMessages();
   const closeLabel = t.ui.close;
@@ -60,9 +61,8 @@ const FeedbackModal: React.FC<Props> = ({ isOpen, onClose, onSubmit, variant = '
   }
 
   const isContact = variant === 'contact';
-  // 各遊戲打開的是那款自己的樣子（Zach 10/24）；虎羊棋的圖示是蠟封信圓牌
+  // 各遊戲打開的是那款自己的樣子（Zach 10/24）；左上的圖示每款都跟外面「聯絡我們」的圓鈕一樣（11/1，虎羊棋原本是蠟封信圓牌）
   const th = theme ?? DEFAULT_CORNER;
-  const bagh = th.skin === 'bagh';
   const soft = th.soft ?? 'text-ink-soft';
   // 對局回饋要選評分；聯絡我們評分選填，但至少要寫點什麼
   const canSend = isContact ? message.trim().length > 0 : rating !== null;
@@ -75,7 +75,7 @@ const FeedbackModal: React.FC<Props> = ({ isOpen, onClose, onSubmit, variant = '
   const submit = async () => {
     if (!canSend || state === 'sending') return;
     setState('sending');
-    track('feedback_send', { entry: isContact ? 'contact' : 'game', rating: rating ?? undefined });
+    track('feedback_send', { game, entry: isContact ? 'contact' : 'game', rating: rating ?? undefined });
     try {
       await onSubmit(rating, message.trim(), contact.trim());
       setState('sent');
@@ -94,7 +94,8 @@ const FeedbackModal: React.FC<Props> = ({ isOpen, onClose, onSubmit, variant = '
       onClose={onClose}
       title={state === 'sent' ? g.feedback.sent : copy.heading}
       kicker={copy.kicker}
-      icon={bagh ? InviteToken : GiChatBubble}
+      // 跟外面「聯絡我們」那顆圓鈕同一個圖示（11/1 Zach：彈窗左上的實心對話框跟按鈕不一樣）
+      icon={LuMessageCircle}
       band={th.band}
       footer={
         state === 'sent' ? (

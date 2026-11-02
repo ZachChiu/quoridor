@@ -25,7 +25,10 @@ export async function openChrome() {
   const port = 9400 + Math.floor(Math.random() * 400);
   const proc = spawn(CHROME, [
     `--remote-debugging-port=${port}`, `--user-data-dir=${dir}`, '--headless=new',
-    '--no-first-run', '--no-default-browser-check', '--disable-extensions', 'about:blank',
+    '--no-first-run', '--no-default-browser-check', '--disable-extensions',
+    // 雲端容器是 root，Chrome 在 root 底下不開沙箱就不肯啟動
+    ...(process.getuid?.() === 0 ? ['--no-sandbox'] : []),
+    'about:blank',
   ], { stdio: 'ignore' });
   let ver;
   for (let i = 0; i < 60 && !ver; i++) {
@@ -93,6 +96,20 @@ export async function openChrome() {
         clip: { x, y, width, height, scale: 2 },
       });
       return { src: `data:image/png;base64,${shot.data}`, width: Math.ceil(width), height: Math.ceil(height), pad };
+    },
+    /** 一張 SVG → 去背 PNG（width×height 像素，SVG 自己撐滿）。九子棋的棋盤與棋子紋理用（build-nmm-art.mjs） */
+    async renderSvg({ svg, width, height }) {
+      const html = `<!doctype html><html><head><style>html,body{margin:0;background:transparent}svg{display:block}</style></head><body>${svg}</body></html>`;
+      await s('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: 1, mobile: false });
+      await s('Page.navigate', { url: 'data:text/html;base64,' + Buffer.from(html).toString('base64') });
+      for (let i = 0; i < 50; i++) {
+        const ready = await s('Runtime.evaluate', { expression: `document.readyState === 'complete' && !!document.querySelector('svg')`, returnByValue: true });
+        if (ready.result.value) break;
+        await sleep(50);
+      }
+      await sleep(200);
+      const shot = await s('Page.captureScreenshot', { format: 'png', clip: { x: 0, y: 0, width, height, scale: 1 } });
+      return Buffer.from(shot.data, 'base64');
     },
     async close() {
       try { await send('Browser.close'); } catch { /* 已經關了 */ }

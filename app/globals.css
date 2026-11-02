@@ -48,22 +48,24 @@
   font-display: swap;
 }
 
-/* 依 <html lang> 換字型（lang 由 Shell 依語系給，見 i18n/locales 的 HTML_LANG）。 */
+/* 依 <html lang> 換字型（lang 由 Shell 依語系給，見 i18n/locales 的 HTML_LANG）。
+   --font-site 是全站這一套；畫面實際用的是 --font-app，預設就是 --font-site ——
+   有自己字的遊戲在自己的頁面上把 --font-app 換掉、--font-site 留著當備援（scripts/build-game-fonts.mjs）。 */
 :root:lang(zh-Hans) {
-  --font-app: 'Noto Sans SC Subset', system-ui, -apple-system, 'PingFang SC',
+  --font-site: 'Noto Sans SC Subset', system-ui, -apple-system, 'PingFang SC',
     'Microsoft YaHei', sans-serif;
 }
 /* 泰文字型裡沒有的符號（✓ · …）與英數，由繁中子集補上 */
 :root:lang(th) {
-  --font-app: 'Noto Sans Thai Subset', 'Noto Sans TC Subset', system-ui, -apple-system,
+  --font-site: 'Noto Sans Thai Subset', 'Noto Sans TC Subset', system-ui, -apple-system,
     'Thonburi', 'Leelawadee UI', sans-serif;
 }
 :root:lang(ja) {
-  --font-app: system-ui, -apple-system, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN',
+  --font-site: system-ui, -apple-system, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN',
     'Noto Sans JP', 'Yu Gothic', 'Meiryo', sans-serif;
 }
 :root:lang(ko) {
-  --font-app: system-ui, -apple-system, 'Apple SD Gothic Neo', 'Noto Sans KR',
+  --font-site: system-ui, -apple-system, 'Apple SD Gothic Neo', 'Noto Sans KR',
     'Malgun Gothic', sans-serif;
 }
 
@@ -71,8 +73,9 @@
 :root {
   /* 色票取自參考稿的實際取樣值：厚描邊 + 飽和色塊 + 奶油底的平面風格。
      所有顏色都走 CSS 變數，換色只需要改這一段。 */
-  --font-app: 'Noto Sans TC Subset', system-ui, -apple-system, 'PingFang TC',
+  --font-site: 'Noto Sans TC Subset', system-ui, -apple-system, 'PingFang TC',
     'Microsoft JhengHei', sans-serif;
+  --font-app: var(--font-site);
 
   --background: #e8e1d7;
   --foreground: #1a1613;
@@ -421,6 +424,10 @@ body {
 
    換頁轉場（WipeOverlay）也掛這個 class，但它是 absolute（見元件註解），
    位置與高度由元件自己用 JS 量了覆寫 —— absolute 往外多蓋會把頁面撐長。 */
+/* 對話框遮罩（Modal、PlatformDialog）：打開時淡入。關閉時直接 display:none，不淡出 */
+.dialog-backdrop { transition: opacity 300ms; }
+@starting-style { .dialog-backdrop { opacity: 0; } }
+
 .cover-viewport {
   --overscan: max(25vh, 12rem);
   position: fixed;
@@ -474,11 +481,19 @@ body {
    那時改扣 12rem，並且版面轉成左右並排（標題在左、磁磚在右），
    把橫式多出來的寬度用掉。
 
-   限定 max-height: 600px 才套，桌機（同樣是 landscape）不受影響。 */
-.home-grid { max-width: min(380px, calc(100dvh - 22rem)); }
+   限定 max-height: 600px 才套，桌機（同樣是 landscape）不受影響。
+
+   直式另有下限 18rem：矮手機上不再為了塞進一個畫面把磁磚縮小，放不下就往下捲（2026-10-25 Zach）。
+
+   高度一律用 svh（工具列展開時的高度，不會變）不用 dvh：手機往下捲、工具列收起來時 dvh 會變大，
+   磁磚跟著脹大縮小（2026-10-25 Zach 回報）。 */
+.home-grid { max-width: min(380px, calc(100svh - 22rem)); }
+@media (orientation: portrait) {
+  .home-grid { max-width: min(380px, max(18rem, calc(100svh - 22rem))); }
+}
 
 @media (orientation: landscape) and (max-height: 600px) {
-  .home-grid { max-width: min(320px, calc(100dvh - 12rem)); }
+  .home-grid { max-width: min(320px, calc(100svh - 12rem)); }
   .home-main {
     flex-direction: row;
     align-items: center;
@@ -508,7 +523,8 @@ body {
 html:has(.platform-root), body:has(.platform-root) { background: rgb(var(--plat-bg)); }
 /* 虎羊棋的整頁畫框是番紅花底（BaghFrame），同一個理由 */
 html:has(.bagh-root), body:has(.bagh-root) { background: #e3a43c; }
-/* 虎羊棋的背景：米提拉圖騰滿版鋪（BaghFrame）。
+/* 虎羊棋的背景：米提拉圖騰滿版鋪，鋪在頁面本身（BaghFrame 的根節點），跟著頁面捲 ——
+   iOS 26 Safari 的狀態列與工具列底下只畫得出捲過去的內容（fixed 的層、背景圖都不會），先前那層 fixed 的圖騰在那兩條只剩番紅花色塊。
    圖塊是把一整幅 AI 圖騰用 image quilting 縫成上下左右都無縫的一塊（在接縫帶裡找差異最小的切線拼接），
    所以可以縮小重複鋪、看不出接縫。先前試過四條飾帶拼的畫框（接縫明顯）、一整幅 cover（虎羊太大），Zach 都要改。
    圖塊的顏色用 Lab 空間的色彩轉移對齊到 board-art.webp 外圈的飾帶（原圖偏亮、偏檸檬黃，Zach 要跟那張一致），接近白色的地方保留色相。
@@ -541,10 +557,139 @@ html:has(.bagh-root), body:has(.bagh-root) { background: #e3a43c; }
    標記之間刻意隔一行空白：分支依序合併時改的是不同地方，git 才不會衝突（CLAUDE.md〈視覺〉）。 */
 
 /* ▸ 九子棋（feat/game-nine-mens-morris） */
+/* 九子棋（MorrisFrame）：整頁是《遊戲之書》那幅插圖。顏色取自插圖，見 components/nine-mens-morris/palette.ts。
+   .nmm-frame：最外緣一圈插圖的朱紅框、內側一條羊皮紙色細線、四角的小方塊裡一朵四瓣小花（插圖框角的小圓飾；原本畫叉，右上角那個貼著聯絡鈕像關閉鈕，10/22 換掉） —— 唯一的裝飾，只有這一層。
+   border-image 畫在邊框裡，內容永遠蓋不到；邊段是均勻的帶子，stretch 不會變形。
+   .nmm-field：群青底撒細白點（插圖的底就是這樣），兩層錯開的點陣，很淡。 */
+html:has(.nmm-root), body:has(.nmm-root) { background: #c54915; }
+/* 拿子的手從畫面外伸進來、袖子一路接到畫面外（MorrisHand）：超出的部分裁掉，不撐出捲軸。
+   clip 不會像 hidden 那樣變成捲動容器；不支援 clip 的舊瀏覽器退回 hidden（高度跟著內容長，一樣不會自己捲） */
+.nmm-root { overflow: hidden; overflow: clip; }
+.nmm-frame {
+  border: var(--nmm-frame, 12px) solid #c54915;
+  border-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 36 36'%3E%3Cpath fill='%23c54915' d='M0 0H36V8.5H0Z M0 27.5H36V36H0Z M0 0H8.5V36H0Z M27.5 0H36V36H27.5Z'/%3E%3Cpath fill='%23eee0c4' d='M8.5 8.5H27.5V10H8.5Z M8.5 26H27.5V27.5H8.5Z M8.5 8.5H10V27.5H8.5Z M26 8.5H27.5V27.5H26Z'/%3E%3Cg fill='%23c54915'%3E%3Crect width='12' height='12'/%3E%3Crect x='24' width='12' height='12'/%3E%3Crect y='24' width='12' height='12'/%3E%3Crect x='24' y='24' width='12' height='12'/%3E%3C/g%3E%3Cg fill='%23eee0c4'%3E%3Ccircle cx='3.9' cy='6' r='1.8'/%3E%3Ccircle cx='8.1' cy='6' r='1.8'/%3E%3Ccircle cx='6' cy='3.9' r='1.8'/%3E%3Ccircle cx='6' cy='8.1' r='1.8'/%3E%3Ccircle cx='27.9' cy='6' r='1.8'/%3E%3Ccircle cx='32.1' cy='6' r='1.8'/%3E%3Ccircle cx='30' cy='3.9' r='1.8'/%3E%3Ccircle cx='30' cy='8.1' r='1.8'/%3E%3Ccircle cx='3.9' cy='30' r='1.8'/%3E%3Ccircle cx='8.1' cy='30' r='1.8'/%3E%3Ccircle cx='6' cy='27.9' r='1.8'/%3E%3Ccircle cx='6' cy='32.1' r='1.8'/%3E%3Ccircle cx='27.9' cy='30' r='1.8'/%3E%3Ccircle cx='32.1' cy='30' r='1.8'/%3E%3Ccircle cx='30' cy='27.9' r='1.8'/%3E%3Ccircle cx='30' cy='32.1' r='1.8'/%3E%3C/g%3E%3Cg fill='%23c54915'%3E%3Ccircle cx='6' cy='6' r='.85'/%3E%3Ccircle cx='30' cy='6' r='.85'/%3E%3Ccircle cx='6' cy='30' r='.85'/%3E%3Ccircle cx='30' cy='30' r='.85'/%3E%3C/g%3E%3C/svg%3E") 12 / var(--nmm-frame, 12px) stretch;
+}
+@media (max-width: 640px) { .nmm-frame { --nmm-frame: 9px; } }
+.nmm-field {
+  background-color: #4b4577;
+  background-image:
+    radial-gradient(circle, rgba(238, 224, 196, 0.32) 0 0.9px, transparent 1.4px),
+    radial-gradient(circle, rgba(238, 224, 196, 0.18) 0 0.7px, transparent 1.2px);
+  background-size: 34px 34px, 34px 34px;
+  background-position: 0 0, 17px 17px;
+}
+
+/* 九子棋的介面零件：照《遊戲之書》（1283）的手抄本 —— 拱頂的插圖框、朱紅與群青交替的上色首字、朱紅的段落符 ¶、
+   蠟封；難度用骰子點數（這本書有一半在講骰子遊戲）。只換形狀、材質與記號，不疊花紋：裝飾仍只有最外緣的朱紅框。
+   顏色同 components/nine-mens-morris/palette.ts。 */
+/* 拱頂的羊皮紙：上緣是圓拱，內側一道朱紅細線順著拱走（插圖框的那條線） */
+.nmm-arch {
+  /* 水平半徑用 50%（不是 999px）：半徑加起來超過寬度時，瀏覽器會把所有半徑等比例縮小，垂直那一邊也跟著縮成幾乎方角 */
+  border-radius: 50% 50% 6px 6px / 2.4rem 2.4rem 6px 6px; background: #eee0c4; color: #1e120a;
+  box-shadow: inset 0 0 0 2px #c54915, inset 0 0 0 4px #eee0c4, inset 0 0 0 5px rgb(197 73 21 / 0.35);
+  transition: background-color 0.15s, color 0.15s, box-shadow 0.15s, filter 0.15s;
+}
+.nmm-arch.is-small { border-radius: 50% 50% 5px 5px / 1.3rem 1.3rem 5px 5px; }
+@media (pointer: fine) { .nmm-arch:hover:not(:disabled) { background: #e3c99c; } }
+/* 主要動作：朱紅的拱、羊皮紙字（先手／後手、再來一局） */
+.nmm-arch.is-red { background: #c54915; color: #eee0c4; box-shadow: inset 0 0 0 3px #c54915, inset 0 0 0 4.5px rgb(238 224 196 / 0.7); }
+@media (pointer: fine) { .nmm-arch.is-red:hover:not(:disabled) { background: #c54915; filter: brightness(1.08); } }
+/* 輪到的那方：拱內側換成朱紅粗線 */
+.nmm-arch.is-on { box-shadow: inset 0 0 0 3px #c54915, inset 0 0 0 5px #eee0c4, inset 0 0 0 6px #c54915; }
+/* 沒輪到的那方：群青底上半透明的拱 */
+.nmm-arch.is-dim { background: rgb(238 224 196 / 0.14); color: rgb(238 224 196 / 0.85); box-shadow: inset 0 0 0 1.5px rgb(238 224 196 / 0.3); }
+/* 連線時自己那張狀態卡：拱外隔一道群青的縫，再一條羊皮紙細線、一圈朱紅（跟整頁最外緣的畫框同一套）。
+   用記號不用字：畫面上不寫「你」（Zach 在 Wall Go 選過，寫字太直白）。亮、暗兩種狀態都要接在原本的內線後面 */
+.nmm-arch.is-mine.is-on { box-shadow: inset 0 0 0 3px #c54915, inset 0 0 0 5px #eee0c4, inset 0 0 0 6px #c54915, 0 0 0 3px #4b4577, 0 0 0 4.5px #eee0c4, 0 0 0 7.5px #c54915; }
+.nmm-arch.is-mine.is-dim { box-shadow: inset 0 0 0 1.5px rgb(238 224 196 / 0.3), 0 0 0 3px #4b4577, 0 0 0 4.5px #eee0c4, 0 0 0 7.5px #c54915; }
+/* 上色首字：一格方塊，朱紅與群青交替，放圖示（手抄本段落開頭那個上了色的大字） */
+.nmm-initial { display: grid; place-items: center; width: 2.75rem; height: 2.75rem; flex: none; border-radius: 3px; background: #c54915; color: #eee0c4; font-size: 1.6rem; }
+.nmm-initial.is-blue { background: #4b4577; }
+/* 段落符 ¶：羊皮紙上是朱紅，群青底上改用羊皮紙色（朱紅疊群青只有 1.8:1） */
+.nmm-pilcrow::before { content: '\00B6'; color: var(--nmm-rubric, #c54915); font-weight: 900; margin-right: 0.3em; }
+/* 蠟封開關：關＝一圈淡墨線的空印，開＝朱紅的封蠟 */
+.nmm-seal { position: relative; display: grid; place-items: center; width: 2rem; height: 2rem; flex: none; border-radius: 50%;
+  box-shadow: inset 0 0 0 2px rgb(30 18 10 / 0.3); color: transparent; font-weight: 900; transition: background-color 0.15s, box-shadow 0.15s, color 0.15s; }
+.nmm-seal.is-on { background: #c54915; color: #eee0c4; box-shadow: 0 0 0 3px rgb(197 73 21 / 0.28); }
+
+/* 拿子：可以拿的子以腳底為軸左右搖，像快被推倒（取代原本的紅色 ×，Zach 10/24 嫌醜）。
+   transform-origin 在 MorrisBoard 設成腳底；減少動態時停在歪一邊 */
+.nmm-teeter { rotate: 7deg; }
+@media (prefers-reduced-motion: no-preference) { .nmm-teeter { animation: nmm-teeter 0.85s ease-in-out infinite alternate; } }
+@keyframes nmm-teeter { from { rotate: -8deg; } to { rotate: 8deg; } }
+
+/* 連線頁（MorrisOnline）：連線中黑白兩個小人輪流朝對方鞠躬；等人時對方的空位輕輕晃。
+   用獨立的 rotate 屬性，transform-origin 在腳底（元件設好的） */
+@keyframes nmm-bow-r { 0%, 50%, 100% { rotate: 0deg; } 18%, 32% { rotate: 20deg; } }
+@keyframes nmm-bow-l { 0%, 50%, 100% { rotate: 0deg; } 68%, 82% { rotate: -20deg; } }
+@keyframes nmm-wait { 0%, 100% { rotate: -4deg; } 50% { rotate: 4deg; } }
 
 /* ▸ 盲眼五子棋（feat/game-blind-gomoku） */
+/* 盲眼五子棋（GomokuFrame）：最外緣一圈照朝鮮拼布包袱巾外圈的布條 —— 上下直條、左右橫條、四角對角拼的三角，
+   布塊之間留一條白絲縫線。顏色取自那塊包袱巾，見 components/blind-gomoku/palette.ts。唯一的裝飾，只有這一層。
+   每一段是 11 條寬窄不一、顏色不按順序的布（240 單位長）：第一版一段只有三條，重複起來像糖果條紋，不像包袱巾。
+   邊段 round 重複，任何寬度都是整數段，不會切半。 */
+html:has(.gmk-root), body:has(.gmk-root) { background: #e4d6bb; }
+.gmk-frame {
+  border: var(--gmk-frame, 26px) solid #046161;
+  border-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300' viewBox='0 0 300 300'%3E%3Crect width='300' height='300' fill='%23ede2c7'/%3E%3Crect x='30.5' y='0.5' width='21' height='29' fill='%23dfda24'/%3E%3Crect x='52.5' y='0.5' width='13' height='29' fill='%23be3479'/%3E%3Crect x='66.5' y='0.5' width='29' height='29' fill='%23046161'/%3E%3Crect x='96.5' y='0.5' width='17' height='29' fill='%23ede2c7'/%3E%3Crect x='114.5' y='0.5' width='25' height='29' fill='%23b35e40'/%3E%3Crect x='140.5' y='0.5' width='11' height='29' fill='%230b2859'/%3E%3Crect x='152.5' y='0.5' width='23' height='29' fill='%23f59bad'/%3E%3Crect x='176.5' y='0.5' width='19' height='29' fill='%234da275'/%3E%3Crect x='196.5' y='0.5' width='15' height='29' fill='%2346246b'/%3E%3Crect x='212.5' y='0.5' width='27' height='29' fill='%23983c4a'/%3E%3Crect x='240.5' y='0.5' width='29' height='29' fill='%23be3479'/%3E%3Crect x='30.5' y='270.5' width='17' height='29' fill='%230b2859'/%3E%3Crect x='48.5' y='270.5' width='25' height='29' fill='%23ede2c7'/%3E%3Crect x='74.5' y='270.5' width='13' height='29' fill='%234da275'/%3E%3Crect x='88.5' y='270.5' width='29' height='29' fill='%23be3479'/%3E%3Crect x='118.5' y='270.5' width='19' height='29' fill='%23dfda24'/%3E%3Crect x='138.5' y='270.5' width='23' height='29' fill='%23662d2e'/%3E%3Crect x='162.5' y='270.5' width='11' height='29' fill='%23046161'/%3E%3Crect x='174.5' y='270.5' width='27' height='29' fill='%23f59bad'/%3E%3Crect x='202.5' y='270.5' width='21' height='29' fill='%23b35e40'/%3E%3Crect x='224.5' y='270.5' width='15' height='29' fill='%2346246b'/%3E%3Crect x='240.5' y='270.5' width='29' height='29' fill='%23046161'/%3E%3Crect x='0.5' y='30.5' width='29' height='25' fill='%23983c4a'/%3E%3Crect x='0.5' y='56.5' width='29' height='17' fill='%23046161'/%3E%3Crect x='0.5' y='74.5' width='29' height='29' fill='%23ede2c7'/%3E%3Crect x='0.5' y='104.5' width='29' height='13' fill='%23dfda24'/%3E%3Crect x='0.5' y='118.5' width='29' height='21' fill='%2346246b'/%3E%3Crect x='0.5' y='140.5' width='29' height='27' fill='%23be3479'/%3E%3Crect x='0.5' y='168.5' width='29' height='11' fill='%234da275'/%3E%3Crect x='0.5' y='180.5' width='29' height='19' fill='%23b35e40'/%3E%3Crect x='0.5' y='200.5' width='29' height='23' fill='%230b2859'/%3E%3Crect x='0.5' y='224.5' width='29' height='15' fill='%23f59bad'/%3E%3Crect x='0.5' y='240.5' width='29' height='29' fill='%23dfda24'/%3E%3Crect x='270.5' y='30.5' width='29' height='15' fill='%23be3479'/%3E%3Crect x='270.5' y='46.5' width='29' height='27' fill='%23b35e40'/%3E%3Crect x='270.5' y='74.5' width='29' height='19' fill='%230b2859'/%3E%3Crect x='270.5' y='94.5' width='29' height='23' fill='%23ede2c7'/%3E%3Crect x='270.5' y='118.5' width='29' height='11' fill='%234da275'/%3E%3Crect x='270.5' y='130.5' width='29' height='29' fill='%23dfda24'/%3E%3Crect x='270.5' y='160.5' width='29' height='17' fill='%23983c4a'/%3E%3Crect x='270.5' y='178.5' width='29' height='25' fill='%2346246b'/%3E%3Crect x='270.5' y='204.5' width='29' height='13' fill='%23046161'/%3E%3Crect x='270.5' y='218.5' width='29' height='21' fill='%23662d2e'/%3E%3Crect x='270.5' y='240.5' width='29' height='29' fill='%23f59bad'/%3E%3Cpath d='M0.5 0.5H29L0.5 29Z' fill='%23046161'/%3E%3Cpath d='M29.5 1.2V29.5H1.2Z' fill='%23be3479'/%3E%3Cpath d='M270.5 0.5H299.5V29Z' fill='%2346246b'/%3E%3Cpath d='M270.5 1.2L298.8 29.5H270.5Z' fill='%23dfda24'/%3E%3Cpath d='M0.5 270.5H29.5V299Z' fill='%23b35e40'/%3E%3Cpath d='M0.5 271.2L28.8 299.5H0.5Z' fill='%230b2859'/%3E%3Cpath d='M270.5 270.5H299L270.5 299Z' fill='%23662d2e'/%3E%3Cpath d='M299.5 271.2V299.5H271.2Z' fill='%234da275'/%3E%3C/svg%3E") 30 / var(--gmk-frame, 26px) round;
+}
+@media (max-width: 640px) { .gmk-frame { --gmk-frame: 17px; } }
+
+/* 盲眼五子棋的介面零件：照朝鮮拼布包袱巾（조각보）的做法 —— 每顆按鈕是一塊布，邊上一圈平針縫（홈질）的虛線；
+   主要動作是拼起來的布（青綠布、左上角拼一塊桃紅三角，三角與主布之間一道白絲縫線）；次要動作是半透明的苧麻布
+   （모시 조각보），縫線透出來；連結底下是一道縫線。不疊花紋：裝飾仍只有最外緣的布條外框。顏色同 palette.ts 與 Stone.tsx。 */
+.gmk-patch {
+  position: relative; border-radius: 2px; background: #f2e4c9; color: #2a2525;
+  outline: 1.5px dashed rgb(42 37 37 / 0.4); outline-offset: -5px;
+  transition: background-color 0.15s, color 0.15s, filter 0.15s;
+}
+@media (pointer: fine) { .gmk-patch:hover:not(:disabled) { filter: brightness(0.96); } }
+.gmk-patch.is-ramie { background: rgb(242 228 201 / 0.5); box-shadow: inset 0 0 0 1px rgb(42 37 37 / 0.16); }
+.gmk-patch.is-pieced {
+  --corner: 22px; color: #f2e4c9; outline-color: rgb(242 228 201 / 0.6);
+  background:
+    linear-gradient(135deg, transparent calc(var(--corner) - 1px), #f2e4c9 calc(var(--corner) - 1px), #f2e4c9 calc(var(--corner) + 1px), transparent calc(var(--corner) + 1px)),
+    linear-gradient(135deg, #be3479 var(--corner), #046161 var(--corner));
+}
+/* 連線：對方斷線（滿 3 秒）那塊反灰，正中蓋一層半透明的灰＋斷掉的 Wi‑Fi（同九子棋、虎棋，11/1 Zach：純灰色遮罩、不要按鈕感） */
+.gmk-away > :not(.gmk-away-cover) { filter: grayscale(1); opacity: 0.75; }
+.gmk-away-cover { position: absolute; inset: 0; display: grid; place-items: center; border-radius: inherit; background: rgb(119 114 108 / 0.78); color: #f2e4c9; font-size: var(--away-size, 1.6rem); }
+/* 連結：底下一道平針縫 */
+.gmk-thread { font-weight: 900; text-decoration: underline dashed rgb(42 37 37 / 0.55); text-decoration-thickness: 2px; text-underline-offset: 6px; }
+/* 連線頁（GomokuOnline）：平針縫一直往前縫（連線中、等朋友；虛線一段 8，走兩段剛好接回原位），空著的那塊布上淡淡的子輕輕浮著 */
+@keyframes gmk-sew { to { stroke-dashoffset: -16; } }
+@keyframes gmk-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
 
 /* ▸ 騎士巡邏（feat/game-knights-tour） */
+/* 騎士巡邏（KtFrame）：一張印了銅版插圖的紙。.kt-frame 是銅版的雙線框（外粗內細、中間透明露出紙色），
+   唯一的裝飾，只有這一層。顏色取自 18 世紀的原件，見 components/knights-tour/palette.ts。
+   .kt-serif：拉丁字與數字用舊式襯線（系統字型：蘋果裝置有 Iowan Old Style，Windows 有 Palatino Linotype）。 */
+html:has(.kt-root), body:has(.kt-root) { background: #edddc7; }
+.kt-frame {
+  border: var(--kt-frame, 8px) solid #322e2a;
+  border-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath fill='%23322e2a' fill-rule='evenodd' d='M0 0H24V24H0Z M2.6 2.6V21.4H21.4V2.6Z'/%3E%3Cpath fill='%23322e2a' fill-rule='evenodd' d='M5 5H19V19H5Z M5.9 5.9V18.1H18.1V5.9Z'/%3E%3C/svg%3E") 8 / var(--kt-frame, 8px) stretch;
+}
+@media (max-width: 640px) { .kt-frame { --kt-frame: 6px; } }
+.kt-serif { font-family: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif; }
+
+/* 騎士巡邏的介面零件：照 18 世紀數學版畫（歐拉 1759）—— 次要按鈕是銅版的雙線壓痕框，選中填上版畫的斜線排線
+   （跟棋盤的深格同一種線，不用實色），主要動作是紅粉筆色、內縮一道紙色壓痕線。不疊花紋：裝飾仍只有最外緣的銅版雙線框。
+   顏色同 components/knights-tour/palette.ts。 */
+.kt-plate {
+  border-radius: 1.5px; background-color: #edddc7; color: #322e2a;
+  box-shadow: inset 0 0 0 1.2px #322e2a, inset 0 0 0 3.5px #edddc7, inset 0 0 0 4.1px rgb(50 46 42 / 0.6);
+  transition: background-color 0.15s, color 0.15s;
+}
+@media (pointer: fine) { .kt-plate:hover:not(:disabled) { background-image: repeating-linear-gradient(45deg, rgb(50 46 42 / 0.08) 0 1px, transparent 1px 5px); } }
+.kt-plate.is-hatched { background-image: repeating-linear-gradient(45deg, rgb(50 46 42 / 0.28) 0 1px, transparent 1px 4.5px); }
+.kt-plate.is-wash { background-color: #e2c9b1; }
+.kt-chalk {
+  border-radius: 1.5px; background: #834d36; color: #edddc7;
+  box-shadow: inset 0 0 0 3px #834d36, inset 0 0 0 4px rgb(237 221 199 / 0.65);
+  transition: filter 0.15s;
+}
+@media (pointer: fine) { .kt-chalk:hover:not(:disabled) { filter: brightness(1.1); } }
 
 /* ▸ 時間拍賣（feat/game-time-auction） */
 
@@ -615,3 +760,39 @@ html:has(.mcl-root) { --ink-soft: #5e4b3f; }
 @media (prefers-reduced-motion: reduce) { .mcl-land, .mcl-receive, .mcl-pop { animation: none !important; } }
 /* 連線的等人畫面：圓木桌上還空著的座位（黃銅虛線圈）輕輕浮著、亮一點又淡回去（MancalaOnline.tsx，只在 motion-safe 時掛上） */
 @keyframes mcl-wait { 0%, 100% { translate: 0 0; opacity: 0.5; } 50% { translate: 0 -8%; opacity: 0.95; } }
+
+/* 九子棋選單的大按鈕：字放在拱中間最高的地方置中，首字留左、箭頭留右，左右對稱；節目規則左邊補一個朱紅的 ¶ 對稱右邊的蠟封
+   （11/1 Zach 在 beta 切換 A 只留字／B 首字在上／C 左右對稱後選 C）。
+   前面加 html 壓過元件上的 text-left、px-4。首字做過「頂端也是拱」「貼著左上角、上緣順著拱滑下去」，11/1 Zach 都要改回原本的方塊 */
+html .nmm-row, html .nmm-ai-head { position: relative; justify-content: center; text-align: center; padding-inline: 3.25rem; }
+html .nmm-row .nmm-initial, html .nmm-ai-head .nmm-initial { position: absolute; left: 1rem; top: 50%; translate: 0 -42%; }
+html .nmm-ai-head .nmm-initial { left: 0; }
+html .nmm-chev { position: absolute; right: 1.4rem; top: 50%; translate: 0 -42%; }
+html .nmm-row-text { flex: 0 1 auto; }
+html .nmm-row .nmm-seal { position: absolute; right: 1rem; top: 50%; translate: 0 -42%; }
+html .nmm-row:not(:has(.nmm-initial))::before { content: '¶'; position: absolute; left: 1.55rem; top: 50%; translate: 0 -42%; color: #c54915; font-size: 1.5rem; font-weight: 900; }
+
+/* 九子棋首頁的桌機版面：標題、標語一列一列排在左邊，插圖與右邊整排按鈕在同一列、下緣切齊
+   （插圖的底＝最後一張按鈕的底，「怎麼玩」掛在按鈕下面不算）。11/1 Zach：原本兩欄各自置中，左圖右按鈕一高一低；
+   從「上下都對齊」「下緣對齊」「標題置中＋左右等寬」裡選了下緣對齊、標題留左、左右不要一樣寬。
+   前面加 html 壓過元件上 lg:flex-row 那些 Tailwind 的類別 */
+@media (min-width: 1024px) {
+  html .nmm-main { display: grid; grid-template-columns: minmax(0, 1fr) 400px; grid-template-rows: auto auto auto auto; column-gap: 3rem; row-gap: 0; align-items: end; align-content: center; }
+  html .nmm-head { display: contents; }
+  html .nmm-head > :not(.nmm-art) { grid-column: 1; }
+  html .nmm-art { grid-column: 1; grid-row: 4; margin-top: 0.75rem; }
+  html .nmm-modes { grid-column: 2; grid-row: 4; position: relative; justify-content: flex-end; }
+  html .nmm-modes > a:last-child { position: absolute; top: 100%; left: 50%; translate: -50% 0; margin-top: 0.5rem; }
+}
+
+/* 九子棋連線：對方斷線（滿 3 秒）那張狀態卡反灰，正中間蓋一個斷掉的 Wi‑Fi（2026-11-01 Zach） */
+.nmm-arch.is-away { box-shadow: inset 0 0 0 1.5px rgb(238 224 196 / 0.25); background: rgb(238 224 196 / 0.08); }
+.nmm-arch.is-away > :not(.nmm-away-cover) { filter: grayscale(1); opacity: 0.75; }
+.nmm-away-cover { position: absolute; inset: 0; display: grid; place-items: center; border-radius: inherit; background: rgb(119 114 108 / 0.78); color: #eee0c4; font-size: 1.9rem; }
+
+/* 尼泊爾虎棋連線：對方斷線（滿 3 秒）那張狀態卡反灰，正中間蓋一個斷掉的 Wi‑Fi（2026-11-01 Zach）。
+   底下的字去色，上面蓋一層半透明的灰（字隱約看得到）、正中一個圖示（11/1 Zach 一路調過：實心灰把資訊全蓋住、淡墨看起來怪、
+   圖示包在圓章裡像多一顆按鈕，最後是「純灰色遮罩」。Wall Go 同一個做法） */
+.bagh-away { background: rgb(74 38 22 / 0.07) !important; color: var(--ink-soft, #6b5a48) !important; }
+.bagh-away > :not(.bagh-away-cover) { filter: grayscale(1); opacity: 0.75; }
+.bagh-away-cover { position: absolute; inset: 0; display: grid; place-items: center; border-radius: inherit; background: rgb(119 114 108 / 0.78); color: #fbf4e1; font-size: 1.9rem; }

@@ -4,7 +4,7 @@ import { playSynth, type Synth } from '@/utils/sound';
  * 虎羊棋的音效：塔布拉手鼓 —— 羊是高的「答」、老虎是低的「咚」（音往上揚，像手掌壓著鼓皮推上去）。
  * Zach 10/24 從試聽表 A–F 裡選了 E（第一版的銅鈴、手鼓、低吼與 A 木魚都換掉了）。全部當場合成，出處見 docs/sound.md。
  */
-export type BaghSound = 'place' | 'goat' | 'tiger' | 'capture' | 'turn' | 'win' | 'lose';
+export type BaghSound = 'place' | 'goat' | 'tiger' | 'capture' | 'turn' | 'win' | 'lose' | 'nudge';
 
 /** 一聲鼓：正弦波從 f0 滑到 f1 給音高，再疊一下高頻雜音給手指拍到鼓皮的「啪」 */
 function drum(s: Synth, at: number, f0: number, f1: number, dur: number, vol: number) {
@@ -29,6 +29,8 @@ export function playBagh(name: BaghSound) {
         [0, 0.08, 0.16, 0.24].forEach((d, i) => drum(s, t + d, 520 + i * 40, 500 + i * 40, 0.2, 0.22));
         drum(s, t + 0.34, 80, 130, 0.7, 0.6);
         break;
+      // 被催：手掌在手鼓的鼓框上急拍三下（連線，2026-11-01）
+      case 'nudge': [0, 0.11, 0.22].forEach((dt) => { s.knock(t + dt, 300, 0.08, 1.2); drum(s, t + dt, 240, 200, 0.12, 0.18); }); break;
       case 'lose': drum(s, t, 110, 90, 0.5, 0.5); drum(s, t + 0.25, 90, 70, 0.7, 0.5); break;
     }
   });

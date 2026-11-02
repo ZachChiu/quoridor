@@ -1,9 +1,10 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { MiniBoard } from './BaghBoard';
 import { BAGH_PRIMARY, BAGH_SECONDARY } from './styles';
 import type { Move, Point } from '@/games/bagh-chal/engine';
 import { useStep, useSwipePager } from '@/hook/useSwipePager';
+import { track } from '@/utils/analytics';
 
 /**
  * Bagh Chal 規則的四個步驟，每步一張小棋盤。規則頁（全部攤開）與對局中的說明彈窗（一次一步）共用。
@@ -62,6 +63,13 @@ export function RulesStepsPaged({ open, rules, prev, next, done, onDone }: {
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [open, onKeyDown]);
+  // 關掉時讀到第幾步（跟 Wall Go 的遊玩方式一樣送 tutorial_close）：按完成、按 ×、點遮罩都算，開著離開對局也算
+  const seen = useRef(i);
+  useEffect(() => { seen.current = i; }, [i]);
+  useEffect(() => {
+    if (!open) return;
+    return () => track('tutorial_close', { game: 'bagh-chal', step: seen.current + 1, steps: STEPS.length, finished: seen.current === STEPS.length - 1 });
+  }, [open]);
   const text = captions(rules);
   const last = i === STEPS.length - 1;
   return (

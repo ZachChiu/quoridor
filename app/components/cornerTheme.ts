@@ -24,6 +24,8 @@ export type CornerTheme = {
   field: string;
   /** 小字（說明、選填）的顏色 */
   soft?: string;
+  /** 語言彈窗的每一列字置中、目前的語言不打勾（九子棋的拱頂，中間最高） */
+  centerRows?: boolean;
   /** 虎羊棋的彈窗有上方飾帶（Modal 的 skin） */
   skin?: 'default' | 'bagh';
 };

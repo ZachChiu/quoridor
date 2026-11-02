@@ -3,7 +3,7 @@ import { FAQ_TEXT } from './content/faq';
 import { localePath, type Locale } from './locales';
 import { wallGo } from './routes';
 import { brandName } from '@/brand';
-import { ogImageUrl, OG_SIZE } from './metadata';
+import { ogImageUrl, OG_SIZE, platformDescription } from './metadata';
 
 const SITE = process.env.SITE_URL || 'https://quoridorgame.com';
 
@@ -38,6 +38,17 @@ const SITE = process.env.SITE_URL || 'https://quoridorgame.com';
  * `aggregateRating` 可以長出星等，是這裡唯一還拿得到的顯眼 rich result。
  * 但我們沒有真實評分，編一個出來就是偽造評價 —— 違反規範，也不該做。
  */
+
+/**
+ * 平台首頁的代表圖：骰子惡魔置中、深色底，三種比例（scripts/og-art/brand-covers.mjs 產生，六個語系共用）。
+ * 11/2 Zach 搜「WALL GO」，縮圖是頁面上九子棋的古畫 —— Google 沒被告知代表圖時，從頁面上的 img 挑最像照片的那張
+ *（docs/platform-thumbnail.md；Zach 從骰子惡魔、Wall Go 棋盤兩稿挑了骰子惡魔）。
+ */
+const BRAND_COVERS = [
+  { file: 'cover-1x1.png', width: 1200, height: 1200 },
+  { file: 'cover-4x3.png', width: 1600, height: 1200 },
+  { file: 'cover-16x9.png', width: 1920, height: 1080 },
+].map(({ file, ...size }) => ({ '@type': 'ImageObject', url: `${SITE}/brand/${file}`, ...size }));
 
 /** platform＝平台首頁（/），其餘是 Wall Go 的頁面（/wall-go/…） */
 type PageKind = 'platform' | 'home' | 'rules' | 'solo';
@@ -150,11 +161,13 @@ export function pageGraph(locale: Locale, kind: PageKind) {
           '@id': `${pageUrl}#webpage`,
           url: pageUrl,
           name: `${t.platform.metaTitle} | ${brandName(locale)}`,
-          description: t.platform.metaDescription,
+          description: platformDescription(locale),
           isPartOf: { '@id': id('website') },
           about: { '@id': id('series') },
           hasPart: { '@id': id('game') },
-          primaryImageOfPage: { '@type': 'ImageObject', url: ogImageUrl(locale, '/'), ...OG_SIZE },
+          // CollectionPage 是 WebPage 的子型別。代表圖用 16:9 那張，image 三種比例都給（分享圖另外是 og:image）
+          primaryImageOfPage: BRAND_COVERS[2],
+          image: BRAND_COVERS,
           inLanguage: locale,
         },
       ],

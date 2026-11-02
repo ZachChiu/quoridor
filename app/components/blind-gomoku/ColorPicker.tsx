@@ -28,8 +28,9 @@ export function ColorPicker({ value, onChange, disabled, label, nameOf }: {
             title={nameOf(c)}
             disabled={disabled}
             onClick={() => onChange(c)}
-            className={`grid aspect-square max-h-14 w-full place-items-center rounded-2xl transition active:scale-95 disabled:opacity-40 ${
-              on ? 'bg-tile-ink' : 'bg-tile-ink/[0.07] fine:hover:bg-tile-ink/[0.12]'
+            // 一格一塊布：選中的那塊縫線變成實線的黑絲（棋子本身就是那塊布的顏色，不再墊深墨）
+            className={`gmk-patch grid aspect-square max-h-14 w-full place-items-center active:scale-95 disabled:opacity-40 ${
+              on ? '![outline-color:#2a2525] ![outline-offset:-4px] ![outline-style:solid] ![outline-width:2px]' : 'is-ramie'
             }`}
           >
             <ColorFace color={c} className={`size-[72%] transition-transform ${on ? 'scale-110' : ''}`} />

@@ -1,7 +1,8 @@
 'use client';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useIsoLayoutEffect } from '@/hook/useIsoLayoutEffect';
 import type { Locale } from '@/i18n/locales';
+import { track } from '@/utils/analytics';
 import GomokuMenu from './GomokuMenu';
 import GomokuPlay from './GomokuPlay';
 import { HIDE_MENU_STYLE_ID, modeHash, readModeHash, type GomokuMode } from './modeHash';
@@ -18,11 +19,19 @@ export default function BlindGomoku({ locale }: { locale: Locale }) {
   const [mode, setMode] = useState<GomokuMode | null | undefined>(undefined);
   // 換模式或重整都要開新的一局：key 帶一個每次選模式都會變的序號
   const [round, setRound] = useState(0);
+  // 畫面上是哪個 hash：返回鍵退掉的若是同一個網址（對局中「離開前確認」的守門那筆，hook/useLeaveGuard.ts），
+  // 不是換模式，不能重開一局 —— 不然確認視窗一跳出來，棋盤就被清空了
+  const shown = useRef<string | null>(null);
 
   useIsoLayoutEffect(() => {
     // 選單上那段內嵌 script 加的「先藏起選單」到這裡就完成任務了
     document.getElementById(HIDE_MENU_STYLE_ID)?.remove();
-    const read = () => { setMode(readModeHash(location.hash)); setRound((r) => r + 1); };
+    const read = () => {
+      if (location.hash === shown.current) return;
+      shown.current = location.hash;
+      setMode(readModeHash(location.hash));
+      setRound((r) => r + 1);
+    };
     read();
     window.addEventListener('popstate', read);
     window.addEventListener('hashchange', read);
@@ -33,12 +42,17 @@ export default function BlindGomoku({ locale }: { locale: Locale }) {
   }, []);
 
   const start = (m: GomokuMode) => {
+    track('mode_select', m.opponent === 'ai'
+      ? { game: 'blind-gomoku', mode: 'solo', players: 2, difficulty: m.level, entry: 'home' }
+      : { game: 'blind-gomoku', mode: 'local', players: 2, entry: 'home' });
     history.pushState(null, '', modeHash(m));
+    shown.current = location.hash;
     setMode(m);
     setRound((r) => r + 1);
   };
   const toMenu = () => {
     history.pushState(null, '', location.pathname + location.search);
+    shown.current = location.hash;
     setMode(null);
   };
 

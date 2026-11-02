@@ -12,6 +12,13 @@ export const PLATFORM_HOME = '/';
 
 export const WALL_GO = '/wall-go';
 
+/** 每一季一個目錄頁（2026-10-25 Zach：「點進每一季可以看遊戲的目錄」）：`/season/1`、`/season/2`、`/season/3` */
+export type SeasonNumber = '1' | '2' | '3';
+export const SEASON_NUMBERS: SeasonNumber[] = ['3', '2', '1'];
+export function season(n: SeasonNumber) {
+  return `/season/${n}` as const;
+}
+
 /** Bagh Chal（虎羊棋）。開局選模式與對局在同一頁 */
 export const BAGH_CHAL = '/bagh-chal';
 export function baghChal(sub: '' | '/rules' | '/solo' | '/local' | '/online' = '') {

@@ -2,6 +2,21 @@
 import { useEffect, useRef, useState } from 'react';
 import { useScrollLock } from './useScrollLock';
 
+/*
+  遮罩不用 fixed，改成 absolute、定在目前的捲動位置、上下各多蓋一截（11/1 Zach：手機上彈窗打開，最下面一條沒有變暗）。
+  iOS 26 的 Safari（與 iPhone 上的 Chrome）把頁面一路畫到工具列後面，但只畫跟著頁面捲的內容，fixed 的層不畫 ——
+  fixed 的遮罩再怎麼往外多蓋（.cover-viewport）那一截都是 html 的底色。換頁轉場（WipeOverlay）也是同一個做法。
+  捲動鎖因此也不能再把 body 變成 fixed（useScrollLock），不然整頁都不畫在那一截。
+*/
+const BLEED = (h: number) => Math.round(Math.max(h * 0.25, 192));
+
+function placeBackdrop(el: HTMLElement) {
+  const h = Math.max(window.innerHeight, window.visualViewport?.height ?? 0);
+  const bleed = BLEED(h);
+  el.style.top = `${window.scrollY - bleed}px`;
+  el.style.height = `${Math.ceil(h) + 2 * bleed}px`;
+}
+
 const FOCUSABLE = 'a[href],button:not([disabled]),input,select,textarea,[tabindex]:not([tabindex="-1"])';
 
 /**
@@ -13,6 +28,8 @@ const FOCUSABLE = 'a[href],button:not([disabled]),input,select,textarea,[tabinde
  */
 export function useDialog(isOpen: boolean, onClose: () => void, onKeyDown?: (e: KeyboardEvent) => void) {
   const panelRef = useRef<HTMLDivElement>(null);
+  /** 遮罩那層：absolute，打開時定到目前的捲動位置（placeBackdrop） */
+  const backdropRef = useRef<HTMLDivElement>(null);
   const restoreRef = useRef<HTMLElement | null>(null);
 
   // 打開時鎖住背景捲動 —— 手機上不鎖的話，滑動會穿透到後面的頁面。
@@ -71,5 +88,25 @@ export function useDialog(isOpen: boolean, onClose: () => void, onKeyDown?: (e: 
     }
   }, [isOpen]);
 
-  return { panelRef, portalReady };
+  useEffect(() => {
+    const el = backdropRef.current;
+    if (!isOpen || !el) return;
+    placeBackdrop(el);
+    // 轉向、工具列伸縮時重量；頁面萬一還是捲了（捲動鎖擋不到的情況），遮罩也跟著過去
+    const onResize = () => placeBackdrop(el);
+    window.addEventListener('resize', onResize);
+    window.addEventListener('scroll', onResize, { passive: true });
+    window.visualViewport?.addEventListener('resize', onResize);
+    return () => {
+      window.removeEventListener('resize', onResize);
+      window.removeEventListener('scroll', onResize);
+      window.visualViewport?.removeEventListener('resize', onResize);
+      // 關掉時把多蓋的高度清掉：下次打開那一下遮罩先露出來、捲動鎖才量捲軸，
+      // 留著上次的高度會把頁面撐出一條捲軸，鎖就多補 15px 的 padding，右邊變寬（11/1 Zach：第二次打開才會）
+      el.style.top = '';
+      el.style.height = '';
+    };
+  }, [isOpen, portalReady]);
+
+  return { panelRef, backdropRef, portalReady };
 }
