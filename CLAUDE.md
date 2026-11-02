@@ -259,6 +259,10 @@ nudge { by, at }          最近一次「催一下」
     GA（11/3，上線前先接好）：`game: 'balance-mancala'`，事件跟盲五子棋同一套；`players` 是一桌的席數（4–7，AI 也算，`analytics.ts` 的 `Players` 因此放寬到 7），難度只有有 AI 的局帶，`game_end` 的 `winner` 是第一名的座位字母（並列用 / 接起來）。
     規則頁（10/25）：`/balance-mancala/rules`（`MancalaRulesPage`），七條規則一條一張圖，圖是遊戲裡真的圓盤與分數面板擺的靜態局面（`MancalaRulesSteps.tsx`，4 席各 4 顆、每張子數對得上），放在羊皮紙色的切角方塊上；最後是出處、名字由來、署名與插圖、頁邊的出處。設定頁的「怎麼玩」改成連過去（不再開彈窗），對局中的說明彈窗是同一份七步、一次一步、可以左右滑（`useSwipePager`），頁碼是一排深金小方塊、上一步／下一步是羊皮紙條與金箔，彈窗裡不放離開對局的連結。圓盤的座標字串取到小數三位：規則頁的圓盤是伺服器先畫的，Math.cos 在 Node 與瀏覽器差最後一位，不取整就 hydration mismatch。分享圖 `scripts/og-games/balance-mancala.mjs`：羊皮紙底、墨字、金膠囊，右邊是聖米迦勒秤靈魂裁成方的（`scripts/og-art/balance-mancala.jpg`，`art.cjs` 裁的）。
 
+  - 六角數字盤（`feat/game-hexagon`，2026-11-03 試做，第 1 季決賽第 2 戰的 Hexagon；規則、出題、原件與配色見 `docs/hexagon.md`）：原件是大都會博物館 15～16 世紀的藍白六角磁磚（伊茲尼克 40.181.11、馬木路克 1982.478.1，CC0）；最外緣一圈鈷藍邊磚＋一串釉白小六角（`.hx-frame`），按鈕是一塊塊磁磚（`.hx-tile`／`.hx-cobalt`）。
+    `/hexagon` 一頁，模式放 hash：`#daily`（當地日期當種子、5 回合）、`#show`（10 回合）、`#practice-easy|normal|hard`。規則在 `app/games/hexagon/engine.ts`（27 條線與節目十盤的答案由測試鎖住、每題保證 2～5 組），畫面在 `app/components/hexagon/`。
+    整頁與名字字標是圓體 Chiron GoRound TC（繁中、英文）。首頁上排的平台 logo、聯絡、語言跟著版面排，不浮著。還沒有規則頁、og 圖、favicon、GA 事件。
+
 - **棋盤**：外圍那圈 9px 是「牆」不是裝飾邊框（規則裡棋盤外緣本身就算一道牆）。
   牆的位移一律 `calc(var(--board-gap) * -0.5)` —— 對齊的是格線中心而不是格子邊，
   兩者差半個格縫，寫死會漂掉。

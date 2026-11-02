@@ -35,6 +35,8 @@ const LOADERS: Record<string, () => Promise<{ default: EntranceScene }>> = {
   'knights-tour': () => import('./knights-tour/Entrance'),
 
   'balance-mancala': () => import('./balance-mancala/Entrance'),
+
+  hexagon: () => import('./hexagon/Entrance'),
 };
 
 const ready = new Map<string, EntranceScene>();

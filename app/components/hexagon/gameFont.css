@@ -1,0 +1,6 @@
+/* 由 scripts/build-game-fonts.mjs 依 scripts/game-fonts/hexagon.mjs 產生，不要手改（npm run font:subset）。
+   這款的頁面（html:has(.hx-root)）整頁換成自己的字，--font-site 是全站那套黑體、當備援。 */
+@font-face { font-family: 'hexagon zh-TW'; src: url('/fonts/games/hexagon/zh-TW.woff2') format('woff2'); font-weight: 400 900; font-style: normal; font-display: swap; }
+@font-face { font-family: 'hexagon en'; src: url('/fonts/games/hexagon/en.woff2') format('woff2'); font-weight: 400 900; font-style: normal; font-display: swap; }
+:root:lang(zh-Hant-TW):has(.hx-root) { --font-app: 'hexagon zh-TW', var(--font-site); }
+:root:lang(en):has(.hx-root) { --font-app: 'hexagon en', var(--font-site); }
