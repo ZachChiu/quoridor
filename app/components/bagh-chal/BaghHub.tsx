@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import { useLatched } from '@/hook/useLatched';
 import Modal from '@/components/Modal';
 import { useRouter } from 'next/navigation';
 import { useMessages, useLocale } from '@/i18n/LocaleProvider';
@@ -52,6 +53,8 @@ export default function BaghHub() {
   const locale = useLocale();
   const router = useRouter();
   const [side, setSide] = useState<Side | null>(null);
+  // 彈窗淡出時內容照最後選的那邊畫，不退回老虎
+  const shown = useLatched(side);
   const [inviteOpen, setInviteOpen] = useState(false);
   const go = (path: string) => router.push(localePath(locale, path));
 
@@ -77,10 +80,10 @@ export default function BaghHub() {
       </a>
 
       <Modal skin="bagh" isOpen={!!side} onClose={() => setSide(null)} title={t.ui.pickLevel}
-        kicker={labelled(locale, b.playAs, side === 'goat' ? b.goat : b.tiger)}
-        icon={side === 'goat' ? GoatToken : TigerToken}
-        band={side === 'goat' ? { className: 'bg-[#5b6620]', fg: 'text-tile-cream' } : { className: 'bg-[#e3a43c]', fg: 'text-tile-ink' }}>
-        <BaghDifficulty side={side ?? 'tiger'} onPick={startSolo} />
+        kicker={labelled(locale, b.playAs, shown === 'goat' ? b.goat : b.tiger)}
+        icon={shown === 'goat' ? GoatToken : TigerToken}
+        band={shown === 'goat' ? { className: 'bg-[#5b6620]', fg: 'text-tile-cream' } : { className: 'bg-[#e3a43c]', fg: 'text-tile-ink' }}>
+        <BaghDifficulty side={shown ?? 'tiger'} onPick={startSolo} />
       </Modal>
 
       <Modal skin="bagh" isOpen={inviteOpen} onClose={() => setInviteOpen(false)} title={b.pickSide} kicker={b.onlineTitle}
