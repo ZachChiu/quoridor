@@ -6,6 +6,7 @@ import { fill, useTextTable } from '@/i18n/gameText';
 import { TEXT, type BalanceMancalaText } from '@/games/balance-mancala/text';
 import { CELLS, COLOURS, letterOf, seatOfLetter, type Scores, type Seat } from '@/games/balance-mancala/engine';
 import MancalaRing, { type RingMark } from './MancalaRing';
+import { BoardFace } from './hoursArt';
 import ScorePanel from './ScorePanel';
 import PieceDisc from './PieceDisc';
 import { BRASS, BRASS_DEEP, DISH_BG, WOOD } from './palette';
@@ -15,7 +16,7 @@ import { BRASS, BRASS_DEEP, DISH_BG, WOOD } from './palette';
  * 規則頁（全部攤開，RulesStepsList）與對局中的說明彈窗（一次一步、可以左右滑，RulesStepsPaged）共用。
  * 文字是 text.ts 的 rules（七條）＋ ruleTitles（小標），跟這裡的七張圖同索引。
  *
- * 圖全部是遊戲裡真的元件畫的靜態局面：圓盤（MancalaRing，一塊圓的木頭）與分數面板（ScorePanel），
+ * 圖全部是遊戲裡真的元件畫的靜態局面：圓盤（MancalaRing，墨底金格紋的圓）與分數面板（ScorePanel），
  * 放在一塊布色的切角方塊上（對局頁就是布上一塊木頭）。不加新顏色、不畫花紋（裝飾只有整頁最外緣的布邊）。
  * 盤面上的格子是按鈕，圖整塊 inert＋aria-hidden：不能點、不搶焦點，意思由旁邊的字講。
  * 局面是 4 席（A–D 各 4 顆，共 16 顆）的一局，每一張的子數都對得上。
@@ -60,7 +61,8 @@ function Ring({ t, board, center, ...rest }: {
   mark?: RingMark;
 }) {
   return (
-    <div className="w-full rounded-full p-[3%]" style={{ background: WOOD }}>
+    <div className="relative w-full rounded-full p-[3%]" style={{ background: WOOD }}>
+      <BoardFace />
       <MancalaRing board={board} colourShort={t.colourShort} highLabel={t.high} lowLabel={t.low} ariaOf={() => ''}
         selectable={rest.selectable ?? null} dimOthers={!!rest.selectable} selected={rest.from ?? null}
         incoming={rest.incoming} emptied={rest.from ?? null} mark={rest.mark ?? null} onPick={noop} center={center} />

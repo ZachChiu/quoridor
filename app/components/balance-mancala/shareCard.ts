@@ -3,20 +3,21 @@ import { drawBrand, drawQr, fitText, type CardLayout, type ShareAssets } from '@
 import { fill } from '@/i18n/gameText';
 import { HEX, seatLook } from './palette';
 
-// 分享圖先維持現況（Adinkra）的顏色與素材：試做的皮只換畫面
+// Canvas 讀不懂 CSS 變數：用取樣值（palette.ts 的 HEX）
 const { BRASS, BRASS_DEEP, CLOTH, CLOTH_LIGHT, INK, INK_SOFT, WOOD } = HEX;
+const INK_RGBA = (a: number) => `rgba(63,56,51,${a})`;
 
 /**
  * 平衡播棋的結算分享圖（Zach 10/24：結尾的可分享畫面，各自設計）。長得像這款的頁面，不像 Wall Go 的平塗撞色：
  *
- * - 底是 1825 年那塊 Adinkra 印花布的布色，最外緣一圈蓋印的布邊 —— 跟頁面同一張 frame.png 照 border-image 的方式切九宮格、
- *   邊段 round 重複（整數個印章），裡面不加任何花紋
- * - 上面是首頁的主視覺（三件黃金砝碼）、節目出處、遊戲名；結果寫在一塊黃銅牌上（主要按鈕的那塊牌子）
- * - 名次一人一列：勝方是一塊木頭（盤面的木色），輸家是一條印花布（上下兩道梳線，次要按鈕的那條布）。
- *   每列右邊是三個盤子 —— 盤面上同樣的紅藍綠、同樣的黃銅外緣 —— 裡面寫那一色的分數，最右邊是最終分數（2×最低−最高）
- * - 最下面一條印花布放站名與 QR
+ * - 底是時禱書的羊皮紙，最外緣一圈頁邊 —— 跟頁面同一個圖案（frame-card.png，frame.svg 的 3 倍點陣）照 border-image 的方式
+ *   切九宮格、邊段 round 重複（整數段藤蔓），裡面不加任何花紋
+ * - 上面是首頁的主視覺（聖米迦勒秤靈魂）、節目出處、遊戲名；結果寫在一塊金箔上（主要按鈕的那塊）
+ * - 名次一人一列：勝方是一塊盤面的暗底，輸家是一條畫了格線的羊皮紙（次要按鈕的那條）。
+ *   每列右邊是三個盤子 —— 盤面上同樣的紅藍綠、同樣的金邊 —— 裡面寫那一色的分數，最右邊是最終分數（2×最低−最高）
+ * - 最下面一條羊皮紙放站名與 QR
  *
- * 顏色全部是 palette.ts 的（布、墨、黃銅、木頭、座位色）；盤子的紅藍綠是站上的玩家色，由畫面讀 CSS 變數傳進來。
+ * 顏色全部是 palette.ts 的 HEX（羊皮紙、墨、金、盤面暗底、座位色）；盤子的紅藍綠是站上的玩家色，由畫面讀 CSS 變數傳進來。
  * 版面座標以 1080 寬為準。
  */
 export type MancalaCardRow = { seat: Seat; rank: number; name: string; scores: Scores; final: number };
@@ -45,11 +46,11 @@ export type MancalaCardData = {
   };
 };
 
-/** images 的順序（useShareCard 的 images 照這個給）：布邊、三件砝碼 */
-export const MCL_CARD_IMAGES = ['/games/balance-mancala/frame.png', '/games/balance-mancala/weights.webp'];
+/** images 的順序（useShareCard 的 images 照這個給）：頁邊、主視覺 */
+export const MCL_CARD_IMAGES = ['/games/balance-mancala/frame-card.png', '/games/balance-mancala/key-art.webp'];
 
 type Ctx = CanvasRenderingContext2D;
-const WEIGHTS_RATIO = 264 / 1000;
+const KEY_RATIO = 560 / 1000;
 
 /** 切角的長方形（.mcl-plaque／.mcl-cut 的形狀） */
 function cutPath(ctx: Ctx, x: number, y: number, w: number, h: number, k: number) {
@@ -65,34 +66,41 @@ function cutPath(ctx: Ctx, x: number, y: number, w: number, h: number, k: number
   ctx.closePath();
 }
 
-/** 黃銅牌：黃銅底、切角，內側一圈淡墨（同 .mcl-plaque 的 inset 陰影） */
+/** 金箔：金底、切角，內側一圈墨線、再一道羊皮紙的縫（同 .mcl-plaque 的兩層 inset 陰影；k 是切角，線寬照它算） */
 function plaque(ctx: Ctx, x: number, y: number, w: number, h: number, k: number) {
+  const line = k * 0.32;
   ctx.save();
   cutPath(ctx, x, y, w, h, k);
   ctx.fillStyle = BRASS;
   ctx.fill();
   ctx.clip();
-  ctx.strokeStyle = 'rgba(32,18,17,0.28)';
-  ctx.lineWidth = k * 0.7;
+  // 描邊的一半在路徑外（被 clip 掉），所以線寬是看得到的兩倍
+  ctx.strokeStyle = CLOTH_LIGHT;
+  ctx.lineWidth = line * 4;
+  cutPath(ctx, x, y, w, h, k);
+  ctx.stroke();
+  ctx.strokeStyle = INK_RGBA(0.55);
+  ctx.lineWidth = line * 2;
   cutPath(ctx, x, y, w, h, k);
   ctx.stroke();
   ctx.restore();
 }
 
-/** 印花布條：亮布色，上下各兩道梳線（同 .mcl-cloth，s 是 CSS px 到圖上的倍數） */
+/** 畫了格線的羊皮紙：亮羊皮紙，上下各一道金線（離邊 2、粗 2）、一道墨線（離邊 6、粗 1）（同 .mcl-cloth，s 是 CSS px 到圖上的倍數） */
 function comb(ctx: Ctx, x: number, y: number, w: number, h: number, s: number) {
   ctx.fillStyle = CLOTH_LIGHT;
   ctx.fillRect(x, y, w, h);
-  ctx.fillStyle = 'rgba(32,18,17,0.55)';
-  for (const dy of [3, 6]) {
-    ctx.fillRect(x, y + dy * s, w, s);
-    ctx.fillRect(x, y + h - dy * s - s, w, s);
-  }
+  ctx.fillStyle = BRASS;
+  ctx.fillRect(x, y + 2 * s, w, 2 * s);
+  ctx.fillRect(x, y + h - 4 * s, w, 2 * s);
+  ctx.fillStyle = INK_RGBA(0.5);
+  ctx.fillRect(x, y + 6 * s, w, s);
+  ctx.fillRect(x, y + h - 7 * s, w, s);
 }
 
 /**
- * 最外緣的布邊：frame.png（234×234，slice 84）照 CSS 的 `border-image: … 84 / band round` 畫 ——
- * 四角各一個印章，邊段重複整數次、稍微伸縮到剛好填滿。圖沒載到就畫兩道墨線。
+ * 最外緣的頁邊：frame-card.png（252×252，slice 84）照 CSS 的 `border-image: … 28 / band round` 畫 ——
+ * 四角各一朵花，邊段重複整數次、稍微伸縮到剛好填滿。圖沒載到就畫兩道墨線。
  */
 function frame(ctx: Ctx, img: HTMLImageElement | undefined, w: number, h: number, band: number) {
   if (!img) {
@@ -134,7 +142,7 @@ function centered(ctx: Ctx, font: string, s: string, cx: number, cy: number, siz
   ctx.restore();
 }
 
-/** 一顆子：座位色＋字母，外圈一道亮布色的縫（同 PieceDisc） */
+/** 一顆子：座位色＋字母，外圈一道亮羊皮紙的縫（同 PieceDisc） */
 function disc(ctx: Ctx, font: string, seat: Seat, cx: number, cy: number, d: number, alpha = 1) {
   const look = seatLook(seat);
   ctx.save();
@@ -151,7 +159,7 @@ function disc(ctx: Ctx, font: string, seat: Seat, cx: number, cy: number, d: num
   centered(ctx, font, letterOf(seat), cx, cy, d * 0.56, look.fg, alpha);
 }
 
-/** 一個盤子：紅／藍／綠，黃銅外緣（同盤面），裡面寫分數 */
+/** 一個盤子：紅／藍／綠，金邊（同盤面），裡面寫分數 */
 function dish(ctx: Ctx, font: string, color: string, value: number, cx: number, cy: number, d: number, alpha = 1) {
   ctx.save();
   ctx.globalAlpha = alpha;
@@ -230,15 +238,15 @@ function row(ctx: Ctx, d: MancalaCardData, r: MancalaCardRow, c: Cols, y: number
   fitText(ctx, d.font, String(r.final), finalR, cy + (win ? 38 : 18) * u, { size: (win ? 80 : 52) * u, color: win ? BRASS : INK, align: 'right', max: finalW + 20 * u });
 }
 
-/** 結果的黃銅牌：上面一行小字（遊戲結束 · 模式），牌子裡是大標 */
+/** 結果的金箔：上面一行小字（遊戲結束 · 模式），金箔裡是大標 */
 function resultPlaque(ctx: Ctx, d: MancalaCardData, cx: number, y: number, w: number, h: number, size: number) {
   plaque(ctx, cx - w / 2, y, w, h, Math.round(h * 0.13));
   fitText(ctx, d.font, d.text.title, cx, y + h / 2 + size * 0.36, { size, color: INK, align: 'center', max: w - h * 0.6 });
 }
 
-function weights(ctx: Ctx, a: ShareAssets, cx: number, y: number, w: number) {
+function keyArt(ctx: Ctx, a: ShareAssets, cx: number, y: number, w: number) {
   const img = a.images[1];
-  if (img) ctx.drawImage(img, cx - w / 2, y, w, w * WEIGHTS_RATIO);
+  if (img) ctx.drawImage(img, cx - w / 2, y, w, w * KEY_RATIO);
 }
 
 function footer(ctx: Ctx, d: MancalaCardData, a: ShareAssets, x: number, y: number, w: number, h: number, o: { brand: number; small: number; qr: number; s: number }) {
@@ -258,7 +266,7 @@ function base(ctx: Ctx, a: ShareAssets, w: number, h: number, band: number) {
 function story(ctx: Ctx, d: MancalaCardData, a: ShareAssets) {
   const W = 1080, H = 1920, B = 64, cx = W / 2;
   base(ctx, a, W, H, B);
-  weights(ctx, a, cx, 112, 600);
+  keyArt(ctx, a, cx, 90, 360);
   fitText(ctx, d.font, d.text.showRef, cx, 326, { size: 30, weight: 700, color: INK_SOFT, align: 'center', max: 860 });
   fitText(ctx, d.font, d.text.name, cx, 430, { size: 100, color: INK, align: 'center', max: 860 });
   if (d.text.altName) fitText(ctx, d.font, d.text.altName, cx, 486, { size: 34, weight: 700, color: INK_SOFT, align: 'center', max: 860 });
