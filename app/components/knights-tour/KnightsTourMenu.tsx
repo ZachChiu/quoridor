@@ -5,7 +5,7 @@ import { GiStopwatch } from 'react-icons/gi';
 import KnightSvg from './KnightSvg';
 import { LuChevronRight } from 'react-icons/lu';
 import LocalName, { letteringOf } from '@/components/LocalName';
-import PlatformCorner from '@/components/PlatformCorner';
+import GameHomeBar from '@/components/GameHomeBar';
 import { useTextTable } from '@/i18n/gameText';
 import { localePath, type Locale } from '@/i18n/locales';
 import { KNIGHTS_TOUR, trialRules } from '@/i18n/routes';
@@ -45,10 +45,11 @@ export default function KnightsTourMenu({ locale, onShow, onPractice }: {
   const card = 'flex w-full items-center gap-3 px-4 py-3.5 text-left active:scale-[0.99]';
 
   return (
-    <KtFrame className="items-center justify-center px-5 py-[max(1rem,3svh)]">
-      {/* 右上角的聯絡、語言：圓鈕與打開的彈窗都是這款的圖版（KT_CORNER），不是 Wall Go 的奶油底 */}
-      <PlatformCorner locale={locale} theme={KT_CORNER} offset="calc(clamp(6px, 1.6vw, 14px) + var(--kt-frame, 8px) + 6px)" />
-      <main className="flex w-full max-w-[420px] flex-col items-center pt-10 lg:max-w-[900px] lg:flex-row lg:items-center lg:gap-14 lg:pt-0">
+    <KtFrame className="items-center px-5 pb-[max(1rem,3svh)] pt-2">
+      {/* 最上面一列：平台 logo、聯絡、語言（GameHomeBar），跟內容同寬、排在流裡（11/3 Zach：跟時間拍賣一樣、不要浮著）。
+          圓鈕與打開的彈窗都是這款的圖版（KT_CORNER），不是 Wall Go 的奶油底 */}
+      <GameHomeBar locale={locale} theme={KT_CORNER} className="max-w-[420px] lg:max-w-[900px]" />
+      <main className="my-auto flex w-full max-w-[420px] flex-col items-center pt-4 lg:max-w-[900px] lg:flex-row lg:items-center lg:gap-14 lg:pt-0">
         <header className="flex w-full flex-col items-center text-center lg:flex-1">
           <h1 className="flex w-full flex-col items-center">
             {lettering ? (

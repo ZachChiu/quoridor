@@ -4,7 +4,7 @@ import type { CSSProperties } from 'react';
  * 遊戲首頁右上角「聯絡我們」與「語言」的外觀：圓鈕本身，加上打開的那兩個彈窗。
  *
  * 每款遊戲都有自己的視覺，這兩個彈窗卻一直是 Wall Go 的奶油底＋深墨按鈕（Zach 10/24：九子棋有些彈窗打開還是舊的 Wall Go 樣式，
- * 「每一頁都有各自的視覺了，把右上角的留言跟語系彈窗一起整併好」）。各遊戲在自己的資料夾定義一份，交給 PlatformCorner。
+ * 「每一頁都有各自的視覺了，把右上角的留言跟語系彈窗一起整併好」）。各遊戲在自己的資料夾定義一份，交給 GameHomeBar（虎羊棋是 BaghHeader）。
  *
  * 只放字串（class 與 style），不放元件：遊戲首頁多半是伺服器元件，函式傳不進 client 元件。
  * 也刻意放在沒有 'use client' 的檔案（原因見 bagh-chal/styles.ts）。

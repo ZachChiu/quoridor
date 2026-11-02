@@ -17,7 +17,7 @@ import { RulesStepsList } from './RulesSteps';
  * 一顆回這款首頁選玩法的按鈕 ＋ 署名。整頁包在包袱巾的畫框裡（GomokuFrame：裝飾只有最外緣一圈布條），
  * 卡片與按鈕是這款自己的布（globals.css 的 .gmk-*）。同一組步驟也在對局中的說明彈窗裡（RulesSteps.tsx，一次一步、可以左右滑）。
  *
- * 這款裡面換頁不播轉場：回首頁用一般的 Link。置頂列不放平台 logo 與聯絡我們（那是遊戲首頁才有的，見 PlatformCorner）。
+ * 這款裡面換頁不播轉場：回首頁用一般的 Link。置頂列不放平台 logo 與聯絡我們（那是遊戲首頁才有的，見 GameHomeBar）。
  */
 export default function RulesPage({ locale }: { locale: Locale }) {
   const t = pickText(TEXT, locale);
