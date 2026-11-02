@@ -52,7 +52,7 @@ export type OnlineMode = {
 /**
  * 盲眼五子棋的對局畫面。六種模式共用：盲棋／一般 × 對電腦／兩人同機／連線。
  *
- * - 手機：上方一排小圓鈕（換模式、聲音、標題、說明、重來），下面狀態、棋盤、選色盤與「下子」。
+ * - 手機：上方一排小圓鈕（首頁、聲音、標題、重來、說明），下面兩方的分段條與狀態（固定兩行高，提示一出一沒棋盤不跳）、棋盤、選色盤與「下子」。
  *   悔棋（只有一般模式）放在「下子」旁邊：上方加了聲音鈕之後再放悔棋，標題會被擠成「盲五…」
  *   390×844 一個畫面放得下，不捲動
  * - 桌機（lg）：棋盤在左，右邊一欄放狀態、選色盤與有字的按鈕
@@ -181,7 +181,7 @@ export default function GomokuPlay({ mode, onMenu }: { mode: GomokuMode | Online
   };
 
   // 連線的字跟兩人同機一樣寫黑方／白方，不寫「你」「對方」（太直白，Zach 對 Wall Go 選過用記號不用字）：
-  // 自己是哪一方由狀態底下那兩塊小布標出來（見 seats）
+  // 自己是哪一方由兩方那條分段條上的實線框標出來（見 segment）
   const resultTitle = game.winner === 'draw' ? t.draw
     : vsAi ? (game.winner === 'black' ? t.youWin : t.youLose)
     : game.winner === 'black' ? t.blackWins : t.whiteWins;
@@ -256,61 +256,50 @@ export default function GomokuPlay({ mode, onMenu }: { mode: GomokuMode | Online
   const wide = 'gmk-patch is-ramie flex h-12 items-center justify-center gap-2 text-sm font-black disabled:opacity-35';
   const ink = 'gmk-patch is-pieced flex h-12 items-center justify-center gap-2 text-sm font-black active:scale-[0.98] disabled:opacity-35';
 
-  // 連線：黑方、白方兩塊小布，自己那塊的縫線是實線的黑絲（跟選色盤選中的那格、等人畫面自己那塊布同一個記號）；
-  // 讀屏另外念一句「你執黑先下」。對方斷線（滿 3 秒）那塊蓋一層灰、正中一個斷掉的 Wi‑Fi（同九子棋、虎棋）
+  // 對方斷線（滿 3 秒）那半蓋一層灰、正中一個斷掉的 Wi‑Fi（同九子棋、虎棋）
   const sideName = (s: Side) => (s === 'black' ? t.black : t.white);
   const awayCover = (
     <span className="gmk-away-cover" role="img" aria-label={g.status.away}><LuWifiOff aria-hidden="true" /></span>
   );
-  const seats = online && (
-    <div className="mt-1.5 flex gap-1.5 lg:hidden">
-      {(['black', 'white'] as const).map((s) => (
-        <span key={s} aria-hidden={away !== s}
-          className={`gmk-patch relative flex items-center gap-1.5 py-1 pl-1.5 pr-2.5 text-xs font-black ![outline-offset:-3px] ${
-            s === online.side ? '![outline-color:#2a2525] ![outline-style:solid] ![outline-width:1.5px]' : 'is-ramie text-ink-soft'
-          } ${away === s ? 'gmk-away [--away-size:1rem]' : ''}`}>
-          <SideFace side={s} className="size-3.5" />{sideName(s)}
-          {away === s && awayCover}
-        </span>
-      ))}
-      <span className="sr-only">{online.side === 'black' ? t.youAreBlack : t.youAreWhite}</span>
-    </div>
-  );
-
-  // 桌機右欄的兩方（同九子棋、虎棋的兩張狀態卡）：輪到的那方是白絲布、另一方淡下去；連線時自己那塊多一圈黑絲實線
   const turnSide = game.winner ? (game.winner === 'draw' ? null : game.winner) : game.turn;
-  const sideCards = (
-    <div className="grid grid-cols-2 gap-2.5">
-      {(['black', 'white'] as const).map((s) => (
-        <div key={s}
-          className={`gmk-patch relative flex items-center gap-2.5 px-3 py-2.5 ![outline-offset:-4px] ${turnSide === s ? '' : 'is-ramie [&>:not(.gmk-away-cover)]:opacity-45'} ${
-            online && s === online.side ? '![outline-color:#2a2525] ![outline-style:solid] ![outline-width:1.5px]' : ''
-          } ${away === s ? 'gmk-away' : ''}`}>
-          <SideFace side={s} className="size-6 shrink-0" />
-          <span className="min-w-0">
-            <span className="block text-sm font-black leading-tight">{sideName(s)}</span>
-            <span className="block text-xs font-bold leading-tight text-ink-soft">
-              {vsAi ? (s === 'black' ? t.you : t.ai) : online && s === online.side ? <span className="sr-only">{t.you}</span> : ' '}
-            </span>
-          </span>
-          {away === s && awayCover}
-        </div>
-      ))}
-    </div>
+
+  // 結算關掉之後留在翻開的盤面上看，狀態那一塊換成叫回結算的鈕（同尼泊爾虎棋；11/2 Zach：「結束點不出結尾畫面」）
+  const reopen = ended && (
+    <button type="button" onClick={() => setResultOpen(true)} className={`${wide} w-full px-4`}>
+      {game.winner !== 'draw' && <SideFace side={game.winner!} className="size-5 shrink-0" />}
+      {resultTitle} · {g.champion.seeResult}
+    </button>
   );
 
-  const statusBlock = (
-    <div className="flex items-start justify-between gap-3">
-      <div className="min-w-0" aria-live="polite">
-        <p className="text-base font-black leading-tight">{status}</p>
-        {hint && <p className="mt-0.5 text-xs font-bold leading-snug text-ink-soft">{hint}</p>}
-        {seats}
-        {canPlay && <p className="mt-0.5 hidden text-xs font-bold leading-snug text-ink-soft coarse:block">{t.aimHint}</p>}
-      </div>
-      <span className="gmk-patch is-ramie flex shrink-0 items-center gap-1.5 py-1.5 pl-2 pr-3 text-xs font-black tabular-nums">
-        <SideFace side={game.winner && game.winner !== 'draw' ? game.winner : game.turn} className="size-4" />
-        {moveNo}
-      </span>
+  const mine = (s: Side) => (online ? online.side === s : false);
+  const sub = (s: Side) => (vsAi ? (s === 'black' ? t.you : t.ai) : '');
+  // 連線時自己那半的縫線換成 2px 實線（11/2 Zach 從實線框、底下布邊、名字後的小人三種挑了實線框）：
+  // 輪到自己時在青綠布上是白絲，輪到對方時是黑絲；跟選色盤選中的那格同一個記號
+  const markBox = (s: Side, lit: boolean) => (!mine(s) ? ''
+    : lit ? '![outline-color:#f2e4c9] ![outline-style:solid] ![outline-width:2px]' : '![outline-color:#2a2525] ![outline-style:solid] ![outline-width:2px]');
+  // 兩方是一條分段條（11/2 Zach 從計分牌、上下夾、分段條挑了分段條），手機與桌機同一條，輪到的那半是拼起來的青綠布；名字只有一行（對電腦才多一行「你／AI」），黑白兩塊才對得齊
+  const segment = (tall: boolean) => (
+    <div className="gmk-patch is-ramie grid grid-cols-2 gap-1 p-1 ![outline-offset:-3px]">
+      {(['black', 'white'] as const).map((s) => {
+        const lit = turnSide === s;
+        return (
+          <div key={s} className={`relative flex items-center justify-center gap-2 rounded-[2px] font-black ![outline-offset:-4px] ${tall ? 'h-14 text-base' : 'h-10 text-sm'} ${
+            lit ? 'gmk-patch is-pieced ![--corner:14px]' : 'text-ink-soft'} ${markBox(s, lit)} ${away === s ? 'gmk-away [--away-size:1.1rem]' : ''}`}>
+            <SideFace side={s} className={`${tall ? 'size-7' : 'size-6'} shrink-0`} />
+            <span>{sideName(s)}{sub(s) && <span className="ml-1 text-[11px] font-bold opacity-75">{sub(s)}</span>}</span>
+            {away === s && awayCover}
+          </div>
+        );
+      })}
+      {online && <span className="sr-only">{online.side === 'black' ? t.youAreBlack : t.youAreWhite}</span>}
+    </div>
+  );
+  const sideCards = segment(true);
+  /** 手機：一行狀態＋提示，固定兩行高 —— 提示一出一沒，棋盤不跟著跳 */
+  const line = (
+    <div className="mt-1.5 flex h-8 items-start justify-between gap-2 text-xs font-bold leading-4 text-ink-soft" aria-live="polite">
+      <p className="line-clamp-2 min-w-0"><span className="text-ink font-black">{status}</span>{hint && <> · {hint}</>}</p>
+      <span className="shrink-0 font-black tabular-nums">{moveNo}</span>
     </div>
   );
 
@@ -361,18 +350,20 @@ export default function GomokuPlay({ mode, onMenu }: { mode: GomokuMode | Online
           <p className="truncate text-[11px] font-bold text-ink-soft">{modeLabel}</p>
         </div>
         <div className="flex shrink-0 gap-1">
-          <button type="button" onClick={() => setHelpOpen(true)} aria-label={t.rules} className={round}><LuCircleHelp aria-hidden="true" /></button>
-          {/* 連線沒有重來：留一顆同寬的空位，標題才會在正中間 */}
+          {/* 連線沒有重來：留一顆同寬的空位（在內側，問號才會靠邊），標題才會在正中間 */}
           {online ? <span aria-hidden="true" className="size-11 shrink-0" />
             : <button type="button" onClick={restart} aria-label={t.restart} className={round}><LuRotateCcw aria-hidden="true" /></button>}
+          <button type="button" onClick={() => setHelpOpen(true)} aria-label={t.rules} className={round}><LuCircleHelp aria-hidden="true" /></button>
         </div>
       </div>
-      <div className="mt-2 w-full max-w-[520px] lg:hidden">{statusBlock}</div>
+      <div className="mt-2 w-full max-w-[520px] lg:hidden">
+        {reopen || <>{segment(false)}{line}</>}
+      </div>
 
       {/* 桌機：棋盤與右欄並排（排法見 deskLayout.ts）；手機這一層是 contents，不影響手機的上下排 */}
       <div className={PLAY_GRID.row}>
         {/* 棋盤：手機在剩下的高度裡置中；寬度同時受高度限制，矮的手機也放得下下面的選色盤 */}
-        <div ref={boardRef} className="flex w-full max-w-[min(520px,calc(100svh-17rem))] flex-1 items-center py-2 lg:w-[min(640px,calc(100svh-4rem))] lg:max-w-none lg:flex-none lg:py-0">
+        <div ref={boardRef} className={`flex w-full max-w-[min(520px,calc(100svh-17rem))] flex-1 items-center py-2 lg:w-[min(640px,calc(100svh-4rem))] lg:max-w-none lg:flex-none lg:py-0`}>
           <GomokuBoard
             board={game.board}
             moves={game.moves}
@@ -405,7 +396,7 @@ export default function GomokuPlay({ mode, onMenu }: { mode: GomokuMode | Online
                 {resignButton}
                 <button type="button" onClick={() => aim !== null && place(aim)} disabled={!canPlay || aim === null || !!game.board[aim]}
                   className={`${ink} hidden coarse:flex`}>
-                  {t.place}
+                  {canPlay && aim === null ? t.aimFirst : t.place}
                 </button>
               </div>
             </>
@@ -424,13 +415,13 @@ export default function GomokuPlay({ mode, onMenu }: { mode: GomokuMode | Online
               {soundButton}
             </div>
             {sideCards}
-            <div className="flex items-start justify-between gap-3">
+            {reopen || <div className="flex items-start justify-between gap-3">
               <div className="min-w-0" aria-live="polite">
                 <p className="text-base font-black leading-tight">{status}</p>
                 {hint && <p className="mt-0.5 text-xs font-bold leading-snug text-ink-soft">{hint}</p>}
               </div>
               <span className="gmk-patch is-ramie flex shrink-0 items-center gap-1.5 py-1.5 pl-2 pr-3 text-xs font-black tabular-nums">{moveNo}</span>
-            </div>
+            </div>}
             {!ended && picker && (
               <div className="flex flex-col gap-2">
                 <p className="text-xs font-black text-ink-soft">{t.pickColor}</p>
