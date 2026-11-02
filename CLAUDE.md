@@ -378,8 +378,10 @@ GA 由 `app/shell.tsx` 的 `<GoogleAnalytics>` 載入（只有 `NEXT_PUBLIC_APP_
 | `select_game` | 平台首頁、季目錄點了能玩的遊戲卡（大卡的「開始玩」也算） | game、location（home_hero／home_grid／season／related）、season（1／2／3） |
 
 - `game_start` / `game_end` 看**狀態轉變**而不是按鈕；第一次觀察到的狀態不送（重整後從棋譜重建的「已開始／已結束」不是這次發生的），連線另用 sessionStorage 去重。連線局每位玩家各送一次，所以是「人次」不是「局數」。投降不另外送，會以 `game_end` 的 `ended: 'resign'` 出現。
-- **`page_view` 交給 GA 自己算**（首次載入由 config、站內換頁由加強型評估的「依瀏覽器記錄事件」）。不要再手動送 —— 以前的 `AnalyticsProvider` 就是這樣讓每次瀏覽都算兩次。
-  它要帶的 `page_type`（platform_home／season／game_home／rules／play）與 `game` 用 `gtag('set')` 設：`utils/pageMeta.ts` 的內嵌 script 在 GA 載入前包住 pushState／replaceState、聽 popstate，網址一變就照新網址 set（在 React effect 裡 set 會晚 GA 一步、帶到上一頁的值）。set 過的值這一頁之後的每個事件都會帶。
+- **`page_view` 由 `utils/pageMeta.ts` 的內嵌 script 送，一次換頁一筆**，事件本身帶 `page_type`（platform_home／season／game_home／rules／play）與 `game`（11/2 大腦筋派工，`docs/page-type-ga-fix.md`）。
+  先前用 `gtag('set')` 讓 GA 自己送的 page_view 帶上，但 GA4 的 set 不會把自訂參數帶進事件、換頁再 config 一次參數也不會更新（無頭 Chrome 攔下 /g/collect 實測），v26.11.1 起的 page_view 全部沒帶。
+  所以 config 是 `send_page_view: false`、不用 `@next/third-parties` 的 `<GoogleAnalytics>`（它自己 config 會多送一筆），**GA 後台「加強型評估 → 依瀏覽器記錄事件判斷網頁變更」要關掉**，不然站內換頁算兩次。
+  只看 pathname＋search（hash、離開守門那筆同網址的 push 不算），等新頁標題換上再送（最多 1 秒），page_location 不帶 hash。其他事件不帶 page_type。不要另外再手動送 page_view。
 - `select_game` 由 `SelectGameTracker` 在 document 上聽 click：能玩的卡本來就有 `data-game`，往上找 `data-select-location` 決定是哪一區。
 - 參數要在 GA 後台「管理 → 自訂定義」註冊才看得到：維度 `mode`、`players`、`difficulty`、`entry`、`result`、`winner`、`ended`、`reason`、`fail_step`、`method`、`from`、`to`、`finished`、`game`、`location`、`page_type`、`season`、`board_size`（騎士巡遊的棋盤大小，11/1 已註冊）；指標 `turns`、`duration_sec`、`step`、`rating`。
   `share` 的 `content_type`、`item_id` 是 GA4 建議事件的標準參數，後台有沒有內建維度要上線後確認，沒有再註冊。
