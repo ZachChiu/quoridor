@@ -1,8 +1,9 @@
 'use client';
-import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { COLORS, type Side, type StoneColor } from '@/games/blind-gomoku/engine';
 import type { BlindGomokuText } from '@/games/blind-gomoku/text';
 import { useStep, useSwipePager } from '@/hook/useSwipePager';
+import { track } from '@/utils/analytics';
 import { ColorFace, INK, KEY_HEX, SideFace } from './Stone';
 
 /**
@@ -189,6 +190,13 @@ export function RulesStepsPaged({ open, steps, prev, next, done, onDone }: {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [open, onKeyDown]);
   const last = i === STEP_COUNT - 1;
+  // 關掉時讀到第幾步（同 Wall Go、九子棋送 tutorial_close）：按完成、按 ×、點遮罩都算
+  const seen = useRef(i);
+  useEffect(() => { seen.current = i; }, [i]);
+  useEffect(() => {
+    if (!open) return;
+    return () => track('tutorial_close', { game: 'blind-gomoku', step: seen.current + 1, steps: STEP_COUNT, finished: seen.current === STEP_COUNT - 1 });
+  }, [open]);
   return (
     <div className="flex flex-col gap-4">
       {/* 每一頁左右各留 12px、外框往外撐回去：拖到一半時相鄰兩頁的字中間隔一道縫，不會黏在一起 */}

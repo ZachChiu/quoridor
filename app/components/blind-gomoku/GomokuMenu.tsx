@@ -11,6 +11,7 @@ import PlatformCorner from '@/components/PlatformCorner';
 import { useTextTable } from '@/i18n/gameText';
 import { localePath, type Locale } from '@/i18n/locales';
 import { BLIND_GOMOKU, trialOnline, trialRules } from '@/i18n/routes';
+import { track } from '@/utils/analytics';
 import { LEVELS } from '@/games/blind-gomoku/ai';
 import type { Side } from '@/games/blind-gomoku/engine';
 import { newRoomHash } from '@/games/blind-gomoku/online';
@@ -68,6 +69,7 @@ export default function GomokuMenu({ locale, onStart }: { locale: Locale; onStar
   const chip = 'gmk-patch px-3 py-2 text-sm font-black active:scale-95';
   const openRoom = () => {
     setInviteOpen(false);
+    track('mode_select', { game: 'blind-gomoku', mode: 'online', players: 2, entry: 'home' });
     router.push(localePath(locale, trialOnline(BLIND_GOMOKU)) + newRoomHash(inviteBlind, inviteSide));
   };
 

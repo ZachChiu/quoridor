@@ -2,6 +2,7 @@
 import { useRef, useState } from 'react';
 import { useIsoLayoutEffect } from '@/hook/useIsoLayoutEffect';
 import type { Locale } from '@/i18n/locales';
+import { track } from '@/utils/analytics';
 import GomokuMenu from './GomokuMenu';
 import GomokuPlay from './GomokuPlay';
 import { HIDE_MENU_STYLE_ID, modeHash, readModeHash, type GomokuMode } from './modeHash';
@@ -41,6 +42,9 @@ export default function BlindGomoku({ locale }: { locale: Locale }) {
   }, []);
 
   const start = (m: GomokuMode) => {
+    track('mode_select', m.opponent === 'ai'
+      ? { game: 'blind-gomoku', mode: 'solo', players: 2, difficulty: m.level, entry: 'home' }
+      : { game: 'blind-gomoku', mode: 'local', players: 2, entry: 'home' });
     history.pushState(null, '', modeHash(m));
     shown.current = location.hash;
     setMode(m);

@@ -1,5 +1,5 @@
 'use client';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { LuCheck, LuCopy, LuShare2 } from 'react-icons/lu';
@@ -8,6 +8,7 @@ import { parseRoomHash, useHashSession, useTurnRoom, type TurnRoomFailure } from
 import { useRoomSignals } from '@/hook/useRoomSignals';
 import { seatIndex, seatKey, type SeatKey } from '@/types/turnRoom';
 import { writeResigned } from '@/utils/roomSignals';
+import { track } from '@/utils/analytics';
 import { useGameText } from '@/i18n/LocaleProvider';
 import { fill, useTextTable } from '@/i18n/gameText';
 import { localePath, type Locale } from '@/i18n/locales';
@@ -80,6 +81,18 @@ function Session({ locale, hash }: { locale: Locale; hash: string }) {
   const resign = useCallback(() => { if (roomPath && me !== null) void writeResigned(roomPath, seatKey(me)); }, [roomPath, me]);
   const sideOfKey = (k: string | null): Side | null => (k ? sideOfSeat(seatIndex(k as SeatKey)) : null);
 
+  // GA：開房的人房間開好送 room_created、連不上送 online_error（同九子棋、虎棋）
+  const created = useRef(false);
+  useEffect(() => {
+    if (created.current || !('create' in target) || !room) return;
+    created.current = true;
+    track('room_created', { game: 'blind-gomoku', players: 2 });
+  }, [target, room]);
+  useEffect(() => {
+    // 連結本身壞了（badLink）不是連線失敗，不送
+    if (failure && failure !== 'badLink') track('online_error', { game: 'blind-gomoku', reason: failure });
+  }, [failure]);
+
   if (failure) return <Failure failure={failure} home={home} />;
   if (!room || !side || !ok || !inviteUrl) return <Connecting />;
   if (open.length) return <Waiting side={side} blind={ok.blind} url={inviteUrl} home={home} />;
@@ -88,7 +101,7 @@ function Session({ locale, hash }: { locale: Locale; hash: string }) {
       opponent: 'online', blind: ok.blind, side, game: ok.game, onMove, newRoom, resigned, resign,
       away: sideOfKey(signals.away[0] ?? null), selfOffline: signals.selfOffline,
       canNudge: signals.canNudge, nudged: signals.nudged, shake: signals.shake, nudgeFrom: sideOfKey(signals.nudgeFrom),
-      nudge: () => signals.sendNudge(),
+      nudge: () => signals.sendNudge(() => track('nudge_send', { game: 'blind-gomoku', players: 2 })),
     }} />
   );
 }
@@ -180,6 +193,7 @@ function Waiting({ side, blind, url, home }: { side: Side; blind: boolean; url: 
 
   const copy = async () => {
     try { await navigator.clipboard.writeText(url); } catch { return; }
+    track('share_room_link', { game: 'blind-gomoku', method: 'copy' });
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -224,7 +238,7 @@ function Waiting({ side, blind, url, home }: { side: Side; blind: boolean; url: 
             </button>
           </div>
           {canShare && (
-            <button type="button" onClick={() => { share({ title: t.title, text: t.shareText, url }).catch(() => {}); }}
+            <button type="button" onClick={() => { track('share_room_link', { game: 'blind-gomoku', method: 'native' }); share({ title: t.title, text: t.shareText, url }).catch(() => {}); }}
               className="gmk-patch is-pieced flex h-12 w-full items-center justify-center gap-2 px-4 text-base font-black active:scale-[0.98]">
               <LuShare2 className="text-lg" aria-hidden="true" />{g.share.share}
             </button>

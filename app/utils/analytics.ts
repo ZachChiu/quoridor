@@ -28,8 +28,10 @@ type Players = 1 | 2 | 3;
  * 哪一款遊戲：網址的 slug（/wall-go/ → wall-go）。平台上線後同一個 GA 資源有好幾款，
  * 跟對局有關的事件都一定要帶（docs/platform-tracking.md）。新遊戲上線時加在這裡，漏帶就編譯不過。
  */
-export type GameSlug = 'wall-go' | 'bagh-chal' | 'knights-tour' | 'nine-mens-morris';
+export type GameSlug = 'wall-go' | 'bagh-chal' | 'knights-tour' | 'nine-mens-morris' | 'blind-gomoku';
 type G = { game: GameSlug };
+/** 難度。盲五子棋另有一級 show：照節目裡 AI 的規矩（跟你上一手同色），2026-11 上線時加 */
+type Level = Difficulty | 'show';
 
 /** 平台首頁、季目錄頁點了哪裡的遊戲卡 */
 export type SelectLocation = 'home_hero' | 'home_grid' | 'season' | 'related';
@@ -42,14 +44,14 @@ type BoardSize = number;
 
 type Events = {
   /** 首頁（或 /solo 頁）選了一個模式。是「想玩」，不是「開始玩」 */
-  mode_select: G & { mode: GameModeParam; players: Players; difficulty?: Difficulty; entry: 'home' | 'solo_page'; board_size?: BoardSize };
+  mode_select: G & { mode: GameModeParam; players: Players; difficulty?: Level; entry: 'home' | 'solo_page'; board_size?: BoardSize };
   /** 連線房開好了（還沒有人加入） */
   room_created: G & { players: 2 | 3 };
   /**
    * 這一局真的開始了：本機／單人是擺下第一顆棋，連線是人到齊、開始擺棋。
    * 分母用這個，完成率＝game_end ÷ game_start。
    */
-  game_start: G & { mode: GameModeParam; players: Players; difficulty?: Difficulty; board_size?: BoardSize };
+  game_start: G & { mode: GameModeParam; players: Players; difficulty?: Level; board_size?: BoardSize };
   /**
    * 這一局結束了。
    * result：單人與連線從「這台裝置上的玩家」的角度看（win／lose／tie）；
@@ -57,7 +59,7 @@ type Events = {
    * Wall Go 是 A／B／C（多人同勝用 / 接起來），尼泊爾虎棋是 tiger／goat／draw。
    */
   game_end: G & {
-    mode: GameModeParam; players: Players; difficulty?: Difficulty; board_size?: BoardSize;
+    mode: GameModeParam; players: Players; difficulty?: Level; board_size?: BoardSize;
     result: 'win' | 'lose' | 'tie' | 'decided';
     /** 一個人解題的遊戲沒有勝方，不帶 */
     winner?: string;
@@ -66,7 +68,7 @@ type Events = {
     duration_sec?: number;
   };
   /** 結束畫面按「再來一局」 */
-  game_restart: G & { mode: GameModeParam; players: Players; difficulty?: Difficulty; board_size?: BoardSize };
+  game_restart: G & { mode: GameModeParam; players: Players; difficulty?: Level; board_size?: BoardSize };
   /** 連線對戰失敗 */
   /**
    * fail_step 不叫 step：step 已經是 tutorial_close 的「看到第幾步」，在 GA 註冊成指標，
