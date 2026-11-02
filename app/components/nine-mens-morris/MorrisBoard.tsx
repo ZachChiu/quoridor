@@ -39,13 +39,13 @@ const top = (y: number) => `${(y / BOARD_H) * 100}%`;
 
 /**
  * 鐘形小人。畫法是手抄本的筆觸（細而抖的墨線、蛋彩斑駁、提白），由 scripts/build-nmm-art.mjs 烘成圖（art.ts 的 PIECE_ART），
- * 這裡只貼圖 —— 一盤十幾顆子各跑一次 feTurbulence，手機上會卡。mark：上一手的子，頭上點一個反色小點
+ * 這裡只貼圖 —— 一盤十幾顆子各跑一次 feTurbulence，手機上會卡。
+ * 上一手不畫任何記號（11/3 Zach 從頭上白點、原位空心圈、都不留裡選了都不留：白點看起來像被選中）
  */
-export function PieceGlyph({ side, mark = false, className = '' }: { side: Side; mark?: boolean; className?: string }) {
+export function PieceGlyph({ side, className = '' }: { side: Side; className?: string }) {
   return (
     <svg viewBox="0 0 100 100" overflow="visible" className={className} aria-hidden="true">
       <image href={PIECE_ART[side]} x={-PIECE_PAD} y={-PIECE_PAD} width={100 + PIECE_PAD * 2} height={100 + PIECE_PAD * 2} />
-      {mark && <circle cx={MAN_HEAD.x} cy={MAN_HEAD.y} r={5} fill={side === 'black' ? NMM.parchment : NMM.ink} />}
     </svg>
   );
 }
@@ -101,15 +101,13 @@ const MAN = { left: pct((1 - MAN_SCALE) / 2), top: pct(MAN_TOP), width: pct(MAN_
  * 規則頁畫出來的就是對局裡看到的樣子。
  * hover：對局才有的「滑鼠滑過才浮出」—— 小圖沒有滑鼠互動，浮出的子直接畫成半透明。
  */
-function PointMarks({ cell, selected, removable, movable, mark, target, ghost, from, hover = false }: {
+function PointMarks({ cell, selected, removable, movable, target, ghost, hover = false }: {
   cell: Cell;
   selected: boolean;
   removable: boolean;
   movable: boolean;
-  mark: boolean;
   target?: 'place' | 'move';
   ghost?: Side;
-  from: boolean;
   hover?: boolean;
 }) {
   // 腳下的粉筆：選起來的子原地留一塊印、可以拿的子是虛線圈、可以走的子是淡淡的實線圈。
@@ -125,7 +123,7 @@ function PointMarks({ cell, selected, removable, movable, mark, target, ghost, f
       {cell && (
         <span data-piece="" style={{ ...MAN, transformOrigin: MAN_ORIGIN }}
           className={`absolute transition-transform duration-200 ${selected ? 'translate-y-[-16%] scale-105' : movable && hover ? 'fine:group-hover:translate-y-[-6%]' : ''} ${removable ? 'nmm-teeter' : ''}`}>
-          <PieceGlyph side={sideOf(cell)} mark={mark} className="size-full" />
+          <PieceGlyph side={sideOf(cell)} className="size-full" />
         </span>
       )}
       {!cell && target === 'move' && <span aria-hidden="true" className={`${dot} size-[30%] bg-[#eee0c4] shadow-[0_0_0_1.5px_rgb(30_18_10/0.45)]`} style={SPOT} />}
@@ -134,7 +132,6 @@ function PointMarks({ cell, selected, removable, movable, mark, target, ghost, f
           <PieceGlyph side={ghost} className="size-full" />
         </span>
       )}
-      {!cell && !target && from && <span aria-hidden="true" className={`${dot} size-[34%] border-2 border-[#eee0c4]/60`} style={SPOT} />}
     </>
   );
 }
@@ -155,7 +152,7 @@ function TrayPieces({ removed }: { removed: Record<Side, number> }) {
  * 每個點是 span 不是按鈕（不能點、不進 Tab 順序），整張圖讀屏不念 —— 旁邊那段字就是圖在講的事。
  * 沒有落子、閒置這些動畫；可以拿的子照樣搖（對局裡就是靠這個認出能拿哪顆）。
  */
-export function MorrisMiniBoard({ board, mills = [], removable = [], selected, targets = [], ghost, lastTo, lastFrom, removed = { black: 0, white: 0 } }: {
+export function MorrisMiniBoard({ board, mills = [], removable = [], selected, targets = [], ghost, removed = { black: 0, white: 0 } }: {
   board: Cell[];
   /** 剛連成的線（粉筆） */
   mills?: Point[][];
@@ -167,10 +164,6 @@ export function MorrisMiniBoard({ board, mills = [], removable = [], selected, t
   targets?: Point[];
   /** 正要放下去的子（半透明） */
   ghost?: { side: Side; at: Point };
-  /** 上一手的子（頭上一個點） */
-  lastTo?: Point;
-  /** 上一手從哪裡走過來（空點上一圈粉筆） */
-  lastFrom?: Point;
   removed?: Record<Side, number>;
 }) {
   return (
@@ -182,8 +175,8 @@ export function MorrisMiniBoard({ board, mills = [], removable = [], selected, t
         const target = targets.includes(p) ? 'move' : ghost?.at === p ? 'place' : undefined;
         return (
           <span key={p} className="absolute aspect-square" style={pointStyle(x, y)}>
-            <PointMarks cell={cell} selected={selected === p} removable={!!cell && removable.includes(p)} movable={false} mark={p === lastTo}
-              target={target} ghost={ghost?.at === p ? ghost.side : undefined} from={p === lastFrom} />
+            <PointMarks cell={cell} selected={selected === p} removable={!!cell && removable.includes(p)} movable={false}
+              target={target} ghost={ghost?.at === p ? ghost.side : undefined} />
           </span>
         );
       })}
@@ -199,7 +192,7 @@ export type Pluck = { plies: number; at: Point; side: Side; slot: number };
 export type PluckStage = 'grip' | 'drop' | 'done';
 
 /** 對局用的棋盤：每個點都是按鈕 */
-export function MorrisBoard({ board, targets, movable, removable, selected, lastTo, lastFrom, mills, removed, last, plies, pluck, onPluck, idle, ghost, labels, onPick }: {
+export function MorrisBoard({ board, targets, movable, removable, selected, mills, removed, last, plies, pluck, onPluck, idle, ghost, labels, onPick }: {
   board: Cell[];
   /** 現在可以放／走過去的空點 */
   targets: Map<Point, 'place' | 'move'>;
@@ -208,10 +201,6 @@ export function MorrisBoard({ board, targets, movable, removable, selected, last
   /** 拿子步驟：可以拿掉的對方棋子 */
   removable: Set<Point>;
   selected: Point | null;
-  /** 上一手放下或走到的子 */
-  lastTo?: Point;
-  /** 上一手從哪裡走過來（現在是空點） */
-  lastFrom?: Point;
   mills: Point[][];
   /** 兩方各被拿掉幾顆（躺在下方） */
   removed: Record<Side, number>;
@@ -335,8 +324,8 @@ export function MorrisBoard({ board, targets, movable, removable, selected, last
         return (
           <button key={p} data-point={p} type="button" onClick={() => onPick(p)} aria-label={label} aria-pressed={isSelected || undefined}
             className="group absolute aspect-square rounded-full" style={pointStyle(x, y)}>
-            <PointMarks cell={cell} selected={isSelected} removable={canRemove} movable={movable.has(p)} mark={p === lastTo}
-              target={target} ghost={target === 'place' ? ghost : undefined} from={p === lastFrom} hover />
+            <PointMarks cell={cell} selected={isSelected} removable={canRemove} movable={movable.has(p)}
+              target={target} ghost={target === 'place' ? ghost : undefined} hover />
           </button>
         );
       })}

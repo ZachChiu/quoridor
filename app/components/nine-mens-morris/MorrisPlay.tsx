@@ -239,10 +239,6 @@ export default function MorrisPlay({ locale, mode, showRules, moves = '', onMenu
   }
   // 電腦或對方在挑要拿哪一顆時，自己的子不搖（跟電腦下一樣，提示列寫「正在挑」）
   const removableNow = new Set(still ? [] : removable(game));
-  // 這一回合（成三的話是拿子之前那一手）放下或走動的子
-  const step = last?.kind === 'remove' ? prev : last;
-  const lastTo = step && step.kind !== 'remove' ? step.to : undefined;
-  const lastFrom = step?.kind === 'move' ? step.from : undefined;
   const removed = { black: removedCount('black'), white: removedCount('white') };
   const mills = lastMills(game);
   // 成三了卻沒進入拿子（節目規則：對方的子全在線上）
@@ -415,7 +411,7 @@ export default function MorrisPlay({ locale, mode, showRules, moves = '', onMenu
       {/* 棋盤比寬多一段（下方放被拿掉的子，106:118），桌機照高度算寬 */}
       <div ref={boardRef} className="flex w-full max-w-[500px] flex-1 items-center py-2 lg:max-w-[min(580px,calc((100svh-5rem)*0.9))] lg:flex-none lg:py-0">
         <MorrisBoard board={game.board} targets={targets} movable={selected === null ? movable : new Set()} removable={removableNow}
-          selected={selected} lastTo={lastTo} lastFrom={lastFrom} mills={mills} removed={removed} last={last}
+          selected={selected} mills={mills} removed={removed} last={last}
           plies={h.length} pluck={pluck} onPluck={onPluck} idle={game.winner ? null : other(game.turn)} ghost={phase === 'place' && !still ? game.turn : undefined}
           labels={{ black: t.black, white: t.white, empty: t.empty, remove: t.phase.remove }} onPick={pick} />
       </div>
