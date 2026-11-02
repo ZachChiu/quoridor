@@ -1,6 +1,7 @@
 'use client';
 import { COLOURS, END_SCORE, finalScore, type Colour, type Scores, type Seat } from '@/games/balance-mancala/engine';
 import { BRASS_DEEP, CLOTH, DISH_BG, seatLook } from './palette';
+import { LuWifiOff } from 'react-icons/lu';
 import PieceDisc from './PieceDisc';
 
 /** 分數條的刻度：0–33，30 的結束線畫在 91% 的位置，超過 30 的那一點點看得到 */
@@ -13,19 +14,26 @@ const pct = (v: number) => `${(Math.min(v, SCALE) / SCALE) * 100}%`;
  * 一手套用之後，加分的那條慢慢長過去、變了的數字跳一下（.mcl-pop：key 跟著數值換，換了才重播；0 分不跳）——
  * 盤面上「+N」與黃銅聲是第一拍，這裡是記進帳的第二拍。減少動態效果時都不動。
  *
- * 連線時自己那一列多一圈自己座位色的框，中間留一道縫（CLAUDE.md：連線時比分上自己那塊多一圈自己顏色的框；
+ * 自己那一列（跟 AI 玩、連線）多一圈自己座位色的框，中間留一道縫（CLAUDE.md：連線時比分上自己那塊多一圈自己顏色的框；
  * 不在畫面上寫「你」）。列是切角的（.mcl-cut），框也要切角 —— clip-path 會把 box-shadow／outline 切掉，
  * 所以框是外面兩層：座位色一層、布色一層（那道縫），列本身照舊。
+ *
+ * 連線時斷線滿 3 秒的人（away）：那一列反灰、正中間蓋一層半透明的灰和一個斷掉的 Wi‑Fi（同九子棋、虎棋、盲五子棋的「純灰色遮罩」）。
  */
-export default function ScorePanel({ scores, names, turn, gain, colourShort, finalLabel, mine = null, compact = false }: {
+export default function ScorePanel({ scores, names, turn, gain, colourShort, finalLabel, mine = null, youLabel = '', away = [], awayLabel = '', compact = false }: {
   scores: Scores[];
   names: string[];
   turn: Seat | null;
   gain: { owner: Seat; colour: Colour | null; points: number } | null;
   colourShort: string[];
   finalLabel: string;
-  /** 這台裝置上的人坐哪（連線）；null＝沒有「自己」（本機對戰、跟 AI 玩時名字已經寫「你」） */
+  /** 這台裝置上的人坐哪（跟 AI 玩、連線）；null＝沒有「自己」（本機對戰） */
   mine?: Seat | null;
+  /** 讀屏念在自己那一列前面（畫面上不寫） */
+  youLabel?: string;
+  /** 連線時斷線的人與讀屏念的「離線」 */
+  away?: Seat[];
+  awayLabel?: string;
   /** 不寫名字（規則頁的小圖：子上已經印了座位字母，窄的圖裡把寬度留給分數條）；讀屏照舊念名字 */
   compact?: boolean;
 }) {
@@ -38,9 +46,10 @@ export default function ScorePanel({ scores, names, turn, gain, colourShort, fin
         const f2 = finalScore(after);
         // 最低那色算兩次、最高那色要扣：短標旁邊標 ×2／−（三色一樣多時不標）
         const lo = Math.min(...sc), hi = Math.max(...sc);
+        const gone = away.includes(seat);
         const row = (
-          <div key={seat} className={`mcl-cut flex items-center gap-2 px-2 py-1 ${turn === seat ? 'bg-[rgb(var(--mcl-ink-rgb)/0.08)]' : ''}`}
-            aria-label={`${names[seat]}: ${COLOURS.map((c) => `${colourShort[c]} ${sc[c]}`).join(', ')}; ${finalLabel} ${f}`}>
+          <div key={seat} className={`mcl-cut relative flex items-center gap-2 px-2 py-1 ${turn === seat ? 'bg-[rgb(var(--mcl-ink-rgb)/0.08)]' : ''} ${gone ? 'mcl-away' : ''}`}
+            aria-label={`${seat === mine && youLabel ? `${youLabel} · ` : ''}${names[seat]}${gone && awayLabel ? ` (${awayLabel})` : ''}: ${COLOURS.map((c) => `${colourShort[c]} ${sc[c]}`).join(', ')}; ${finalLabel} ${f}`}>
             <PieceDisc seat={seat} size="1.65rem" />
             {!compact && <p className="w-[4.25rem] shrink-0 truncate text-xs font-black">{names[seat]}</p>}
             <div className="flex min-w-0 flex-1 flex-col gap-[3px]" aria-hidden="true">
@@ -73,6 +82,7 @@ export default function ScorePanel({ scores, names, turn, gain, colourShort, fin
               <p className="text-lg font-black tabular-nums leading-none"><span key={f} className={sc.some((x) => x > 0) ? 'mcl-pop' : ''}>{f}</span></p>
               <p className="mt-0.5 text-[9px] font-black leading-none text-ink-soft">{g && f2 !== f ? `→ ${f2}` : finalLabel}</p>
             </div>
+            {gone && <span className="mcl-away-cover" aria-hidden="true"><LuWifiOff /></span>}
           </div>
         );
         if (seat !== mine) return row;

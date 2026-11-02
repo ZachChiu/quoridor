@@ -21,14 +21,16 @@ import type { OnlineFailReason, OnlineStep } from '@/types/online';
  */
 /** local／solo／online 是對戰類；show（節目挑戰）、practice（練習）是騎士巡遊這種一個人解題的 */
 export type GameModeParam = 'local' | 'solo' | 'online' | 'show' | 'practice';
-/** 一個人解題的遊戲是 1 */
-type Players = 1 | 2 | 3;
+/** 一個人解題的遊戲是 1。平衡播棋是一桌的席數（4–7，AI 也算），2026-11 加 */
+type Players = 1 | 2 | 3 | 4 | 5 | 6 | 7;
+/** 連線房的人數（全部是真人） */
+type RoomPlayers = Exclude<Players, 1>;
 
 /**
  * 哪一款遊戲：網址的 slug（/wall-go/ → wall-go）。平台上線後同一個 GA 資源有好幾款，
  * 跟對局有關的事件都一定要帶（docs/platform-tracking.md）。新遊戲上線時加在這裡，漏帶就編譯不過。
  */
-export type GameSlug = 'wall-go' | 'bagh-chal' | 'knights-tour' | 'nine-mens-morris' | 'blind-gomoku';
+export type GameSlug = 'wall-go' | 'bagh-chal' | 'knights-tour' | 'nine-mens-morris' | 'blind-gomoku' | 'balance-mancala';
 type G = { game: GameSlug };
 /** 難度。盲五子棋另有一級 show：照節目裡 AI 的規矩（跟你上一手同色），2026-11 上線時加 */
 type Level = Difficulty | 'show';
@@ -46,7 +48,7 @@ type Events = {
   /** 首頁（或 /solo 頁）選了一個模式。是「想玩」，不是「開始玩」 */
   mode_select: G & { mode: GameModeParam; players: Players; difficulty?: Level; entry: 'home' | 'solo_page'; board_size?: BoardSize };
   /** 連線房開好了（還沒有人加入） */
-  room_created: G & { players: 2 | 3 };
+  room_created: G & { players: RoomPlayers };
   /**
    * 這一局真的開始了：本機／單人是擺下第一顆棋，連線是人到齊、開始擺棋。
    * 分母用這個，完成率＝game_end ÷ game_start。
@@ -83,7 +85,7 @@ type Events = {
    */
   share: G & { method: 'native' | 'download'; content_type: 'result_card'; item_id: 'poster' | 'square' | 'story' };
   /** 連線時催輪到的人 */
-  nudge_send: G & { players: 2 | 3 };
+  nudge_send: G & { players: RoomPlayers };
   /** 關掉遊玩方式。step 從 1 起算；finished＝有沒有看到最後一步 */
   tutorial_close: G & { step: number; steps: number; finished: boolean };
   /** 切換語系 */

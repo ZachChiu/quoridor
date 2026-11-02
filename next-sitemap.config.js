@@ -31,8 +31,8 @@ module.exports = {
     // Bagh Chal 的對局頁（跟電腦下的靜態 HTML 是空的，選邊與難度在掛載後才畫）
     '/bagh-chal/solo', '/*/bagh-chal/solo', '/bagh-chal/local', '/*/bagh-chal/local', '/bagh-chal/online', '/*/bagh-chal/online',
     // 第二批還在試做的（頁面 robots noindex），上線時拿掉那一款（頁面也要換成 launchedGameMetadata）
-    // 規則頁（2026-10-25 加）跟著首頁一起：試做期間不收。騎士巡遊、九子棋 2026-11-01 上線，盲五子棋 11-02
-    ...['/time-auction', '/balance-mancala'].flatMap((p) => [p, `/*${p}`, `${p}/rules`, `/*${p}/rules`]),
+    // 規則頁（2026-10-25 加）跟著首頁一起：試做期間不收。騎士巡遊、九子棋 2026-11-01 上線，盲五子棋 11-02，平衡播棋 11-03 準備好
+    ...['/time-auction'].flatMap((p) => [p, `/*${p}`, `${p}/rules`, `/*${p}/rules`]),
     // 第二批的連線房（2026-10-24 加）：跟 Wall Go、虎棋的連線頁一樣是空殼，上線後也不收
     ...['/time-auction', '/nine-mens-morris', '/blind-gomoku', '/balance-mancala'].flatMap((p) => [`${p}/online`, `/*${p}/online`]),
     // 舊網址（2026-10 平台化前），只做轉址：真正的 301 在 CloudFront，這些頁面是備援。

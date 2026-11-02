@@ -1,5 +1,6 @@
 'use client';
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { track } from '@/utils/analytics';
 import { GiLaurelCrown } from 'react-icons/gi';
 import { useStep, useSwipePager } from '@/hook/useSwipePager';
 import { fill, useTextTable } from '@/i18n/gameText';
@@ -209,6 +210,13 @@ export function RulesStepsPaged({ open, prev, next, done, onDone }: {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [open, onKeyDown]);
   const last = i === STEP_COUNT - 1;
+  // 關掉時讀到第幾步（同 Wall Go、九子棋、盲五子棋送 tutorial_close）：按完成、按 ×、點遮罩都算
+  const seen = useRef(i);
+  useEffect(() => { seen.current = i; }, [i]);
+  useEffect(() => {
+    if (!open) return;
+    return () => track('tutorial_close', { game: 'balance-mancala', step: seen.current + 1, steps: STEP_COUNT, finished: seen.current === STEP_COUNT - 1 });
+  }, [open]);
   return (
     <div className="flex flex-col gap-4">
       {i === 0 && <p className="mcl-cut bg-[var(--mcl-cloth)] px-3 py-2 text-sm font-black leading-snug">{t.goal}</p>}

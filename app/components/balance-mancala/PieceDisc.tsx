@@ -7,12 +7,14 @@ import { BRASS_DEEP, CLOTH_LIGHT, INK, letterOf, seatLook } from './palette';
  * `size` 是 CSS 長度（盤面上用 cqw，跟著盤面縮放；面板上用 px／rem）。
  * `count` > 1 時右上角標數字（同一格裡同一個人的子合成一顆顯示時用）。
  */
-export default function PieceDisc({ seat, size, count = 1, ring, onBoard = false, className = '', style }: {
+export default function PieceDisc({ seat, size, count = 1, ring, mine = false, onBoard = false, className = '', style }: {
   seat: Seat;
   size: string;
   count?: number;
   /** 額外的外框：incoming＝預覽中剛放進來的子、selected＝排序時選中、last＝最後一顆 */
   ring?: 'incoming' | 'selected' | 'last';
+  /** 自己的子（跟 AI 玩、連線的對局中央、天平）：亮布色的縫外面再一圈座位色 —— 跟分數面板自己那一列的框同一個記號，畫面上不寫「你」 */
+  mine?: boolean;
   /** 盤面上的子：帶 data-seat，閒置動作（idleMotion.ts）靠它找子、分辨是誰的 */
   onBoard?: boolean;
   className?: string;
@@ -22,7 +24,8 @@ export default function PieceDisc({ seat, size, count = 1, ring, onBoard = false
   const gap = `calc(${size} * 0.09)`;
   const outer = ring === 'incoming' ? `, 0 0 0 calc(${size} * 0.2) ${INK}`
     : ring === 'selected' ? `, 0 0 0 calc(${size} * 0.2) ${INK}`
-    : ring === 'last' ? `, 0 0 0 calc(${size} * 0.2) ${BRASS_DEEP}` : '';
+    : ring === 'last' ? `, 0 0 0 calc(${size} * 0.2) ${BRASS_DEEP}`
+    : mine ? `, 0 0 0 calc(${gap} + max(2px, ${size} * 0.07)) ${look.bg}` : '';
   return (
     <span
       aria-hidden="true"

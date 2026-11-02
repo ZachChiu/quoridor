@@ -16,6 +16,7 @@ import { ONLINE_MAX, ONLINE_MIN } from './online';
 import MancalaFrame from './MancalaFrame';
 import { CLOTH, WOOD } from './palette';
 import { MCL_CORNER } from './styles';
+import { track } from '@/utils/analytics';
 
 const SEAT_CHOICES = Array.from({ length: MAX_SEATS - MIN_SEATS + 1 }, (_, i) => MIN_SEATS + i);
 const HUMAN_CHOICES = Array.from({ length: MAX_SEATS - 1 }, (_, i) => i + 2);
@@ -46,8 +47,15 @@ export default function MancalaSetup({ locale, initial, onStart }: { locale: Loc
 
   const total = mode === 'solo' ? seats : mode === 'online' ? online : localSeats(humans);
   const computers = mode === 'solo' ? seats - 1 : mode === 'online' ? 0 : total - humans;
-  const start = (difficulty: Difficulty) => onStart({ mode, seats: total, humans: mode === 'solo' ? 1 : humans, difficulty });
-  const openRoom = () => router.push(`${localePath(locale, trialOnline(BALANCE_MANCALA))}#new=${online}`);
+  // GA：mode_select 是「想玩」（按下開始／難度、開房間），players 是一桌的席數（AI 也算），難度只有有 AI 時帶
+  const start = (difficulty: Difficulty) => {
+    track('mode_select', { game: 'balance-mancala', mode, players: total as 4 | 5 | 6 | 7, difficulty: computers > 0 ? difficulty : undefined, entry: 'home' });
+    onStart({ mode, seats: total, humans: mode === 'solo' ? 1 : humans, difficulty });
+  };
+  const openRoom = () => {
+    track('mode_select', { game: 'balance-mancala', mode: 'online', players: online as 4 | 5 | 6 | 7, entry: 'home' });
+    router.push(`${localePath(locale, trialOnline(BALANCE_MANCALA))}#new=${online}`);
+  };
   const choices = mode === 'solo' ? SEAT_CHOICES : mode === 'online' ? ONLINE_CHOICES : HUMAN_CHOICES;
   const value = mode === 'solo' ? seats : mode === 'online' ? online : humans;
   const setValue = mode === 'solo' ? setSeats : mode === 'online' ? setOnline : setHumans;

@@ -32,6 +32,7 @@ export type BalanceMancalaText = {
   start: string;
   openRoom: string;
   howTo: string;
+  /** 讀屏才念：自己那一方（畫面上不寫「你」，用座位色的外框標，CLAUDE.md） */
   you: string;
   computer: string;
   player: string;
@@ -46,10 +47,8 @@ export type BalanceMancalaText = {
   high: string;
   low: string;
   cellAria: string;
-  setupYou: string;
   setupHuman: string;
   setupComputer: string;
-  turnYou: string;
   turnHuman: string;
   thinking: string;
   sowing: string;
@@ -89,7 +88,6 @@ export type BalanceMancalaText = {
   balanceEven: string;
   balanceNear: string;
   gameOver: string;
-  youWin: string;
   winner: string;
   tie: string;
   endReason: string;
@@ -161,10 +159,8 @@ export const TEXT: TextTable<BalanceMancalaText> = {
     high: '最高色',
     low: '最低色',
     cellAria: '{cell}，{n} 顆子',
-    setupYou: '放子：點一格放你的子（每格最多 2 顆）',
     setupHuman: '{name} 放子：點一格（每格最多 2 顆）',
     setupComputer: '{name} 放子中…',
-    turnYou: '輪到你：點一格有你的子的格子',
     turnHuman: '輪到 {name}：點一格有自己的子的格子',
     thinking: '{name} 思考中…',
     sowing: '{name} 播種中…',
@@ -179,10 +175,10 @@ export const TEXT: TextTable<BalanceMancalaText> = {
     whoLastHint: '誰的子最後落下，誰就得分。選一個結果：',
     orderToggle: '自己排落下順序',
     orderHide: '收起順序',
-    coachSetup: '先放子。之後只能從「有你的子」的格子出手，分散一點，選擇比較多。',
+    coachSetup: '先放子。之後只能從有自己的子的格子出手，分散一點，選擇比較多。',
     coachTurn: '點一格有 {seat} 的格子：整格的子（別人的也算）都拿起來，順時針一格放一顆。',
     coachPick: '盤面上的線是這一手的路線。最後一顆是誰的，誰就得分，記在落點那格的顏色。選好再按「播下去」。',
-    coachBalance: '分數不是越多越好：最終分＝2×最低−最高，三色要平均。「你的三色」那塊會告訴你下一分該記到哪。',
+    coachBalance: '分數不是越多越好：最終分＝2×最低−最高，三色要平均。「三色」那塊會告訴你下一分該記到哪。',
     coachGot: '知道了',
     coachOff: '不用教了',
     suggest: '建議排法',
@@ -195,16 +191,15 @@ export const TEXT: TextTable<BalanceMancalaText> = {
     previewHover: '點一下，再決定順序',
     previewTie: '同分：選要記哪一色',
     pickColour: '同分，選要記哪一色',
-    endsWarn: '這一手會讓遊戲立刻結束：你是第 {rank} 名',
+    endsWarn: '這一手會讓遊戲立刻結束：{name} 排第 {rank} 名',
     endsWarnLocal: '這一手會讓遊戲立刻結束：{name} 第一',
     final: '最終',
     formula: '最終分＝2×最低−最高',
-    balanceTitle: '{name}的三色',
+    balanceTitle: '{name} 的三色',
     balanceNeed: '下一分最好記到：{colours}',
     balanceEven: '三色一樣多：加哪一色都會先拉開差距',
     balanceNear: '{colour}快到 30，到了遊戲立刻結束',
     gameOver: '遊戲結束',
-    youWin: '你贏了！',
     winner: '{name} 獲勝',
     tie: '並列第一',
     endReason: '{name} 的{colour}到了 {n} 分，遊戲結束。',
@@ -276,10 +271,8 @@ export const TEXT: TextTable<BalanceMancalaText> = {
     high: 'Highest',
     low: 'Lowest',
     cellAria: '{cell}, {n} pieces',
-    setupYou: 'Setup: tap a cell to place your piece (max 2 per cell)',
     setupHuman: '{name}: tap a cell to place a piece (max 2 per cell)',
     setupComputer: '{name} is placing…',
-    turnYou: 'Your turn: tap a cell with your piece',
     turnHuman: "{name}'s turn: tap a cell with your piece",
     thinking: '{name} is thinking…',
     sowing: '{name} is sowing…',
@@ -310,7 +303,7 @@ export const TEXT: TextTable<BalanceMancalaText> = {
     previewHover: 'Click to choose the order',
     previewTie: 'Tie: pick a colour',
     pickColour: 'Tie — pick the colour',
-    endsWarn: 'This ends the game now: you finish #{rank}',
+    endsWarn: 'This ends the game now: {name} finishes #{rank}',
     endsWarnLocal: 'This ends the game now: {name} wins',
     final: 'Final',
     formula: 'Final = 2 × lowest − highest',
@@ -319,7 +312,6 @@ export const TEXT: TextTable<BalanceMancalaText> = {
     balanceEven: 'All three are even: any points will open a gap first',
     balanceNear: '{colour} is close to 30 — reaching it ends the game',
     gameOver: 'Game over',
-    youWin: 'You win!',
     winner: '{name} wins',
     tie: 'Shared first place',
     endReason: "{name}'s {colour} reached {n} — game over.",
@@ -391,10 +383,8 @@ export const TEXT: TextTable<BalanceMancalaText> = {
     high: '最高色',
     low: '最低色',
     cellAria: '{cell}、駒 {n} 個',
-    setupYou: '配置：マスをタップして駒を置く（1マス 2 個まで）',
     setupHuman: '{name}：マスをタップして駒を置く（1マス 2 個まで）',
     setupComputer: '{name} が配置中…',
-    turnYou: 'あなたの番：自分の駒があるマスをタップ',
     turnHuman: '{name} の番：自分の駒があるマスをタップ',
     thinking: '{name} が考え中…',
     sowing: '{name} が駒をまいています…',
@@ -425,7 +415,7 @@ export const TEXT: TextTable<BalanceMancalaText> = {
     previewHover: 'クリックして順番を決める',
     previewTie: '同点：色を選ぶ',
     pickColour: '同点：記録する色を選ぶ',
-    endsWarn: 'この手でゲーム終了：あなたは {rank} 位',
+    endsWarn: 'この手でゲーム終了：{name} は {rank} 位',
     endsWarnLocal: 'この手でゲーム終了：{name} が1位',
     final: '最終',
     formula: '最終スコア＝2×最低−最高',
@@ -434,7 +424,6 @@ export const TEXT: TextTable<BalanceMancalaText> = {
     balanceEven: '三色とも同じ：どの色に入れても差がつく',
     balanceNear: '{colour}が30に近い。届くとすぐ終了',
     gameOver: 'ゲーム終了',
-    youWin: 'あなたの勝ち！',
     winner: '{name} の勝ち',
     tie: '同率1位',
     endReason: '{name} の{colour}が {n} 点に達してゲーム終了。',
@@ -506,10 +495,8 @@ export const TEXT: TextTable<BalanceMancalaText> = {
     high: '최고 색',
     low: '최저 색',
     cellAria: '{cell}, 말 {n}개',
-    setupYou: '배치: 칸을 눌러 말을 놓으세요 (한 칸에 최대 2개)',
     setupHuman: '{name}: 칸을 눌러 말을 놓으세요 (한 칸에 최대 2개)',
     setupComputer: '{name} 배치 중…',
-    turnYou: '내 차례: 내 말이 있는 칸을 누르세요',
     turnHuman: '{name} 차례: 자기 말이 있는 칸을 누르세요',
     thinking: '{name} 생각 중…',
     sowing: '{name} 말을 놓는 중…',
@@ -540,7 +527,7 @@ export const TEXT: TextTable<BalanceMancalaText> = {
     previewHover: '클릭해서 순서 정하기',
     previewTie: '동점: 색을 고르세요',
     pickColour: '동점: 점수를 넣을 색 선택',
-    endsWarn: '이 수로 게임이 바로 끝납니다: 나는 {rank}위',
+    endsWarn: '이 수로 게임이 바로 끝납니다: {name} {rank}위',
     endsWarnLocal: '이 수로 게임이 바로 끝납니다: {name} 1위',
     final: '최종',
     formula: '최종 점수 = 2 × 최저 − 최고',
@@ -549,7 +536,6 @@ export const TEXT: TextTable<BalanceMancalaText> = {
     balanceEven: '세 색이 같아요: 어느 색에 넣어도 먼저 차이가 생겨요',
     balanceNear: '{colour}이(가) 30에 가까워요. 닿으면 바로 끝나요',
     gameOver: '게임 종료',
-    youWin: '승리!',
     winner: '{name} 승리',
     tie: '공동 1위',
     endReason: '{name}의 {colour}이 {n}점에 도달해 게임이 끝났습니다.',
@@ -621,10 +607,8 @@ export const TEXT: TextTable<BalanceMancalaText> = {
     high: '最高色',
     low: '最低色',
     cellAria: '{cell}，{n} 颗子',
-    setupYou: '摆子：点一格放你的棋子（每格最多 2 颗）',
     setupHuman: '{name} 摆子：点一格（每格最多 2 颗）',
     setupComputer: '{name} 摆子中…',
-    turnYou: '轮到你：点一格有你棋子的格子',
     turnHuman: '轮到 {name}：点一格有自己棋子的格子',
     thinking: '{name} 思考中…',
     sowing: '{name} 播子中…',
@@ -639,10 +623,10 @@ export const TEXT: TextTable<BalanceMancalaText> = {
     whoLastHint: '谁的棋子最后落下，谁就得分。选一个结果：',
     orderToggle: '自己排落下顺序',
     orderHide: '收起顺序',
-    coachSetup: '先摆子。之后只能从“有你的棋子”的格子出手，分散一点，选择比较多。',
+    coachSetup: '先摆子。之后只能从有自己棋子的格子出手，分散一点，选择比较多。',
     coachTurn: '点一格有 {seat} 的格子：整格的棋子（别人的也算）都拿起来，顺时针一格放一颗。',
     coachPick: '盘面上的线是这一手的路线。最后一颗是谁的，谁就得分，记在落点那格的颜色。选好再按“播下去”。',
-    coachBalance: '分数不是越多越好：最终分＝2×最低−最高，三色要平均。“你的三色”那块会告诉你下一分该记到哪。',
+    coachBalance: '分数不是越多越好：最终分＝2×最低−最高，三色要平均。“三色”那块会告诉你下一分该记到哪。',
     coachGot: '知道了',
     coachOff: '不用教了',
     suggest: '推荐排法',
@@ -655,16 +639,15 @@ export const TEXT: TextTable<BalanceMancalaText> = {
     previewHover: '点一下，再决定顺序',
     previewTie: '同分：选要记哪一色',
     pickColour: '同分，选要记哪一色',
-    endsWarn: '这一手会让游戏立刻结束：你是第 {rank} 名',
+    endsWarn: '这一手会让游戏立刻结束：{name} 排第 {rank} 名',
     endsWarnLocal: '这一手会让游戏立刻结束：{name} 第一',
     final: '最终',
     formula: '最终分＝2×最低−最高',
-    balanceTitle: '{name}的三色',
+    balanceTitle: '{name} 的三色',
     balanceNeed: '下一分最好记到：{colours}',
     balanceEven: '三色一样多：加哪一色都会先拉开差距',
     balanceNear: '{colour}快到 30，到了游戏立刻结束',
     gameOver: '游戏结束',
-    youWin: '你赢了！',
     winner: '{name} 获胜',
     tie: '并列第一',
     endReason: '{name} 的{colour}到了 {n} 分，游戏结束。',
@@ -736,10 +719,8 @@ export const TEXT: TextTable<BalanceMancalaText> = {
     high: 'สีสูงสุด',
     low: 'สีต่ำสุด',
     cellAria: '{cell} มีหมาก {n} ตัว',
-    setupYou: 'วางหมาก: แตะช่องเพื่อวางหมากของคุณ (ช่องละไม่เกิน 2 ตัว)',
     setupHuman: '{name}: แตะช่องเพื่อวางหมาก (ช่องละไม่เกิน 2 ตัว)',
     setupComputer: '{name} กำลังวางหมาก…',
-    turnYou: 'ตาคุณ: แตะช่องที่มีหมากของคุณ',
     turnHuman: 'ตาของ {name}: แตะช่องที่มีหมากของตัวเอง',
     thinking: '{name} กำลังคิด…',
     sowing: '{name} กำลังหว่าน…',
@@ -770,7 +751,7 @@ export const TEXT: TextTable<BalanceMancalaText> = {
     previewHover: 'คลิกเพื่อเลือกลำดับ',
     previewTie: 'เสมอ: เลือกสี',
     pickColour: 'เสมอกัน เลือกสีที่จะได้แต้ม',
-    endsWarn: 'ตานี้จะจบเกมทันที: คุณได้อันดับ {rank}',
+    endsWarn: 'ตานี้จะจบเกมทันที: {name} ได้อันดับ {rank}',
     endsWarnLocal: 'ตานี้จะจบเกมทันที: {name} ชนะ',
     final: 'สุดท้าย',
     formula: 'คะแนนสุดท้าย = 2 × ต่ำสุด − สูงสุด',
@@ -779,7 +760,6 @@ export const TEXT: TextTable<BalanceMancalaText> = {
     balanceEven: 'สามสีเท่ากัน: ลงสีไหนก็จะเกิดช่องว่างก่อน',
     balanceNear: '{colour}ใกล้ 30 แล้ว ถึงเมื่อไรเกมจบทันที',
     gameOver: 'จบเกม',
-    youWin: 'คุณชนะ!',
     winner: '{name} ชนะ',
     tie: 'อันดับ 1 ร่วม',
     endReason: 'สี{colour}ของ {name} ถึง {n} แต้ม เกมจบแล้ว',
