@@ -7,7 +7,7 @@ import { GiBrain, GiScrollUnfurled, GiTabletopPlayers } from 'react-icons/gi';
 import { LuChevronRight } from 'react-icons/lu';
 import LocalName, { letteringOf } from '@/components/LocalName';
 import Modal from '@/components/Modal';
-import PlatformCorner from '@/components/PlatformCorner';
+import GameHomeBar from '@/components/GameHomeBar';
 import { useMessages } from '@/i18n/LocaleProvider';
 import { useTextTable } from '@/i18n/gameText';
 import { localePath, type Locale } from '@/i18n/locales';
@@ -55,7 +55,7 @@ function DiePips({ n }: { n: 1 | 2 | 3 }) {
  * 節目規則的開關也管連線：開房的人決定，寫進房間的 setup，進房的人照著下。
  *
  * 中日韓的標題是當地名字，英文名用哥德字標排在下面；英文、泰文的標題本來就是英文名，字標直接當標題。
- * 角落沿用遊戲首頁的 PlatformCorner：左上回平台首頁，右上聯絡我們與語言。
+ * 最上面一列是遊戲首頁共用的 GameHomeBar：左邊回平台首頁，右邊聯絡我們與語言。
  */
 export default function MorrisSetup({ locale, onStart }: { locale: Locale; onStart: (mode: MorrisMode, showRules: boolean) => void }) {
   const t = useTextTable(TEXT);
@@ -77,9 +77,10 @@ export default function MorrisSetup({ locale, onStart }: { locale: Locale; onSta
   const lettering = letteringOf(NAME_LETTERING, locale, t.title);
 
   return (
-    <MorrisFrame className="nmm-setup items-center px-4 pb-6 pt-[3.75rem] lg:justify-center lg:py-10">
-      <PlatformCorner locale={locale} theme={MORRIS_CORNER} offset="calc(var(--nmm-frame, 12px) + 6px)" />
-      <main className="nmm-main flex w-full max-w-[440px] flex-col gap-4 lg:max-w-[980px] lg:flex-row lg:items-center lg:gap-12">
+    <MorrisFrame className="nmm-setup items-center px-4 pb-6 pt-2 lg:pb-10 lg:pt-3">
+      {/* 最上面一列：平台 logo、聯絡、語言（GameHomeBar），跟內容同寬、排在流裡（11/3 Zach：跟時間拍賣一樣、不要浮著） */}
+      <GameHomeBar locale={locale} theme={MORRIS_CORNER} className="max-w-[440px] lg:max-w-[980px]" />
+      <main className="nmm-main flex w-full max-w-[440px] flex-col gap-4 pt-3 lg:my-auto lg:max-w-[980px] lg:flex-row lg:items-center lg:gap-12 lg:pt-0">
         <header className="nmm-head flex flex-col items-center text-center lg:flex-1 lg:items-start lg:text-left">
           <p className="text-xs font-bold tracking-wide text-[#eee0c4]/80 [@media(max-height:700px)]:hidden">{t.tags}</p>
           {latinTitle ? (

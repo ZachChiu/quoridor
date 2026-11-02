@@ -1,5 +1,5 @@
 import HomeClient from '@/HomeClient';
-import PlatformCorner from '@/components/PlatformCorner';
+import GameHomeBar from '@/components/GameHomeBar';
 import { getMessages } from '@/i18n';
 import type { Locale } from '@/i18n/locales';
 import { pageGraph, ldScript } from '@/i18n/jsonld';
@@ -17,15 +17,12 @@ export default function HomeView({ locale }: { locale: Locale }) {
   // 直式（手機）放不下就往下捲；橫式（桌機、橫放手機）照舊固定一屏 ——
   // 1280x720 的桌機靠吃掉一點上下留白剛好塞得下，放開會多出一小段捲動。
   return (
-      <div className="flex min-h-dvh flex-col items-center justify-center px-5 py-[max(1rem,3svh)] font-[family-name:var(--font-app)] landscape:h-dvh">
-        {/* 左上平台 logo、右上聯絡我們＋語言（PlatformCorner），放角落、不在流程裡多吃一列。 */}
-        <PlatformCorner locale={locale} />
-        {/* 讓出角落那排（logo 與圓鈕）的留白（只在直式），一律撐滿、不縮。
-            先前容器是固定的 h-dvh、這塊會縮，為了整頁塞進一個畫面不出捲軸；矮手機上縮到 0，
-            標題就頂到右上角的圓鈕。2026-10-25 Zach：「不用這麼執著一定要塞在手機版小小的畫面內」——
-            畫面不夠高就往下捲。 */}
-        <div aria-hidden="true" className="hidden h-14 w-px shrink-0 portrait:block" />
-        <main className="home-main flex w-full max-w-[420px] flex-col items-center">
+      <div className="flex min-h-dvh flex-col items-center px-5 pb-[max(1rem,3svh)] pt-2.5 font-[family-name:var(--font-app)] landscape:h-dvh">
+        {/* 最上面一列：平台 logo、聯絡我們＋語言（GameHomeBar），跟內容同寬、排在流裡
+            （11/3 Zach：跟時間拍賣一樣、不要浮著）。先前釘在角落，直式要另外留 3.5rem 閃它。
+            畫面不夠高就往下捲（10/25 Zach：「不用這麼執著一定要塞在手機版小小的畫面內」）。 */}
+        <GameHomeBar locale={locale} className="home-bar max-w-[420px]" />
+        <main className="home-main my-auto flex w-full max-w-[420px] flex-col items-center pt-3 landscape:pt-0">
           <header className="text-center">
             <h1 className="mt-1 text-[clamp(2.25rem,7svh,3.75rem)] font-black leading-[0.95] tracking-tight">
               {t.home.titleLine1}

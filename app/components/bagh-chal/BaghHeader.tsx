@@ -9,8 +9,9 @@ import { BAGH_CORNER } from './styles';
 /**
  * 虎羊棋首頁面板最上面那一列：左邊平台 logo（回平台首頁）、右邊聯絡我們與語言。
  *
- * Wall Go 首頁是把這三顆釘在畫面角落（PlatformCorner，fixed）。虎羊棋外面有一圈畫框，
- * 釘在角落就是疊在飾帶上 —— Zach：不要直接埋在哪裡。所以放進紙色面板裡、跟內容走在同一個流裡，
+ * 先前 Wall Go 首頁是把這三顆釘在畫面角落（fixed）。虎羊棋外面有一圈畫框，
+ * 釘在角落就是疊在飾帶上 —— Zach：不要直接埋在哪裡。所以放進紙色面板裡、跟內容走在同一個流裡
+ * （11/3 起其他款也改成在流裡的一列，見 GameHomeBar），
  * 圓鈕換成虎羊棋的樣子（紙色底、橄欖綠外圈），打開的彈窗也是虎羊棋的。
  */
 export default function BaghHeader({ locale }: { locale: Locale }) {

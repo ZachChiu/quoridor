@@ -88,10 +88,13 @@ export default function PlatformView({ locale }: { locale: Locale }) {
               </Link>
             </h2>
             {season.games.length === 0 ? (
-              <div className="flex items-center gap-3 rounded-xl bg-plat-surface px-5 py-6 text-[15px] font-bold text-plat-muted">
+              // 還沒播的第 3 季：整塊連到第 3 季頁（那裡有介紹、先玩前兩季、常見問題；docs/season3-page.md）
+              <Link href={localePath(locale, seasonPath(season.id.slice(1) as SeasonNumber))}
+                className="group flex items-center gap-3 rounded-xl bg-plat-surface px-5 py-6 text-[15px] font-bold text-plat-muted transition fine:hover:bg-plat-raised fine:hover:text-tile-cream">
                 <GiHourglass aria-hidden="true" className="shrink-0 text-3xl text-brand-red" />
-                {p.s3Empty}
-              </div>
+                <span className="flex-1">{p.s3Empty}</span>
+                <LuChevronRight aria-hidden="true" className="shrink-0 text-[20px] transition fine:group-hover:translate-x-0.5" />
+              </Link>
             ) : (
               <CardRow>
                 {playableFirst(season.games).map((game) => (
