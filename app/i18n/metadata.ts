@@ -213,6 +213,8 @@ const GAME_ICONS: Record<string, Metadata['icons'] | undefined> = {
   'balance-mancala': iconSet('balance-mancala', true),
 
   hexagon: undefined,
+
+  'liars-dice': undefined,
 };
 function gameIcons(path: string): Pick<Metadata, 'icons'> {
   const icons = GAME_ICONS[path.split('/')[1]];

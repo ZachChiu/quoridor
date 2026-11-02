@@ -263,6 +263,8 @@ nudge { by, at }          最近一次「催一下」
     `/hexagon` 一頁，模式放 hash：`#daily`（當地日期當種子、5 回合）、`#show`（10 回合）、`#practice-easy|normal|hard`。規則在 `app/games/hexagon/engine.ts`（27 條線與節目十盤的答案由測試鎖住、每題保證 2～5 組），畫面在 `app/components/hexagon/`。
     整頁與名字字標是圓體 Chiron GoRound TC（繁中、英文）。首頁上排的平台 logo、聯絡、語言跟著版面排，不浮著。還沒有規則頁、og 圖、favicon、GA 事件。
 
+  - 大話骰（`feat/game-liars-dice`，2026-11-03 試做）：第 2 季 Doubt and Bet 的原型，平台卡片寫節目名「疑心下注」、點進去是 `/liars-dice`。原件是殖民時期秘魯的安地斯小披風 uncu（大都會博物館 CC0）；最外緣是胸前的階梯方格（`.ld-frame`），頁面是紫褐羊毛、骰子的點是披風上的「眼」。規則、配色、電腦對手、連線的公平骰子做法見 `docs/liars-dice.md`。先做對電腦（2–6 人）與同一台輪流，連線版還沒做。
+
 - **棋盤**：外圍那圈 9px 是「牆」不是裝飾邊框（規則裡棋盤外緣本身就算一道牆）。
   牆的位移一律 `calc(var(--board-gap) * -0.5)` —— 對齊的是格線中心而不是格子邊，
   兩者差半個格縫，寫死會漂掉。

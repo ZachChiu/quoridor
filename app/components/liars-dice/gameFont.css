@@ -1,0 +1,14 @@
+/* 由 scripts/build-game-fonts.mjs 依 scripts/game-fonts/liars-dice.mjs 產生，不要手改（npm run font:subset）。
+   這款的頁面（html:has(.ld-root)）整頁換成自己的字，--font-site 是全站那套黑體、當備援。 */
+@font-face { font-family: 'liars-dice zh-TW'; src: url('/fonts/games/liars-dice/zh-TW.woff2') format('woff2'); font-weight: 400 900; font-style: normal; font-display: swap; }
+@font-face { font-family: 'liars-dice en'; src: url('/fonts/games/liars-dice/en.woff2') format('woff2'); font-weight: 400 900; font-style: normal; font-display: swap; }
+@font-face { font-family: 'liars-dice ja'; src: url('/fonts/games/liars-dice/ja.woff2') format('woff2'); font-weight: 400 900; font-style: normal; font-display: swap; }
+@font-face { font-family: 'liars-dice ko'; src: url('/fonts/games/liars-dice/ko.woff2') format('woff2'); font-weight: 400 900; font-style: normal; font-display: swap; }
+@font-face { font-family: 'liars-dice zh-Hans'; src: url('/fonts/games/liars-dice/zh-Hans.woff2') format('woff2'); font-weight: 400 900; font-style: normal; font-display: swap; }
+@font-face { font-family: 'liars-dice th'; src: url('/fonts/games/liars-dice/th.woff2') format('woff2'); font-weight: 400 900; font-style: normal; font-display: swap; }
+:root:lang(zh-Hant-TW):has(.ld-root) { --font-app: 'liars-dice zh-TW', var(--font-site); }
+:root:lang(en):has(.ld-root) { --font-app: 'liars-dice en', var(--font-site); }
+:root:lang(ja):has(.ld-root) { --font-app: 'liars-dice ja', var(--font-site); }
+:root:lang(ko):has(.ld-root) { --font-app: 'liars-dice ko', var(--font-site); }
+:root:lang(zh-Hans):has(.ld-root) { --font-app: 'liars-dice zh-Hans', var(--font-site); }
+:root:lang(th):has(.ld-root) { --font-app: 'liars-dice th', 'liars-dice en', var(--font-site); }
