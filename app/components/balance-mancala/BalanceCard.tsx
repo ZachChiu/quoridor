@@ -14,12 +14,14 @@ const H = 72;
  * 柱子底下標「最低 ×2」「最高 −」，右邊把公式代進真的數字，最後一行直接說下一分該記到哪一色。
  * 預覽一手時，加上去的那段畫成半透明（跟分數面板一樣）。
  *
- * 只畫一個人：跟 AI 玩是你、連線是自己、本機對戰是輪到的人。顏色只有盤子的紅藍綠與砝碼的黃銅，不加新色。
+ * 只畫一個人：跟 AI 玩、連線是自己，本機對戰是輪到的人。顏色只有盤子的紅藍綠與砝碼的黃銅，不加新色。
  */
-export default function BalanceCard({ t, seat, name, scores, gain }: {
+export default function BalanceCard({ t, seat, name, mine = false, scores, gain }: {
   t: BalanceMancalaText;
   seat: Seat;
   name: string;
+  /** 這是自己（跟 AI 玩、連線）：子多一圈座位色的框，讀屏念「你」 */
+  mine?: boolean;
   scores: Scores;
   /** 預覽：這一手讓這個人哪一色 +幾分 */
   gain: { colour: Colour; points: number } | null;
@@ -43,8 +45,8 @@ export default function BalanceCard({ t, seat, name, scores, gain }: {
   return (
     <div className="mcl-cloth flex w-full flex-col gap-2 p-3" aria-live="polite">
       <div className="flex items-center gap-2">
-        <PieceDisc seat={seat} size="1.4rem" />
-        <p className="text-xs font-black">{fill(t.balanceTitle, { name })}</p>
+        <PieceDisc seat={seat} size="1.4rem" mine={mine} />
+        <p className="text-xs font-black">{fill(t.balanceTitle, { name })}{mine && <span className="sr-only">（{t.you}）</span>}</p>
       </div>
       <div className="flex items-end gap-4">
         {/* 三柱砝碼：底對齊，最低那柱的頂端一條黃銅虛線 */}

@@ -31,7 +31,7 @@ export type Outcome = { owner: Seat; points: number; colour: Colour | null; f1: 
  * 盤面同時畫出播完的樣子（每顆子落在哪、最後一顆在哪、誰得幾分）。
  */
 export default function OrderEditor({
-  t, from, pieces, order, sel, preview, names, endsText, onLast, onSlot, onColour, onSuggest, onCancel, onSow, outcomes,
+  t, from, pieces, order, sel, preview, names, self = null, endsText, onLast, onSlot, onColour, onSuggest, onCancel, onSow, outcomes,
 }: {
   t: BalanceMancalaText;
   from: number;
@@ -41,6 +41,8 @@ export default function OrderEditor({
   sel: number | null;
   preview: Sow;
   names: string[];
+  /** 自己坐哪（跟 AI 玩、連線）：選項裡自己的子多一圈座位色的框 */
+  self?: Seat | null;
   /** 這一手會結束遊戲時的提醒（不會就是 null） */
   endsText: string | null;
   onLast: (owner: Seat) => void;
@@ -79,7 +81,7 @@ export default function OrderEditor({
             if (!r) return (
               <button key={o} type="button" role="radio" aria-checked={o === last} aria-label={names[o]} onClick={() => onLast(o)}
                 className={`flex items-center gap-1.5 py-1 pl-1.5 pr-3 text-xs font-black ${o === last ? 'mcl-plaque' : patch}`}>
-                <PieceDisc seat={o} size="1.75rem" />
+                <PieceDisc seat={o} size="1.75rem" mine={o === self} />
                 <span className="max-w-[5.5rem] truncate">{names[o]}</span>
               </button>
             );
@@ -87,7 +89,7 @@ export default function OrderEditor({
               <button key={o} type="button" role="radio" aria-checked={o === last} onClick={() => onLast(o)}
                 aria-label={`${names[o]} +${r.points} ${r.colour !== null ? t.colourNames[r.colour] : ''}`}
                 className={`flex items-center gap-2 px-2 py-1.5 text-left ${o === last ? 'mcl-plaque' : patch}`}>
-                <PieceDisc seat={o} size="1.9rem" />
+                <PieceDisc seat={o} size="1.9rem" mine={o === self} />
                 <span className="min-w-0">
                   <span className="flex items-center gap-1 text-sm font-black leading-tight">
                     <span className="truncate">{names[o]}</span> +{r.points}

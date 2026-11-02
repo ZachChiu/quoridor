@@ -765,6 +765,9 @@ html:has(.mcl-root), body:has(.mcl-root) { background: var(--mcl-cloth); }
 @media (prefers-reduced-motion: reduce) { .mcl-land, .mcl-receive, .mcl-pop { animation: none !important; } }
 /* 連線的等人畫面：圓盤上還空著的座位（金色虛線圈）輕輕浮著、亮一點又淡回去（MancalaOnline.tsx，只在 motion-safe 時掛上） */
 @keyframes mcl-wait { 0%, 100% { translate: 0 0; opacity: 0.5; } 50% { translate: 0 -8%; opacity: 0.95; } }
+/* 連線：斷線滿 3 秒的人那一列分數反灰，正中間蓋一層半透明的灰和一個斷掉的 Wi‑Fi（ScorePanel；同九子棋、虎棋、盲五子棋的「純灰色遮罩」） */
+.mcl-away > :not(.mcl-away-cover) { filter: grayscale(1); opacity: 0.75; }
+.mcl-away-cover { position: absolute; inset: 0; display: grid; place-items: center; background: rgb(119 114 108 / 0.78); color: var(--mcl-cloth-light); font-size: 1.25rem; }
 
 /* 九子棋選單的大按鈕：字放在拱中間最高的地方置中，首字留左、箭頭留右，左右對稱；節目規則左邊補一個朱紅的 ¶ 對稱右邊的蠟封
    （11/1 Zach 在 beta 切換 A 只留字／B 首字在上／C 左右對稱後選 C）。

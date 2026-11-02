@@ -4,6 +4,9 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { LuCheck, LuCopy, LuShare2 } from 'react-icons/lu';
 import { useWebShare, share } from '@/hook/useWebShare';
+import { useRoomSignals } from '@/hook/useRoomSignals';
+import { seatIndex, seatKey, type SeatKey } from '@/types/turnRoom';
+import { track } from '@/utils/analytics';
 import { parseRoomHash, useHashSession, useTurnRoom, type TurnRoomFailure } from '@/hook/useTurnRoom';
 import { fill, useTextTable } from '@/i18n/gameText';
 import { useGameText } from '@/i18n/LocaleProvider';
@@ -25,10 +28,15 @@ import PieceDisc from './PieceDisc';
  * - 還沒坐滿：等人畫面（一張圓木桌，坐了誰、還空幾個位子），放邀請連結
  * - 坐滿：同一個 MancalaPlay，局面由房間的整串走法重走出來（online.ts），解不開或不合規則就當作連線壞了
  * - 結算的「再來一局」是換 hash 開一間新房（同樣的人數），再把新連結傳出去
+ * - 在線狀態、催一下照九子棋與盲五子棋（useRoomSignals，11/3）：斷線滿 3 秒的人那一列分數反灰、蓋一個斷掉的 Wi‑Fi，
+ *   被催的人圓盤抖一下、小手鈴搖四下。**沒有投降**：一桌四到七個人，一個人投降不該讓整桌結束
+ *   （房間的 resigned 也只放得下一個座位），要走就離開（其他人會停在那裡等，文案寫了）
  *
  * 三個畫面（連線中、等人、失敗）都是這款自己的世界：時禱書的頁面（MancalaFrame）、墨底的圓盤、金箔與畫了格線的羊皮紙條。
  * 不用 Wall Go 的紙色面板與紅藍棋子（裝飾只有 MancalaFrame 那一圈頁邊）。
  */
+const seatOf = (k: string): Seat => seatIndex(k as SeatKey);
+
 export default function MancalaOnline({ locale }: { locale: Locale }) {
   const session = useHashSession();
   if (!session) return null;
@@ -55,9 +63,34 @@ function Session({ locale, hash }: { locale: Locale; hash: string }) {
   useEffect(() => { if (bad) fail(); }, [bad, fail]);
 
   const onSend = useCallback((next: MancalaState) => send(movesOf(next), next.turn), [send]);
-  const online = useMemo(() => (me !== null && state && state !== 'bad' ? { me, state, send: onSend } : null), [me, state, onSend]);
+  const roomPath = room ? `turnRooms/${room.id}` : null;
+  const playing = state !== null && state !== 'bad' && state.phase !== 'over' && open.length === 0;
+  const signals = useRoomSignals({
+    roomPath, me: me === null ? null : seatKey(me), presence: room?.presence, nudge: room?.nudge,
+    turn: turn === null ? null : seatKey(turn), active: playing,
+  });
+  const awayKeys = signals.away.join(',');
+  const away = useMemo(() => (awayKeys ? awayKeys.split(',').map(seatOf) : []), [awayKeys]);
+  const sendNudge = signals.sendNudge;
+  const nudge = useCallback(() => sendNudge(() => track('nudge_send', { game: 'balance-mancala', players: seats as 4 | 5 | 6 | 7 })), [sendNudge, seats]);
+  const online = useMemo(() => (me !== null && state && state !== 'bad' ? {
+    me, state, send: onSend, away, selfOffline: signals.selfOffline, canNudge: signals.canNudge, nudged: signals.nudged, nudge,
+    shake: signals.shake, nudgeFrom: signals.nudgeFrom === null ? null : seatOf(signals.nudgeFrom),
+  } : null), [me, state, onSend, away, signals.selfOffline, signals.canNudge, signals.nudged, nudge, signals.shake, signals.nudgeFrom]);
   const match = useMemo((): MatchSetup => ({ mode: 'online', seats, humans: seats, difficulty: 'normal' }), [seats]);
   const newRoom = useCallback(() => { location.hash = `#new=${seats}`; }, [seats]);
+
+  // GA：開房的人房間開好送 room_created、連不上送 online_error（同九子棋、盲五子棋）
+  const created = useRef(false);
+  useEffect(() => {
+    if (created.current || !('create' in target) || !room) return;
+    created.current = true;
+    track('room_created', { game: 'balance-mancala', players: room.seats as 4 | 5 | 6 | 7 });
+  }, [target, room]);
+  useEffect(() => {
+    // 連結本身壞了（badLink）不是連線失敗，不送
+    if (failure && failure !== 'badLink') track('online_error', { game: 'balance-mancala', reason: failure });
+  }, [failure]);
 
   if (failure) return <Failure locale={locale} failure={failure} />;
   if (!room || me === null || !online || !inviteUrl) return <Connecting />;
@@ -171,6 +204,7 @@ function Waiting({ seats, filled, me, url, home }: { seats: number; filled: Seat
   const [copied, setCopied] = useState(false);
   const copy = async () => {
     try { await navigator.clipboard.writeText(url); } catch { return; }
+    track('share_room_link', { game: 'balance-mancala', method: 'copy' });
     setCopied(true);
     window.setTimeout(() => setCopied(false), 2000);
   };
@@ -193,7 +227,7 @@ function Waiting({ seats, filled, me, url, home }: { seats: number; filled: Seat
             const here = filled.includes(i);
             const name = fill(t.player, { seat: letterOf(i) });
             return (
-              <div key={i} role="listitem" aria-label={`${name}: ${here ? t.seated : t.emptySeat}`}
+              <div key={i} role="listitem" aria-label={`${i === me ? `${t.you} · ` : ''}${name}: ${here ? t.seated : t.emptySeat}`}
                 className="absolute -translate-x-1/2 -translate-y-1/2" style={{ left: `${50 + 36 * Math.cos(a)}%`, top: `${50 + 36 * Math.sin(a)}%` }}>
                 {here ? (
                   <span className="block rounded-full"
@@ -231,7 +265,7 @@ function Waiting({ seats, filled, me, url, home }: { seats: number; filled: Seat
             </button>
           </div>
           {canShare && (
-            <button type="button" onClick={() => { share({ title: t.title, text: t.shareText, url }).catch(() => {}); }}
+            <button type="button" onClick={() => { track('share_room_link', { game: 'balance-mancala', method: 'native' }); share({ title: t.title, text: t.shareText, url }).catch(() => {}); }}
               className="mcl-plaque flex h-12 w-full items-center justify-center gap-2 px-4 text-base font-black">
               <LuShare2 className="text-lg" aria-hidden="true" />{g.share.share}
             </button>
