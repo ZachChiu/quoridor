@@ -1,7 +1,9 @@
 import { getMessages, siteName } from './index';
 import { FAQ_TEXT } from './content/faq';
+import { SEASON3_TEXT, SEASON3_UPDATED } from './content/season3';
 import { localePath, type Locale } from './locales';
-import { wallGo } from './routes';
+import { season, wallGo } from './routes';
+import { SEASONS, gameName } from '@/games/catalog';
 import { brandName } from '@/brand';
 import { ogImageUrl, OG_SIZE, platformDescription } from './metadata';
 
@@ -221,6 +223,51 @@ export function pageGraph(locale: Locale, kind: PageKind) {
   return {
     '@context': 'https://schema.org',
     '@graph': [...base, page, breadcrumbNode(locale, pageUrl, [{ name: crumbName, path }])],
+  };
+}
+
+/** 第 3 季頁現在能推薦的遊戲：前兩季做好的（第 3 季自己的遊戲之後列在格子裡，不算進「先玩前兩季」） */
+export function earlierPlayable() {
+  return SEASONS.filter((s) => s.id !== 's3').flatMap((s) => s.games).filter((g) => g.playable && g.look);
+}
+
+/** 第 3 季頁的常見問題：{n}、{games} 換成前兩季做好的遊戲，畫面與 FAQPage 讀同一份 */
+export function season3Faq(locale: Locale) {
+  const games = earlierPlayable();
+  const fill = (a: string) => a.replace('{n}', String(games.length)).replace('{games}', games.map((g) => gameName(g, locale)).join(getMessages(locale).platform.listSep));
+  return SEASON3_TEXT[locale].faq.map((f) => ({ q: f.q, a: fill(f.a) }));
+}
+
+/**
+ * 第 3 季頁（docs/season3-page.md）：頁面節點直接是 FAQPage（同規則頁的寫法），about 指向節目，
+ * dateModified 跟頁面上的「最後更新」同一個值 —— 開播後每次整理新的一批就改 content/season3.ts 的 SEASON3_UPDATED。
+ */
+export function season3Graph(locale: Locale) {
+  const p = getMessages(locale).platform;
+  const pageUrl = SITE + localePath(locale, season('3'));
+  return {
+    '@context': 'https://schema.org',
+    '@graph': [
+      organizationNode(locale),
+      websiteNode(locale),
+      seriesNode(locale),
+      {
+        '@type': 'FAQPage',
+        '@id': `${pageUrl}#webpage`,
+        url: pageUrl,
+        name: p.seasonMetaTitle.replace('{season}', p.s3),
+        description: SEASON3_TEXT[locale].intro,
+        isPartOf: { '@id': id('website') },
+        about: { '@id': id('series') },
+        dateModified: SEASON3_UPDATED,
+        inLanguage: locale,
+        mainEntity: season3Faq(locale).map((f) => ({
+          '@type': 'Question',
+          name: f.q,
+          acceptedAnswer: { '@type': 'Answer', text: f.a },
+        })),
+      },
+    ],
   };
 }
 
