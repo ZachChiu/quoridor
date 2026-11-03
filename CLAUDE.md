@@ -238,6 +238,10 @@ nudge { by, at }          最近一次「催一下」
     對局左上的房子回這款的選單（換 hash，不播轉場；從選單進來的是 `history.back()`，直接開 `#show`／`#practice-N` 的是 `replaceState`），只有首頁左上的骰子去平台。不做連線版（一個人解的謎題，10/24 Zach）。
     **規則頁** `/knights-tour/rules`（10/25，`views/KnightsTourRulesView.tsx`）：第二張圖版（右下角 Tab. II.），六步各一張 Fig.（對局的 `TourBoard` 畫的靜態局面，`knights-tour/RulesSteps.tsx`，局面都由 engine 重播過、測試鎖住），最後出處、名字由來、回首頁選模式、署名；選單的「遊戲規則」連過去、不開彈窗。對局中的說明彈窗是同一份步驟、一次一步、可以左右滑（`useSwipePager`），頁碼是一排小壓痕方塊，不放出處與離開的連結。分享圖 `scripts/og-games/knights-tour.mjs`（紙底、紅粉筆膠囊、右邊是 plate.webp 切出來的棋盤 `scripts/og-art/knights-tour.webp`）。
 
+  - 方程式金字塔（`feat/game-equation-pyramid`，2026-11-03 試做，第 2 季第 6 天監獄賽；規則、出題、電腦、原件與配色見 `docs/equation-pyramid.md`）：原件是大都會博物館卓瑟王階梯金字塔地下墓室的綠松石彩陶牆磚（48.160.1，CC0）；最外緣一圈小彩陶磚（`.ep-frame`），盤上一格一塊磚（上緣圓、下緣方），按鈕主要深釉、次要淡墨。
+    `/equation-pyramid` 一頁，模式放 hash：`#show-easy|normal|hard|solo`（節目規則 10 回合 × 3 分鐘，跟電腦搶答或一個人計分）、`#daily`（當地日期當種子、找齊為止）、`#big`（15 格、找齊為止）。規則在 `app/games/equation-pyramid/engine.ts`（節目十回合的答案由測試鎖住），畫面在 `app/components/equation-pyramid/`。
+    自己那塊分數一圈深釉框、電腦那塊褪釉橄欖色（不寫「你」「對手」）。還沒有規則頁、og 圖、favicon、自己的字、GA 事件、連線。
+
   - 時間拍賣：試做中，視覺在 `feat/game-time-auction`。
 
   - 均衡曼卡拉：試做中，視覺在 `feat/game-balance-mancala`。

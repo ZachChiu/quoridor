@@ -1,4 +1,5 @@
 import * as routes from '@/i18n/routes';
+import { BLURB as EQUATION_PYRAMID } from './equation-pyramid/blurb';
 import { BLURB as NINE_MENS_MORRIS } from './nine-mens-morris/blurb';
 import { BLURB as BLIND_GOMOKU } from './blind-gomoku/blurb';
 import { BLURB as KNIGHTS_TOUR } from './knights-tour/blurb';
@@ -10,6 +11,7 @@ import { BLURB as BALANCE_MANCALA } from './balance-mancala/blurb';
  * Wall Go 與尼泊爾虎棋的在 messages 的 platform.heroMeta／baghHeroMeta（先做的，留在原處）。
  */
 export const BLURBS: Partial<Record<string, typeof NINE_MENS_MORRIS>> = {
+  [routes.EQUATION_PYRAMID]: EQUATION_PYRAMID,
   [routes.NINE_MENS_MORRIS]: NINE_MENS_MORRIS,
   [routes.BLIND_GOMOKU]: BLIND_GOMOKU,
   [routes.KNIGHTS_TOUR]: KNIGHTS_TOUR,

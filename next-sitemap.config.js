@@ -35,6 +35,8 @@ module.exports = {
     ...['/time-auction', '/balance-mancala'].flatMap((p) => [p, `/*${p}`, `${p}/rules`, `/*${p}/rules`]),
     // 第二批的連線房（2026-10-24 加）：跟 Wall Go、虎棋的連線頁一樣是空殼，上線後也不收
     ...['/time-auction', '/nine-mens-morris', '/blind-gomoku', '/balance-mancala'].flatMap((p) => [`${p}/online`, `/*${p}/online`]),
+    // 第三批試做：方程式金字塔（2026-11-03，feat/game-equation-pyramid）
+    '/equation-pyramid', '/*/equation-pyramid',
     // 舊網址（2026-10 平台化前），只做轉址：真正的 301 在 CloudFront，這些頁面是備援。
     // 逐一列出，不能寫 '/*/rules' —— * 也會對到 wall-go，連新的 /wall-go/rules 一起排除掉
     '/match',

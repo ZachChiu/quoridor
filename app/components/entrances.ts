@@ -26,6 +26,8 @@ export type EntranceScene = {
 };
 
 const LOADERS: Record<string, () => Promise<{ default: EntranceScene }>> = {
+  'equation-pyramid': () => import('./equation-pyramid/Entrance'),
+
   // 時間拍賣（feat/game-time-auction 打開這一行）
 
   'nine-mens-morris': () => import('./nine-mens-morris/Entrance'),

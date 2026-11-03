@@ -44,6 +44,9 @@ export function trialOnline(game: OnlineTrialGame): string {
   return `${game}/online`;
 }
 
+/** 第三批試做（2026-11-03）：方程式金字塔（第 2 季第 6 天監獄賽的 Equation Pyramid），先不做連線 */
+export const EQUATION_PYRAMID = '/equation-pyramid';
+
 /**
  * 第二批的規則頁（2026-10-25 Zach：「怎麼玩都沒有換新頁，最好是跟 Wall Go 一樣，圖配字」）。
  * 每款在自己的分支加 `<遊戲>/rules` 的頁面；對局中的說明彈窗是同一份步驟、一次一步、可以左右滑（hook/useSwipePager.ts）。
