@@ -242,6 +242,10 @@ nudge { by, at }          最近一次「催一下」
 
   - 均衡曼卡拉：試做中，視覺在 `feat/game-balance-mancala`。
 
+  - 提問與真相（`feat/game-question-truth`，2026-11-03 試做）：第 2 季決賽第 3 戰。原件是 La Tour〈方塊 A 的老千〉（約 1635，羅浮宮，PD-Art）；頁面是畫裡背景的黑、牌是手上那張牌的白、牌桌是橄欖綠桌布，最外緣是交際花的珍珠項鍊（`.qt-frame`），整頁的字 Noto Serif＋EB Garamond（`scripts/game-fonts/question-and-truth.mjs`）。
+    節目版（對電腦三級、同一台兩人：秘密出價、11 題、報真相）與自己的挑戰（每日一手：每題有價錢、花最少枚數；六問一猜：6 題後報一次）都在 `/question-and-truth`，模式放 hash。
+    規則與推理是純函式（`games/question-and-truth/`：engine、solver、ai、challenge），電腦只看公開的問答、看不到對方的牌（測試鎖住）。規則、挑戰的數字、電腦怎麼想、連線要 commit-reveal 藏牌見 `docs/question-and-truth.md`。連線版還沒做。
+
 - **棋盤**：外圍那圈 9px 是「牆」不是裝飾邊框（規則裡棋盤外緣本身就算一道牆）。
   牆的位移一律 `calc(var(--board-gap) * -0.5)` —— 對齊的是格線中心而不是格子邊，
   兩者差半個格縫，寫死會漂掉。

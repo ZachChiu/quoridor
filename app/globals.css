@@ -695,6 +695,62 @@ html:has(.kt-root), body:has(.kt-root) { background: #edddc7; }
 
 /* ▸ 均衡曼卡拉（feat/game-balance-mancala） */
 
+/* ▸ 提問與真相（feat/game-question-truth） */
+/* 提問與真相（QtFrame）：Georges de La Tour〈方塊 A 的老千〉（約 1635，羅浮宮，公有領域）。頁面是畫裡背景的黑，
+   字是蕾絲的米白、牌與彈窗是手上那張牌的白、牌桌是橄欖綠桌布、強調是少年裙子的朱紅（只當色塊）、次要字是頭巾的金。
+   .qt-frame 是交際花的珍珠項鍊 —— 唯一的裝飾，只有最外緣這一圈。顏色見 components/question-and-truth/palette.ts。 */
+/* 變數也掛在 html 上：彈窗用 portal 畫在 <body>，不在 .qt-root 裡面 */
+.qt-root, html:has(.qt-root) {
+  --qt-page: #0e1012; --qt-fg: #c8c5a5; --qt-gold: #af8942; --qt-red: #993e27;
+  --qt-table: #635b33; --qt-paper: #c2d1c5; --qt-ink: #211e19;
+  --qt-frame-src: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 36 36'%3E%3Cdefs%3E%3CradialGradient id='p' cx='0.38' cy='0.34' r='0.7'%3E%3Cstop offset='0' stop-color='%23f1eed8'/%3E%3Cstop offset='0.55' stop-color='%23c8c5a5'/%3E%3Cstop offset='1' stop-color='%23756f58'/%3E%3C/radialGradient%3E%3C/defs%3E%3Crect width='36' height='36' fill='%230e1012'/%3E%3Ccircle cx='6' cy='6' r='3.9' fill='url(%23p)'/%3E%3Ccircle cx='18' cy='6' r='3.9' fill='url(%23p)'/%3E%3Ccircle cx='30' cy='6' r='3.9' fill='url(%23p)'/%3E%3Ccircle cx='6' cy='18' r='3.9' fill='url(%23p)'/%3E%3Ccircle cx='30' cy='18' r='3.9' fill='url(%23p)'/%3E%3Ccircle cx='6' cy='30' r='3.9' fill='url(%23p)'/%3E%3Ccircle cx='18' cy='30' r='3.9' fill='url(%23p)'/%3E%3Ccircle cx='30' cy='30' r='3.9' fill='url(%23p)'/%3E%3C/svg%3E");
+  --qt-frame-slice: 12;
+}
+html:has(.qt-root), body:has(.qt-root) { background: #0e1012; }
+.qt-frame {
+  border: var(--qt-frame-w, 12px) solid var(--qt-page);
+  border-image: var(--qt-frame-src) var(--qt-frame-slice) / var(--qt-frame-w, 12px) round;
+}
+@media (max-width: 640px) { .qt-frame { --qt-frame-w: 9px; } }
+/* 彈窗的標題列：黑底，下緣一排小珍珠（同一條項鍊） */
+.qt-band {
+  background:
+    radial-gradient(circle at 50% 50%, #e6e2c8 0 2.4px, #8d8870 3px, transparent 3.6px) bottom 2px left 3px / 10px 8px repeat-x,
+    var(--qt-page);
+  padding-bottom: 12px !important;
+}
+
+/* 按鈕：一律直角微圓、沒有框線。is-ink 主要（牌紙底深墨字）、is-soft 次要（米白淡一層）、is-red 朱紅（說真相）、
+   is-quiet 小圓鈕；彈窗（牌紙）裡 is-ink-on-paper 主要、is-paper 次要、is-on 選中 */
+.qt-btn { border-radius: 5px; font-weight: 900; transition: filter 0.15s, transform 0.1s, background-color 0.15s; }
+.qt-btn:active:not(:disabled) { transform: scale(0.98); }
+.qt-btn:disabled { opacity: 0.35; }
+@media (pointer: fine) { .qt-btn:hover:not(:disabled) { filter: brightness(1.1); } }
+.qt-btn.is-ink { background: var(--qt-paper); color: var(--qt-ink); }
+.qt-btn.is-soft { background: color-mix(in srgb, var(--qt-fg) 12%, transparent); color: var(--qt-fg); }
+.qt-btn.is-red { background: var(--qt-red); color: #f1eed8; }
+.qt-btn.is-quiet { background: color-mix(in srgb, var(--qt-fg) 10%, transparent); color: var(--qt-fg); border-radius: 9999px; }
+.qt-btn.is-ink-on-paper { background: var(--qt-ink); color: var(--qt-paper); }
+.qt-btn.is-paper { background: color-mix(in srgb, var(--qt-ink) 9%, transparent); color: var(--qt-ink); }
+.qt-btn.is-on { background: var(--qt-ink); color: var(--qt-paper); }
+.qt-field { border-radius: 4px; background: color-mix(in srgb, var(--qt-ink) 8%, transparent); outline: none; }
+.qt-field:focus { box-shadow: 0 0 0 2px var(--qt-red); }
+
+/* 牌：畫裡的牌是素白小牌、點數平塗，沒有描邊。牌背是同一張紙上一格一格的朱紅菱形（方塊 A 的方塊） */
+.qt-card { background: var(--qt-paper); color: var(--qt-ink); border-radius: 4px; }
+.qt-back {
+  border-radius: 4px;
+  background-color: var(--qt-paper);
+  background-image:
+    repeating-linear-gradient(45deg, var(--qt-red) 0 1.2px, transparent 1.2px 7px),
+    repeating-linear-gradient(-45deg, var(--qt-red) 0 1.2px, transparent 1.2px 7px);
+  background-clip: content-box;
+  padding: 4px;
+  box-shadow: inset 0 0 0 4px var(--qt-paper), inset 0 0 0 5px var(--qt-red);
+}
+/* 牌桌：橄欖綠桌布 */
+.qt-table { background: var(--qt-table); }
+
 /* 九子棋選單的大按鈕：字放在拱中間最高的地方置中，首字留左、箭頭留右，左右對稱；節目規則左邊補一個朱紅的 ¶ 對稱右邊的蠟封
    （11/1 Zach 在 beta 切換 A 只留字／B 首字在上／C 左右對稱後選 C）。
    前面加 html 壓過元件上的 text-left、px-4。首字做過「頂端也是拱」「貼著左上角、上緣順著拱滑下去」，11/1 Zach 都要改回原本的方塊 */

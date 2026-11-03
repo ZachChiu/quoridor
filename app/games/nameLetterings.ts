@@ -5,6 +5,7 @@ import { NAME_LETTERING as BLIND_GOMOKU } from './blind-gomoku/nameLettering';
 import { NAME_LETTERING as KNIGHTS_TOUR } from './knights-tour/nameLettering';
 import { NAME_LETTERING as TIME_AUCTION } from './time-auction/nameLettering';
 import { NAME_LETTERING as BALANCE_MANCALA } from './balance-mancala/nameLettering';
+import { NAME_LETTERING as QUESTION_AND_TRUTH } from './question-and-truth/nameLettering';
 
 /**
  * 第二批五款在地名字的字標，依站內路徑查（產物在各款自己的 nameLettering.ts，scripts/build-name-lettering.mjs 產生）。
@@ -16,4 +17,5 @@ export const NAME_LETTERINGS: Partial<Record<string, NameLettering>> = {
   [routes.KNIGHTS_TOUR]: KNIGHTS_TOUR,
   [routes.TIME_AUCTION]: TIME_AUCTION,
   [routes.BALANCE_MANCALA]: BALANCE_MANCALA,
+  [routes.QUESTION_AND_TRUTH]: QUESTION_AND_TRUTH,
 };
