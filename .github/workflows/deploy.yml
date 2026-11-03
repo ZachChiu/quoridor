@@ -21,6 +21,13 @@ env:
   BETA_FIREBASE_MESSAGING_SENDER_ID: "952360268072"
   BETA_FIREBASE_APP_ID: "1:952360268072:web:c1ce0b44c69198a968601d"
 
+# 同一條分支的部署一次只跑一個，後面的排隊（不取消跑到一半的：s3 sync 中途被砍，站上會剩一半新一半舊）。
+# 2026-11-03 beta 連推好幾次，兩次部署同時 sync＋--delete：一部分頁面是舊建置的 HTML、
+# 它要的 chunk 卻被新建置刪掉，那些頁面整頁沒有 JS（按鈕都按不動）。GitHub 一個 group 只留一個排隊的，最後一次推的一定最後部署。
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   # 構建和部署工作
   deploy:
