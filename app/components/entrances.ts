@@ -41,6 +41,8 @@ const LOADERS: Record<string, () => Promise<{ default: EntranceScene }>> = {
   hexagon: () => import('./hexagon/Entrance'),
 
   'liars-dice': () => import('./liars-dice/Entrance'),
+
+  'question-and-truth': () => import('./question-and-truth/Entrance'),
 };
 
 const ready = new Map<string, EntranceScene>();

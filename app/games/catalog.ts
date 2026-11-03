@@ -106,7 +106,8 @@ export const SEASONS: Season[] = [
       { name: 'Equation Pyramid', names: { 'zh-TW': '方程式金字塔', 'zh-Hans': '方程式金字塔' }, playable: routes.EQUATION_PYRAMID,
         look: { card: 'bg-[#195153] text-[#e8ebe2]', wipe: '#327675', art: '/games/equation-pyramid/card.webp', hero: '/games/equation-pyramid/hero-wide.webp', heroSquare: '/games/equation-pyramid/hero-square.webp', cover: true, entrance: 'equation-pyramid' } },
       { name: 'Big Small', names: { 'zh-TW': '大或小', 'zh-Hans': '大或小' } },
-      { name: 'Question and Truth', names: { 'zh-TW': '提問與真相', 'zh-Hans': '提问与真相' } },
+      { name: 'Question and Truth', names: { 'zh-TW': '提問與真相', 'zh-Hans': '提问与真相' }, playable: routes.QUESTION_AND_TRUTH,
+        look: { card: 'bg-[#0e1012] text-[#c8c5a5]', wipe: '#0e1012', art: '/games/question-and-truth/card.webp', hero: '/games/question-and-truth/latour.webp', heroSquare: '/games/question-and-truth/hero-square.webp', cover: true, entrance: 'question-and-truth' } },
       { name: "Knight's Tour", names: { 'zh-TW': '騎士巡遊', 'zh-Hans': '骑士巡游' }, playable: routes.KNIGHTS_TOUR,
         // 三張都是真的棋盤＋背後不同路線的手稿（11/3 Zach 選 B），scripts/knights-tour/build-key-art.mjs 產生
         look: { card: 'bg-[#edddc7] text-[#322e2a]', wipe: '#edddc7', art: '/games/knights-tour/card.webp', hero: '/games/knights-tour/hero-wide.webp', heroSquare: '/games/knights-tour/hero-square.webp', cover: true, entrance: 'knights-tour', rules: routes.trialRules(routes.KNIGHTS_TOUR),

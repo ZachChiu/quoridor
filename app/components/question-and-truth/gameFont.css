@@ -1,0 +1,14 @@
+/* 由 scripts/build-game-fonts.mjs 依 scripts/game-fonts/question-and-truth.mjs 產生，不要手改（npm run font:subset）。
+   這款的頁面（html:has(.qt-root)）整頁換成自己的字，--font-site 是全站那套黑體、當備援。 */
+@font-face { font-family: 'question-and-truth zh-TW'; src: url('/fonts/games/question-and-truth/zh-TW.woff2') format('woff2'); font-weight: 400 900; font-style: normal; font-display: swap; }
+@font-face { font-family: 'question-and-truth en'; src: url('/fonts/games/question-and-truth/en.woff2') format('woff2'); font-weight: 400 800; font-style: normal; font-display: swap; }
+@font-face { font-family: 'question-and-truth ja'; src: url('/fonts/games/question-and-truth/ja.woff2') format('woff2'); font-weight: 400 900; font-style: normal; font-display: swap; }
+@font-face { font-family: 'question-and-truth ko'; src: url('/fonts/games/question-and-truth/ko.woff2') format('woff2'); font-weight: 400 900; font-style: normal; font-display: swap; }
+@font-face { font-family: 'question-and-truth zh-Hans'; src: url('/fonts/games/question-and-truth/zh-Hans.woff2') format('woff2'); font-weight: 400 900; font-style: normal; font-display: swap; }
+@font-face { font-family: 'question-and-truth th'; src: url('/fonts/games/question-and-truth/th.woff2') format('woff2'); font-weight: 400 900; font-style: normal; font-display: swap; }
+:root:lang(zh-Hant-TW):has(.qt-root) { --font-app: 'question-and-truth zh-TW', var(--font-site); }
+:root:lang(en):has(.qt-root) { --font-app: 'question-and-truth en', var(--font-site); }
+:root:lang(ja):has(.qt-root) { --font-app: 'question-and-truth ja', var(--font-site); }
+:root:lang(ko):has(.qt-root) { --font-app: 'question-and-truth ko', var(--font-site); }
+:root:lang(zh-Hans):has(.qt-root) { --font-app: 'question-and-truth zh-Hans', var(--font-site); }
+:root:lang(th):has(.qt-root) { --font-app: 'question-and-truth th', 'question-and-truth en', var(--font-site); }
