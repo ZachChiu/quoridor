@@ -987,3 +987,50 @@ html:has(.hx-root), body:has(.hx-root) { background: #f5e5d3; }
   .hx-flip { transition: none; }
   .hx-shake, .hx-pop { animation: none; }
 }
+
+/* ▸ 方程式金字塔（feat/game-equation-pyramid） */
+/* 方程式金字塔（EpFrame）：卓瑟王階梯金字塔地下墓室的彩陶牆 —— 石灰白的底，一塊塊綠松石色的磚。顏色見 components/equation-pyramid/palette.ts。
+   .ep-frame 是唯一的裝飾：最外緣一圈小彩陶磚（上緣圓、下緣方，深淺三種釉交錯），磚縫是石灰白（border-image round 重複）。 */
+html:has(.ep-root), body:has(.ep-root) { background: #e8ebe2; }
+.ep-frame {
+  border: var(--ep-frame, 16px) solid #327675;
+  border-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30'%3E%3Cpath fill='%23e8ebe2' fill-rule='evenodd' d='M0 0H30V30H0Z M10 10V20H20V10Z'/%3E%3Cpath fill='%23195153' d='M1.5 9V3.5Q1.5 1.2 5 1.2Q8.5 1.2 8.5 3.5V9Z'/%3E%3Cpath fill='%23327675' d='M11.5 9V3.5Q11.5 1.2 15 1.2Q18.5 1.2 18.5 3.5V9Z'/%3E%3Cpath fill='%23549894' d='M21.5 9V3.5Q21.5 1.2 25 1.2Q28.5 1.2 28.5 3.5V9Z'/%3E%3Cpath fill='%23327675' d='M1.5 19V13.5Q1.5 11.2 5 11.2Q8.5 11.2 8.5 13.5V19Z'/%3E%3Cpath fill='%23195153' d='M21.5 19V13.5Q21.5 11.2 25 11.2Q28.5 11.2 28.5 13.5V19Z'/%3E%3Cpath fill='%23327675' d='M1.5 29V23.5Q1.5 21.2 5 21.2Q8.5 21.2 8.5 23.5V29Z'/%3E%3Cpath fill='%23549894' d='M11.5 29V23.5Q11.5 21.2 15 21.2Q18.5 21.2 18.5 23.5V29Z'/%3E%3Cpath fill='%23327675' d='M21.5 29V23.5Q21.5 21.2 25 21.2Q28.5 21.2 28.5 23.5V29Z'/%3E%3C/svg%3E") 10 / var(--ep-frame, 16px) round;
+}
+@media (max-width: 640px) { .ep-frame { --ep-frame: 12px; } }
+
+/* 按鈕：主要是一塊深釉磚（上緣圓、下緣方），次要是淡墨。沒有框線；hover 只給滑鼠 */
+.ep-deep { border-radius: 12px 12px 6px 6px; background: #195153; color: #e8ebe2; transition: filter 0.15s; }
+.ep-soft { border-radius: 12px 12px 6px 6px; background: rgb(7 26 25 / 0.07); color: #071a19; transition: background-color 0.15s; }
+@media (pointer: fine) {
+  .ep-deep:hover:not(:disabled) { filter: brightness(1.15); }
+  .ep-soft:hover:not(:disabled) { background: rgb(7 26 25 / 0.12); }
+}
+
+/* 盤上的磚（PyramidBoard）：上半亮釉、往下深釉，跟牆上的磚一樣上緣圓、下緣方；符號是釉光色、數字是石灰白 */
+.ep-brick {
+  border-radius: 18% 18% 7% 7% / 24% 24% 9% 9%;
+  background: linear-gradient(180deg, #549894 0%, #327675 46%, #195153 100%);
+  color: #e8ebe2;
+  transition: background 0.12s, color 0.12s;
+}
+.ep-brick .ep-op { color: #a3d0c7; }
+.ep-brick > span:first-child { color: #a3d0c7; }
+.ep-brick.is-on { background: #e8ebe2; color: #195153; box-shadow: inset 0 0 0 max(2px, 0.6cqw) #195153; }
+.ep-brick.is-on .ep-op, .ep-brick.is-on > span:first-child { color: #327675; }
+.ep-order { background: #195153; color: #e8ebe2; }
+.ep-brick.is-cpu { background: #676549; }
+@media (pointer: fine) { button.ep-brick:not(.is-on):hover { filter: brightness(1.1); } }
+@keyframes ep-shake { 0%, 100% { translate: 0; } 20% { translate: -5px 0; } 40% { translate: 5px 0; } 60% { translate: -3px 0; } 80% { translate: 2px 0; } }
+.ep-shake { animation: ep-shake 0.36s ease-in-out; }
+@keyframes ep-pop { 0% { scale: 1; } 40% { scale: 1.1; } 100% { scale: 1; } }
+.ep-pop { animation: ep-pop 0.34s ease-out; }
+/* 電腦答的那三格：褪成橄欖色一下再回來 */
+@keyframes ep-cpu { 0%, 70% { background: #676549; scale: 1.06; } 100% { scale: 1; } }
+.ep-cpu { animation: ep-cpu 1.3s ease-out; }
+@keyframes ep-in { from { opacity: 0; translate: 0 6px; } to { opacity: 1; translate: 0; } }
+.ep-in { animation: ep-in 0.25s ease-out both; }
+@keyframes ep-target { 0% { opacity: 0; scale: 0.4; } 70% { opacity: 1; scale: 1.15; } 100% { scale: 1; } }
+.ep-target { animation: ep-target 0.45s cubic-bezier(0.3, 0.7, 0.3, 1.2) both; }
+@media (prefers-reduced-motion: reduce) {
+  .ep-shake, .ep-pop, .ep-cpu, .ep-in, .ep-target { animation: none; }
+}

@@ -28,6 +28,8 @@ export type EntranceScene = {
 const LOADERS: Record<string, () => Promise<{ default: EntranceScene }>> = {
   'time-auction': () => import('./time-auction/Entrance'),
 
+  'equation-pyramid': () => import('./equation-pyramid/Entrance'),
+
   'nine-mens-morris': () => import('./nine-mens-morris/Entrance'),
 
   'blind-gomoku': () => import('./blind-gomoku/Entrance'),

@@ -200,6 +200,8 @@ function iconSet(id: string, svg = false): Metadata['icons'] {
 const GAME_ICONS: Record<string, Metadata['icons'] | undefined> = {
   'wall-go': iconSet('wall-go', true),
 
+  'equation-pyramid': undefined,
+
   'bagh-chal': iconSet('bagh-chal'),
 
   'nine-mens-morris': iconSet('nine-mens-morris'),

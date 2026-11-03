@@ -102,7 +102,9 @@ export const SEASONS: Season[] = [
       // 點進去玩的是它的原型大話骰（2026-11-03 Zach：大話骰排入研究、找風格套用）；卡片照舊寫節目的名字
       { name: 'Doubt and Bet', names: { 'zh-TW': '疑心下注', 'zh-Hans': '疑心下注' }, playable: routes.LIARS_DICE,
         look: { card: 'bg-[#41303a] text-[#d4b98f]', wipe: '#41303a', art: '/games/liars-dice/uncu.webp', cover: true, entrance: 'liars-dice' } },
-      { name: 'Equation Pyramid', names: { 'zh-TW': '方程式金字塔', 'zh-Hans': '方程式金字塔' } },
+      // 方程式金字塔：第三批試做（feat/game-equation-pyramid，2026-11-03）。卡片是卓瑟王階梯金字塔墓室的彩陶牆磚（Met 48.160.1，CC0）
+      { name: 'Equation Pyramid', names: { 'zh-TW': '方程式金字塔', 'zh-Hans': '方程式金字塔' }, playable: routes.EQUATION_PYRAMID,
+        look: { card: 'bg-[#195153] text-[#e8ebe2]', wipe: '#327675', art: '/games/equation-pyramid/card.webp', hero: '/games/equation-pyramid/hero-wide.webp', heroSquare: '/games/equation-pyramid/hero-square.webp', cover: true, entrance: 'equation-pyramid' } },
       { name: 'Big Small', names: { 'zh-TW': '大或小', 'zh-Hans': '大或小' } },
       { name: 'Question and Truth', names: { 'zh-TW': '提問與真相', 'zh-Hans': '提问与真相' } },
       { name: "Knight's Tour", names: { 'zh-TW': '騎士巡遊', 'zh-Hans': '骑士巡游' }, playable: routes.KNIGHTS_TOUR,
