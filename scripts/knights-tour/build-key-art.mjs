@@ -5,7 +5,7 @@
  *   public/games/knights-tour/hero-square.webp  1080×1080 手機大卡片，下面五分之三蓋著黑色漸層與字，棋盤放上半
  *   public/games/knights-tour/card.webp         960×540   小卡片，左上是「可以玩」、左下是名字
  *
- * 跟 Wall Go、尼泊爾虎棋同一個做法：前景是**遊戲裡真的棋盤**（練習模式 8×8 照歐拉的走法下了 20 步、騎士停在正中間，微斜 3°），
+ * 跟 Wall Go、尼泊爾虎棋同一個做法：前景是**遊戲裡真的棋盤**（練習模式 8×8 照歐拉的走法下了 20 步、騎士停在正中間，順時針斜 8°：11/3 Zach 從 0°、3°、逆時針 6°、8° 裡挑了 8°），
  * 底是那款的世界 —— 一疊散開的手稿紙，每張是一條**不同的**騎士巡遊（數字表＋紅粉筆路線，照首頁 Fig. 1 的畫法）。
  * 路線用 Warnsdorff 法則加亂數平手規則產生、每條都驗過是 64 格的合法巡遊，同一張圖裡沒有兩張一樣的。亂數有固定種子，重跑結果一樣。
  *
@@ -130,7 +130,7 @@ async function make(file, w, h, { sheet: sheetSize, size, deg, cx, cy, seed, qua
   console.log(`${file} ${w}×${h} ${(info.size / 1024).toFixed(0)} KB`);
 }
 
-await make('hero-wide.webp', 1600, 660, { sheet: 300, size: 470, deg: 3, cx: 0.77, cy: 0.51, seed: 1, quality: 62 });
-await make('hero-square.webp', 1080, 1080, { sheet: 300, size: 520, deg: 3, cx: 0.56, cy: 0.36, seed: 2, quality: 62 });
+await make('hero-wide.webp', 1600, 660, { sheet: 300, size: 470, deg: 8, cx: 0.77, cy: 0.51, seed: 1, quality: 62 });
+await make('hero-square.webp', 1080, 1080, { sheet: 300, size: 520, deg: 8, cx: 0.56, cy: 0.36, seed: 2, quality: 62 });
 // 小卡片的棋盤上下置中（11/3 Zach：「現在偏上」，原本 cy 0.40、上緣被切掉）；手機方圖下半蓋著字，所以仍偏上
-await make('card.webp', 960, 540, { sheet: 230, size: 340, deg: 3, cx: 0.64, cy: 0.50, seed: 3, quality: 66 });
+await make('card.webp', 960, 540, { sheet: 230, size: 340, deg: 8, cx: 0.64, cy: 0.50, seed: 3, quality: 66 });
