@@ -147,8 +147,9 @@ const en: Messages = {
     intro:
       "Wall Go comes from the Netflix series The Devil's Plan: Death Room. It is a variant of Go, played on a 7×7 board by two or three players.\nA turn is two things: move one piece, then build one wall. Each step below comes with a diagram.",
     metaTitle: 'Rules',
+    searchTitle: "Wall Go Rules: How to Play (The Devil's Plan Season 2)",
     metaDescription:
-      "Complete Wall Go rules: opening placement, moving 0 to 2 squares and then building a wall each turn, scoring enclosed territory, the 3-player wall break, and how the game ends. From Netflix's The Devil's Plan: Death Room.",
+      "Move a piece up to 2 squares, build a wall, and enclose the most territory to win. Wall Go rules for 2–3 players in step-by-step diagrams, then play free online. From The Devil's Plan season 2.",
     ogTitle: 'How to play Wall Go',
     ogDescription: 'One step, one diagram: placement, movement, walls, territory and scoring.',
     faqHeading: 'Common questions',
