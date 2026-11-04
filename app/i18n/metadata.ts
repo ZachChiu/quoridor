@@ -257,6 +257,8 @@ export function localeMetadata(locale: Locale, path: PagePath): Metadata {
     // 平台首頁是「節目遊戲整理｜平台名」，Wall Go 首頁維持原本的標題
     ...(path === '/' ? { title: { absolute: `${t.platform.metaTitle} | ${brandName(locale)}` } } : {}),
     ...(path === '/wall-go' ? { title: { absolute: t.meta.titleDefault } } : {}),
+    // 規則頁：搜的人打的是「wall go rules」「牆壁圍棋規則」，標題自己帶遊戲名與節目，不套 template
+    ...(path === '/wall-go/rules' ? { title: { absolute: t.rules.searchTitle } } : {}),
     // 季目錄頁同平台首頁：接平台名，不套 Wall Go 的標題格式
     ...(path.startsWith('/season/') ? { title: { absolute: `${c.title} | ${brandName(locale)}` } } : {}),
     // 其他遊戲不套 Wall Go 的標題格式（「… | 牆壁圍棋 Wall Go」），接平台名
