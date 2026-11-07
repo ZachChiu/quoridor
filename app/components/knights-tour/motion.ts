@@ -14,6 +14,8 @@ import { colOf, rowOf, type Square } from '@/games/knights-tour/engine';
  * - 放下騎士：從上面落下來、影子跟著變大，落地壓扁再彈一下。
  * - 走完：步數照 1、2、3… 的順序一格一格跳一下（像歐拉那張表從頭念一遍），最後騎士揚起前腳；
  *   封閉巡遊接回起點的那段虛線這時才淡淡浮出來。
+ * - 倒回去（11/7 Zach：「重來的話可以讓他快速從順序跳回去嗎」）：悔一步時騎士跳回上一格，重來時照走過的順序一格一格倒跳回第 1 格
+ *   （PracticeGame 的 restart 一步一步悔、這裡每一步用比較短的跳），紅粉筆不重畫。面向照舊是最後一步的方向，看起來像倒帶。
  * - 走錯（節目挑戰踩到走過的格子）：騎士往那一格探過去、縮回來搖頭；卡住沒路可走就原地左右張望。
  * - 閒著：玩家一陣子（3.5–6.5 秒）沒動，騎士轉頭望向一個跳得到的格子、那個圓點跟著輕輕脹一下；有時候用前蹄刨地。
  *   只是隨機挑一個合法的格子，不是提示。
@@ -88,7 +90,14 @@ export function animateStep(root: HTMLElement, n: number, path: readonly Square[
  * 從 prev 跳到 cur。騎士已經畫在 cur 那一格了，所以影格是「從 prev 的位置（相對位移）回到 0」。
  * 影格事先算好交給 WAAPI，播放時不用 JS 逐格寫 style。
  */
-function jump(root: HTMLElement, knight: HTMLElement, shadow: HTMLElement | null, n: number, prev: Square, cur: Square) {
+/** 倒回上一格（悔一步、重來的倒帶）：從 from 跳回 to，ms 是這一跳多長 */
+export function animateBack(root: HTMLElement, n: number, from: Square, to: Square, ms = JUMP_MS) {
+  if (reducedMotion()) return;
+  const knight = knightEl(root);
+  if (knight) jump(root, knight, shadowEl(root), n, from, to, ms, false);
+}
+
+function jump(root: HTMLElement, knight: HTMLElement, shadow: HTMLElement | null, n: number, prev: Square, cur: Square, ms = JUMP_MS, chalk = true) {
   const size = root.clientWidth / n;
   const dx = (colOf(n, prev) - colOf(n, cur)) * size;
   const dy = (rowOf(n, prev) - rowOf(n, cur)) * size;
@@ -140,8 +149,9 @@ function jump(root: HTMLElement, knight: HTMLElement, shadow: HTMLElement | null
     { offset: LAND + 0.12, translate: '0px 0px', scale: '1.15', opacity: 0 },
     { offset: 1, translate: '0px 0px', scale: '1', opacity: 0 },
   );
-  knight.animate(frames, { duration: JUMP_MS, easing: 'linear' });
-  shadow?.animate(shade, { duration: JUMP_MS, easing: 'linear' });
+  knight.animate(frames, { duration: ms, easing: 'linear' });
+  shadow?.animate(shade, { duration: ms, easing: 'linear' });
+  if (!chalk) return;
 
   // 紅粉筆跟著畫過去：離地開始畫、落地畫到
   const line = root.querySelector<SVGElement>('[data-last]');

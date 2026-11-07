@@ -14,7 +14,7 @@ import HowToPlay from './HowToPlay';
 import SizePicker from './SizePicker';
 import LeaveModal from './LeaveModal';
 import TourBoard from './TourBoard';
-import { finaleMs } from './motion';
+import { finaleMs, reducedMotion } from './motion';
 import { closedKey, practiceKey, saveBest, useBestTimes } from './records';
 import { track } from '@/utils/analytics';
 
@@ -34,6 +34,8 @@ type Note = 'notKnight' | 'badStart' | 'revisited' | null;
  * 用過提示的那一局不列入最佳紀錄；悔棋與判定可以用 —— 它們本來就是練習的一部分。
  *
  * 聲音在點擊當下放（sounds.ts）：只有真的走了、悔了、點錯了才響，重新整理、換大小不會響。
+ * 重來不是一下清空：騎士照走過的順序一格一格倒跳回第 1 格（一路彈著那段旋律倒過來），站一下才清空、翻一頁紙
+ * （11/7 Zach：「重來的話可以讓他快速從順序跳回去嗎」）。整段不到一秒，倒帶時點棋盤、悔棋、提示都不理。
  * 走完時先讓騎士在棋盤上收尾（motion.ts 的 finale），再跳出結算 —— 結算就是分享圖（shareCard.ts），
  * 關掉就停在走完的棋盤上。
  *
@@ -61,6 +63,10 @@ export default function PracticeGame({ n, closed = false, onMenu, onSize }: { n:
   /** 走完到跳出結算之間的那段收尾 */
   const finaleTimer = useRef(0);
   useEffect(() => () => window.clearTimeout(finaleTimer.current), []);
+  /** 重來的倒帶：每一跳多長（倒帶中才有值）與計時器 */
+  const [rewindMs, setRewindMs] = useState<number | null>(null);
+  const rewindTimer = useRef(0);
+  useEffect(() => () => { window.clearInterval(rewindTimer.current); window.clearTimeout(rewindTimer.current); }, []);
 
   const running = startedAt !== null && endedAt === null;
   useEffect(() => {
@@ -90,6 +96,7 @@ export default function PracticeGame({ n, closed = false, onMenu, onSize }: { n:
   };
 
   const tap = (sq: Square, el: HTMLElement) => {
+    if (rewindMs !== null) return;
     const kind = tapKind(tour, sq);
     if (kind === 'current' || kind === 'over') return;
     if (kind === 'notKnight' || kind === 'revisit') { setNote(kind === 'revisit' ? 'revisited' : 'notKnight'); shake(el); playKt('wrong'); return; }
@@ -118,12 +125,12 @@ export default function PracticeGame({ n, closed = false, onMenu, onSize }: { n:
   };
 
   const back = (next: Tour) => {
+    if (rewindMs !== null) return;
     commit(next);
     playKt('undo');
   };
 
-  const restart = () => {
-    window.clearTimeout(finaleTimer.current);
+  const clear = () => {
     if (tour.path.length) playKt('clear');
     commit(createTour(n));
     setStartedAt(null);
@@ -133,7 +140,29 @@ export default function PracticeGame({ n, closed = false, onMenu, onSize }: { n:
     setResult(null);
   };
 
+  const restart = () => {
+    window.clearTimeout(finaleTimer.current);
+    if (rewindMs !== null) return;
+    const hops = tour.path.length - 1;
+    if (hops < 2 || reducedMotion()) { clear(); return; }
+    // 步數越多每一跳越快：整段 0.9 秒上下，最慢 90ms 一跳（短的路才不會像慢動作）
+    const every = Math.round(Math.max(40, Math.min(90, 900 / hops)));
+    setResult(null);
+    setRewindMs(every * 2);
+    let at = tour;
+    rewindTimer.current = window.setInterval(() => {
+      at = undo(at);
+      commit(at);
+      playJump(n, at.path[at.path.length - 1]);
+      if (at.path.length > 1) return;
+      window.clearInterval(rewindTimer.current);
+      // 站回第 1 格，落地了再清空
+      rewindTimer.current = window.setTimeout(() => { setRewindMs(null); clear(); }, every * 2 + 120);
+    }, every);
+  };
+
   const askHint = () => {
+    if (rewindMs !== null) return;
     setShown({ path: tour.path, hint: findHint(tour, undefined, closed) });
     setAssisted(true);
   };
@@ -246,7 +275,7 @@ export default function PracticeGame({ n, closed = false, onMenu, onSize }: { n:
         board={<TourBoard n={n} path={tour.path} targets={targets} dead={dead}
           hinted={hint?.kind === 'move' ? hint.square : null} failed={stuck ? tour.path[tour.path.length - 1] : null}
           idle={tour.path.length > 0 && !done && !stuck && !hint}
-          label={label} boardLabel={`${t.board} ${size}`} onTap={tap} />} />
+          label={label} boardLabel={`${t.board} ${size}`} onTap={tap} rewindMs={rewindMs ?? undefined} />} />
 
       <HowToPlay open={helpOpen} onClose={() => setHelpOpen(false)} />
       <SizePicker open={sizeOpen} current={n} closed={closed} onClose={() => setSizeOpen(false)}
