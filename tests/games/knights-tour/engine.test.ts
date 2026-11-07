@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   createTour, move, replay, undo, truncate, legalMoves, knightMoves, isKnightMove, isComplete, isStuck,
   tapKind, canStartFrom, colorOf, visitOrder, current, solve, verdict, warnsdorff, hint, lastSolvableLength,
-  SIZES, type Square,
+  isClosedTour, canClose, SIZES, type Square,
 } from '@/games/knights-tour/engine';
 import {
   startShow, showTap, showRetry, showNext, showTick, showElapsed, showRemaining, SHOW_SIZES, SHOW_TIME_LIMIT_MS,
@@ -254,6 +254,85 @@ describe('解題器', () => {
     expect(warnsdorff(createTour(6))).toBe(0);
     // 卡住了就沒有建議
     expect(warnsdorff(replay(6, [8, 21, 13, 0]))).toBeNull();
+  });
+});
+
+describe('回到原點（封閉巡遊）', () => {
+  /** 走完而且最後一步跳得回起點 */
+  const isClosedPath = (n: number, path: readonly Square[]) => isTour(n, path) && isKnightMove(n, path[0], path[path.length - 1]);
+  /** 固定種子的亂數（測試要每次一樣） */
+  const rng = (seed: number) => () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
+
+  it('只有偶數邊做得到；單數邊的棋盤直接回「不行」', () => {
+    expect(SIZES.filter(canClose)).toEqual([6, 8, 10]);
+    for (const n of [5, 7, 9]) expect(solve(move(createTour(n), 0), 1_000_000, true).verdict).toBe('no');
+  });
+
+  it('6×6、8×8、10×10 從每一格出發都在 2000 個節點內找到回得去的路', () => {
+    for (const n of [6, 8, 10]) {
+      for (let s = 0; s < n * n; s++) {
+        const r = solve(move(createTour(n), s), 2000, true);
+        expect(r.verdict, `${n}×${n} start ${s}`).toBe('yes');
+        if (r.verdict === 'yes') {
+          expect(isClosedPath(n, r.path)).toBe(true);
+          expect(r.path[0]).toBe(s);
+        }
+      }
+    }
+  });
+
+  it('走到一半的局面：預設上限的結論跟算到底的一致，回得去時保留已經走的那一段', () => {
+    const r = rng(7);
+    let decided = 0;
+    for (let k = 0; k < 150; k++) {
+      let t = move(createTour(6), Math.floor(r() * 36));
+      const len = Math.floor(r() * 30);
+      for (let i = 0; i < len; i++) {
+        const m = legalMoves(t);
+        if (!m.length) break;
+        t = move(t, m[Math.floor(r() * m.length)]);
+      }
+      const quick = solve(t, undefined, true);
+      if (quick.verdict === 'unknown') continue;
+      decided++;
+      expect(quick.verdict, t.path.join(',')).toBe(solve(t, 5_000_000, true).verdict);
+      if (quick.verdict === 'yes') {
+        expect(quick.path.slice(0, t.path.length)).toEqual(t.path);
+        expect(isClosedPath(6, quick.path)).toBe(true);
+      }
+    }
+    expect(decided).toBeGreaterThan(140);
+  });
+
+  it('走得完但回不去：一般判定說走得完，回到原點說不行', () => {
+    // 從角落出發的開放巡邏：最後一格不在角落的兩個鄰居上
+    const open = solve(move(createTour(6), 0));
+    expect(open.verdict).toBe('yes');
+    if (open.verdict !== 'yes') return;
+    const done = replay(6, open.path);
+    expect(isComplete(done)).toBe(true);
+    expect(isClosedTour(done)).toBe(isKnightMove(6, open.path[0], open.path[35]));
+    if (isClosedTour(done)) return;
+    expect(hint(done, undefined, true)).toEqual({ kind: 'undo', keep: lastSolvableLength(done, undefined, true) });
+    // 退回前面幾步還有救：只剩最後一格時回不去，往前退總有一步可以
+    const keep = lastSolvableLength(done, undefined, true);
+    expect(keep).toBeGreaterThan(0);
+    expect(keep).toBeLessThan(36);
+    expect(verdict(truncate(done, keep), undefined, true)).toBe('yes');
+  });
+
+  it('照著提示一路走，最後一步跳得回起點', () => {
+    for (const n of [6, 8]) {
+      let t = move(createTour(n), sq(n, 2, 3));
+      while (!isComplete(t)) {
+        const h = hint(t, undefined, true);
+        expect(h.kind).toBe('move');
+        if (h.kind !== 'move') return;
+        expect(h.sure).toBe(true);
+        t = move(t, h.square);
+      }
+      expect(isClosedTour(t)).toBe(true);
+    }
   });
 });
 

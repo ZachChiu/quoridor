@@ -10,6 +10,12 @@ describe('網址 hash ↔ 模式', () => {
     expect(parseMode('#practice-10')).toEqual({ kind: 'practice', n: 10 });
   });
 
+  it('回到原點只有偶數邊（單數邊做不到，回選單）', () => {
+    expect(parseMode('#closed-6')).toEqual({ kind: 'closed', n: 6 });
+    expect(parseMode('#closed-10')).toEqual({ kind: 'closed', n: 10 });
+    for (const h of ['#closed-5', '#closed-7', '#closed-9', '#closed-4', '#closed-12']) expect(parseMode(h), h).toEqual({ kind: 'menu' });
+  });
+
   it('認不得的一律回選單', () => {
     for (const h of ['', '#', '#practice-4', '#practice-11', '#practice-', '#practice-8x', '#solo', '#SHOW']) {
       expect(parseMode(h), h).toEqual({ kind: 'menu' });
@@ -17,7 +23,7 @@ describe('網址 hash ↔ 模式', () => {
   });
 
   it('來回一致', () => {
-    for (const m of [{ kind: 'show' }, { kind: 'practice', n: 7 }, { kind: 'menu' }] as const) {
+    for (const m of [{ kind: 'show' }, { kind: 'practice', n: 7 }, { kind: 'closed', n: 8 }, { kind: 'menu' }] as const) {
       expect(parseMode(modeHash(m))).toEqual(m);
     }
   });

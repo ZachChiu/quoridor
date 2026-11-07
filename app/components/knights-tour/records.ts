@@ -1,11 +1,12 @@
 import { useMemo, useSyncExternalStore } from 'react';
-import { isSize } from '@/games/knights-tour/engine';
+import { canClose, isSize } from '@/games/knights-tour/engine';
 
 /**
  * 最佳紀錄，存在這台裝置的 localStorage（不上傳、沒有排行榜）。
  *
  * - show：節目挑戰三關的總時間
  * - practice-N：練習模式 N×N 從放下騎士到走完的時間（用過提示的那一局不算）
+ * - closed-N：「回到原點」N×N（同上，只有偶數邊）
  *
  * 存取一律包 try/catch：無痕模式或封鎖網站資料時 localStorage 會丟錯，那時就是沒有紀錄，遊戲照玩。
  * 讀取用 useSyncExternalStore 而不是 useEffect + setState（跟 hook/useCoarsePointer 同一個理由）：
@@ -13,10 +14,11 @@ import { isSize } from '@/games/knights-tour/engine';
  */
 const KEY = 'knights-tour:best';
 
-export type RecordKey = 'show' | `practice-${number}`;
+export type RecordKey = 'show' | `practice-${number}` | `closed-${number}`;
 export type BestTimes = Partial<Record<RecordKey, number>>;
 
 export const practiceKey = (n: number): RecordKey => `practice-${n}`;
+export const closedKey = (n: number): RecordKey => `closed-${n}`;
 
 const listeners = new Set<() => void>();
 
@@ -31,7 +33,8 @@ function parse(raw: string | null): BestTimes {
     if (!value || typeof value !== 'object') return {};
     const out: BestTimes = {};
     for (const [k, ms] of Object.entries(value)) {
-      const ok = k === 'show' || (/^practice-\d+$/.test(k) && isSize(Number(k.slice(9))));
+      const m = /^(practice|closed)-(\d+)$/.exec(k);
+      const ok = k === 'show' || (!!m && isSize(Number(m[2])) && (m[1] === 'practice' || canClose(Number(m[2]))));
       if (ok && typeof ms === 'number' && Number.isFinite(ms) && ms > 0) out[k as RecordKey] = ms;
     }
     return out;

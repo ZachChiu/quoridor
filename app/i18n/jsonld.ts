@@ -2,9 +2,10 @@ import { getMessages, siteName } from './index';
 import { FAQ_TEXT } from './content/faq';
 import { SEASON3_TEXT, SEASON3_UPDATED } from './content/season3';
 import { localePath, type Locale } from './locales';
-import { season, wallGo } from './routes';
+import { KNIGHTS_TOUR, season, trialRules, wallGo } from './routes';
 import { SEASONS, gameName } from '@/games/catalog';
 import { brandName } from '@/brand';
+import { TEXT as KT_TEXT } from '@/games/knights-tour/text';
 import { ogImageUrl, OG_SIZE, platformDescription } from './metadata';
 
 const SITE = process.env.SITE_URL || 'https://quoridorgame.com';
@@ -262,6 +263,36 @@ export function season3Graph(locale: Locale) {
         dateModified: SEASON3_UPDATED,
         inLanguage: locale,
         mainEntity: season3Faq(locale).map((f) => ({
+          '@type': 'Question',
+          name: f.q,
+          acceptedAnswer: { '@type': 'Answer', text: f.a },
+        })),
+      },
+    ],
+  };
+}
+
+/**
+ * 騎士巡遊規則頁：頁面節點是 FAQPage（同 Wall Go 規則頁的寫法），問答跟畫面上的常見問題同一份（text.ts 的 faq）。
+ * 11/7 加「騎士能走完再回到起點嗎」（docs/puzzle-reels.md B），英文帶 closed knight's tour。
+ */
+export function knightsTourRulesGraph(locale: Locale) {
+  const t = KT_TEXT[locale];
+  const pageUrl = SITE + localePath(locale, trialRules(KNIGHTS_TOUR));
+  return {
+    '@context': 'https://schema.org',
+    '@graph': [
+      organizationNode(locale),
+      websiteNode(locale),
+      {
+        '@type': 'FAQPage',
+        '@id': `${pageUrl}#webpage`,
+        url: pageUrl,
+        name: t.rulesMetaTitle,
+        description: t.rulesMetaDescription,
+        isPartOf: { '@id': id('website') },
+        inLanguage: locale,
+        mainEntity: t.faq.map((f) => ({
           '@type': 'Question',
           name: f.q,
           acceptedAnswer: { '@type': 'Answer', text: f.a },
