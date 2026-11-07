@@ -22,8 +22,8 @@
     - 「白棋下一步怎麼走才贏？」／「White to move and win. Where?」
   - 中間是我們自己的棋盤畫面，走到卡關的那一刻停住。
   - 下方小字「quoridorgame.com」。
-- **答案不放在影片裡**。結尾寫「答案留言見」或「自己去試試」。答案另外做一張圖或一支短片，讓 Zach 放在留言或下一支影片。
-- 不用節目畫面、Netflix 的圖、演出者照片。底部小字「非官方粉絲作品」照舊。
+- **不交出答案**（11/7 Zach 看過前兩支後改）：結尾寫「留言說說看 👇」／「Drop your guess below 👇」，不做答案圖，captions 也不寫答案。出題前答案照樣用程式驗過。
+- 不用節目畫面、Netflix 的圖、演出者照片。底部只留 quoridorgame.com，不寫「非官方粉絲作品」（11/7 Zach）。
 
 ### 第一批 6 支（題目你們挑，答案一定要用程式驗過）
 
@@ -36,11 +36,10 @@
 | 5 | 九子棋 | 「這步走哪裡可以連成一排、吃掉對方？」 |
 | 6 | 盲五子棋 | 「你看不到對手的棋，下一步下哪？」（答案附整個盤面） |
 
-- 每支都有中文、英文兩版，加上答案圖：一共 12 支影片、6 張答案圖。
+- 每支都有中文、英文兩版，一共 12 支影片。
 - 放 `marketing/reels/<編號>-<遊戲>/`，旁邊放一份 `captions.md`：
   - 貼文文案中、英各一段，2～3 句，最後一句問大家。
-  - 答案文字。
-  - 帶來源標記的連結：`?utm_source=instagram&utm_medium=social&utm_campaign=puzzle&utm_content=<編號>`。Threads 版把 source 換成 threads。
+  - 帶來源標記的連結：`?utm_source=instagram&utm_medium=social&utm_campaign=puzzle&utm_content=<影片檔名>`，例如 `01-knights-tour-5x5-zh-TW`，一支影片一個值。Threads 版把 source 換成 threads。素材清單和發文日記在 `marketing/reels/README.md`。
 
 ## B. 騎士巡遊「回到原點」挑戰（封閉巡遊）
 
@@ -63,6 +62,6 @@
 
 ## 驗收
 
-- A：大腦筋看過 12 支影片和答案，答案對、字沒被切到、手機上看得清楚。Zach 看過說可以。
+- A：大腦筋看過 12 支影片，字沒被切到、手機上看得清楚；出題的答案有程式驗過。Zach 看過說可以。
 - B 上線當下：大腦筋玩一次挑戰模式、看規則頁的常見問題。
 - Zach 發文後 2 週：GA 看 utm_campaign=puzzle 帶來多少 Sessions、多少人開局。

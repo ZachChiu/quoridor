@@ -3,7 +3,7 @@ import { useEffect, useId, useLayoutEffect, useMemo, useRef } from 'react';
 import { colOf, colorOf, isKnightMove, rowOf, type Square } from '@/games/knights-tour/engine';
 import { KNIGHT_GAP } from './knightArt';
 import KnightSvg from './KnightSvg';
-import { animateFail, animateStep, idleGlance, JUMP_MS, reducedMotion } from './motion';
+import { animateBack, animateFail, animateStep, idleGlance, JUMP_MS, reducedMotion } from './motion';
 
 const NONE: ReadonlySet<Square> = new Set();
 /** 騎士一步的長度（格子座標）：√(1² + 2²) */
@@ -20,12 +20,12 @@ const STEP = Math.sqrt(5);
  * 層次：格子（SVG）→ 路徑 → 最上面透明的按鈕（數字、圓點、騎士）。路徑畫在數字下面，才不會把步數劃掉。
  * 走完而且最後一步跳得回起點（封閉巡遊）時，多一段淡紅粉筆的虛線接回第 1 格。
  *
- * 動作（跳、紅粉筆畫過去、走完、走錯、閒著望向落點）在 motion.ts。只在剛好多走一步時播 ——
- * 悔棋、重來、換大小都不播；元件掛上去時看到的局面也不播。
+ * 動作（跳、紅粉筆畫過去、走完、走錯、閒著望向落點）在 motion.ts。只在剛好多走一步時播跳過去、剛好少一步時播跳回來
+ * （悔一步；重來是一步一步悔回去，`rewindMs` 是那時每一跳多長）—— 換大小不播；元件掛上去時看到的局面也不播。
  * 版面照 BaghBoard：外層只管邊框，正方形在內層自己身上 —— aspect-square 跟 padding／border
  * 寫在同一個元素時，iPhone 的 WebKit 會算錯高度。
  */
-export default function TourBoard({ n, path, targets = NONE, dead = NONE, hinted = null, failed = null, label, boardLabel, onTap, showKnight = true, idle = false }: {
+export default function TourBoard({ n, path, targets = NONE, dead = NONE, hinted = null, failed = null, label, boardLabel, onTap, showKnight = true, idle = false, rewindMs = JUMP_MS }: {
   n: number;
   path: readonly Square[];
   /** 現在點得到的落點（圓點） */
@@ -45,6 +45,8 @@ export default function TourBoard({ n, path, targets = NONE, dead = NONE, hinted
   showKnight?: boolean;
   /** 玩家正在想下一步（騎士已經放下、還沒走完、沒有提示）：騎士偶爾望向跳得到的格子 */
   idle?: boolean;
+  /** 跳回上一格要多久（重來的倒帶比悔一步快） */
+  rewindMs?: number;
 }) {
   // useId 可能帶冒號或特殊括號，放進 SVG 的 url(#…) 會引用不到：只留英數字
   const hatchId = `kt-hatch-${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
@@ -63,16 +65,17 @@ export default function TourBoard({ n, path, targets = NONE, dead = NONE, hinted
   const squareRef = useRef<HTMLDivElement>(null);
 
   // 剛好多走一步才播跳的動作；走錯（failed 從沒有變成有）時騎士探過去搖頭、或原地張望
-  const seen = useRef({ length: path.length, failed });
+  const seen = useRef({ length: path.length, failed, current });
   useLayoutEffect(() => {
     const before = seen.current;
-    seen.current = { length: path.length, failed };
+    seen.current = { length: path.length, failed, current };
     const root = squareRef.current;
     if (!root || !showKnight) return;
     const stepped = path.length === before.length + 1;
     if (stepped) animateStep(root, n, path, closed);
+    else if (path.length === before.length - 1 && before.current !== null && current !== null) animateBack(root, n, before.current, current, rewindMs);
     if (failed !== null && before.failed === null && current !== null) animateFail(root, n, current, failed, stepped ? JUMP_MS : 0);
-  }, [path, failed, n, closed, current, showKnight]);
+  }, [path, failed, n, closed, current, showKnight, rewindMs]);
 
   // 閒著：3.5–6.5 秒沒動就望向一個落點。碰一下棋盤（點錯也算）就重新計時
   useEffect(() => {
