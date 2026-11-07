@@ -272,9 +272,11 @@ export default function PracticeGame({ n, closed = false, onMenu, onSize }: { n:
       <GameFrame title={t.title} subtitle={`${modeName} · ${size}`}
         menuLabel={t.menu} helpLabel={t.rules} onMenu={() => leave.request(onMenu)} onHelp={() => setHelpOpen(true)}
         status={status} controls={controls}
-        board={<TourBoard n={n} path={tour.path} targets={targets} dead={dead}
-          hinted={hint?.kind === 'move' ? hint.square : null} failed={stuck ? tour.path[tour.path.length - 1] : null}
-          idle={tour.path.length > 0 && !done && !stuck && !hint}
+        home={tour.path.length === 0}
+        // 倒帶時不畫落點、提示、卡住的那一格（11/7 Zach：「跳回去時不要顯示可以走的下一步的那個圓點」）
+        board={<TourBoard n={n} path={tour.path} targets={rewindMs === null ? targets : undefined} dead={dead}
+          hinted={hint?.kind === 'move' && rewindMs === null ? hint.square : null} failed={stuck && rewindMs === null ? tour.path[tour.path.length - 1] : null}
+          idle={tour.path.length > 0 && !done && !stuck && !hint && rewindMs === null}
           label={label} boardLabel={`${t.board} ${size}`} onTap={tap} rewindMs={rewindMs ?? undefined} />} />
 
       <HowToPlay open={helpOpen} onClose={() => setHelpOpen(false)} />

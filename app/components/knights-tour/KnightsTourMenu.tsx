@@ -25,7 +25,7 @@ import { formatTime, sizeLabel } from './ui';
  * 主視覺是「Fig. 1」：歐拉 1759 年論文裡那條 8×8 走法，用對局同一個棋盤畫（深格斜線、舊式數字、紅粉筆路徑）——
  * 不用另外畫插圖，也跟點進去的棋盤是同一套東西。
  *
- * 模式是沒有框線的卡片：節目挑戰墨色（主要）、練習與「回到原點」淡墨（次要），照 Wall Go 的兩種按鈕；規則放成文字連結，
+ * 模式是沒有框線的卡片：節目挑戰墨色（主要）、練習與封閉巡遊淡墨（次要），照 Wall Go 的兩種按鈕；規則放成文字連結，
  * 連到規則頁（/knights-tour/rules，2026-10-25 起不再開彈窗；一般的 Link，這款裡面換頁不播轉場）。
  * 節目挑戰是真的 `<a href="#show">`（新分頁開也對），點擊在當下交給上層 pushState（WebKit 的返回鍵規則）。
  * 字級、間距、插圖跟著畫面高度縮放時用 svh 不用 dvh：往下捲、工具列收起時 dvh 變大，字和圖會跟著放大。
@@ -57,9 +57,11 @@ export default function KnightsTourMenu({ locale, onShow, onPractice, onClosed }
       {/* 最上面一列：平台 logo、聯絡、語言（GameHomeBar），跟內容同寬、排在流裡（11/3 Zach：跟時間拍賣一樣、不要浮著）。
           圓鈕與打開的彈窗都是這款的圖版（KT_CORNER），不是 Wall Go 的奶油底 */}
       <GameHomeBar locale={locale} theme={KT_CORNER} className="max-w-[420px] lg:max-w-[900px]" />
-      <main className="my-auto flex w-full max-w-[420px] flex-col items-center pt-4 lg:max-w-[900px] lg:flex-row lg:items-center lg:gap-14 lg:pt-0">
-        <header className="flex w-full flex-col items-center text-center lg:flex-1">
-          <h1 className="flex w-full flex-col items-center">
+      {/* 桌機兩欄：左邊標題、小字、Fig. 1，右邊模式卡片從 Fig. 1 的上緣開始排（11/7 Zach：「節目挑戰對齊左邊棋盤」）。
+          header 在桌機拆成 grid 的三格（contents），卡片放在第三列、跟 Fig. 1 同一列、靠上 */}
+      <main className="my-auto flex w-full max-w-[420px] flex-col items-center pt-4 lg:grid lg:max-w-[900px] lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start lg:gap-x-14 lg:pt-0">
+        <header className="flex w-full flex-col items-center text-center lg:contents">
+          <h1 className="flex w-full flex-col items-center text-center lg:col-start-1">
             {lettering ? (
               <>
                 <span className="sr-only">{t.title}</span>
@@ -70,17 +72,17 @@ export default function KnightsTourMenu({ locale, onShow, onPractice, onClosed }
             )}
             {t.subtitle && <span className="kt-serif mt-1 text-[clamp(1.1rem,3svh,1.6rem)] italic">{t.subtitle}</span>}
           </h1>
-          <p className="mt-[max(0.4rem,1.2svh)] text-sm font-bold opacity-80 md:text-base">{t.tagline}</p>
+          <p className="mt-[max(0.4rem,1.2svh)] text-center text-sm font-bold opacity-80 md:text-base lg:col-start-1">{t.tagline}</p>
           {/* Fig. 1：歐拉的走法 */}
           {/* 出處：歐拉 1759 年論文裡的走法（自己畫的）。畫面上不寫出處（Zach 10/24：插圖不要說明） */}
-          <div className="mt-[max(0.75rem,2.2svh)] flex w-full flex-col items-center gap-1.5">
+          <div className="mt-[max(0.75rem,2.2svh)] flex w-full flex-col items-center gap-1.5 lg:col-start-1 lg:row-start-3">
             <div className="w-[min(100%,17rem,30svh)] lg:w-[min(100%,24rem)]">
               <TourBoard n={8} path={EULER_TOUR} showKnight={false} />
             </div>
           </div>
         </header>
 
-        <div className="mt-[max(1rem,3svh)] flex w-full flex-col gap-2.5 lg:mt-0 lg:w-[380px]">
+        <div className="mt-[max(1rem,3svh)] flex w-full flex-col gap-2.5 lg:col-start-2 lg:row-start-3 lg:mt-[max(0.75rem,2.2svh)] lg:w-[380px]">
           <a href={`${localePath(locale, KNIGHTS_TOUR)}#show`} onClick={(e) => { e.preventDefault(); onShow(); }}
             className={`${card} kt-chalk`}>
             <GiStopwatch aria-hidden="true" className="shrink-0 text-3xl" />
@@ -99,7 +101,7 @@ export default function KnightsTourMenu({ locale, onShow, onPractice, onClosed }
             </span>
             <LuChevronRight aria-hidden="true" className="shrink-0 text-xl opacity-60" />
           </button>
-          {/* 回到原點（封閉巡遊）：走完每一格、最後一步跳回起點（docs/puzzle-reels.md B） */}
+          {/* 封閉巡遊（先前叫「回到原點」）：走完每一格、最後一步跳回起點（docs/puzzle-reels.md B） */}
           <button type="button" onClick={() => pickSize('closed')} className={`${card} kt-plate`}>
             <GiReturnArrow aria-hidden="true" className="shrink-0 text-3xl" />
             <span className="min-w-0 flex-1">
