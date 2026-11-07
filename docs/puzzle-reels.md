@@ -1,4 +1,6 @@
-# 「你會怎麼走？」解謎短影片＋騎士巡遊「回到原點」挑戰
+# 「你會怎麼走？」解謎短影片＋騎士巡遊「封閉巡遊」挑戰
+
+11/7 Zach 改名：回到原點 → 封閉巡遊（en Closed tour），節目挑戰 → 魔鬼的計謀節目挑戰。
 
 大腦筋 11/7 寫。Zach 11/7：
 
@@ -41,7 +43,7 @@
   - 貼文文案中、英各一段，2～3 句，最後一句問大家。
   - 帶來源標記的連結：`?utm_source=instagram&utm_medium=social&utm_campaign=puzzle&utm_content=<影片檔名>`，例如 `01-knights-tour-5x5-zh-TW`，一支影片一個值。Threads 版把 source 換成 threads。素材清單和發文日記在 `marketing/reels/README.md`。
 
-## B. 騎士巡遊「回到原點」挑戰（封閉巡遊）
+## B. 騎士巡遊「封閉巡遊」挑戰（en Closed tour）
 
 - 騎士巡遊多一個模式：走完全部格子之後，最後一步還要能跳回起點才算過關。
 - 只開放偶數邊、6×6 以上的棋盤。邊長是單數的棋盤做不到，5×5 選這個模式時直接說明為什麼。
