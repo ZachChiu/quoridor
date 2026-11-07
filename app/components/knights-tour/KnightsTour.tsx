@@ -8,7 +8,7 @@ import ShowGame from './ShowGame';
 import { track } from '@/utils/analytics';
 
 /**
- * /knights-tour：選模式與對局都在這一頁，模式放在 hash —— `#show`、`#practice-8`，沒有就是選單。
+ * /knights-tour：選模式與對局都在這一頁，模式放在 hash —— `#show`、`#practice-8`、`#closed-8`（回到原點），沒有就是選單。
  *
  * 放 hash 是為了返回鍵：從選單進入對局時在點擊當下 pushState 一筆（WebKit 要在使用者手勢裡新增紀錄，
  * 否則返回時會被跳過，見 CLAUDE.md〈站內換頁〉），按返回就回到選單，而不是離開整個遊戲。
@@ -49,6 +49,7 @@ export default function KnightsTour({ locale }: { locale: Locale }) {
   const mode = useMemo(() => parseMode(hash), [hash]);
 
   const practice = (n: number) => modeHash({ kind: 'practice', n });
+  const closed = (n: number) => modeHash({ kind: 'closed', n });
 
   if (mode.kind === 'show') {
     return <ShowGame onMenu={backToMenu} onPractice={(n) => go(practice(n), true)} />;
@@ -56,7 +57,11 @@ export default function KnightsTour({ locale }: { locale: Locale }) {
   if (mode.kind === 'practice') {
     return <PracticeGame key={mode.n} n={mode.n} onMenu={backToMenu} onSize={(n) => go(practice(n), true)} />;
   }
+  if (mode.kind === 'closed') {
+    return <PracticeGame key={`closed-${mode.n}`} n={mode.n} closed onMenu={backToMenu} onSize={(n) => go(closed(n), true)} />;
+  }
   return <KnightsTourMenu locale={locale}
     onShow={() => { track('mode_select', { game: 'knights-tour', mode: 'show', players: 1, entry: 'home' }); enter(modeHash({ kind: 'show' })); }}
-    onPractice={(n) => { track('mode_select', { game: 'knights-tour', mode: 'practice', players: 1, entry: 'home', board_size: n }); enter(practice(n)); }} />;
+    onPractice={(n) => { track('mode_select', { game: 'knights-tour', mode: 'practice', players: 1, entry: 'home', board_size: n }); enter(practice(n)); }}
+    onClosed={(n) => { track('mode_select', { game: 'knights-tour', mode: 'closed', players: 1, entry: 'home', board_size: n }); enter(closed(n)); }} />;
 }

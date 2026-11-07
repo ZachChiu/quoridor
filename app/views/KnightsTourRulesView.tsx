@@ -6,6 +6,7 @@ import KtFrame from '@/components/knights-tour/KtFrame';
 import { RulesStepsList } from '@/components/knights-tour/RulesSteps';
 import { KT_CORNER } from '@/components/knights-tour/styles';
 import { getMessages } from '@/i18n';
+import { knightsTourRulesGraph, ldScript } from '@/i18n/jsonld';
 import { pickText } from '@/i18n/gameText';
 import { localePath, type Locale } from '@/i18n/locales';
 import { KNIGHTS_TOUR } from '@/i18n/routes';
@@ -15,7 +16,8 @@ import { TEXT, type KnightsText } from '@/games/knights-tour/text';
  * 騎士巡遊的規則頁（/knights-tour/rules，六個語系共用）。2026-10-25 Zach：「怎麼玩最好跟 Wall Go 一樣圖配字」。
  *
  * 整頁是書裡的第二張銅版圖版（KtFrame，右下角 Tab. II.）：一步一張圖（Fig. 1–6，對局用的棋盤畫的靜態局面）＋小標＋一段字，
- * 同一組步驟也在對局中的說明彈窗裡（一次一步，RulesSteps.tsx）。最後是出處、名字的由來、一顆回這款首頁選模式的鈕、署名。
+ * 同一組步驟也在對局中的說明彈窗裡（一次一步，RulesSteps.tsx）。接著是常見問題（11/7：騎士能不能回到起點，也輸出成 FAQPage），
+ * 最後是出處、名字的由來、一顆回這款首頁選模式的鈕、署名。
  * 裝飾只有最外緣那圈雙線框；步驟之間只隔一道淡墨細線（書頁的分隔，不是框）。
  * 這款裡面換頁不播轉場：用一般的 Link（不是 TransitionLink）。
  */
@@ -41,7 +43,19 @@ export default function KnightsTourRulesView({ locale }: { locale: Locale }) {
 
         <div className="mt-9"><RulesStepsList /></div>
 
-        <section className="mt-2 border-t border-[#322e2a]/25 pt-6 text-sm leading-relaxed opacity-80">
+        <section className="mt-2 border-t border-[#322e2a]/25 pt-6">
+          <h2 className="text-xl font-black">{t.faqTitle}</h2>
+          <dl className="mt-3 flex flex-col gap-4">
+            {t.faq.map((f) => (
+              <div key={f.q}>
+                <dt className="text-base font-black">{f.q}</dt>
+                <dd className="mt-1 text-sm leading-relaxed">{f.a}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+
+        <section className="mt-6 border-t border-[#322e2a]/25 pt-6 text-sm leading-relaxed opacity-80">
           <p>{t.source}</p>
           {/* 名字的由來（Zach 10/24：遊戲名照 Netflix 版本，在規則裡介紹） */}
           <p className="mt-2">{t.nameNote}</p>
@@ -59,6 +73,7 @@ export default function KnightsTourRulesView({ locale }: { locale: Locale }) {
           {m.credits.suffix}
         </p>
       </main>
+      <script {...ldScript(knightsTourRulesGraph(locale))} />
     </KtFrame>
   );
 }

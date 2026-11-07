@@ -19,8 +19,8 @@ import type { OnlineFailReason, OnlineStep } from '@/types/online';
  * 清單見 CLAUDE.md〈數據分析〉。參數名稱不能用 GA 保留給流量來源的 source／medium／campaign／term／content：
  * GA4 會拿它們蓋掉這個工作階段的來源（mode_select 帶過 source=home，Google 搜尋進來的被記成「home」）。
  */
-/** local／solo／online 是對戰類；show（節目挑戰）、practice（練習）是騎士巡遊這種一個人解題的 */
-export type GameModeParam = 'local' | 'solo' | 'online' | 'show' | 'practice';
+/** local／solo／online 是對戰類；show（節目挑戰）、practice（練習）、closed（回到原點）是騎士巡遊這種一個人解題的 */
+export type GameModeParam = 'local' | 'solo' | 'online' | 'show' | 'practice' | 'closed';
 /** 一個人解題的遊戲是 1。平衡播棋是一桌的席數（4–7，AI 也算），2026-11 加 */
 type Players = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 /** 連線房的人數（全部是真人） */

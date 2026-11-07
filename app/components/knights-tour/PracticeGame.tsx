@@ -5,7 +5,7 @@ import { LuCheck, LuCircleHelp, LuGrid3X3, LuImage, LuLightbulb, LuRotateCcw, Lu
 import { ShareResultModal } from '@/components/ShareResultModal';
 import { fill, useTextTable } from '@/i18n/gameText';
 import {
-  canStartFrom, createTour, hint as findHint, isComplete, isStuck, legalMoves, move, tapKind, truncate, undo, verdict,
+  canStartFrom, createTour, hint as findHint, isClosedTour, isComplete, isStuck, legalMoves, move, tapKind, truncate, undo, verdict,
   type Hint, type Square, type Tour,
 } from '@/games/knights-tour/engine';
 import { TEXT, type KnightsText } from '@/games/knights-tour/text';
@@ -15,11 +15,11 @@ import SizePicker from './SizePicker';
 import LeaveModal from './LeaveModal';
 import TourBoard from './TourBoard';
 import { finaleMs } from './motion';
-import { practiceKey, saveBest, useBestTimes } from './records';
+import { closedKey, practiceKey, saveBest, useBestTimes } from './records';
 import { track } from '@/utils/analytics';
 
-/** GA：練習是一盤，開始＝第一步，結束＝走完（卡住可以悔棋，不算結束） */
-const GA = { game: 'knights-tour', mode: 'practice', players: 1 } as const;
+/** GA：練習是一盤，開始＝第一步，結束＝走完（卡住可以悔棋，不算結束）；回到原點要走完而且跳得回起點才算結束 */
+const gaOf = (closed: boolean) => ({ game: 'knights-tour', mode: closed ? 'closed' : 'practice', players: 1 } as const);
 import { isClosed } from './shareCard';
 import { playJump, playKt } from './sounds';
 import { formatTime, shake, sizeLabel, squareName } from './ui';
@@ -36,8 +36,14 @@ type Note = 'notKnight' | 'badStart' | 'revisited' | null;
  * 聲音在點擊當下放（sounds.ts）：只有真的走了、悔了、點錯了才響，重新整理、換大小不會響。
  * 走完時先讓騎士在棋盤上收尾（motion.ts 的 finale），再跳出結算 —— 結算就是分享圖（shareCard.ts），
  * 關掉就停在走完的棋盤上。
+ *
+ * `closed`：「回到原點」挑戰（封閉巡遊，docs/puzzle-reels.md B）。同一個畫面，只差在過關的條件：
+ * 每一格都走過、而且最後一格跳得回第 1 格。走完卻跳不回去不算過關，跟卡住一樣可以悔棋、看提示；
+ * 判定與提示改問「還回不回得到起點」（engine 的 solve(…, closed)）。只有偶數邊（mode.ts 擋掉單數邊）。
  */
-export default function PracticeGame({ n, onMenu, onSize }: { n: number; onMenu: () => void; onSize: (n: number) => void }) {
+export default function PracticeGame({ n, closed = false, onMenu, onSize }: { n: number; closed?: boolean; onMenu: () => void; onSize: (n: number) => void }) {
+  const GA = gaOf(closed);
+  const recordKey = closed ? closedKey(n) : practiceKey(n);
   const t = useTextTable<KnightsText>(TEXT);
   const best = useBestTimes();
   const [tour, setTour] = useState<Tour>(() => createTour(n));
@@ -63,12 +69,15 @@ export default function PracticeGame({ n, onMenu, onSize }: { n: number; onMenu:
     return () => window.clearInterval(id);
   }, [running]);
 
-  const done = isComplete(tour);
+  /** 過關：練習是走完，回到原點還要最後一步跳得回起點 */
+  const done = closed ? isClosedTour(tour) : isComplete(tour);
+  /** 回到原點：每一格都走過了，但最後一格跳不回起點（還沒過關，可以悔棋） */
+  const openEnd = closed && isComplete(tour) && !done;
   // 走到一半回選單先問（房子鈕、返回鍵）；換大小不必問，但一樣先退掉守門（hook/useLeaveGuard.ts）
   const leave = useLeaveGuard({ live: !done, inProgress: !done && tour.path.length > 0 });
-  const stuck = isStuck(tour);
+  const stuck = isStuck(tour) || openEnd;
   // 每一步都問一次解題器。正常局面零點幾毫秒；最壞跑滿節點上限，桌機約 10ms
-  const solvable = useMemo(() => (tour.path.length && !done ? verdict(tour) : null), [tour, done]);
+  const solvable = useMemo(() => (tour.path.length && !done ? verdict(tour, undefined, closed) : null), [tour, done, closed]);
   const targets = useMemo(() => new Set(tour.path.length && !done ? legalMoves(tour) : []), [tour, done]);
   const dead = useMemo(() => new Set(!tour.path.length && n % 2
     ? Array.from({ length: n * n }, (_, sq) => sq).filter((sq) => !canStartFrom(n, sq)) : []), [tour, n]);
@@ -92,14 +101,16 @@ export default function PracticeGame({ n, onMenu, onSize }: { n: number; onMenu:
     playJump(n, sq, kind === 'start');
     const start = startedAt ?? at;
     if (startedAt === null) { setStartedAt(at); track('game_start', { ...GA, board_size: n }); }
-    if (isComplete(next)) {
+    if (closed && isComplete(next) && !isClosedTour(next)) {
+      playKt('stuck', 0.3);
+    } else if (isComplete(next)) {
       setEndedAt(at);
       const ms = at - start;
       track('game_end', { ...GA, board_size: n, result: 'win', ended: 'natural', turns: next.path.length, duration_sec: Math.round(ms / 1000) });
       const closed = isClosed(next);
       playKt('complete', 0.3);
       if (closed) playKt('closed', 0.95);
-      setResult({ ms, isNew: assisted ? false : saveBest(practiceKey(n), ms).isNew, open: false });
+      setResult({ ms, isNew: assisted ? false : saveBest(recordKey, ms).isNew, open: false });
       finaleTimer.current = window.setTimeout(() => setResult((r) => (r ? { ...r, open: true } : r)), finaleMs(n * n) + (closed ? 500 : 0));
     } else if (isStuck(next)) {
       playKt('stuck', 0.3);
@@ -123,23 +134,25 @@ export default function PracticeGame({ n, onMenu, onSize }: { n: number; onMenu:
   };
 
   const askHint = () => {
-    setShown({ path: tour.path, hint: findHint(tour) });
+    setShown({ path: tour.path, hint: findHint(tour, undefined, closed) });
     setAssisted(true);
   };
 
   const elapsed = startedAt === null ? 0 : (endedAt ?? Math.max(now, startedAt)) - startedAt;
   const size = sizeLabel(n);
   const total = n * n;
+  const modeName = closed ? t.closedMode : t.practiceMode;
 
   const message = note === 'badStart' ? t.badStart
     : note === 'notKnight' ? t.notKnight
     : note === 'revisited' ? t.revisited
     : hint?.kind === 'move' ? (hint.sure ? t.hintMove : t.hintGuess)
-    : hint?.kind === 'undo' ? (hint.keep ? fill(t.hintUndo, { k: hint.keep }) : t.hintUndoStart)
+    : hint?.kind === 'undo' ? (hint.keep ? fill(closed ? t.hintUndoClosed : t.hintUndo, { k: hint.keep }) : t.hintUndoStart)
+    : openEnd ? t.notClosed
     : stuck ? t.stuck
-    : done ? fill(t.doneBody, { size, time: formatTime(elapsed) })
-    : tour.path.length === 0 ? (n % 2 ? t.placeKnightOdd : t.placeKnight)
-    : t.moveKnight;
+    : done ? fill(closed ? t.closedDoneBody : t.doneBody, { size, time: formatTime(elapsed) })
+    : tour.path.length === 0 ? (closed ? t.placeKnightClosed : n % 2 ? t.placeKnightOdd : t.placeKnight)
+    : closed ? t.moveKnightClosed : t.moveKnight;
 
   const label = (sq: Square, order: number) => {
     const name = squareName(n, sq);
@@ -150,8 +163,8 @@ export default function PracticeGame({ n, onMenu, onSize }: { n: number; onMenu:
     return name;
   };
 
-  const chip = solvable === 'yes' ? { text: t.canFinish, icon: LuCheck, cls: 'kt-plate' }
-    : solvable === 'no' ? { text: t.cannotFinish, icon: LuX, cls: 'kt-chalk' }
+  const chip = solvable === 'yes' ? { text: closed ? t.canReturn : t.canFinish, icon: LuCheck, cls: 'kt-plate' }
+    : solvable === 'no' ? { text: closed ? t.cannotReturn : t.cannotFinish, icon: LuX, cls: 'kt-chalk' }
     : solvable === 'unknown' ? { text: t.unsure, icon: LuCircleHelp, cls: 'kt-plate text-ink-soft' }
     : null;
 
@@ -215,19 +228,19 @@ export default function PracticeGame({ n, onMenu, onSize }: { n: number; onMenu:
     );
   };
 
-  const bestHere = best[practiceKey(n)];
+  const bestHere = best[recordKey];
   const share = useKtShare({
     isOpen: !!result?.open,
     plates: [{ n, path: tour.path }],
     time: formatTime(result?.ms ?? 0),
     isNew: !!result?.isNew,
-    kicker: `${t.practiceMode} · ${size}`,
-    title: t.doneTitle,
+    kicker: `${modeName} · ${size}`,
+    title: closed ? t.closedDoneTitle : t.doneTitle,
   });
 
   return (
     <>
-      <GameFrame title={t.title} subtitle={`${t.practiceMode} · ${size}`}
+      <GameFrame title={t.title} subtitle={`${modeName} · ${size}`}
         menuLabel={t.menu} helpLabel={t.rules} onMenu={() => leave.request(onMenu)} onHelp={() => setHelpOpen(true)}
         status={status} controls={controls}
         board={<TourBoard n={n} path={tour.path} targets={targets} dead={dead}
@@ -236,16 +249,16 @@ export default function PracticeGame({ n, onMenu, onSize }: { n: number; onMenu:
           label={label} boardLabel={`${t.board} ${size}`} onTap={tap} />} />
 
       <HowToPlay open={helpOpen} onClose={() => setHelpOpen(false)} />
-      <SizePicker open={sizeOpen} current={n} onClose={() => setSizeOpen(false)}
+      <SizePicker open={sizeOpen} current={n} closed={closed} onClose={() => setSizeOpen(false)}
         onPick={(next) => { setSizeOpen(false); if (next === n) restart(); else leave.skip(() => onSize(next)); }} />
       <LeaveModal leave={leave} />
 
       {/* 結算就是分享圖：一張銅版圖版（shareCard.ts）。關掉就停在走完的棋盤上，換大小在棋盤下面 */}
       <ShareResultModal isOpen={!!result?.open} onClose={() => setResult((r) => (r ? { ...r, open: false } : r))}
-        title={t.doneTitle} card={share} onRestart={() => { track('game_restart', { ...GA, board_size: n }); restart(); }} restartLabel={t.again}
+        title={closed ? t.closedDoneTitle : t.doneTitle} card={share} onRestart={() => { track('game_restart', { ...GA, board_size: n }); restart(); }} restartLabel={t.again}
         classes={KT_SHARE} frameClassName="rounded-[2px]"
         srText={[
-          fill(t.doneBody, { size, time: formatTime(result?.ms ?? 0) }),
+          fill(closed ? t.closedDoneBody : t.doneBody, { size, time: formatTime(result?.ms ?? 0) }),
           result?.isNew ? t.newBest : bestHere !== undefined ? fill(t.bestWas, { time: formatTime(bestHere) }) : '',
           done && isClosed(tour) ? t.closedTour : '',
           assisted ? t.assisted : '',

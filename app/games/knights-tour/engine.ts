@@ -138,6 +138,18 @@ export function isComplete(t: Tour): boolean {
   return t.path.length === t.n * t.n;
 }
 
+/** 走完了，而且最後一格跳得回起點（封閉巡遊） */
+export function isClosedTour(t: Tour): boolean {
+  return isComplete(t) && isKnightMove(t.n, t.path[0], t.path[t.path.length - 1]);
+}
+
+/**
+ * 「回到原點」（封閉巡遊）做不做得到：只有偶數邊的棋盤可以。
+ * 騎士每跳一步就換一次格子顏色；回到起點要跳 n² 步，n² 是單數的話最後一步一定落在另一種顏色，回不去。
+ * 偶數盤裡 4×4 也沒有（太小），這裡的大小從 5 起，所以 6、8、10 都有（tests 逐格驗過）。
+ */
+export const canClose = (n: number) => n % 2 === 0;
+
 /** 騎士已經放下、還沒走完，卻沒有任何一格可以走 */
 export function isStuck(t: Tour): boolean {
   return t.path.length > 0 && !isComplete(t) && legalMoves(t).length === 0;
@@ -207,19 +219,39 @@ function farness(n: number): Float64Array {
  * 3. 連通（只在開頭）：還沒走的格子必須從騎士這裡全部走得到
  *
  * 還沒放騎士時從左上角出發（每一種大小的角落都走得完）。
+ *
+ * `closed`：要走完、而且最後一步跳得回起點（「回到原點」挑戰）。做法是把起點當成還沒走的終點 ——
+ * 從騎士這裡走過剩下的每一格、最後落回起點，就是一條「起點固定在尾巴」的路，上面的剪枝原封不動都成立
+ * （顏色、死巷都把起點算進去；起點只能是最後一步）。只放了起點時，先挑一個鄰居當第二步再解。
  */
-export function solve(t: Tour, budget = DEFAULT_BUDGET): Solution {
-  if (t.path.length === 0) return solve(move(t, 0), budget);
-  if (isComplete(t)) return { verdict: 'yes', path: [...t.path] };
+export function solve(t: Tour, budget = DEFAULT_BUDGET, closed = false): Solution {
+  if (t.path.length === 0) return solve(move(t, 0), budget, closed);
+  if (closed && !canClose(t.n)) return { verdict: 'no' };
+  if (isComplete(t)) return !closed || isClosedTour(t) ? { verdict: 'yes', path: [...t.path] } : { verdict: 'no' };
+  if (closed && t.path.length === 1) {
+    // 封閉巡遊是一個圈，從起點往哪個鄰居出發都在圈上；照 Warnsdorff 的順序一個一個試，節點上限平分
+    const firsts = [...knightMoves(t.n, t.path[0])].sort((a, b) => knightMoves(t.n, a).length - knightMoves(t.n, b).length || a - b);
+    let unsure = false;
+    for (const x of firsts) {
+      const s = solve(move(t, x), Math.ceil(budget / firsts.length), true);
+      if (s.verdict === 'yes') return s;
+      if (s.verdict === 'unknown') unsure = true;
+    }
+    return unsure ? { verdict: 'unknown' } : { verdict: 'no' };
+  }
 
   const { n } = t;
   const N = n * n;
+  /** 封閉時起點也是要走到的最後一格 */
+  const home = closed ? t.path[0] : -1;
+  const total = closed ? N + 1 : N;
   const g = knightGraph(n);
   const far = farness(n);
   const color = (sq: Square) => colorOf(n, sq);
 
   const visited = new Uint8Array(N);
   for (const sq of t.path) visited[sq] = 1;
+  if (closed) visited[home] = 0;
   /** 每一格還沒走過的鄰居數 */
   const deg = new Int8Array(N);
   /** 還沒走過的格子，依顏色分 */
@@ -263,7 +295,7 @@ export function solve(t: Tour, budget = DEFAULT_BUDGET): Solution {
       if (!visited[x] && !seen[x]) { seen[x] = 1; reached++; queue.push(x); }
     }
   }
-  if (reached !== N - path.length) return { verdict: 'no' };
+  if (reached !== total - path.length) return { verdict: 'no' };
 
   const visit = (s: Square) => {
     visited[s] = 1;
@@ -291,7 +323,7 @@ export function solve(t: Tour, budget = DEFAULT_BUDGET): Solution {
   };
 
   const dfs = (cur: Square): boolean => {
-    const remaining = N - path.length;
+    const remaining = total - path.length;
     if (remaining === 0) return true;
     if (++nodes > budget) { exhausted = true; return false; }
 
@@ -305,7 +337,7 @@ export function solve(t: Tour, budget = DEFAULT_BUDGET): Solution {
     //    少了這一條，「走掉角落的一個出口、角落只好當終點、偏偏終點顏色不對」這種開局
     //    第三步就注定失敗的局面，要窮舉上千萬個節點才證明得了
     let candidates: Square[] = [];
-    for (const x of g[cur]) if (!visited[x]) candidates.push(x);
+    for (const x of g[cur]) if (!visited[x] && (x !== home || remaining === 1)) candidates.push(x);
     if (candidates.length === 0) return false;
     if (remaining >= 2) {
       if (thin[0] > 0 || thin[1] > 2) return false;
@@ -334,13 +366,14 @@ export function solve(t: Tour, budget = DEFAULT_BUDGET): Solution {
   };
 
   const found = dfs(path[path.length - 1]);
-  if (found) return { verdict: 'yes', path };
+  // 封閉時最後多推了一次起點，拿掉
+  if (found) return { verdict: 'yes', path: closed ? path.slice(0, N) : path };
   return exhausted ? { verdict: 'unknown' } : { verdict: 'no' };
 }
 
-/** 從這裡還走不走得完 */
-export function verdict(t: Tour, budget = DEFAULT_BUDGET): Verdict {
-  return solve(t, budget).verdict;
+/** 從這裡還走不走得完（closed：還回不回得到起點） */
+export function verdict(t: Tour, budget = DEFAULT_BUDGET, closed = false): Verdict {
+  return solve(t, budget, closed).verdict;
 }
 
 /**
@@ -365,13 +398,13 @@ export function warnsdorff(t: Tour): Square | null {
  * 所以用二分搜尋，最多約 7 次 solve。只採用真的找到路（'yes'）的長度，
  * 節點上限用完的當成走不完，寧可多退幾步也不給一個不保證的答案。
  */
-export function lastSolvableLength(t: Tour, budget = DEFAULT_BUDGET): number {
+export function lastSolvableLength(t: Tour, budget = DEFAULT_BUDGET, closed = false): number {
   let lo = 0;
   let hi = t.path.length;
-  if (verdict(t, budget) === 'yes') return hi;
+  if (verdict(t, budget, closed) === 'yes') return hi;
   while (hi - lo > 1) {
     const mid = (lo + hi) >> 1;
-    if (verdict(truncate(t, mid), budget) === 'yes') lo = mid; else hi = mid;
+    if (verdict(truncate(t, mid), budget, closed) === 'yes') lo = mid; else hi = mid;
   }
   return lo;
 }
@@ -383,14 +416,14 @@ export type Hint =
   | { kind: 'undo'; keep: number }
   | { kind: 'done' };
 
-/** 練習模式的提示 */
-export function hint(t: Tour, budget = DEFAULT_BUDGET): Hint {
-  if (isComplete(t)) return { kind: 'done' };
-  const s = solve(t, budget);
+/** 練習模式的提示（closed：「回到原點」挑戰，要給回得去的下一步） */
+export function hint(t: Tour, budget = DEFAULT_BUDGET, closed = false): Hint {
+  if (isComplete(t)) return !closed || isClosedTour(t) ? { kind: 'done' } : { kind: 'undo', keep: lastSolvableLength(t, budget, closed) };
+  const s = solve(t, budget, closed);
   if (s.verdict === 'yes') return { kind: 'move', square: s.path[t.path.length], sure: true };
   if (s.verdict === 'unknown') {
     const w = warnsdorff(t);
     if (w !== null) return { kind: 'move', square: w, sure: false };
   }
-  return { kind: 'undo', keep: lastSolvableLength(t, budget) };
+  return { kind: 'undo', keep: lastSolvableLength(t, budget, closed) };
 }

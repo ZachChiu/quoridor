@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import Link from 'next/link';
-import { GiStopwatch } from 'react-icons/gi';
+import { GiReturnArrow, GiStopwatch } from 'react-icons/gi';
 import KnightSvg from './KnightSvg';
 import { LuChevronRight } from 'react-icons/lu';
 import LocalName, { letteringOf } from '@/components/LocalName';
@@ -9,14 +9,14 @@ import GameHomeBar from '@/components/GameHomeBar';
 import { useTextTable } from '@/i18n/gameText';
 import { localePath, type Locale } from '@/i18n/locales';
 import { KNIGHTS_TOUR, trialRules } from '@/i18n/routes';
-import { SIZES } from '@/games/knights-tour/engine';
+import { canClose, SIZES } from '@/games/knights-tour/engine';
 import { EULER_TOUR } from '@/games/knights-tour/euler';
 import { NAME_LETTERING } from '@/games/knights-tour/nameLettering';
 import { TEXT, type KnightsText } from '@/games/knights-tour/text';
 import KtFrame from './KtFrame';
 import SizePicker from './SizePicker';
 import TourBoard from './TourBoard';
-import { practiceKey, useBestTimes, type RecordKey } from './records';
+import { closedKey, practiceKey, useBestTimes, type RecordKey } from './records';
 import { KT_CORNER } from './styles';
 import { formatTime, sizeLabel } from './ui';
 
@@ -25,22 +25,30 @@ import { formatTime, sizeLabel } from './ui';
  * 主視覺是「Fig. 1」：歐拉 1759 年論文裡那條 8×8 走法，用對局同一個棋盤畫（深格斜線、舊式數字、紅粉筆路徑）——
  * 不用另外畫插圖，也跟點進去的棋盤是同一套東西。
  *
- * 模式是兩張沒有框線的卡片：節目挑戰墨色（主要）、練習淡墨（次要），照 Wall Go 的兩種按鈕；規則放成文字連結，
+ * 模式是沒有框線的卡片：節目挑戰墨色（主要）、練習與「回到原點」淡墨（次要），照 Wall Go 的兩種按鈕；規則放成文字連結，
  * 連到規則頁（/knights-tour/rules，2026-10-25 起不再開彈窗；一般的 Link，這款裡面換頁不播轉場）。
  * 節目挑戰是真的 `<a href="#show">`（新分頁開也對），點擊在當下交給上層 pushState（WebKit 的返回鍵規則）。
  * 字級、間距、插圖跟著畫面高度縮放時用 svh 不用 dvh：往下捲、工具列收起時 dvh 變大，字和圖會跟著放大。
  */
-export default function KnightsTourMenu({ locale, onShow, onPractice }: {
+export default function KnightsTourMenu({ locale, onShow, onPractice, onClosed }: {
   locale: Locale;
   onShow: () => void;
   onPractice: (n: number) => void;
+  onClosed: (n: number) => void;
 }) {
   const t = useTextTable<KnightsText>(TEXT);
   // 中日韓泰的標題用同一種風格的字（宋體／明朝）寫成的字標，平台卡片用的是同一份；英文照舊用字型
   const lettering = letteringOf(NAME_LETTERING, locale, t.title);
   const best = useBestTimes();
+  /** 選大小的彈窗：練習、回到原點共用同一個，只差單數邊能不能選（關的時候 sizeFor 不清，淡出時字不會跳回練習） */
   const [sizeOpen, setSizeOpen] = useState(false);
-  const records = ([['show', t.showMode], ...SIZES.map((n) => [practiceKey(n), sizeLabel(n)])] as [RecordKey, string][])
+  const [sizeFor, setSizeFor] = useState<'practice' | 'closed'>('practice');
+  const pickSize = (kind: 'practice' | 'closed') => { setSizeFor(kind); setSizeOpen(true); };
+  const records = ([
+    ['show', t.showMode],
+    ...SIZES.map((n) => [practiceKey(n), sizeLabel(n)]),
+    ...SIZES.filter(canClose).map((n) => [closedKey(n), `${t.closedMode} ${sizeLabel(n)}`]),
+  ] as [RecordKey, string][])
     .flatMap(([key, name]) => { const ms = best[key]; return ms === undefined ? [] : [{ key, name, ms }]; });
   const card = 'flex w-full items-center gap-3 px-4 py-3.5 text-left active:scale-[0.99]';
 
@@ -82,12 +90,21 @@ export default function KnightsTourMenu({ locale, onShow, onPractice }: {
             </span>
             <LuChevronRight aria-hidden="true" className="shrink-0 text-xl opacity-70" />
           </a>
-          <button type="button" onClick={() => setSizeOpen(true)} className={`${card} kt-plate`}>
+          <button type="button" onClick={() => pickSize('practice')} className={`${card} kt-plate`}>
             {/* 對局裡那隻銅版畫騎士（11/1 Zach） */}
             <KnightSvg className="size-9 shrink-0" />
             <span className="min-w-0 flex-1">
               <span className="block text-lg font-black leading-tight">{t.practiceMode}</span>
               <span className="kt-serif mt-0.5 block text-sm opacity-75">{t.practiceKicker}</span>
+            </span>
+            <LuChevronRight aria-hidden="true" className="shrink-0 text-xl opacity-60" />
+          </button>
+          {/* 回到原點（封閉巡遊）：走完每一格、最後一步跳回起點（docs/puzzle-reels.md B） */}
+          <button type="button" onClick={() => pickSize('closed')} className={`${card} kt-plate`}>
+            <GiReturnArrow aria-hidden="true" className="shrink-0 text-3xl" />
+            <span className="min-w-0 flex-1">
+              <span className="block text-lg font-black leading-tight">{t.closedMode}</span>
+              <span className="kt-serif mt-0.5 block text-sm opacity-75">{t.closedKicker}</span>
             </span>
             <LuChevronRight aria-hidden="true" className="shrink-0 text-xl opacity-60" />
           </button>
@@ -110,7 +127,8 @@ export default function KnightsTourMenu({ locale, onShow, onPractice }: {
         </div>
       </main>
 
-      <SizePicker open={sizeOpen} onClose={() => setSizeOpen(false)} onPick={(n) => { setSizeOpen(false); onPractice(n); }} />
+      <SizePicker open={sizeOpen} closed={sizeFor === 'closed'} onClose={() => setSizeOpen(false)}
+        onPick={(n) => { setSizeOpen(false); if (sizeFor === 'closed') onClosed(n); else onPractice(n); }} />
     </KtFrame>
   );
 }

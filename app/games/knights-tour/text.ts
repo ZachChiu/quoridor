@@ -83,6 +83,24 @@ export type KnightsText = {
   nameNote: string;
   /** 分享圖上的小章：走完而且最後一步跳得回起點（封閉巡遊） */
   closedTour: string;
+  /** 「回到原點」挑戰（封閉巡遊：走完之後最後一步要跳回起點，docs/puzzle-reels.md B）。選單卡片的名字與小字 */
+  closedMode: string;
+  closedKicker: string;
+  /** 選大小時，單數邊那幾格寫的字；點下去說明為什麼（{size}、{k} = n²） */
+  closedOdd: string;
+  closedOddWhy: string;
+  placeKnightClosed: string;
+  moveKnightClosed: string;
+  /** 每一格都走過了，但最後一格跳不回起點（這局還沒過關，可以悔棋） */
+  notClosed: string;
+  canReturn: string;
+  cannotReturn: string;
+  hintUndoClosed: string;
+  closedDoneTitle: string;
+  closedDoneBody: string;
+  /** 規則頁的常見問題（規則頁也輸出成 FAQPage） */
+  faqTitle: string;
+  faq: readonly { q: string; a: string }[];
   gotIt: string;
   squareVisited: string;
   squareKnight: string;
@@ -163,6 +181,22 @@ export const TEXT = {
     source: '出自 Netflix《魔鬼的計謀：死亡密室》第 2 天的隱藏關卡。',
     nameNote: "名字：節目裡的中文是「騎士巡遊」（第 2 季《魔鬼的計謀：死亡密室》）。這道題在數學上也叫「騎士巡邏」（knight's tour problem），歐拉在 1759 年寫過一篇論文研究它。",
     closedTour: '首尾相接',
+    closedMode: '回到原點',
+    closedKicker: '走完再跳回起點 · 6×6 – 10×10',
+    closedOdd: '回不去',
+    closedOddWhy: '{size} 回不到原點：走完再跳回起點，騎士一共要跳 {k} 步，是單數。騎士每跳一步就換一次格子的顏色，跳單數步一定落在另一種顏色，回不到出發的那一格。選 6×6、8×8 或 10×10 吧。',
+    placeKnightClosed: '點一格放下騎士：走完每一格之後，最後一步要跳得回這裡',
+    moveKnightClosed: '點有圓點的格子前進，最後一步要跳回第 1 格',
+    notClosed: '每一格都走過了，可是最後一格跳不回起點。悔幾步換條路吧',
+    canReturn: '還回得去',
+    cannotReturn: '回不去了',
+    hintUndoClosed: '這樣已經回不到起點了，退回第 {k} 步就還有救',
+    closedDoneTitle: '騎士回到原點了！',
+    closedDoneBody: '{size} 每一格都走過、最後跳回起點，用了 {time}。',
+    faqTitle: '常見問題',
+    faq: [
+      { q: '騎士能走完全部格子，再跳回起點嗎？', a: "可以，但要看棋盤大小。走完每一格、最後一步再跳回起點，叫做「封閉巡遊」（closed knight's tour）。騎士每跳一步就換一次格子的顏色，走完 n×n 再跳回起點一共要跳 n² 步，所以只有邊長是偶數的棋盤做得到：5×5、7×7、9×9 一定回不去，6×6、8×8、10×10 從哪一格出發都有路。選單裡的「回到原點」就是這個挑戰。" },
+    ],
     gotIt: '知道了',
     squareVisited: '{sq}：第 {k} 步',
     squareKnight: '{sq}：騎士在這裡',
@@ -240,6 +274,22 @@ export const TEXT = {
     source: "From a hidden game on day 2 of Netflix's The Devil's Plan: Death Room.",
     nameNote: "The name: the show (season 2, The Devil's Plan: Death Room) calls it Knight's Tour. Mathematicians know it as the knight's tour problem, which Euler studied in a 1759 paper.",
     closedTour: 'Closed tour',
+    closedMode: 'Back to the start',
+    closedKicker: 'Finish, then jump home · 6×6 – 10×10',
+    closedOdd: 'Impossible',
+    closedOddWhy: "{size} can't be closed: finishing and jumping back to the start takes {k} jumps, an odd number. Every jump lands on the other colour, so after an odd number of jumps the knight is never on its starting colour. Try 6×6, 8×8 or 10×10.",
+    placeKnightClosed: 'Tap a square to place the knight. After every square, the last jump has to land back here',
+    moveKnightClosed: 'Tap a dotted square. The last jump has to land back on square 1',
+    notClosed: "Every square is visited, but the last one can't jump back to the start. Undo a few moves and try another route",
+    canReturn: 'Can still close',
+    cannotReturn: "Can't close any more",
+    hintUndoClosed: "You can't get back to the start from here. Go back to move {k} and it's still possible",
+    closedDoneTitle: 'Back to the start!',
+    closedDoneBody: 'Every square on {size}, then home to square 1, in {time}.',
+    faqTitle: 'Common questions',
+    faq: [
+      { q: 'Can the knight visit every square and land back where it started?', a: "Yes, depending on the board. A knight's tour that ends one jump from where it began is called a closed knight's tour. Every jump changes the square's colour, and a closed tour on an n×n board takes n² jumps, so it only works when the side is even: 5×5, 7×7 and 9×9 can never close, while 6×6, 8×8 and 10×10 have closed tours from every square. Try the puzzle yourself in the Back to the start mode." },
+    ],
     gotIt: 'Got it',
     squareVisited: '{sq}: move {k}',
     squareKnight: '{sq}: knight',
@@ -318,6 +368,22 @@ export const TEXT = {
     source: 'Netflix『悪魔の計略 ～デビルズ・プラン～』シーズン2の2日目に登場した隠しゲームです。',
     nameNote: "名前：ナイトツアー（Knight's Tour）は数学の古典的な問題で、オイラーが1759年の論文で研究しました。",
     closedTour: 'スタートに戻れる',
+    closedMode: 'スタートに戻る',
+    closedKicker: '全部回ってから出発点へ · 6×6 – 10×10',
+    closedOdd: '不可能',
+    closedOddWhy: '{size} はスタートに戻れません。全部回って出発点に戻るには {k} 回跳ぶ必要があり、これは奇数です。ナイトは跳ぶたびにマスの色が変わるので、奇数回跳ぶと必ず反対の色に着き、出発したマスには戻れません。6×6、8×8、10×10 を選びましょう。',
+    placeKnightClosed: 'マスをタップしてナイトを置く。全部回ったあと、最後の一手でここに戻ること',
+    moveKnightClosed: '点のあるマスへ進む。最後の一手で 1 番のマスに戻ること',
+    notClosed: '全部のマスを回りましたが、最後のマスからスタートに戻れません。何手か戻して別の道を',
+    canReturn: 'まだ戻れる',
+    cannotReturn: 'もう戻れない',
+    hintUndoClosed: 'このままではスタートに戻れません。{k} 手目まで戻せばまだ間に合います',
+    closedDoneTitle: 'スタートに戻れた！',
+    closedDoneBody: '{size} を全部回ってスタートに戻りました。{time}。',
+    faqTitle: 'よくある質問',
+    faq: [
+      { q: 'ナイトは全部のマスを回って、スタートに戻れますか？', a: "盤の大きさによります。全部のマスを回り、最後の一手で出発点に戻る道順を「閉じた巡回（closed knight's tour）」と呼びます。ナイトは跳ぶたびにマスの色が変わり、n×n を回って戻るには n² 回跳ぶので、辺が偶数の盤でしかできません。5×5・7×7・9×9 は必ず戻れず、6×6・8×8・10×10 はどのマスから出発しても道があります。メニューの「スタートに戻る」で挑戦できます。" },
+    ],
     gotIt: 'わかった',
     squareVisited: '{sq}：{k}手目',
     squareKnight: '{sq}：ナイト',
@@ -396,6 +462,22 @@ export const TEXT = {
     source: '넷플릭스 「데블스 플랜: 데스룸」 2일차에 나온 숨겨진 게임이에요.',
     nameNote: "이름: 기사의 여행(Knight's Tour)은 수학의 오래된 문제로, 오일러가 1759년 논문에서 연구했어요.",
     closedTour: '처음 칸으로 이어짐',
+    closedMode: '처음 칸으로 돌아오기',
+    closedKicker: '다 돌고 출발 칸으로 · 6×6 – 10×10',
+    closedOdd: '불가능',
+    closedOddWhy: '{size}에서는 처음 칸으로 돌아올 수 없습니다. 모든 칸을 돌고 출발 칸으로 돌아오려면 {k}번 뛰어야 하는데, 이건 홀수입니다. 나이트는 한 번 뛸 때마다 칸 색이 바뀌어서 홀수 번 뛰면 반드시 다른 색에 떨어집니다. 6×6, 8×8, 10×10을 골라 보세요.',
+    placeKnightClosed: '칸을 눌러 나이트를 놓으세요. 모든 칸을 돈 뒤 마지막 한 수로 여기로 돌아와야 합니다',
+    moveKnightClosed: '점이 있는 칸으로 이동. 마지막 한 수는 1번 칸으로 돌아와야 합니다',
+    notClosed: '모든 칸을 돌았지만 마지막 칸에서 출발 칸으로 돌아갈 수 없습니다. 몇 수 무르고 다른 길로',
+    canReturn: '아직 돌아갈 수 있음',
+    cannotReturn: '이제 못 돌아감',
+    hintUndoClosed: '이대로는 출발 칸으로 돌아갈 수 없습니다. {k}번째 수까지 무르면 아직 가능합니다',
+    closedDoneTitle: '처음 칸으로 돌아왔다!',
+    closedDoneBody: '{size} 모든 칸을 돌고 출발 칸으로 돌아왔습니다. {time}.',
+    faqTitle: '자주 묻는 질문',
+    faq: [
+      { q: '나이트가 모든 칸을 돌고 출발 칸으로 돌아올 수 있나요?', a: "판 크기에 따라 다릅니다. 모든 칸을 돌고 마지막 한 수로 출발 칸에 돌아오는 경로를 닫힌 기사의 여행(closed knight's tour)이라고 합니다. 나이트는 뛸 때마다 칸 색이 바뀌고, n×n을 돌고 돌아오려면 n²번 뛰어야 하므로 한 변이 짝수인 판에서만 가능합니다. 5×5·7×7·9×9는 절대 안 되고, 6×6·8×8·10×10은 어느 칸에서 출발해도 길이 있습니다. 메뉴의 「처음 칸으로 돌아오기」에서 도전해 보세요." },
+    ],
     gotIt: '알겠어요',
     squareVisited: '{sq}: {k}수째',
     squareKnight: '{sq}: 나이트',
@@ -474,6 +556,22 @@ export const TEXT = {
     source: '出自 Netflix《魔鬼的计谋：死亡密室》第 2 天的隐藏关卡。',
     nameNote: "名字：节目里的中文是“骑士巡游”（第 2 季《魔鬼的计谋：死亡密室》）。这道题在数学上也叫“骑士巡逻”（knight's tour problem），欧拉在 1759 年写过一篇论文研究它。",
     closedTour: '首尾相接',
+    closedMode: '回到原点',
+    closedKicker: '走完再跳回起点 · 6×6 – 10×10',
+    closedOdd: '回不去',
+    closedOddWhy: '{size} 回不到原点：走完再跳回起点，骑士一共要跳 {k} 步，是单数。骑士每跳一步就换一次格子的颜色，跳单数步一定落在另一种颜色，回不到出发的那一格。选 6×6、8×8 或 10×10 吧。',
+    placeKnightClosed: '点一格放下骑士：走完每一格之后，最后一步要能跳回这里',
+    moveKnightClosed: '点有圆点的格子前进，最后一步要跳回第 1 格',
+    notClosed: '每一格都走过了，可是最后一格跳不回起点。悔几步换条路吧',
+    canReturn: '还回得去',
+    cannotReturn: '回不去了',
+    hintUndoClosed: '这样已经回不到起点了，退回第 {k} 步就还有救',
+    closedDoneTitle: '骑士回到原点了！',
+    closedDoneBody: '{size} 每一格都走过、最后跳回起点，用了 {time}。',
+    faqTitle: '常见问题',
+    faq: [
+      { q: '骑士能走完全部格子，再跳回起点吗？', a: "可以，但要看棋盘大小。走完每一格、最后一步再跳回起点，叫做“封闭巡游”（closed knight's tour）。骑士每跳一步就换一次格子的颜色，走完 n×n 再跳回起点一共要跳 n² 步，所以只有边长是偶数的棋盘做得到：5×5、7×7、9×9 一定回不去，6×6、8×8、10×10 从哪一格出发都有路。菜单里的“回到原点”就是这个挑战。" },
+    ],
     gotIt: '知道了',
     squareVisited: '{sq}：第 {k} 步',
     squareKnight: '{sq}：骑士在这里',
@@ -553,6 +651,22 @@ export const TEXT = {
     source: "มาจากเกมลับในวันที่ 2 ของ The Devil's Plan: Death Room ทาง Netflix",
     nameNote: "ชื่อ: ทางเดินม้า (Knight's Tour) เป็นโจทย์คณิตศาสตร์เก่าแก่ ออยเลอร์เคยศึกษาไว้ในบทความปี 1759",
     closedTour: 'วนกลับถึงช่องแรก',
+    closedMode: 'กลับจุดเริ่มต้น',
+    closedKicker: 'เดินครบแล้วกระโดดกลับ · 6×6 – 10×10',
+    closedOdd: 'ทำไม่ได้',
+    closedOddWhy: '{size} กลับจุดเริ่มต้นไม่ได้ เพราะเดินครบแล้วกระโดดกลับต้องกระโดดทั้งหมด {k} ครั้ง ซึ่งเป็นเลขคี่ ม้ากระโดดทีไรสีช่องก็เปลี่ยนทุกครั้ง กระโดดจำนวนคี่ครั้งจึงต้องตกช่องอีกสีเสมอ ลอง 6×6, 8×8 หรือ 10×10',
+    placeKnightClosed: 'แตะช่องเพื่อวางม้า เดินครบทุกช่องแล้วตาสุดท้ายต้องกระโดดกลับมาที่นี่',
+    moveKnightClosed: 'แตะช่องที่มีจุด ตาสุดท้ายต้องกระโดดกลับช่องที่ 1',
+    notClosed: 'เดินครบทุกช่องแล้ว แต่ช่องสุดท้ายกระโดดกลับจุดเริ่มต้นไม่ได้ ย้อนสักสองสามตาแล้วลองทางอื่น',
+    canReturn: 'ยังกลับได้',
+    cannotReturn: 'กลับไม่ได้แล้ว',
+    hintUndoClosed: 'แบบนี้กลับจุดเริ่มต้นไม่ได้แล้ว ย้อนไปตาที่ {k} ยังมีทาง',
+    closedDoneTitle: 'ม้ากลับถึงจุดเริ่มต้นแล้ว!',
+    closedDoneBody: 'เดินครบทุกช่องของ {size} แล้วกลับจุดเริ่มต้น ใช้เวลา {time}',
+    faqTitle: 'คำถามที่พบบ่อย',
+    faq: [
+      { q: 'ม้าเดินครบทุกช่องแล้วกระโดดกลับจุดเริ่มต้นได้ไหม?', a: "ได้ แต่ขึ้นกับขนาดกระดาน เส้นทางที่เดินครบทุกช่องแล้วตาสุดท้ายกลับถึงจุดเริ่มต้นเรียกว่า closed knight's tour ม้ากระโดดทีไรสีช่องเปลี่ยนทุกครั้ง และการเดินครบ n×n แล้วกลับต้องกระโดด n² ครั้ง จึงทำได้เฉพาะกระดานที่ด้านเป็นเลขคู่ 5×5, 7×7, 9×9 กลับไม่ได้แน่นอน ส่วน 6×6, 8×8, 10×10 เริ่มจากช่องไหนก็มีทาง ลองท้าทายได้ในโหมด「กลับจุดเริ่มต้น」" },
+    ],
     gotIt: 'เข้าใจแล้ว',
     squareVisited: '{sq}: ตาที่ {k}',
     squareKnight: '{sq}: ม้าอยู่ที่นี่',
