@@ -3,7 +3,7 @@ import { useEffect, useId, useLayoutEffect, useMemo, useRef } from 'react';
 import { colOf, colorOf, isKnightMove, rowOf, type Square } from '@/games/knights-tour/engine';
 import { KNIGHT_GAP } from './knightArt';
 import KnightSvg from './KnightSvg';
-import { animateBack, animateFail, animateStep, idleGlance, JUMP_MS, reducedMotion } from './motion';
+import { animateBack, animateFail, flyHome, animateStep, idleGlance, JUMP_MS, reducedMotion } from './motion';
 
 const NONE: ReadonlySet<Square> = new Set();
 /** 騎士一步的長度（格子座標）：√(1² + 2²) */
@@ -74,6 +74,7 @@ export default function TourBoard({ n, path, targets = NONE, dead = NONE, hinted
     const stepped = path.length === before.length + 1;
     if (stepped) animateStep(root, n, path, closed);
     else if (path.length === before.length - 1 && before.current !== null && current !== null) animateBack(root, n, before.current, current, rewindMs);
+    else if (path.length === 0 && before.current !== null) flyHome(root, before.current);
     if (failed !== null && before.failed === null && current !== null) animateFail(root, n, current, failed, stepped ? JUMP_MS : 0);
   }, [path, failed, n, closed, current, showKnight, rewindMs]);
 

@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { LuCircleHelp, LuHouse, LuVolume2, LuVolumeX } from 'react-icons/lu';
 import { useSound } from '@/hook/useSound';
 import { useGameText } from '@/i18n/LocaleProvider';
+import KnightSvg from './KnightSvg';
 import KtFrame from './KtFrame';
 import { BTN, BTN_ROUND } from './styles';
 
@@ -18,8 +19,19 @@ export type Place = 'bar' | 'aside';
  *
  * 聲音開關（大鍵琴、鵝毛筆那一套，見 sounds.ts）跟全站共用同一個設定（useSound）：手機在右上、規則旁邊，
  * 桌機在標題右邊。掛著 useSound 才會在第一次點擊時把聲音解鎖。
+ *
+ * `home`：棋盤上還沒有騎士，騎士站在標題旁邊；點了格子它從這裡跳上去，整盤清空時跳回來（motion.ts 的 fly）。
  */
-export default function GameFrame({ title, subtitle, menuLabel, helpLabel, onMenu, onHelp, status, controls, board }: {
+function HomeKnight({ home, className }: { home: boolean; className: string }) {
+  return (
+    <span data-home-knight aria-hidden="true"
+      className={`pointer-events-none relative z-20 block shrink-0 [transform-origin:50%_92%] ${home ? '' : 'opacity-0'} ${className}`}>
+      <KnightSvg className="size-full" />
+    </span>
+  );
+}
+
+export default function GameFrame({ title, subtitle, menuLabel, helpLabel, onMenu, onHelp, status, controls, board, home = false }: {
   title: string;
   subtitle: string;
   menuLabel: string;
@@ -29,6 +41,8 @@ export default function GameFrame({ title, subtitle, menuLabel, helpLabel, onMen
   status: (place: Place) => ReactNode;
   controls: (place: Place) => ReactNode;
   board: ReactNode;
+  /** 棋盤上還沒有騎士：騎士站在標題旁邊 */
+  home?: boolean;
 }) {
   const g = useGameText();
   const { prefs, setPrefs } = useSound();
@@ -42,7 +56,10 @@ export default function GameFrame({ title, subtitle, menuLabel, helpLabel, onMen
       {/* 三欄：左邊一顆、右邊兩顆，兩側各佔 1fr 標題才會在正中間（同 BaghPlay） */}
       <div className="grid w-full max-w-[520px] grid-cols-[1fr_auto_1fr] items-center gap-2 lg:hidden short:hidden">
         <button type="button" onClick={onMenu} aria-label={menuLabel} className={`${BTN_ROUND} justify-self-start`}><LuHouse aria-hidden="true" /></button>
-        <h1 className="truncate text-xl font-black">{title}</h1>
+        <div className="flex min-w-0 items-center gap-1">
+          <HomeKnight home={home} className="size-8" />
+          <h1 className="truncate text-xl font-black">{title}</h1>
+        </div>
         <div className="flex gap-1.5 justify-self-end">
           {sound}
           <button type="button" onClick={onHelp} aria-label={helpLabel} className={BTN_ROUND}><LuCircleHelp aria-hidden="true" /></button>
@@ -59,7 +76,10 @@ export default function GameFrame({ title, subtitle, menuLabel, helpLabel, onMen
       <aside className="hidden w-[320px] shrink-0 flex-col gap-4 lg:flex short:flex short:w-[300px] short:gap-3">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h1 className="text-4xl font-black leading-none short:text-2xl">{title}</h1>
+            <div className="flex items-end gap-2">
+              <HomeKnight home={home} className="-mb-1 size-12 short:size-8" />
+              <h1 className="text-4xl font-black leading-none short:text-2xl">{title}</h1>
+            </div>
             <p className="mt-1.5 text-sm font-bold opacity-75">{subtitle}</p>
           </div>
           {sound}

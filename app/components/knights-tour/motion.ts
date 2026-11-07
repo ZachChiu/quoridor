@@ -11,7 +11,9 @@ import { colOf, rowOf, type Square } from '@/games/knights-tour/engine';
  *   **不擋操作**：狀態在點下去那一下就換好了，動畫只是把騎士從上一格「送」過去；騎士與影子不吃點擊（pointer-events-none），
  *   飛過別的格子時點擊照樣落在底下那一格。還在空中就點下一步，新的這一跳從剛剛那一格起跳（上一跳直接收掉）。
  *   落地在 LAND × JUMP_MS ≈ 220ms，節目挑戰在計時，不能讓玩家等騎士。
- * - 放下騎士：從上面落下來、影子跟著變大，落地壓扁再彈一下。
+ * - 放下騎士：騎士一開始站在標題旁邊（GameFrame 的 data-home-knight），點了格子就從標題那裡跳上棋盤；
+ *   標題旁沒有騎士（首頁的 Fig. 1、看不到標題的版面）才從上面落下來。整盤清空時（重來倒帶完、悔到沒有步數、節目挑戰整盤重來）
+ *   反過來從最後那一格跳回標題旁邊（11/7 Zach：「讓棋子一開始放在騎士巡遊標題的旁邊，點畫面後他跳過去，重新開始就跳跳跳跳回去標題旁邊」）。
  * - 走完：步數照 1、2、3… 的順序一格一格跳一下（像歐拉那張表從頭念一遍），最後騎士揚起前腳；
  *   封閉巡遊接回起點的那段虛線這時才淡淡浮出來。
  * - 倒回去（11/7 Zach：「重來的話可以讓他快速從順序跳回去嗎」）：悔一步時騎士跳回上一格，重來時照走過的順序一格一格倒跳回第 1 格
@@ -52,6 +54,47 @@ const toward = (n: number, a: Square, b: Square) => {
   return { x: x / len, y: y / len };
 };
 
+/** 標題旁邊那隻騎士（手機與桌機各畫一份，挑看得到的那一份） */
+const homeKnightEl = () => [...document.querySelectorAll<HTMLElement>('[data-home-knight]')].find((e) => e.getClientRects().length > 0) ?? null;
+/** 腳下那一點（縮放與轉動的中心，transform-origin 50% 92%） */
+const feetOf = (el: Element) => { const r = el.getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height * 0.92, h: r.height }; };
+/** 在標題與棋盤之間跳一大步要多久 */
+const FLY_MS = 560;
+
+/**
+ * 從 from（畫面上的腳下位置與高度）跳到 el 現在的位置：拋一個弧線過去、邊飛邊從 from 的大小變成自己的大小，落地壓扁再彈一下。
+ * el 本身已經在終點（狀態先換好），動畫只是把它從起點「送」過來。
+ */
+function fly(el: HTMLElement, from: { x: number; y: number; h: number }) {
+  const to = feetOf(el);
+  const dx = from.x - to.x, dy = from.y - to.y, s0 = from.h / to.h;
+  const lift = Math.max(to.h * 0.8, Math.hypot(dx, dy) * 0.22);
+  const frames: Keyframe[] = [
+    { offset: 0, translate: px(dx, dy), scale: `${s0}`, opacity: 1 },
+    { offset: 0.1, translate: px(dx, dy), scale: `${(s0 * 1.1).toFixed(3)} ${(s0 * 0.86).toFixed(3)}`, opacity: 1 },
+  ];
+  for (let i = 1; i <= AIR_SAMPLES; i++) {
+    const t = i / AIR_SAMPLES, k = 1 - t;
+    const sc = s0 + (1 - s0) * t;
+    frames.push({ offset: 0.1 + t * 0.65, translate: px(dx * k, dy * k - 4 * lift * t * (1 - t)), scale: sc.toFixed(3), opacity: 1 });
+  }
+  frames.push(
+    { offset: 0.85, translate: '0px 0px', scale: '1.14 0.82', opacity: 1 },
+    { offset: 0.93, translate: '0px 0px', scale: '0.97 1.04', opacity: 1 },
+    { offset: 1, translate: '0px 0px', scale: '1', opacity: 1 },
+  );
+  el.animate(frames, { duration: FLY_MS, easing: 'linear' });
+}
+
+/** 整盤清空：騎士從 from 那一格跳回標題旁邊（標題旁那隻已經顯示出來，從格子的位置送回去） */
+export function flyHome(root: HTMLElement, from: Square) {
+  if (reducedMotion()) return;
+  const home = homeKnightEl(), cell = cellEl(root, from);
+  if (!home || !cell) return;
+  const r = cell.getBoundingClientRect();
+  fly(home, { x: r.x + r.width / 2, y: r.y + r.height * 0.92, h: r.height });
+}
+
 /** 剛走了一步（path 的最後一格是新的）。走完的話接著播 finale */
 export function animateStep(root: HTMLElement, n: number, path: readonly Square[], closed: boolean) {
   if (reducedMotion()) return;
@@ -59,7 +102,11 @@ export function animateStep(root: HTMLElement, n: number, path: readonly Square[
   const knight = knightEl(root);
   const shadow = shadowEl(root);
   if (knight) {
-    if (path.length === 1) {
+    const home = path.length === 1 ? homeKnightEl() : null;
+    if (home) {
+      // 放下騎士：從標題旁邊跳過來（標題旁那隻同時藏起來，這隻從它的位置起跳）
+      fly(knight, feetOf(home));
+    } else if (path.length === 1) {
       // 放下騎士：從上面掉下來（越掉越快），影子從小、淡變大、變深，落地壓扁再彈一下
       knight.animate([
         { opacity: 0, translate: '0 -45%', scale: '1.2', easing: 'cubic-bezier(0.5, 0, 1, 1)' },

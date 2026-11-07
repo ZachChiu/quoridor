@@ -242,7 +242,7 @@ export default function ShowGame({ onMenu, onPractice }: {
     <>
       <GameFrame title={t.title} subtitle={`${t.showMode} · ${SHOW_SIZES.map(sizeLabel).join(' → ')}`}
         menuLabel={t.menu} helpLabel={t.rules} onMenu={() => leave.request(onMenu)} onHelp={() => setHelpOpen(true)}
-        status={status_} controls={controls}
+        status={status_} controls={controls} home={tour.path.length === 0}
         board={<TourBoard n={n} path={tour.path} targets={targets} dead={dead} failed={run.failure?.square ?? null}
           idle={playing && tour.path.length > 0}
           label={label} boardLabel={`${t.board} ${size}`} onTap={tap} />} />
